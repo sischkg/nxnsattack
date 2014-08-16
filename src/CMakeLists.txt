@@ -1,0 +1,7 @@
+find_package( Boost )
+include_directories(${Boost_INCLUDE_DIRS})
+set(Boost_USE_STATIC_LIBS        ON)
+add_executable( echo ipv4.cpp udpv4.cpp echo.cpp utils.cpp udpv4client.cpp )
+add_executable( dns ipv4.cpp udpv4.cpp dns.cpp utils.cpp udpv4client.cpp dns.hpp dnsclient.cpp)
+add_executable( poison ipv4.cpp udpv4.cpp dns.cpp utils.cpp udpv4client.cpp dns.hpp poison.cpp sourceport.hpp sourceport.cpp )
+TARGET_LINK_LIBRARIES( poison boost_program_options)

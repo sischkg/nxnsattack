@@ -1,0 +1,10 @@
+*~
+*.c
+src/echo
+src/dns
+src/poison
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+
