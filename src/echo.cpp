@@ -8,37 +8,80 @@
 #include <netinet/in.h>
 #include <netinet/ip.h> 
 #include <arpa/inet.h>
+#include <boost/program_options.hpp>
 
-
-int main()
+int main( int argc, char **argv )
 {
-    const char *src_address   = "127.0.0.1";
-    const char *dst_address   = "127.0.0.1";
-    const uint16_t src_port   = 10007;
-    const uint16_t dst_port   = 7;
-    const std::string payload = "test12\r\n";
+    namespace po = boost::program_options;
+    std::string source_address;
+    std::string destination_address;
+    uint16_t    source_port;
+    uint16_t    destination_port;
+    std::string message;
+    bool        wait_response = false;
 
-    udpv4::ClientParameters params;
-    params.destination_address = "127.0.0.1";
-    params.destination_port    = 7;
-    udpv4::Client udp( params );
+    po::options_description desc("UDP Echo client.");
+    desc.add_options()
+        ("help,h",
+         "print this message")
 
-    udp.sendPacket( reinterpret_cast<const boost::uint8_t *>( payload.c_str() ),
-                    payload.size() );
-    udpv4::PacketInfo recv_packet = udp.receivePacket();
-    std::cout << "udp response: " << reinterpret_cast<const char *>( recv_packet.getData() ) << std::endl;
+        ("source-address,s",
+         po::value<std::string>(&source_address),
+         "source address of echo packet")
+
+        ("source-port,S",
+         po::value<uint16_t>(&source_port)->default_value( 10007 ),
+         "source port of echo packet")
+
+        ("destination-address,d",
+         po::value<std::string>(&destination_address),
+         "destination address of echo packet")
+
+        ("destination-port,D",
+         po::value<uint16_t>(&destination_port)->default_value( 7 ),
+         "destination port of echo packet")
+
+        ("wait,w",
+         "wait response")
+
+        ("message,m",
+         po::value<std::string>(&message)->default_value( "test" ),
+         "message in echo packet")
+        ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line( argc, argv, desc), vm);
+    po::notify(vm);
+
+    if ( vm.count("help") ) {
+        std::cerr << desc << "\n";
+        return 1;
+    }
+
+    if ( vm.count( "source-address" )      != 1 ||
+         vm.count( "source-port" )         != 1 ||
+         vm.count( "destination-address" ) != 1 ||
+         vm.count( "destination-port" )    != 1 ||
+         vm.count( "message" )             != 1 ) {
+        std::cerr << desc << "\n";
+        return 1;
+    }
+
+    if ( vm.count( "wait" ) ) {
+	wait_response = true;
+    }
 
     udpv4::PacketInfo raw_udp_packet_info;
-    raw_udp_packet_info.source_address      = src_address;
-    raw_udp_packet_info.destination_address = dst_address;
-    raw_udp_packet_info.source_port         = src_port;
-    raw_udp_packet_info.destination_port    = dst_port;
+    raw_udp_packet_info.source_address      = source_address;
+    raw_udp_packet_info.destination_address = destination_address;
+    raw_udp_packet_info.source_port         = source_port;
+    raw_udp_packet_info.destination_port    = destination_port;
     raw_udp_packet_info.payload.insert( raw_udp_packet_info.payload.end(),
-                                        payload.begin(),
-                                        payload.end() );
+                                        message.begin(),
+                                        message.end() );
 
     udpv4::Sender   udp_sender;
-    udpv4::Receiver udp_receiver( src_port );
+    udpv4::Receiver udp_receiver( source_port );
     udp_sender.sendPacket( raw_udp_packet_info );
     udpv4::PacketInfo udp_packet_info = udp_receiver.receivePacket();
     std::string responsed_data( udp_packet_info.begin(), udp_packet_info.end() );
