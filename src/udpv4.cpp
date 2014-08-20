@@ -1,6 +1,7 @@
 #include "udpv4.hpp"
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 #include "utils.hpp"
 
 namespace udpv4
@@ -66,6 +67,15 @@ namespace udpv4
                                             const std::vector<uint8_t> &payload );
 
 
+    Packet::Packet( const boost::uint8_t *header,  boost::uint16_t header_size,
+		    const boost::uint8_t *payload, boost::uint16_t payload_size )
+    {
+	data.resize( header_size + payload_size );
+	std::copy( header, header + header_size, data.data() );
+	std::copy( payload, payload + payload_size, data.data() + header_size );
+    }
+
+
     Packet generate_udpv4_packet( const PacketInfo &info )
     {
         UDPv4Header udpv4_header;
@@ -74,15 +84,8 @@ namespace udpv4
         udpv4_header.field.length           = htons( info.getLength() );
         udpv4_header.field.checksum         = compute_udpv4_checksum( info );
 
-        std::vector<boost::uint8_t> packet_buffer( info.getLength() );
-        std::memcpy( packet_buffer.data(),
-                     udpv4_header.data,
-                     sizeof(udpv4_header) );
-        std::memcpy( packet_buffer.data() + sizeof(udpv4_header),
-                     info.getData(),
-                     info.getPayloadLength() );
-
-        return Packet( packet_buffer );
+        return Packet( reinterpret_cast<const boost::uint8_t *>( &udpv4_header ),  sizeof(udpv4_header),
+		       info.getData(), info.getPayloadLength() );
     }
 
 

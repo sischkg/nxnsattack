@@ -62,6 +62,9 @@ namespace udpv4
             : data( d )
         {}
 
+        Packet( const boost::uint8_t *header,  boost::uint16_t header_size,
+		const boost::uint8_t *payload, boost::uint16_t payload_size );
+
         const boost::uint8_t *getData() const
         {
             return data.data();

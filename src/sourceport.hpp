@@ -1,8 +1,7 @@
 #ifndef SOURCEPORt_HPP
 #define SOURCEPORT_HPP
 
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random.hpp>
 
 namespace dns
 {
@@ -10,8 +9,8 @@ namespace dns
     {
     private:
         uint16_t fixed_port;
-        boost::random::mt19937 generator;
-        boost::random::uniform_int_distribution<> distributor;
+        boost::random::mt19937                    generator;
+	boost::random::uniform_int_distribution<> distributor;
 
     public:
         SourcePortGenerator( uint16_t sp = 0 )

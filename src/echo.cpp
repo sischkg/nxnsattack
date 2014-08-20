@@ -8,8 +8,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h> 
 #include <arpa/inet.h>
-#include <cstring>
-#include <cstdio>
+
 
 int main()
 {
