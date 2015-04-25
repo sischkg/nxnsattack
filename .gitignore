@@ -1,5 +1,7 @@
 *~
 *.c
+\#*
+.\#*
 src/echo
 src/dns
 src/poison

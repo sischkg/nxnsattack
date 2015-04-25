@@ -48,6 +48,11 @@ namespace ipv4
         std::copy( payload, payload + payload_length, data.data() + header_length );
     }
 
+    Packet::Packet( boost::shared_array<boost::uint8_t> h, boost::uint16_t hl,
+		    boost::shared_array<boost::uint8_t> p, boost::uint16_t pl )
+	: header(h), header_length(hl), payload(p), payload_length(pl)
+    {}
+
 
     Packet generate_ipv4_packet( const PacketInfo &info )
     {

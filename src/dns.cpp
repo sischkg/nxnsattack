@@ -10,45 +10,9 @@
 
 namespace dns
 {
-
-    struct PacketHeaderField
-    {
-        boost::uint16_t id;
-
-        boost::uint8_t  recursion_desired:    1;
-        boost::uint8_t  truncation:           1;
-        boost::uint8_t  authoritative_answer: 1;
-        boost::uint8_t  opcode:               4;
-        boost::uint8_t  query_response:       1;
-
-        boost::uint8_t  response_code:        4;
-        boost::uint8_t  checking_disabled:    1;
-        boost::uint8_t  authentic_data:       1;
-        boost::uint8_t  zero_field:           1;
-        boost::uint8_t  recursion_available:  1;
-
-        boost::uint16_t question_count;
-        boost::uint16_t answer_count;
-        boost::uint16_t authority_count;
-        boost::uint16_t additional_infomation_count;
-    };
-
-
-    struct SOAField
-    {
-        boost::uint32_t serial;
-        boost::uint32_t refresh;
-        boost::uint32_t retry;
-        boost::uint32_t expire;
-        boost::uint32_t minimum;
-    };
-
-
     std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname );
     std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
                                                                                         const boost::uint8_t *domainame );
-
-
     std::vector<boost::uint8_t> generate_question_section( const QuestionSection &q );
     std::vector<boost::uint8_t> generate_response_section( const ResponseSection &r );
 
@@ -62,6 +26,7 @@ namespace dns
     {
         PacketHeaderField header;
         header.id                   = htons( query.id );
+	header.opcode               = 0;
         header.query_response       = 0;
         header.authoritative_answer = 0;
         header.truncation           = 0;
@@ -93,6 +58,7 @@ namespace dns
     {
         PacketHeaderField header;
         header.id                   = htons( response.id );
+	header.opcode               = 0;
         header.query_response       = 1;
         header.authoritative_answer = response.authoritative_answer;
         header.truncation           = response.truncation;
@@ -137,6 +103,31 @@ namespace dns
                      sections.data(), sections.size() );
 
         return packet;
+    }
+
+
+    QueryPacketInfo parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end )
+    {
+        const boost::uint8_t *packet = begin;
+
+        QueryPacketInfo packet_info;
+        const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
+
+        packet_info.id        = ntohs( header->id );
+        packet_info.recursion = header->recursion_desired;
+
+        int question_count              = ntohs( header->question_count );
+        int answer_count                = ntohs( header->answer_count );
+        int authority_count             = ntohs( header->authority_count );
+        int additional_infomation_count = ntohs( header->additional_infomation_count );
+
+        packet += sizeof(PacketHeaderField);
+        for ( int i = 0 ; i < question_count ; i++ ) {
+            QuestionSectionPair pair = parse_question_section( begin, packet );
+            packet_info.question.push_back( pair.first );
+            packet = pair.second;
+        }
+        return packet_info;
     }
 
 

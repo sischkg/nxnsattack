@@ -193,7 +193,42 @@ namespace dns
 
     std::vector<boost::uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     std::vector<boost::uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
+    QueryPacketInfo parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end );
     ResponsePacketInfo parse_dns_response_packet( const boost::uint8_t *begin, const boost::uint8_t *end );
+
+    struct PacketHeaderField
+    {
+        boost::uint16_t id;
+
+        boost::uint8_t  recursion_desired:    1;
+        boost::uint8_t  truncation:           1;
+        boost::uint8_t  authoritative_answer: 1;
+        boost::uint8_t  opcode:               4;
+        boost::uint8_t  query_response:       1;
+
+        boost::uint8_t  response_code:        4;
+        boost::uint8_t  checking_disabled:    1;
+        boost::uint8_t  authentic_data:       1;
+        boost::uint8_t  zero_field:           1;
+        boost::uint8_t  recursion_available:  1;
+
+        boost::uint16_t question_count;
+        boost::uint16_t answer_count;
+        boost::uint16_t authority_count;
+        boost::uint16_t additional_infomation_count;
+    };
+
+
+    struct SOAField
+    {
+        boost::uint32_t serial;
+        boost::uint32_t refresh;
+        boost::uint32_t retry;
+        boost::uint32_t expire;
+        boost::uint32_t minimum;
+    };
+
+
 }
 
 #endif
