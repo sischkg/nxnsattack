@@ -131,27 +131,29 @@ namespace dns
     };
 
 
-    struct QuestionSection
+    struct QuestionSectionEntry
     {
         std::string q_domainname;
         uint16_t    q_type;
         uint16_t    q_class;
+	uint16_t    q_offset;
     };
 
-    struct ResponseSection
+    struct ResponseSectionEntry
     {
         std::string r_domainname;
         uint16_t    r_type;
         uint16_t    r_class;
         uint32_t    r_ttl;
         ResourceDataPtr r_resource_data;
+	uint16_t    r_offset;
     };
 
     struct QueryPacketInfo
     {
         boost::uint16_t id;
         bool            recursion;
-        std::vector<QuestionSection> question;
+        std::vector<QuestionSectionEntry> question;
     };
 
     struct ResponsePacketInfo
@@ -164,10 +166,10 @@ namespace dns
         bool            checking_disabled;
         boost::uint8_t  response_code;
 
-        std::vector<QuestionSection> question;
-        std::vector<ResponseSection> answer;
-        std::vector<ResponseSection> authority;
-        std::vector<ResponseSection> additional_infomation;
+        std::vector<QuestionSectionEntry> question;
+        std::vector<ResponseSectionEntry> answer;
+        std::vector<ResponseSectionEntry> authority;
+        std::vector<ResponseSectionEntry> additional_infomation;
     };
 
 
@@ -185,10 +187,10 @@ namespace dns
         bool            checking_disabled;
         boost::uint8_t  response_code;
 
-        std::vector<QuestionSection> question_section;
-        std::vector<ResponseSection> answer_section;
-        std::vector<ResponseSection> authority_section;
-        std::vector<ResponseSection> additional_infomation_section;
+        std::vector<QuestionSectionEntry> question_section;
+        std::vector<ResponseSectionEntry> answer_section;
+        std::vector<ResponseSectionEntry> authority_section;
+        std::vector<ResponseSectionEntry> additional_infomation_section;
     };
 
     std::vector<boost::uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
@@ -218,7 +220,6 @@ namespace dns
         boost::uint16_t additional_infomation_count;
     };
 
-
     struct SOAField
     {
         boost::uint32_t serial;
@@ -228,6 +229,31 @@ namespace dns
         boost::uint32_t minimum;
     };
 
+    std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname );
+    std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
+                                                                                        const boost::uint8_t *domainame );
+    std::vector<boost::uint8_t> generate_question_section( const QuestionSectionEntry &q );
+    std::vector<boost::uint8_t> generate_response_section( const ResponseSectionEntry &r );
+
+    typedef std::pair<QuestionSectionEntry, const boost::uint8_t *> QuestionSectionEntryPair;
+    typedef std::pair<ResponseSectionEntry, const boost::uint8_t *> ResponseSectionEntryPair;
+    QuestionSectionEntryPair parse_question_section( const boost::uint8_t *packet, const boost::uint8_t *section );
+    ResponseSectionEntryPair parse_response_section( const boost::uint8_t *packet, const boost::uint8_t *section );
+
+    template<typename Type>
+    boost::uint8_t *set_bytes( Type v, boost::uint8_t *pos )
+    {
+        *reinterpret_cast<Type *>( pos ) = v;
+        return pos + sizeof(v);
+    }
+
+    template<typename Type>
+    Type get_bytes( const boost::uint8_t **pos )
+    {
+        Type v = *reinterpret_cast<const Type *>( *pos );
+        *pos += sizeof(Type);
+        return v;
+    }
 
 }
 

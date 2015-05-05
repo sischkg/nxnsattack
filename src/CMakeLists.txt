@@ -9,6 +9,7 @@ add_executable( dns    ipv4.cpp udpv4.cpp utils.cpp udpv4client.cpp dns.cpp dns.
 add_executable( idns_server udpv4.cpp utils.cpp udpv4client.hpp udpv4server.hpp udpv4server.cpp dns.cpp dns.hpp idns_server.cpp )
 #add_executable( poison ipv4.cpp udpv4.cpp utils.cpp udpv4client.cpp dns.cpp dns.hpp sourceport.hpp sourceport.cpp poison.cpp )
 add_executable( tcpsyn ipv4.cpp tcpv4.cpp utils.cpp tcpsyn.cpp )
+add_executable( loop   ipv4.cpp udpv4.cpp utils.cpp udpv4client.cpp dns.cpp tcpv4client.hpp tcpv4client.cpp dns.hpp uncompress_loop.cpp )
 target_link_libraries( echo   boost_program_options)
 #target_link_libraries( poison boost_program_options)
 target_link_libraries( tcpsyn boost_program_options)

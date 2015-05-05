@@ -9,4 +9,6 @@ CMakeCache.txt
 CMakeFiles
 Makefile
 cmake_install.cmake
-
+src/idns_server
+src/loop
+src/tcpsyn

@@ -79,7 +79,7 @@ int main( int argc, char **argv )
         std::ostringstream qname;
         qname << "s" << index << "." << target_domainname;
 
-        dns::QuestionSection question;
+        dns::QuestionSectionEntry question;
         question.q_domainname = qname.str();
         question.q_type       = dns::TYPE_A;
         question.q_class      = dns::CLASS_IN;
@@ -100,14 +100,14 @@ int main( int argc, char **argv )
         udpv4::PacketInfo received_packet;
         for ( int id = 0 ; id < 0xffff ; id++ ) {
 	    
-            dns::ResponseSection authority;
+            dns::ResponseSectionEntry authority;
             authority.r_domainname    = target_domainname;
             authority.r_type          = dns::TYPE_NS;
             authority.r_class         = dns::CLASS_IN;
             authority.r_ttl           = 86400;
             authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( delegated_dns_server_name ) );
 
-            dns::ResponseSection additional_infomation;
+            dns::ResponseSectionEntry additional_infomation;
             additional_infomation.r_domainname    = delegated_dns_server_name;
             additional_infomation.r_type          = dns::TYPE_A;
             additional_infomation.r_class         = dns::CLASS_IN;
@@ -157,18 +157,18 @@ int main( int argc, char **argv )
     }
 poisoned:
 
-    for ( std::vector<dns::QuestionSection>::const_iterator i = res.question.begin() ;
+    for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
           i != res.question.end() ; ++i )
         std::cout << "Query: " << i->q_domainname << std::endl;
-    for ( std::vector<dns::ResponseSection>::const_iterator i = res.answer.begin() ;
+    for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.answer.begin() ;
           i != res.answer.end() ; ++i ) {
         std::cout << "Answer: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
     }
-    for ( std::vector<dns::ResponseSection>::const_iterator i = res.authority.begin() ;
+    for ( std::vector<dns::ResponseSectionEntr>::const_iterator i = res.authority.begin() ;
           i != res.authority.end() ; ++i ) {
         std::cout << "Authority: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
     }
-    for ( std::vector<dns::ResponseSection>::const_iterator i = res.additional_infomation.begin() ;
+    for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.additional_infomation.begin() ;
           i != res.additional_infomation.end() ; ++i ) {
         std::cout << "Additional: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
     }

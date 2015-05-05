@@ -23,7 +23,7 @@ std::string generate_domainname()
 }
 
 
-dns::ResponsePacketInfo generate_response( boost::uint16_t id, const dns::QuestionSection question_section )
+dns::ResponsePacketInfo generate_response( boost::uint16_t id, const dns::QuestionSectionEntry question_section )
 {
     dns::ResponsePacketInfo response;
     response.id = id;
@@ -33,14 +33,14 @@ dns::ResponsePacketInfo generate_response( boost::uint16_t id, const dns::Questi
     response.checking_disabled   = false;
     response.response_code       = dns::NO_ERROR;
 
-    dns::QuestionSection question;
+    dns::QuestionSectionEntry question;
     question.q_domainname = question_section.q_domainname;
     question.q_class      = dns::CLASS_IN;
     question.q_type       = dns::TYPE_A;
     response.question.push_back( question );
 
     for ( int i = 0 ; i < NS_RECORD_COUNT ; i++ ) {
-	dns::ResponseSection response_section;
+	dns::ResponseSectionEntry response_section;
 	response_section.r_domainname = question_section.q_domainname;
 	response_section.r_class      = dns::CLASS_IN;
 	response_section.r_type       = dns::TYPE_NS;
