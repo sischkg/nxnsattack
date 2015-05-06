@@ -157,22 +157,7 @@ int main( int argc, char **argv )
     }
 poisoned:
 
-    for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
-          i != res.question.end() ; ++i )
-        std::cout << "Query: " << i->q_domainname << std::endl;
-    for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.answer.begin() ;
-          i != res.answer.end() ; ++i ) {
-        std::cout << "Answer: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
-    }
-    for ( std::vector<dns::ResponseSectionEntr>::const_iterator i = res.authority.begin() ;
-          i != res.authority.end() ; ++i ) {
-        std::cout << "Authority: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
-    }
-    for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.additional_infomation.begin() ;
-          i != res.additional_infomation.end() ; ++i ) {
-        std::cout << "Additional: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
-    }
-
+    std::cout << res;
 
     return 0;
 }
