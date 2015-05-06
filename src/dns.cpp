@@ -97,10 +97,9 @@ namespace dns
 
     QueryPacketInfo parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end )
     {
-        const boost::uint8_t *packet = begin;
-
+	const boost::uint8_t *packet = begin;
         QueryPacketInfo packet_info;
-        const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
+        const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( packet );
 
         packet_info.id        = ntohs( header->id );
         packet_info.recursion = header->recursion_desired;
@@ -304,6 +303,40 @@ namespace dns
 
         sec.r_resource_data = parsed_data;
         return ResponseSectionEntryPair( sec, p );
+    }
+
+
+    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &res )
+    {
+	std::cout << "ID: " << res.id << std::endl;
+	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
+	      i != res.question.end() ; ++i )
+	    std::cout << "Query: " << i->q_domainname << std::endl;
+
+	return os;
+    }
+
+
+    std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &res )
+    {
+	std::cout << "ID: " << res.id << std::endl;
+	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
+	      i != res.question.end() ; ++i )
+	    std::cout << "Query: " << i->q_domainname << std::endl;
+	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.answer.begin() ;
+	      i != res.answer.end() ; ++i ) {
+	    std::cout << "Answer: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	}
+	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.authority.begin() ;
+	      i != res.authority.end() ; ++i ) {
+	    std::cout << "Authority: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	}
+	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.additional_infomation.begin() ;
+	      i != res.additional_infomation.end() ; ++i ) {
+	    std::cout << "Additional: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	}
+
+	return os;
     }
 
 

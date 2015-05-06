@@ -8,6 +8,8 @@
 
 namespace dns
 {
+    typedef std::vector<boost::uint8_t>::iterator       PacketIterator;
+    typedef std::vector<boost::uint8_t>::const_iterator ConstPacketIterator;
 
     typedef uint16_t Class;
     const Class CLASS_IN = 1;
@@ -195,8 +197,10 @@ namespace dns
 
     std::vector<boost::uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     std::vector<boost::uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
-    QueryPacketInfo parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end );
+    QueryPacketInfo    parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end );
     ResponsePacketInfo parse_dns_response_packet( const boost::uint8_t *begin, const boost::uint8_t *end );
+    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query );
+    std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &response );
 
     struct PacketHeaderField
     {
