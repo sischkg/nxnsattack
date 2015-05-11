@@ -47,6 +47,7 @@ public:
     {}
 };
 
+
 std::string get_error_message( const std::string &msg, int error_number );
 
 boost::uint16_t compute_checksum( const boost::uint8_t *data, size_t length );

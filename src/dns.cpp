@@ -193,15 +193,25 @@ namespace dns
 
 
     std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
-                                                                                        const boost::uint8_t *p )
+                                                                                        const boost::uint8_t *begin,
+											int recur ) throw(FormatError)
     {
+	if ( recur > 100 ) {
+	    throw FormatError( "detected domainname decompress loop" );
+	}
         std::string domainname;
+	const boost::uint8_t *p = begin;
         while ( *p != 0 ) {
             // メッセージ圧縮を行っている場合
             if ( *p & 0xC0 ) {
                 int offset = ntohs( *( reinterpret_cast<const boost::uint16_t *>( p ) ) ) & 0x03ff;
+		if ( packet + offset > begin - 2 ) {
+		    throw FormatError( "detected forword reference of domainname decompress" );
+		}
+
                 std::pair<std::string, const boost::uint8_t *> pair = convert_domainname_binary_to_string( packet,
-                                                                                                           packet + offset );
+                                                                                                           packet + offset,
+													   recur + 1 );
                 return std::pair<std::string, const boost::uint8_t *>( domainname + pair.first, p + 2 );
             }
 

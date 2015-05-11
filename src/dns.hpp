@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -32,6 +33,17 @@ namespace dns
 
     class ResourceData;
     typedef boost::shared_ptr<ResourceData> ResourceDataPtr;
+
+    /*!
+     * DNS Packetのフォーマットエラーを検知した場合にthrowする例外
+     */
+    class FormatError : public std::runtime_error
+    {
+    public:
+	FormatError( const std::string &msg )
+	    : std::runtime_error( msg )
+	{}
+    };
 
     class ResourceData
     {
@@ -235,7 +247,8 @@ namespace dns
 
     std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname );
     std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
-                                                                                        const boost::uint8_t *domainame );
+                                                                                        const boost::uint8_t *domainame,
+											int recur = 0 ) throw(FormatError);
     std::vector<boost::uint8_t> generate_question_section( const QuestionSectionEntry &q );
     std::vector<boost::uint8_t> generate_response_section( const ResponseSectionEntry &r );
 
