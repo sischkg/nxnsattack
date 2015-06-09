@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <boost/numeric/conversion/cast.hpp>
-#include "udpv4client.hpp"
+#include "tcpv4client.hpp"
 #include "dns.hpp"
 #include <iostream>
 #include <algorithm>
@@ -118,7 +118,6 @@ int main()
     for ( int i = 0 ; i < 30000 ; i++ ) {
 	qname += "1.";
     }
-    qname += "siskrn.co";
 
     dns::QueryPacketInfo query;
     query.id        = 0x1234;
@@ -133,18 +132,17 @@ int main()
 
     std::vector<boost::uint8_t> dns_query_packet = gen_dns_query_packet( query );
 
-    udpv4::ClientParameters udp_param;
-    udp_param.destination_address = DNS_SERVER_ADDRESS;
-    udp_param.destination_port    = 53;
-    udpv4::Client udp( udp_param );
-    udp.sendPacket( dns_query_packet.data(), dns_query_packet.size() );
+    tcpv4::ClientParameters tcp_param;
+    tcp_param.destination_address = DNS_SERVER_ADDRESS;
+    tcp_param.destination_port    = 53;
+    tcpv4::Client tcp( tcp_param );
+    boost::uint16_t data_size = htons( boost::numeric_cast<boost::uint16_t>( dns_query_packet.size() ) );
+    tcp.send( reinterpret_cast<boost::uint8_t *>(&data_size), 2 );
+    tcp.send( dns_query_packet.data(), dns_query_packet.size() );
 
-    udpv4::PacketInfo received_packet = udp.receivePacket();
-
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin() + 2,
-                                                                  received_packet.end() );
-
-    std::cout << res;
+    tcpv4::ConnectionInfo received_packet = tcp.receive();
+    std::cerr << received_packet.end() - received_packet.begin() << std::endl;
+    tcp.closeSocket();
 
     return 0;
 }

@@ -12,16 +12,24 @@ namespace dns
     typedef std::vector<boost::uint8_t>::iterator       PacketIterator;
     typedef std::vector<boost::uint8_t>::const_iterator ConstPacketIterator;
 
-    typedef uint16_t Class;
+    typedef boost::uint8_t Opcode;
+    const Opcode OPCODE_QUERY  = 0;
+    const Opcode OPCODE_NOTIFY = 4;
+
+    typedef boost::uint16_t Class;
     const Class CLASS_IN = 1;
 
-    typedef uint16_t Type;
+    typedef boost::uint16_t Type;
     const Type TYPE_A    = 1;
     const Type TYPE_NS   = 2;
     const Type TYPE_SOA  = 6;
     const Type TYPE_AAAA = 28;
+    const Type TYPE_OPT  = 41;
 
-    typedef uint8_t ResponseCode;
+    typedef boost::uint16_t OptType;
+    const OptType OPT_NSID = 3;
+
+    typedef boost::uint8_t ResponseCode;
     const ResponseCode NO_ERROR       = 0;
     const ResponseCode NXRRSET        = 0;
     const ResponseCode FORMAT_ERROR   = 1;
@@ -62,8 +70,8 @@ namespace dns
         boost::uint32_t sin_addr;
 
     public:
-        RecordA( boost::uint32_t sin_addr );
-        RecordA( const std::string &address );
+        RecordA( boost::uint32_t in_sin_addr );
+        RecordA( const std::string &in_address );
 
         virtual std::string toString() const;
         virtual std::vector<boost::uint8_t> getPacket() const;
@@ -126,15 +134,15 @@ namespace dns
     public:
         RecordSOA( const std::string &mname,
                    const std::string &rname,
-                   uint32_t serial,
-                   uint32_t refresh,
-                   uint32_t retry,
-                   uint32_t expire,
-                   uint32_t minimum );
+                    boost::uint32_t serial,
+                    boost::uint32_t refresh,
+                    boost::uint32_t retry,
+                    boost::uint32_t expire,
+                    boost::uint32_t minimum );
 
         virtual std::string toString() const;
         virtual std::vector<boost::uint8_t> getPacket() const;
-        virtual uint16_t type() const
+        virtual  boost::uint16_t type() const
         {
             return TYPE_SOA;
         }
@@ -145,29 +153,125 @@ namespace dns
     };
 
 
+    class OptPseudoRROption
+    {
+    public:
+	virtual ~OptPseudoRROption() {}
+	virtual std::string toString() const = 0;
+	virtual std::vector<boost::uint8_t> getPacket() const = 0;
+	virtual boost::uint16_t code() const = 0;
+	virtual boost::uint16_t size() const = 0;
+    };
+
+    typedef boost::shared_ptr<OptPseudoRROption> OptPseudoRROptPtr;
+
+    class RAWOption : public OptPseudoRROption
+    {
+    private:
+	boost::uint16_t option_code;
+	boost::uint16_t option_size;
+	std::vector<uint8_t> option_data;
+
+    public:
+	RAWOption( boost::uint16_t in_code,
+		   boost::uint16_t in_size,
+		   const std::vector<uint8_t> &in_data )
+	    : option_code( in_code ),
+	      option_size( in_size ),
+	      option_data( in_data )
+	{}
+
+	virtual std::string toString() const;
+	virtual std::vector<boost::uint8_t> getPacket() const;
+	virtual boost::uint16_t code() const { return option_code; }
+	virtual boost::uint16_t size() const { return option_size; }
+    };
+
+
+    class NSIDOption : public OptPseudoRROption
+    {
+    private:
+	std::string nsid;
+    public:
+	NSIDOption( const std::string &id = "" ) : nsid(id) {}
+
+	virtual std::string toString() const { return "NSID: \"" + nsid + "\""; }
+	virtual std::vector<boost::uint8_t> getPacket() const;
+	virtual boost::uint16_t code() const { return OPT_NSID; }
+	virtual boost::uint16_t size() const { return 2 + 2 + nsid.size(); }
+
+	static OptPseudoRROptPtr parse( const boost::uint8_t *begin, const boost::uint8_t *end );
+    };
+
+
+    class RecordOpt : public ResourceData
+    {
+    private:
+	boost::uint16_t payload_size;
+	boost::uint8_t rcode;
+	std::vector<OptPseudoRROptPtr> options;
+	boost::uint16_t rdata_size;
+
+    public:
+	RecordOpt( boost::uint16_t in_payload_size                  = 1280,
+		   boost::uint8_t  in_rcode                         = 0,
+		   const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>(),
+		   boost::uint32_t in_rdata_size                    = 0xffffffff );
+
+	virtual std::string toString() const;
+	virtual std::vector<boost::uint8_t> getPacket() const;
+	virtual boost::uint16_t type() const { return TYPE_OPT; }
+	virtual boost::uint16_t size() const { return 1 + 2 + 2 + 4 + 2 + rdata_size; }
+
+	const std::vector<OptPseudoRROptPtr> &getOptions() const { return options; }
+        static ResourceDataPtr parse( const boost::uint8_t *packet,
+				      const boost::uint8_t *entry_begin,
+				      const boost::uint8_t *begin,
+				      const boost::uint8_t *end );
+    };
+
+
+
     struct QuestionSectionEntry
     {
-        std::string q_domainname;
-        uint16_t    q_type;
-        uint16_t    q_class;
-	uint16_t    q_offset;
+        std::string     q_domainname;
+	boost::uint16_t q_type;
+	boost::uint16_t q_class;
+	boost::uint16_t q_offset;
     };
 
     struct ResponseSectionEntry
     {
         std::string r_domainname;
-        uint16_t    r_type;
-        uint16_t    r_class;
-        uint32_t    r_ttl;
+	boost::uint16_t r_type;
+	boost::uint16_t r_class;
+	boost::uint32_t r_ttl;
         ResourceDataPtr r_resource_data;
-	uint16_t    r_offset;
+	boost::uint16_t r_offset;
     };
 
     struct QueryPacketInfo
     {
         boost::uint16_t id;
+	Opcode          opcode;
         bool            recursion;
+	bool            edns0;
         std::vector<QuestionSectionEntry> question;
+	RecordOpt       opt_pseudo_rr;
+
+	QueryPacketInfo( boost::uint16_t in_id        = 0,
+			 Opcode          in_opcode    = OPCODE_QUERY,
+			 bool            in_recursion = false,
+			 bool            in_edns0     = false,
+			 const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
+			 const RecordOpt &in_opt_pseudo_rr = RecordOpt() )
+	    : id( in_id ),
+	      opcode( in_opcode ),
+	      recursion( in_recursion ),
+	      edns0( in_edns0 ),
+	      question( in_question ),
+	      opt_pseudo_rr( in_opt_pseudo_rr )
+	{}
     };
 
     struct ResponsePacketInfo
@@ -245,7 +349,8 @@ namespace dns
         boost::uint32_t minimum;
     };
 
-    std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname );
+    std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
+								     boost::uint16_t compress_offset = 0xffff );
     std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
                                                                                         const boost::uint8_t *domainame,
 											int recur = 0 ) throw(FormatError);

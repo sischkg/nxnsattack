@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdio>
+#include <iostream>
 #include <boost/scoped_array.hpp>
 #include "utils.hpp"
 
@@ -75,7 +76,6 @@ namespace tcpv4
             openSocket();
 	
 	int sent_size = write( tcp_socket, data, size );
-	std::cerr << data[0] << "," << sent_size << std::endl;
 	if ( sent_size < 0 ) {
             std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
@@ -85,7 +85,7 @@ namespace tcpv4
 
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
-    PacketInfo Client::receive( bool is_nonblocking )
+    ConnectionInfo Client::receive( bool is_nonblocking )
     {
 	if ( tcp_socket < 0 )
             openSocket();
@@ -97,25 +97,47 @@ namespace tcpv4
         sockaddr_in peer_address;
         socklen_t   peer_address_size = sizeof(peer_address);
 	std::vector<boost::uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
-	std::cerr << "recv" << std::endl;
 	int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
-	std::cerr  << recv_size << std::endl;
 
         if ( recv_size < 0 ) {
             int error_num = errno;
             if ( error_num == EAGAIN ) {
-                PacketInfo info;
+                ConnectionInfo info;
                 return info;
             }
-            std::perror( "cannot recv" );
             throw SocketError( get_error_message( "cannot recv packet", error_num ) );
         }
 	receive_buffer.resize( recv_size );
 
-        PacketInfo info;
-	//        info.source_address = convert_address_binary_to_string( peer_address.sin_addr );
-        //info.source_port    = ntohs( peer_address.sin_port );
-        info.payload        = receive_buffer;
+        ConnectionInfo info;
+	info.stream = receive_buffer;
+        return info;
+    }
+
+    ConnectionInfo Client::receive_data( int size )
+    {
+	if ( tcp_socket < 0 )
+            openSocket();
+
+        int flags = 0;
+
+        sockaddr_in peer_address;
+        socklen_t   peer_address_size = sizeof(peer_address);
+	std::vector<boost::uint8_t> receive_buffer( size );
+	int recv_size = read( tcp_socket, receive_buffer.data(), size );
+
+        if ( recv_size < 0 ) {
+            int error_num = errno;
+            if ( error_num == EAGAIN ) {
+                ConnectionInfo info;
+                return info;
+            }
+            throw SocketError( get_error_message( "cannot recv packet", error_num ) );
+        }
+	receive_buffer.resize( recv_size );
+
+        ConnectionInfo info;
+	info.stream = receive_buffer;
         return info;
     }
 
