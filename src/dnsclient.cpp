@@ -14,7 +14,7 @@ int main()
     query.recursion = false;
     query.question.push_back( question );
 
-    std::vector<boost::uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
+    std::vector<uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "192.168.33.10";

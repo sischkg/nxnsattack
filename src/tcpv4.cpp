@@ -9,40 +9,40 @@ namespace tcpv4
 
     struct PseudoTCPv4HeaderField
     {
-        in_addr         source_address;
-        in_addr         destination_address;
-        boost::uint8_t  padding;
-        boost::uint8_t  protocol;
-        boost::uint16_t length;
+        in_addr  source_address;
+        in_addr  destination_address;
+        uint8_t  padding;
+        uint8_t  protocol;
+        uint16_t length;
     };
 
     struct TCPv4HeaderField {
-        boost::uint16_t source_port;
-        boost::uint16_t destination_port;
-	boost::uint32_t sequence_number;
-	boost::uint32_t acknowledgment_number;
-	boost::uint8_t  reserved_1: 4;
-	boost::uint8_t  offset:     4;
-	boost::uint8_t  fin:        1;
-	boost::uint8_t  syn:        1;
-	boost::uint8_t  rst:        1;
-	boost::uint8_t  psh:        1;
-	boost::uint8_t  ack:        1;
-	boost::uint8_t  urg:        1;
-	boost::uint8_t  reserved_2: 2;
-	boost::uint16_t window;
-	boost::uint16_t checksum;
-	boost::uint16_t urgent_pointer;
+        uint16_t source_port;
+        uint16_t destination_port;
+	uint32_t sequence_number;
+	uint32_t acknowledgment_number;
+	uint8_t  reserved_1: 4;
+	uint8_t  offset:     4;
+	uint8_t  fin:        1;
+	uint8_t  syn:        1;
+	uint8_t  rst:        1;
+	uint8_t  psh:        1;
+	uint8_t  ack:        1;
+	uint8_t  urg:        1;
+	uint8_t  reserved_2: 2;
+	uint16_t window;
+	uint16_t checksum;
+	uint16_t urgent_pointer;
     };
 
     union TCPv4Header {
         TCPv4HeaderField field;
-        boost::uint8_t data[sizeof(TCPv4HeaderField)];
+        uint8_t data[sizeof(TCPv4HeaderField)];
     };
 
     void print_pseudo_tcpv4_header( PseudoTCPv4HeaderField header )
     {
-        boost::uint8_t *data = reinterpret_cast<boost::uint8_t *>( &header );
+        uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "pseudoheader:" );
         for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
@@ -52,7 +52,7 @@ namespace tcpv4
 
     void print_tcpv4_header( TCPv4Header header )
     {
-        boost::uint8_t *data = reinterpret_cast<boost::uint8_t *>( &header );
+        uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "tcpv4header:" );
         for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
@@ -60,7 +60,7 @@ namespace tcpv4
         printf( "\n" );
     }
 
-    void print_payload( const boost::uint8_t *data, boost::uint16_t length )
+    void print_payload( const uint8_t *data, uint16_t length )
     {
         printf( "length: %hd\n", length );
         printf( "payload:" );
@@ -70,10 +70,10 @@ namespace tcpv4
         printf( "\n" );
     }
 
-    boost::uint16_t compute_tcpv4_checksum( const PacketInfo & );
+    uint16_t compute_tcpv4_checksum( const PacketInfo & );
 
-    Packet::Packet( const boost::uint8_t *header,  boost::uint16_t header_size,
-		    const boost::uint8_t *payload, boost::uint16_t payload_size )
+    Packet::Packet( const uint8_t *header,  uint16_t header_size,
+		    const uint8_t *payload, uint16_t payload_size )
     {
 	data.resize( header_size + payload_size );
 	std::copy( header,  header  + header_size,  data.data() );
@@ -101,12 +101,12 @@ namespace tcpv4
         tcpv4_header.field.checksum              = compute_tcpv4_checksum( info ); 
 	tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
 
-        return Packet( reinterpret_cast<const boost::uint8_t *>( &tcpv4_header ),  sizeof(tcpv4_header),
+        return Packet( reinterpret_cast<const uint8_t *>( &tcpv4_header ),  sizeof(tcpv4_header),
 		       info.getData(), info.getPayloadLength() );
     }
 
 
-    boost::uint16_t compute_tcpv4_checksum( const PacketInfo &info )
+    uint16_t compute_tcpv4_checksum( const PacketInfo &info )
     {
         PseudoTCPv4HeaderField pseudo_header;
         pseudo_header.source_address      = convert_address_string_to_binary( info.source_address );
@@ -134,7 +134,7 @@ namespace tcpv4
 	tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
 
         size_t checksum_buffer_length = sizeof(pseudo_header) + info.getLength();
-        std::vector<boost::uint8_t> checksum_buffer( checksum_buffer_length );
+        std::vector<uint8_t> checksum_buffer( checksum_buffer_length );
         std::memcpy( checksum_buffer.data(), &pseudo_header, sizeof(pseudo_header) );
         std::memcpy( checksum_buffer.data() + sizeof(pseudo_header),
                      tcpv4_header.data,
@@ -143,7 +143,7 @@ namespace tcpv4
                      info.getData(),
                      info.getPayloadLength() );
 
-        boost::uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );
+        uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );
         return checksum;
     }
 }

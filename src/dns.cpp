@@ -11,7 +11,7 @@
 namespace dns
 {
 
-    std::vector<boost::uint8_t> generate_dns_query_packet( const QueryPacketInfo &query )
+    std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query )
     {
 	PacketHeaderField header;
         header.id                   = htons( query.id );
@@ -26,33 +26,33 @@ namespace dns
         header.checking_disabled    = 0;
         header.response_code        = 0;
 
-        header.question_count              = htons( 1 );
-        header.answer_count                = htons( 0 );
-        header.authority_count             = htons( 0 );
+        header.question_count  = htons( 1 );
+        header.answer_count    = htons( 0 );
+        header.authority_count = htons( 0 );
 	if ( query.edns0 )
 	    header.additional_infomation_count = htons( 1 );
 	else
 	    header.additional_infomation_count = htons( 0 );
 	    
-        std::vector<boost::uint8_t> packet;
-        std::vector<boost::uint8_t> question = generate_question_section( query.question[0] );
+        std::vector<uint8_t> packet;
+        std::vector<uint8_t> question = generate_question_section( query.question[0] );
 
 	if ( query.edns0 ) {
-	    std::vector<boost::uint8_t> opt_pseudo_rr_data = query.opt_pseudo_rr.getPacket();
+	    std::vector<uint8_t> opt_pseudo_rr_data = query.opt_pseudo_rr.getPacket();
 	    packet.resize( sizeof(header) + question.size() + opt_pseudo_rr_data.size() );
 
-	    boost::uint8_t *pos = &packet[0];
-	    pos = std::copy( reinterpret_cast<boost::uint8_t *>( &header ),
-			     reinterpret_cast<boost::uint8_t *>( &header ) + sizeof(header),
+	    uint8_t *pos = &packet[0];
+	    pos = std::copy( reinterpret_cast<uint8_t *>( &header ),
+			     reinterpret_cast<uint8_t *>( &header ) + sizeof(header),
 			     pos );
 	    pos = std::copy( question.begin(),           question.end(),           pos );
 	    pos = std::copy( opt_pseudo_rr_data.begin(), opt_pseudo_rr_data.end(), pos );
 	}
 	else {
 	    packet.resize( sizeof(header) + question.size() );
-	    boost::uint8_t *pos = &packet[0];
-	    pos = std::copy( reinterpret_cast<boost::uint8_t *>( &header ),
-			     reinterpret_cast<boost::uint8_t *>( &header ) + sizeof(header),
+	    uint8_t *pos = &packet[0];
+	    pos = std::copy( reinterpret_cast<uint8_t *>( &header ),
+			     reinterpret_cast<uint8_t *>( &header ) + sizeof(header),
 			     pos );
 	    pos = std::copy( question.begin(), question.end(), pos );
 	}
@@ -60,7 +60,7 @@ namespace dns
     }
 
 
-    std::vector<boost::uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response )
+    std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response )
     {
 	PacketHeaderField header;
         header.id                   = htons( response.id );
@@ -80,26 +80,26 @@ namespace dns
         header.authority_count             = htons( response.authority.size() );
         header.additional_infomation_count = htons( response.additional_infomation.size() );
 
-        std::vector<boost::uint8_t> packet;
-        std::vector<boost::uint8_t> sections;
+        std::vector<uint8_t> packet;
+        std::vector<uint8_t> sections;
         for( std::vector<QuestionSectionEntry>::const_iterator q = response.question.begin() ;
              q != response.question.end() ; ++q ) {
-            std::vector<boost::uint8_t> new_sections = generate_question_section( *q );
+            std::vector<uint8_t> new_sections = generate_question_section( *q );
             sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator a = response.answer.begin() ;
              a != response.answer.end() ; ++a ) {
-            std::vector<boost::uint8_t> new_sections = generate_response_section( *a );
+            std::vector<uint8_t> new_sections = generate_response_section( *a );
             sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator a = response.authority.begin() ;
              a != response.authority.end() ; ++a ) {
-            std::vector<boost::uint8_t> new_sections = generate_response_section( *a );
+            std::vector<uint8_t> new_sections = generate_response_section( *a );
             sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator a = response.additional_infomation.begin() ;
              a != response.additional_infomation.end() ; ++a ) {
-            std::vector<boost::uint8_t> new_sections = generate_response_section( *a );
+            std::vector<uint8_t> new_sections = generate_response_section( *a );
             sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
         }
 
@@ -112,9 +112,9 @@ namespace dns
     }
 
 
-    QueryPacketInfo parse_dns_query_packet( const boost::uint8_t *begin, const boost::uint8_t *end )
+    QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end )
     {
-	const boost::uint8_t *packet = begin;
+	const uint8_t *packet = begin;
         QueryPacketInfo packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( packet );
 
@@ -136,9 +136,9 @@ namespace dns
     }
 
 
-    ResponsePacketInfo parse_dns_response_packet( const boost::uint8_t *begin, const boost::uint8_t *end )
+    ResponsePacketInfo parse_dns_response_packet( const uint8_t *begin, const uint8_t *end )
     {
-        const boost::uint8_t *packet = begin;
+        const uint8_t *packet = begin;
 
         ResponsePacketInfo packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
@@ -182,26 +182,26 @@ namespace dns
     }
 
 
-    std::vector<boost::uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-								     boost::uint16_t   compress_offset )
+    std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
+							      uint16_t   compress_offset )
     {
-        std::vector<boost::uint8_t> bin;
-        std::vector<boost::uint8_t> label;
+        std::vector<uint8_t> bin;
+        std::vector<uint8_t> label;
 
         for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
             if ( *i == '.' ) {
                 if ( label.size() != 0 ) {
-                    bin.push_back( boost::numeric_cast<boost::uint8_t>( label.size() ) );
+                    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
                     bin.insert( bin.end(), label.begin(), label.end() );
                     label.clear();
                 }
             }
             else {
-                label.push_back( boost::numeric_cast<boost::uint8_t>( *i ) );
+                label.push_back( boost::numeric_cast<uint8_t>( *i ) );
             }
         }
         if ( ! label.empty() ) {
-	    bin.push_back( boost::numeric_cast<boost::uint8_t>( label.size() ) );
+	    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
 	    bin.insert( bin.end(), label.begin(), label.end() );
 	    if ( compress_offset != 0xffff ) {
 		bin.push_back( 0xC0 | ( compress_offset >> 8 ) );  
@@ -216,32 +216,32 @@ namespace dns
     }
 
 
-    std::pair<std::string, const boost::uint8_t *> convert_domainname_binary_to_string( const boost::uint8_t *packet,
-                                                                                        const boost::uint8_t *begin,
-											int recur ) throw(FormatError)
+    std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
+										 const uint8_t *begin,
+										 int recur ) throw(FormatError)
     {
 	if ( recur > 100 ) {
 	    throw FormatError( "detected domainname decompress loop" );
 	}
         std::string domainname;
-	const boost::uint8_t *p = begin;
+	const uint8_t *p = begin;
         while ( *p != 0 ) {
             // メッセージ圧縮を行っている場合
             if ( *p & 0xC0 ) {
-                int offset = ntohs( *( reinterpret_cast<const boost::uint16_t *>( p ) ) ) & 0x0bff;
+                int offset = ntohs( *( reinterpret_cast<const uint16_t *>( p ) ) ) & 0x0bff;
 		if ( packet + offset > begin - 2 ) {
 		    throw FormatError( "detected forword reference of domainname decompress" );
 		}
 
-                std::pair<std::string, const boost::uint8_t *> pair = convert_domainname_binary_to_string( packet,
-                                                                                                           packet + offset,
-													   recur + 1 );
-                return std::pair<std::string, const boost::uint8_t *>( domainname + pair.first, p + 2 );
+                std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet,
+												    packet + offset,
+												    recur + 1 );
+                return std::pair<std::string, const uint8_t *>( domainname + pair.first, p + 2 );
             }
 
-            boost::uint8_t label_length = *p;
+            uint8_t label_length = *p;
             p++;
-            for ( boost::uint8_t i = 0 ; i < label_length ; i++, p++ ) {
+            for ( uint8_t i = 0 ; i < label_length ; i++, p++ ) {
                 domainname.push_back( *p );
             }
             domainname.push_back( '.' );
@@ -250,69 +250,69 @@ namespace dns
             domainname.resize( domainname.size() - 1 );
 
         p++;
-        return std::pair<std::string, const boost::uint8_t *>( domainname, p );
+        return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
-    std::vector<boost::uint8_t> generate_question_section( const QuestionSectionEntry &question )
+    std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &question )
     {
-        std::vector<boost::uint8_t> packet = convert_domainname_string_to_binary( question.q_domainname );
-        packet.resize( packet.size() + sizeof(boost::uint16_t) + sizeof(boost::uint16_t) );
-        boost::uint8_t *p = packet.data() + packet.size() - sizeof(boost::uint16_t) - sizeof(boost::uint16_t);
-        p = dns::set_bytes<boost::uint16_t>( htons( question.q_type ),  p );
-        p = dns::set_bytes<boost::uint16_t>( htons( question.q_class ), p );
+        std::vector<uint8_t> packet = convert_domainname_string_to_binary( question.q_domainname );
+        packet.resize( packet.size() + sizeof(uint16_t) + sizeof(uint16_t) );
+        uint8_t *p = packet.data() + packet.size() - sizeof(uint16_t) - sizeof(uint16_t);
+        p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );
+        p = dns::set_bytes<uint16_t>( htons( question.q_class ), p );
 
         return packet;
     }
 
-    QuestionSectionEntryPair parse_question_section( const boost::uint8_t *packet, const boost::uint8_t *p )
+    QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *p )
     {
-        std::pair<std::string, const boost::uint8_t *> pair = convert_domainname_binary_to_string( packet, p );
+        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, p );
         p = pair.second;
 
         QuestionSectionEntry sec;
         sec.q_domainname = pair.first;
-        sec.q_type  = get_bytes<boost::uint16_t>( &p );
-        sec.q_class = get_bytes<boost::uint16_t>( &p );
+        sec.q_type  = get_bytes<uint16_t>( &p );
+        sec.q_class = get_bytes<uint16_t>( &p );
 
         return QuestionSectionEntryPair( sec, p );
     }
 
 
-    std::vector<boost::uint8_t> generate_response_section( const ResponseSectionEntry &response )
+    std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &response )
     {
-        std::vector<boost::uint8_t> packet_name = convert_domainname_string_to_binary( response.r_domainname );
-        std::vector<boost::uint8_t> packet_rd   = response.r_resource_data->getPacket();
-        std::vector<boost::uint8_t> packet( packet_name.size() +
-                                            2 +
-                                            2 +
-                                            4 +
-                                            2 +
-                                            packet_rd.size() );
-        boost::uint8_t *p = packet.data();
+        std::vector<uint8_t> packet_name = convert_domainname_string_to_binary( response.r_domainname );
+        std::vector<uint8_t> packet_rd   = response.r_resource_data->getPacket();
+        std::vector<uint8_t> packet( packet_name.size() +
+				     2 +
+				     2 +
+				     4 +
+				     2 +
+				     packet_rd.size() );
+        uint8_t *p = packet.data();
 
         std::memcpy( p, packet_name.data(), packet_name.size() ); p += packet_name.size();
 
-        p = dns::set_bytes<boost::uint16_t>( htons( response.r_type ),  p );
-        p = dns::set_bytes<boost::uint16_t>( htons( response.r_class ), p );
-        p = dns::set_bytes<boost::uint32_t>( htonl( response.r_ttl ),   p );
-        p = dns::set_bytes<boost::uint16_t>( htons( packet_rd.size() ), p );
+        p = dns::set_bytes<uint16_t>( htons( response.r_type ),  p );
+        p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
+        p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ),   p );
+        p = dns::set_bytes<uint16_t>( htons( packet_rd.size() ), p );
 
         std::memcpy( p, packet_rd.data(), packet_rd.size() );
 
         return packet;
     }
 
-    ResponseSectionEntryPair parse_response_section( const boost::uint8_t *packet, const boost::uint8_t *begin )
+    ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
     {
-        std::pair<std::string, const boost::uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
-        const boost::uint8_t *p = pair.second;
+        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
+        const uint8_t *p = pair.second;
 
         ResponseSectionEntry sec;
         sec.r_domainname     = pair.first;
-        sec.r_type           = ntohs( get_bytes<boost::uint16_t>( &p ) );
-        sec.r_class          = ntohs( get_bytes<boost::uint16_t>( &p ) );
-        sec.r_ttl            = ntohl( get_bytes<boost::uint32_t>( &p ) );
-        uint16_t data_length = ntohs( get_bytes<boost::uint16_t>( &p ) );
+        sec.r_type           = ntohs( get_bytes<uint16_t>( &p ) );
+        sec.r_class          = ntohs( get_bytes<uint16_t>( &p ) );
+        sec.r_ttl            = ntohl( get_bytes<uint32_t>( &p ) );
+        uint16_t data_length = ntohs( get_bytes<uint16_t>( &p ) );
 
         ResourceDataPtr parsed_data;
         switch ( sec.r_type ) {
@@ -377,7 +377,7 @@ namespace dns
     }
 
 
-    RecordA::RecordA( boost::uint32_t addr )
+    RecordA::RecordA( uint32_t addr )
         : sin_addr( addr )
     {}
 
@@ -394,17 +394,17 @@ namespace dns
         std::snprintf( buf,
                        sizeof(buf),
                        "%d.%d.%d.%d",
-                       *( reinterpret_cast<const boost::uint8_t *>( &sin_addr )     ),
-                       *( reinterpret_cast<const boost::uint8_t *>( &sin_addr ) + 1 ),
-                       *( reinterpret_cast<const boost::uint8_t *>( &sin_addr ) + 2 ),
-                       *( reinterpret_cast<const boost::uint8_t *>( &sin_addr ) + 3 ) );
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr )     ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 1 ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 2 ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 3 ) );
         return std::string( buf );
     }
 
 
-    std::vector<boost::uint8_t> RecordA::getPacket() const
+    std::vector<uint8_t> RecordA::getPacket() const
     {
-        std::vector<boost::uint8_t> packet( 4 );
+        std::vector<uint8_t> packet( 4 );
         packet[0] = ( sin_addr >>  0 ) & 0xff;
         packet[1] = ( sin_addr >>  8 ) & 0xff;
         packet[2] = ( sin_addr >> 16 ) & 0xff;
@@ -414,13 +414,13 @@ namespace dns
     }
 
 
-    ResourceDataPtr RecordA::parse( const boost::uint8_t *begin, const boost::uint8_t*end )
+    ResourceDataPtr RecordA::parse( const uint8_t *begin, const uint8_t*end )
     {
-        return ResourceDataPtr( new RecordA( *( reinterpret_cast<const boost::uint32_t *>( begin ) ) ) );
+        return ResourceDataPtr( new RecordA( *( reinterpret_cast<const uint32_t *>( begin ) ) ) );
     }
 
 
-    RecordAAAA::RecordAAAA( const boost::uint8_t *addr )
+    RecordAAAA::RecordAAAA( const uint8_t *addr )
     {
         std::memcpy( sin_addr, addr, sizeof(addr) );
     }
@@ -436,14 +436,14 @@ namespace dns
     }
 
 
-    std::vector<boost::uint8_t> RecordAAAA::getPacket() const
+    std::vector<uint8_t> RecordAAAA::getPacket() const
     {
-        return std::vector< boost::uint8_t >( sin_addr,
-                                              sin_addr + sizeof( sin_addr ) );
+        return std::vector< uint8_t >( sin_addr,
+				       sin_addr + sizeof( sin_addr ) );
     }
 
 
-    ResourceDataPtr RecordAAAA::parse( const boost::uint8_t *begin, const boost::uint8_t*end )
+    ResourceDataPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t*end )
     {
         return ResourceDataPtr( new RecordAAAA( begin ) );
     }
@@ -460,28 +460,28 @@ namespace dns
     }
 
 
-    std::vector<boost::uint8_t> RecordNS::getPacket() const
+    std::vector<uint8_t> RecordNS::getPacket() const
     {
         return convert_domainname_string_to_binary( domainname );
     }
 
 
-    ResourceDataPtr RecordNS::parse( const boost::uint8_t *packet,
-                                     const boost::uint8_t *begin,
-                                     const boost::uint8_t *end )
+    ResourceDataPtr RecordNS::parse( const uint8_t *packet,
+                                     const uint8_t *begin,
+                                     const uint8_t *end )
     {
-        std::pair<std::string, const boost::uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
+        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
         return ResourceDataPtr( new RecordNS( pair.first ) );
     }
 
 
     RecordSOA::RecordSOA( const std::string &mn,
 			  const std::string &rn,
-			  boost::uint32_t sr,
-			  boost::uint32_t rf,
-			  boost::uint32_t rt,
-			  boost::uint32_t ex,
-			  boost::uint32_t min )
+			  uint32_t sr,
+			  uint32_t rf,
+			  uint32_t rt,
+			  uint32_t ex,
+			  uint32_t min )
         : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min )
     {}
 
@@ -500,35 +500,35 @@ namespace dns
     }
 
 
-    std::vector<boost::uint8_t> RecordSOA::getPacket() const
+    std::vector<uint8_t> RecordSOA::getPacket() const
     {
-        std::vector<boost::uint8_t> packet       = convert_domainname_string_to_binary( mname );
-        std::vector<boost::uint8_t> rname_packet = convert_domainname_string_to_binary( rname );
+        std::vector<uint8_t> packet       = convert_domainname_string_to_binary( mname );
+        std::vector<uint8_t> rname_packet = convert_domainname_string_to_binary( rname );
         packet.insert( packet.end(), rname_packet.begin(), rname_packet.end() );
         packet.resize( packet.size() + sizeof(SOAField) );
-        boost::uint8_t *p = packet.data();
-        p = dns::set_bytes<boost::uint32_t>( htonl( serial ),  p );
-        p = dns::set_bytes<boost::uint32_t>( htonl( refresh ), p );
-        p = dns::set_bytes<boost::uint32_t>( htonl( retry ),   p );
-        p = dns::set_bytes<boost::uint32_t>( htonl( expire ),  p );
-        p = dns::set_bytes<boost::uint32_t>( htonl( minimum ), p );
+        uint8_t *p = packet.data();
+        p = dns::set_bytes<uint32_t>( htonl( serial ),  p );
+        p = dns::set_bytes<uint32_t>( htonl( refresh ), p );
+        p = dns::set_bytes<uint32_t>( htonl( retry ),   p );
+        p = dns::set_bytes<uint32_t>( htonl( expire ),  p );
+        p = dns::set_bytes<uint32_t>( htonl( minimum ), p );
 
         return packet;
     }
 
 
-    ResourceDataPtr RecordSOA::parse( const boost::uint8_t *packet,
-                                      const boost::uint8_t *begin,
-                                      const boost::uint8_t *end )
+    ResourceDataPtr RecordSOA::parse( const uint8_t *packet,
+                                      const uint8_t *begin,
+                                      const uint8_t *end )
     {
-        std::pair<std::string, const boost::uint8_t *> mname_pair = convert_domainname_binary_to_string( packet, begin );
-        std::pair<std::string, const boost::uint8_t *> rname_pair = convert_domainname_binary_to_string( packet, mname_pair.second );
-        const boost::uint8_t *p = rname_pair.second;
-        boost::uint32_t serial  = htonl( get_bytes<boost::uint32_t>( &p ) );
-        boost::uint32_t refresh = htonl( get_bytes<boost::uint32_t>( &p ) );
-        boost::uint32_t retry   = htonl( get_bytes<boost::uint32_t>( &p ) );
-        boost::uint32_t expire  = htonl( get_bytes<boost::uint32_t>( &p ) );
-        boost::uint32_t minimum = htonl( get_bytes<boost::uint32_t>( &p ) );
+        std::pair<std::string, const uint8_t *> mname_pair = convert_domainname_binary_to_string( packet, begin );
+        std::pair<std::string, const uint8_t *> rname_pair = convert_domainname_binary_to_string( packet, mname_pair.second );
+        const uint8_t *p = rname_pair.second;
+        uint32_t serial  = htonl( get_bytes<uint32_t>( &p ) );
+        uint32_t refresh = htonl( get_bytes<uint32_t>( &p ) );
+        uint32_t retry   = htonl( get_bytes<uint32_t>( &p ) );
+        uint32_t expire  = htonl( get_bytes<uint32_t>( &p ) );
+        uint32_t minimum = htonl( get_bytes<uint32_t>( &p ) );
 
         return ResourceDataPtr( new RecordSOA( mname_pair.first,
                                                rname_pair.first,
@@ -540,10 +540,10 @@ namespace dns
     }
 
 
-    RecordOpt::RecordOpt( boost::uint16_t in_payload_size,
-			  boost::uint8_t  in_rcode,
+    RecordOpt::RecordOpt( uint16_t in_payload_size,
+			  uint8_t  in_rcode,
 			  const std::vector<OptPseudoRROptPtr> &in_options,
-			  boost::uint32_t in_rdata_size )
+			  uint32_t in_rdata_size )
 	: payload_size( in_payload_size ),
 	  rcode( in_rcode ),
 	  options( in_options )
@@ -554,7 +554,7 @@ namespace dns
 		  i != options.end() ;
 		  ++i ) {
 		rdata_size += (*i)->size();
-		rdata_size = boost::numeric_cast<boost::uint16_t>( boost::numeric_cast<boost::uint32_t>( (*i)->size() ) + rdata_size ); 
+		rdata_size = boost::numeric_cast<uint16_t>( boost::numeric_cast<uint32_t>( (*i)->size() ) + rdata_size ); 
 	    }
 	}
 	else
@@ -577,9 +577,9 @@ namespace dns
 	return os.str();
     }
 
-    std::vector<boost::uint8_t> RecordOpt::getPacket() const
+    std::vector<uint8_t> RecordOpt::getPacket() const
     {
-	std::vector<boost::uint8_t> result;
+	std::vector<uint8_t> result;
 	result.resize( 1 + // domain name "."  
 		       2 + // TYPE OPT
 		       2 + // CLASS payload size
@@ -587,15 +587,15 @@ namespace dns
 		       2 + // RDATA SIZE
 		       rdata_size );
 
-	boost::uint8_t *pos = &result[0];
+	uint8_t *pos = &result[0];
 
-	pos = set_bytes<boost::uint8_t >( 0,                     pos ); // domain name "."
-	pos = set_bytes<boost::uint16_t>( htons( TYPE_OPT ),     pos ); //   
-	pos = set_bytes<boost::uint16_t>( htons( payload_size ), pos ); // payload size
-	pos = set_bytes<boost::uint8_t >( rcode,                 pos ); // extended rcode
-	pos = set_bytes<boost::uint8_t >( 0,                     pos ); // EDNS version
-	pos = set_bytes<boost::uint16_t>( 0,                     pos ); // 
-	pos = set_bytes<boost::uint16_t>( htons( rdata_size ),   pos ); // rdata_size
+	pos = set_bytes<uint8_t >( 0,                     pos ); // domain name "."
+	pos = set_bytes<uint16_t>( htons( TYPE_OPT ),     pos ); //   
+	pos = set_bytes<uint16_t>( htons( payload_size ), pos ); // payload size
+	pos = set_bytes<uint8_t >( rcode,                 pos ); // extended rcode
+	pos = set_bytes<uint8_t >( 0,                     pos ); // EDNS version
+	pos = set_bytes<uint16_t>( 0,                     pos ); // 
+	pos = set_bytes<uint16_t>( htons( rdata_size ),   pos ); // rdata_size
 
 	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
 	      i != options.end() ;
@@ -607,41 +607,41 @@ namespace dns
 	return result;
     }
 
-    ResourceDataPtr RecordOpt::parse( const boost::uint8_t *packet,
-				      const boost::uint8_t *entry_begin,
-				      const boost::uint8_t *begin,
-				      const boost::uint8_t *end )
+    ResourceDataPtr RecordOpt::parse( const uint8_t *packet,
+				      const uint8_t *entry_begin,
+				      const uint8_t *begin,
+				      const uint8_t *end )
     {
 	if ( end - entry_begin < 11 ) {
 	    std::ostringstream os;
 	    os << "size " << end - entry_begin << " is too few Opt Pseudo RR size.";
 	    throw FormatError( os.str() );
 	}
-	const boost::uint8_t *pos = entry_begin;
+	const uint8_t *pos = entry_begin;
 	if ( *pos != 0 )
 	    throw FormatError( "Domain name of Opt Pseudo RR must be '.'." );
 	pos++;
 
-	boost::uint16_t type = ntohs( get_bytes<boost::uint16_t>( &pos ) );
+	uint16_t type = ntohs( get_bytes<uint16_t>( &pos ) );
 	if ( type != TYPE_OPT )
 	    throw std::logic_error( "type must be TYPE_OPT" );
 
-	boost::uint16_t payload_size = ntohs( get_bytes<boost::uint16_t>( &pos ) );
-	boost::uint8_t  rcode        = get_bytes<boost::uint8_t >( &pos );
-	boost::uint8_t  edns_vesion  = get_bytes<boost::uint8_t >( &pos );
-	boost::uint16_t flags        = get_bytes<boost::uint16_t>( &pos );
-	boost::uint16_t rdata_size   = ntohs( get_bytes<boost::uint16_t>( &pos ) );
+	uint16_t payload_size = ntohs( get_bytes<uint16_t>( &pos ) );
+	uint8_t  rcode        = get_bytes<uint8_t >( &pos );
+	uint8_t  edns_vesion  = get_bytes<uint8_t >( &pos );
+	uint16_t flags        = get_bytes<uint16_t>( &pos );
+	uint16_t rdata_size   = ntohs( get_bytes<uint16_t>( &pos ) );
 
 	std::vector<OptPseudoRROptPtr> options;
-	boost::uint16_t read_size = 0;
+	uint16_t read_size = 0;
 	while ( pos < end && read_size < rdata_size ) {
 	    if ( end - pos < 4 || rdata_size - read_size < 4  ) {
 		std::ostringstream os;
 		os << "remains data " << end - pos << ":" << rdata_size - read_size << " is too few size.";
 		throw FormatError( os.str() );
 	    }
-	    boost::uint16_t option_code = ntohs( get_bytes<boost::uint16_t>( &pos ) ); read_size += 2;
-	    boost::uint16_t option_size = ntohs( get_bytes<boost::uint16_t>( &pos ) ); read_size += 2;
+	    uint16_t option_code = ntohs( get_bytes<uint16_t>( &pos ) ); read_size += 2;
+	    uint16_t option_size = ntohs( get_bytes<uint16_t>( &pos ) ); read_size += 2;
 
 	    if ( option_size == 0 )
 		continue;
@@ -664,20 +664,20 @@ namespace dns
 	return ResourceDataPtr( new RecordOpt( payload_size, rcode, options ) );
     }
 
-    std::vector<boost::uint8_t> NSIDOption::getPacket() const
+    std::vector<uint8_t> NSIDOption::getPacket() const
     {
-	std::vector<boost::uint8_t> result;
+	std::vector<uint8_t> result;
 	result.resize( 2 + 2 + nsid.size() );
-	boost::uint8_t *pos = &result[0];
+	uint8_t *pos = &result[0];
 
-	pos = set_bytes<boost::uint16_t>( htons( OPT_NSID ),    pos );
-	pos = set_bytes<boost::uint16_t>( htons( nsid.size() ), pos );
+	pos = set_bytes<uint16_t>( htons( OPT_NSID ),    pos );
+	pos = set_bytes<uint16_t>( htons( nsid.size() ), pos );
 	pos = std::copy( nsid.begin(), nsid.end(), pos );
 
 	return result;
     }
 
-    OptPseudoRROptPtr NSIDOption::parse( const boost::uint8_t *begin, const boost::uint8_t *end )
+    OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
     {
 	std::string nsid( begin, end );
 	return OptPseudoRROptPtr( new NSIDOption( nsid ) );

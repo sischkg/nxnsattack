@@ -23,7 +23,7 @@ std::string generate_domainname()
 }
 
 
-dns::ResponsePacketInfo generate_response( boost::uint16_t id, const dns::QuestionSectionEntry question_section )
+dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSectionEntry question_section )
 {
     dns::ResponsePacketInfo response;
     response.id = id;
@@ -66,7 +66,7 @@ int main( int arc, char **argv )
 	    udpv4::PacketInfo recv_data;
 	    dns::QueryPacketInfo query;
 	    dns::ResponsePacketInfo response;
-	    std::vector<boost::uint8_t> response_packet;
+	    std::vector<uint8_t> response_packet;
 	    udpv4::ClientParameters client_info;
 
 	    try {

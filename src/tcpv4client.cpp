@@ -70,7 +70,7 @@ namespace tcpv4
 	shutdown( SHUT_WR );
     }
 
-    boost::uint16_t Client::send( const boost::uint8_t *data, boost::uint16_t size )
+    uint16_t Client::send( const uint8_t *data, uint16_t size )
     {
         if ( tcp_socket < 0 )
             openSocket();
@@ -96,7 +96,7 @@ namespace tcpv4
 
         sockaddr_in peer_address;
         socklen_t   peer_address_size = sizeof(peer_address);
-	std::vector<boost::uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
+	std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
 	int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
 
         if ( recv_size < 0 ) {
@@ -123,7 +123,7 @@ namespace tcpv4
 
         sockaddr_in peer_address;
         socklen_t   peer_address_size = sizeof(peer_address);
-	std::vector<boost::uint8_t> receive_buffer( size );
+	std::vector<uint8_t> receive_buffer( size );
 	int recv_size = read( tcp_socket, receive_buffer.data(), size );
 
         if ( recv_size < 0 ) {

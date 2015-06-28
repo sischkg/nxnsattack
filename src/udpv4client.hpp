@@ -11,8 +11,8 @@ namespace udpv4
 
     struct ClientParameters
     {
-        std::string     destination_address;
-        boost::uint16_t destination_port;
+        std::string destination_address;
+        uint16_t    destination_port;
     };
 
 
@@ -31,12 +31,12 @@ namespace udpv4
 
         ~Client();
 
-        boost::uint16_t sendPacket( const boost::uint8_t *data, boost::uint16_t size );
-        boost::uint16_t sendPacket( const boost::uint8_t *begin, const boost::uint8_t *end )
+        uint16_t sendPacket( const uint8_t *data, uint16_t size );
+        uint16_t sendPacket( const uint8_t *begin, const uint8_t *end )
         {
             sendPacket( begin, end - begin );
         }
-        boost::uint16_t sendPacket( const std::vector<boost::uint8_t> &packet )
+        uint16_t sendPacket( const std::vector<uint8_t> &packet )
         {
             sendPacket( packet.data(), packet.size() );
         }
@@ -65,7 +65,7 @@ namespace udpv4
             closeSocket();
         }
 
-        boost::uint16_t sendPacket( const PacketInfo & );
+        uint16_t sendPacket( const PacketInfo & );
     };
 
 
@@ -73,12 +73,12 @@ namespace udpv4
     {
     private:
         int udp_socket;
-        boost::uint16_t bind_port;
+        uint16_t bind_port;
 
         void openSocket();
         void closeSocket();
     public:
-        Receiver( boost::uint16_t port )
+        Receiver( uint16_t port )
             : udp_socket( -1 ), bind_port( port )
         {
             openSocket();

@@ -14,22 +14,22 @@ std::string get_error_message( const std::string &msg, int error_number )
 }
 
 
-boost::uint16_t compute_checksum( const boost::uint8_t *data, size_t length )
+uint16_t compute_checksum( const uint8_t *data, size_t length )
 {
-    boost::uint32_t checksum = 0;
-    const boost::uint16_t *p = reinterpret_cast<const boost::uint16_t *>( data );
+    uint32_t checksum = 0;
+    const uint16_t *p = reinterpret_cast<const uint16_t *>( data );
     for ( int i = 0, len = length ; len > 0 ; i++, len -= 2  ) {
-	checksum += ( static_cast<boost::uint32_t>( p[i] ) );
+	checksum += ( static_cast<uint32_t>( p[i] ) );
 	if ( len == 1 ) {
-	    checksum += ( static_cast<boost::uint16_t>( data[length-1] ) << 8 );
+	    checksum += ( static_cast<uint16_t>( data[length-1] ) << 8 );
 	}
     }
 
     checksum = ( checksum >> 16 ) + ( 0xffff & checksum );
     checksum += ( checksum >> 16 );
 
-    //    std::printf( "checksum: %d, %hx\n", length, ~ static_cast<boost::uint16_t>( checksum ) );
-    return ~ static_cast<boost::uint16_t>( checksum );
+    //    std::printf( "checksum: %d, %hx\n", length, ~ static_cast<uint16_t>( checksum ) );
+    return ~ static_cast<uint16_t>( checksum );
 }
 
 in_addr convert_address_string_to_binary( const std::string &str ) throw ( InvalidAddressFormatError )

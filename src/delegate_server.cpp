@@ -40,8 +40,8 @@ int main()
     response.authority.push_back( authority );
     response.additional_infomation.push_back( additional_infomation );
 
-    std::vector<boost::uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
-    std::vector<boost::uint8_t> dns_response_packet = dns::generate_dns_response_packet( response );
+    std::vector<uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
+    std::vector<uint8_t> dns_response_packet = dns::generate_dns_response_packet( response );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "127.0.0.1";

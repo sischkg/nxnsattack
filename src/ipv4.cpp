@@ -26,10 +26,10 @@ namespace ipv4
     union IPv4Header
     {
         struct IPv4HeaderField field;
-        boost::uint8_t data[0];
+        uint8_t data[0];
     };
 
-    boost::uint16_t compute_ipv4_checksum( IPv4Header header );
+    uint16_t compute_ipv4_checksum( IPv4Header header );
 
     void print_header( IPv4Header header )
     {
@@ -40,16 +40,16 @@ namespace ipv4
     }
 
 
-    Packet::Packet( const boost::uint8_t *header,  boost::uint16_t header_length,
-                    const boost::uint8_t *payload, boost::uint16_t payload_length )
+    Packet::Packet( const uint8_t *header,  uint16_t header_length,
+                    const uint8_t *payload, uint16_t payload_length )
     {
         data.resize( header_length + payload_length );
         std::copy( header,  header + header_length,   data.data() );
         std::copy( payload, payload + payload_length, data.data() + header_length );
     }
 
-    Packet::Packet( boost::shared_array<boost::uint8_t> h, boost::uint16_t hl,
-		    boost::shared_array<boost::uint8_t> p, boost::uint16_t pl )
+    Packet::Packet( boost::shared_array<uint8_t> h, uint16_t hl,
+		    boost::shared_array<uint8_t> p, uint16_t pl )
 	: header(h), header_length(hl), payload(p), payload_length(pl)
     {}
 
@@ -84,14 +84,14 @@ namespace ipv4
     }
 
 
-    boost::uint16_t compute_ipv4_checksum( IPv4Header header )
+    uint16_t compute_ipv4_checksum( IPv4Header header )
     {
         header.field.checksum = 0;
         return compute_checksum( header.data, header.field.header_length * 4 );
     }
 
 
-    PacketInfo parse_ipv4_packet( const boost::uint8_t *data, boost::uint16_t length )
+    PacketInfo parse_ipv4_packet( const uint8_t *data, uint16_t length )
     {
         const IPv4Header *header = reinterpret_cast<const IPv4Header *>( data );
         int header_length  = header->field.header_length * 4;

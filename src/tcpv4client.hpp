@@ -9,31 +9,31 @@ namespace tcpv4
 {
     struct ConnectionInfo
     {
-        std::string     source_address;
-        std::string     destination_address;
-        boost::uint16_t source_port;
-        boost::uint16_t destination_port;
-        std::vector<boost::uint8_t> stream;
+        std::string          source_address;
+        std::string          destination_address;
+        uint16_t             source_port;
+        uint16_t             destination_port;
+        std::vector<uint8_t> stream;
 
         /*!
          * @return TCP Stream length(bytes)
          */
-        boost::uint16_t getLength() const
+        uint16_t getLength() const
         {
             return stream.size();
         }
 
-        const boost::uint8_t *getData() const
+        const uint8_t *getData() const
         {
             return stream.data();
         }
 
-        const boost::uint8_t *begin() const
+        const uint8_t *begin() const
         {
             return stream.data();
         }
 
-        const boost::uint8_t *end() const
+        const uint8_t *end() const
         {
             return begin() + getLength();
         }
@@ -42,7 +42,7 @@ namespace tcpv4
     struct ClientParameters
     {
         std::string     destination_address;
-        boost::uint16_t destination_port;
+        uint16_t destination_port;
     };
 
     class Client
@@ -63,12 +63,12 @@ namespace tcpv4
 	void shutdown_read();
 	void shutdown_write();
 
-        boost::uint16_t send( const boost::uint8_t *data, boost::uint16_t size );
-        boost::uint16_t send( const boost::uint8_t *begin, const boost::uint8_t *end )
+        uint16_t send( const uint8_t *data, uint16_t size );
+        uint16_t send( const uint8_t *begin, const uint8_t *end )
         {
             send( begin, end - begin );
         }
-        boost::uint16_t send( const std::vector<boost::uint8_t> &packet )
+        uint16_t send( const std::vector<uint8_t> &packet )
         {
             send( packet.data(), packet.size() );
         }

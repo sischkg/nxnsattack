@@ -10,13 +10,13 @@
 int main( int argc, char **argv )
 {
     namespace po = boost::program_options;
-    std::string     target_dns_server;
-    boost::uint16_t target_source_port;
-    std::string     authoritative_dns_server;
-    std::string     target_domainname;
-    std::string     delegated_dns_server_name;
-    std::string     delegated_dns_server_address;
-    boost::uint32_t interval_mili_second;
+    std::string target_dns_server;
+    uint16_t    target_source_port;
+    std::string authoritative_dns_server;
+    std::string target_domainname;
+    std::string delegated_dns_server_name;
+    std::string delegated_dns_server_address;
+    uint32_t    interval_mili_second;
 
     po::options_description desc("DNS Cache poisoning");
     desc.add_options()
@@ -28,7 +28,7 @@ int main( int argc, char **argv )
          "Target(poisoned) DNS Server IP Address")
 
         ("source_port,s",
-         po::value<boost::uint16_t>(&target_source_port)->default_value( 0 ),
+         po::value<uint16_t>(&target_source_port)->default_value( 0 ),
          "Target(poisoned) DNS Server Query Source Port")
 
         ("auth,a",
@@ -40,7 +40,7 @@ int main( int argc, char **argv )
          "Target domainname")
 
         ("interval,i",
-         po::value<boost::uint32_t>(&interval_mili_second)->default_value(10),
+         po::value<uint32_t>(&interval_mili_second)->default_value(10),
          "spoofing DNS response packet interval(milisecond)")
 
         ("delegate_name,d",
@@ -89,7 +89,7 @@ int main( int argc, char **argv )
         query.recursion = true;
         query.question.push_back( question );
 
-        std::vector<boost::uint8_t> dns_query_packet = dns::generate_dns_query_packet( query );
+        std::vector<8_t> dns_query_packet = dns::generate_dns_query_packet( query );
 
         udpv4::ClientParameters udp_param;
         udp_param.destination_address = target_dns_server;

@@ -50,10 +50,10 @@ int main()
     header.authority_count             = htons( 0 );
     header.additional_infomation_count = htons( 1 );
 
-    std::vector<boost::uint8_t> packet;
-    std::vector<boost::uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
-    std::vector<boost::uint8_t> additional_packet_1 = dns::generate_edns0_section( edns0_1 );
-    std::vector<boost::uint8_t> additional_packet_2 = dns::generate_edns0_section( edns0_2 );
+    std::vector<uint8_t> packet;
+    std::vector<uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
+    std::vector<uint8_t> additional_packet_1 = dns::generate_edns0_section( edns0_1 );
+    std::vector<uint8_t> additional_packet_2 = dns::generate_edns0_section( edns0_2 );
     
     int packet_size = sizeof(header) + question_packet.size();
     int opt_count = 1;
@@ -71,7 +71,7 @@ int main()
     }
     */
 
-    std::vector<boost::uint8_t> packet = dns::generate_dns_query_packet( query );
+    std::vector<uint8_t> packet = dns::generate_dns_query_packet( query );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = DNS_SERVER_ADDRESS;

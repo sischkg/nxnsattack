@@ -58,7 +58,7 @@ namespace udpv4
     }
 
 
-    boost::uint16_t Server::sendPacket( const ClientParameters &dest, const boost::uint8_t *data, boost::uint16_t size )
+    uint16_t Server::sendPacket( const ClientParameters &dest, const uint8_t *data, uint16_t size )
     {
         if ( udp_socket < 0 )
             openSocket();
@@ -92,7 +92,7 @@ namespace udpv4
 
         sockaddr_in peer_address;
         socklen_t   peer_address_size = sizeof(peer_address);
-        std::vector<boost::uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
+        std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
         int recv_size = recvfrom( udp_socket,
                                   receive_buffer.data(), UDP_RECEIVE_BUFFER_SIZE,
                                   flags,

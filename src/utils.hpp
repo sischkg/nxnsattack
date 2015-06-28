@@ -50,7 +50,7 @@ public:
 
 std::string get_error_message( const std::string &msg, int error_number );
 
-boost::uint16_t compute_checksum( const boost::uint8_t *data, size_t length );
+uint16_t compute_checksum( const uint8_t *data, size_t length );
 
 in_addr convert_address_string_to_binary( const std::string &str ) throw ( InvalidAddressFormatError );
 std::string convert_address_binary_to_string( in_addr bin ) throw ( InvalidAddressFormatError );

@@ -47,10 +47,10 @@ int main()
     header.authority_count             = htons( 0 );
     header.additional_infomation_count = htons( 1 );
 
-    std::vector<boost::uint8_t> packet;
-    std::vector<boost::uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
-    std::vector<boost::uint8_t> additional_packet_1 = dns::generate_edns0_section( edns0_1 );
-    std::vector<boost::uint8_t> additional_packet_2 = dns::generate_edns0_section( edns0_2 );
+    std::vector<uint8_t> packet;
+    std::vector<uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
+    std::vector<uint8_t> additional_packet_1 = dns::generate_edns0_section( edns0_1 );
+    std::vector<uint8_t> additional_packet_2 = dns::generate_edns0_section( edns0_2 );
     
     int packet_size = sizeof(header) + question_packet.size();
     int opt_count = 1;
@@ -70,18 +70,18 @@ int main()
     }
     */
 
-    std::vector<boost::uint8_t> packet = dns::generate_dns_query_packet( query );
+    std::vector<uint8_t> packet = dns::generate_dns_query_packet( query );
 
     tcpv4::ClientParameters tcp_param;
     tcp_param.destination_address = DNS_SERVER_ADDRESS;
     tcp_param.destination_port    = 53;
     tcpv4::Client tcp( tcp_param );
-    boost::uint16_t data_size = htons( boost::numeric_cast<boost::uint16_t>( packet.size() ) );
-    tcp.send( reinterpret_cast<boost::uint8_t *>(&data_size), 2 );
+    uint16_t data_size = htons( boost::numeric_cast<uint16_t>( packet.size() ) );
+    tcp.send( reinterpret_cast<uint8_t *>(&data_size), 2 );
     tcp.send( packet.data(), packet.size() );
 
     tcpv4::ConnectionInfo received_packet = tcp.receive_data( 2 );
-    int response_size = ntohs( *reinterpret_cast<boost::uint16_t *>( &received_packet.stream[0] ) );
+    int response_size = ntohs( *reinterpret_cast<uint16_t *>( &received_packet.stream[0] ) );
     received_packet = tcp.receive_data( response_size );
     tcp.closeSocket();
 
