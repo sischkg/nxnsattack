@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <algorithm>
 #include "utils.hpp"
+#include <iostream>
 
 namespace udpv4
 {
@@ -60,13 +61,6 @@ namespace udpv4
 
     uint16_t compute_udpv4_checksum( const PacketInfo & );
 
-    uint16_t compute_udpv4_checksum( const std::string        &source_address,
-                                            const std::string &destination_address,
-                                            uint16_t           source_port,
-                                            uint16_t           destination_port,
-                                            const std::vector<uint8_t> &payload );
-
-
     Packet::Packet( const uint8_t *header,  uint16_t header_size,
 		    const uint8_t *payload, uint16_t payload_size )
     {
@@ -76,13 +70,14 @@ namespace udpv4
     }
 
 
-    Packet generate_udpv4_packet( const PacketInfo &info )
+    Packet generate_udpv4_packet( const PacketInfo &info,
+				  const ChecksumCalculatable &checksum_calcurator )
     {
         UDPv4Header udpv4_header;
         udpv4_header.field.source_port      = htons( info.source_port );
         udpv4_header.field.destination_port = htons( info.destination_port );
         udpv4_header.field.length           = htons( info.getLength() );
-        udpv4_header.field.checksum         = compute_udpv4_checksum( info );
+        udpv4_header.field.checksum         = checksum_calcurator( info );
 
         return Packet( reinterpret_cast<const uint8_t *>( &udpv4_header ),  sizeof(udpv4_header),
 		       info.getData(), info.getPayloadLength() );
@@ -117,5 +112,11 @@ namespace udpv4
         uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );
         return checksum;
     }
+
+    uint16_t StandardChecksumCalculator::operator()( const PacketInfo &info ) const
+    {
+	return compute_udpv4_checksum( info );
+    }
+
 }
 

@@ -48,14 +48,17 @@ namespace udpv4
 
     class Sender
     {
+    public:
+	typedef boost::shared_ptr<ChecksumCalculatable> ChecksumPtr;
     private:
         int raw_socket;
+	ChecksumPtr udp_checksum;
 
         void openSocket();
         void closeSocket();
     public:
-        Sender()
-            : raw_socket( -1 )
+        Sender( ChecksumPtr checksum = ChecksumPtr( new StandardChecksumCalculator() ) )
+            : raw_socket( -1 ), udp_checksum( checksum )
         {
             openSocket();
         }

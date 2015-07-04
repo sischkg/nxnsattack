@@ -16,20 +16,20 @@ std::string get_error_message( const std::string &msg, int error_number )
 
 uint16_t compute_checksum( const uint8_t *data, size_t length )
 {
-    uint32_t checksum = 0;
-    const uint16_t *p = reinterpret_cast<const uint16_t *>( data );
-    for ( int i = 0, len = length ; len > 0 ; i++, len -= 2  ) {
-	checksum += ( static_cast<uint32_t>( p[i] ) );
-	if ( len == 1 ) {
-	    checksum += ( static_cast<uint16_t>( data[length-1] ) << 8 );
-	}
+    unsigned long sum = 0;
+    uint16_t *buf = (uint16_t *)data;
+
+    while (length > 1) {
+	sum += *buf++;
+	length -= 2;
     }
+    if (length)
+	sum += *(u_int8_t *)buf;
 
-    checksum = ( checksum >> 16 ) + ( 0xffff & checksum );
-    checksum += ( checksum >> 16 );
-
-    //    std::printf( "checksum: %d, %hx\n", length, ~ static_cast<uint16_t>( checksum ) );
-    return ~ static_cast<uint16_t>( checksum );
+    sum  = (sum & 0xffff) + (sum >> 16);
+    sum  = (sum & 0xffff) + (sum >> 16);
+	
+    return ~sum;
 }
 
 in_addr convert_address_string_to_binary( const std::string &str ) throw ( InvalidAddressFormatError )

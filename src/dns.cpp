@@ -428,9 +428,9 @@ namespace dns
     std::string RecordAAAA::toString() const
     {
         std::stringstream buff;
-        buff << std::hex << sin_addr[0];
+        buff << std::hex << (uint32_t)sin_addr[0];
         for ( int i = 1 ; i < sizeof(sin_addr) ; i++ ) {
-            buff << ":" << sin_addr[i];
+            buff << ":" << (uint32_t)sin_addr[i];
         }
         return buff.str();
     }

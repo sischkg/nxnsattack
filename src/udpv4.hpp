@@ -96,14 +96,19 @@ namespace udpv4
         }
     };
 
-    Packet generate_udpv4_packet( const PacketInfo & );
+    struct ChecksumCalculatable
+    {
+	virtual ~ChecksumCalculatable() {}
+	virtual uint16_t operator()( const PacketInfo & ) const = 0;
+    };
 
-    Packet generate_udpv4_packet( const std::string &source_address,
-                                  const std::string &destination_address,
-                                  uint16_t           source_port,
-                                  uint16_t           destination_port,
-                                  const std::vector<uint8_t> &payload );
+    struct StandardChecksumCalculator : public ChecksumCalculatable
+    {
+	virtual uint16_t operator()( const PacketInfo & ) const;
+    };
 
+    Packet generate_udpv4_packet( const PacketInfo &,
+				  const ChecksumCalculatable &checksum = StandardChecksumCalculator() );
 }
 
 #endif

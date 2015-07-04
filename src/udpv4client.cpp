@@ -142,7 +142,7 @@ namespace udpv4
         if ( raw_socket < 0 )
             openSocket();
 
-        Packet udp_packet = generate_udpv4_packet( udp_packet_info );
+        Packet udp_packet = generate_udpv4_packet( udp_packet_info, *udp_checksum );
 
         ipv4::PacketInfo ip_packet_info;
         ip_packet_info.tos         = 0;
