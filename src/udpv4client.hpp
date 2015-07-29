@@ -76,13 +76,20 @@ namespace udpv4
     {
     private:
         int udp_socket;
+	std::string bind_address;
         uint16_t bind_port;
 
         void openSocket();
         void closeSocket();
     public:
         Receiver( uint16_t port )
-            : udp_socket( -1 ), bind_port( port )
+            : udp_socket( -1 ), bind_address( "0.0.0.0" ), bind_port( port )
+        {
+            openSocket();
+        }
+
+        Receiver( const std::string &bind_addr, uint16_t port )
+            : udp_socket( -1 ), bind_address( bind_addr ), bind_port( port )
         {
             openSocket();
         }

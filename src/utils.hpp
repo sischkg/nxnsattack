@@ -2,9 +2,12 @@
 #define UTILS_HPP
 
 #include <arpa/inet.h>
+#include <vector>
 #include <stdexcept>
 #include <boost/cstdint.hpp>
 #include <boost/shared_array.hpp>
+
+typedef std::vector<uint8_t> PacketData;
 
 /*!
  * IPアドレスのテキスト形式をバイナリ形式(in_addr)へ変換できない場合にthrowする例外

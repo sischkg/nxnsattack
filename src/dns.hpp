@@ -277,11 +277,11 @@ namespace dns
     struct ResponsePacketInfo
     {
         uint16_t id;
-        bool            recursion_available;
-        bool            authoritative_answer;
-        bool            truncation;
-        bool            authentic_data;
-        bool            checking_disabled;
+        bool     recursion_available;
+        bool     authoritative_answer;
+        bool     truncation;
+        bool     authentic_data;
+        bool     checking_disabled;
         uint8_t  response_code;
 
         std::vector<QuestionSectionEntry> question;

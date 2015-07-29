@@ -5,110 +5,103 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <iterator>
+#include <algorithm>
 #include <arpa/inet.h>
 #include <boost/numeric/conversion/cast.hpp>
 
 namespace dns
 {
 
-    std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query )
+    PacketData generate_dns_packet( const PacketInfo &info)
     {
 	PacketHeaderField header;
-        header.id                   = htons( query.id );
-	header.opcode               = query.opcode;
-        header.query_response       = 0;
-        header.authoritative_answer = 0;
-        header.truncation           = 0;
-        header.recursion_desired    = query.recursion;
-        header.recursion_available  = 0;
+        header.id                   = htons( info.id );
+	header.opcode               = info.opcode;
+        header.query_response       = info.query_response;
+        header.authoritative_answer = info.authoritative_answer;
+        header.truncation           = info.truncation;
+        header.recursion_desired    = info.recursion_desired;
+        header.recursion_available  = info.recursion_available;
         header.zero_field           = 0;
         header.authentic_data       = 0;
-        header.checking_disabled    = 0;
-        header.response_code        = 0;
+        header.checking_disabled    = info.checking_disabled;
+        header.response_code        = info.response_code;
 
-        header.question_count  = htons( 1 );
-        header.answer_count    = htons( 0 );
-        header.authority_count = htons( 0 );
-	if ( query.edns0 )
-	    header.additional_infomation_count = htons( 1 );
-	else
-	    header.additional_infomation_count = htons( 0 );
-	    
-        std::vector<uint8_t> packet;
-        std::vector<uint8_t> question = generate_question_section( query.question[0] );
+        header.question_count              = htons( info.question_section.size() );
+        header.answer_count                = htons( info.answer_section.size() );
+        header.authority_count             = htons( info.authority_section.size() );
+        header.additional_infomation_count = htons( info.additional_infomation_section.size() );
 
-	if ( query.edns0 ) {
-	    std::vector<uint8_t> opt_pseudo_rr_data = query.opt_pseudo_rr.getPacket();
-	    packet.resize( sizeof(header) + question.size() + opt_pseudo_rr_data.size() );
+        PacketData packet;
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+	pos = std::copy( reinterpret_cast<const uint8_t *>( &header ),
+			 reinterpret_cast<const uint8_t *>( &header ) + sizeof(header),
+			 pos );
 
-	    uint8_t *pos = &packet[0];
-	    pos = std::copy( reinterpret_cast<uint8_t *>( &header ),
-			     reinterpret_cast<uint8_t *>( &header ) + sizeof(header),
-			     pos );
-	    pos = std::copy( question.begin(),           question.end(),           pos );
-	    pos = std::copy( opt_pseudo_rr_data.begin(), opt_pseudo_rr_data.end(), pos );
-	}
-	else {
-	    packet.resize( sizeof(header) + question.size() );
-	    uint8_t *pos = &packet[0];
-	    pos = std::copy( reinterpret_cast<uint8_t *>( &header ),
-			     reinterpret_cast<uint8_t *>( &header ) + sizeof(header),
-			     pos );
-	    pos = std::copy( question.begin(), question.end(), pos );
-	}
+        for( std::vector<QuestionSectionEntry>::const_iterator q = info.question_section.begin() ;
+             q != info.question_section.end() ; ++q ) {
+            PacketData entry = generate_question_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = info.answer_section.begin() ;
+             q != info.answer_section.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = info.authority_section.begin() ;
+             q != info.authority_section.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = info.additional_infomation_section.begin() ;
+             q != info.additional_infomation_section.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+
         return packet;
     }
 
 
-    std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response )
+    PacketData generate_dns_query_packet( const QueryPacketInfo &query )
     {
-	PacketHeaderField header;
-        header.id                   = htons( response.id );
-	header.opcode               = 0;
-        header.query_response       = 1;
-        header.authoritative_answer = response.authoritative_answer;
-        header.truncation           = response.truncation;
-        header.recursion_desired    = 0;
-        header.recursion_available  = response.recursion_available;
-        header.zero_field           = 0;
-        header.authentic_data       = 0;
-        header.checking_disabled    = 0;
-        header.response_code        = response.response_code;
+	PacketInfo info;
+	info.id     = query.id;
+	info.opcode = 0;
+	info.query_response = 0;
+	info.authoritative_answer = 0;
+	info.truncation           = 0;
+        info.recursion_desired    = query.recursion;
+        info.recursion_available  = 0;
+        info.checking_disabled    = 0;
+        info.response_code        = 0;
 
-        header.question_count              = htons( response.question.size() );
-        header.answer_count                = htons( response.answer.size() );
-        header.authority_count             = htons( response.authority.size() );
-        header.additional_infomation_count = htons( response.additional_infomation.size() );
+	info.question_section = query.question;
 
-        std::vector<uint8_t> packet;
-        std::vector<uint8_t> sections;
-        for( std::vector<QuestionSectionEntry>::const_iterator q = response.question.begin() ;
-             q != response.question.end() ; ++q ) {
-            std::vector<uint8_t> new_sections = generate_question_section( *q );
-            sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator a = response.answer.begin() ;
-             a != response.answer.end() ; ++a ) {
-            std::vector<uint8_t> new_sections = generate_response_section( *a );
-            sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator a = response.authority.begin() ;
-             a != response.authority.end() ; ++a ) {
-            std::vector<uint8_t> new_sections = generate_response_section( *a );
-            sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator a = response.additional_infomation.begin() ;
-             a != response.additional_infomation.end() ; ++a ) {
-            std::vector<uint8_t> new_sections = generate_response_section( *a );
-            sections.insert( sections.end(), new_sections.begin(), new_sections.end() );
-        }
+	return generate_dns_packet( info );
+    }
 
-        packet.resize( sizeof(header) + sections.size() );
-        std::memcpy( packet.data(), &header, sizeof(header) );
-        std::memcpy( packet.data() + sizeof(header),
-                     sections.data(), sections.size() );
 
-        return packet;
+    PacketData generate_dns_response_packet( const ResponsePacketInfo &response )
+    {
+	PacketInfo info;
+	info.id                   = response.id;
+	info.opcode               = 0;
+	info.query_response       = 1;
+	info.authoritative_answer = response.authoritative_answer;
+	info.truncation           = response.truncation;
+        info.recursion_desired    = 0;
+        info.recursion_available  = response.recursion_available;
+        info.checking_disabled    = 0;
+        info.response_code        = response.response_code;
+
+	info.question_section              = response.question;
+	info.answer_section                = response.answer;
+	info.authority_section             = response.authority;
+	info.additional_infomation_section = response.additional_infomation;
+
+	return generate_dns_packet( info );
     }
 
 
@@ -182,11 +175,11 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-							      uint16_t   compress_offset )
+    PacketData convert_domainname_string_to_binary( const std::string &domainname,
+						    uint16_t compress_offset )
     {
-        std::vector<uint8_t> bin;
-        std::vector<uint8_t> label;
+        PacketData bin;
+        PacketData label;
 
         for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
             if ( *i == '.' ) {
@@ -253,9 +246,9 @@ namespace dns
         return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
-    std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &question )
+    PacketData generate_question_section( const QuestionSectionEntry &question )
     {
-        std::vector<uint8_t> packet = convert_domainname_string_to_binary( question.q_domainname );
+        PacketData packet = convert_domainname_string_to_binary( question.q_domainname );
         packet.resize( packet.size() + sizeof(uint16_t) + sizeof(uint16_t) );
         uint8_t *p = packet.data() + packet.size() - sizeof(uint16_t) - sizeof(uint16_t);
         p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );
@@ -278,11 +271,11 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &response )
+    PacketData generate_response_section( const ResponseSectionEntry &response )
     {
-        std::vector<uint8_t> packet_name = convert_domainname_string_to_binary( response.r_domainname );
-        std::vector<uint8_t> packet_rd   = response.r_resource_data->getPacket();
-        std::vector<uint8_t> packet( packet_name.size() +
+        PacketData packet_name = convert_domainname_string_to_binary( response.r_domainname );
+        PacketData packet_rd   = response.r_resource_data->getPacket();
+        PacketData packet( packet_name.size() +
 				     2 +
 				     2 +
 				     4 +
@@ -402,9 +395,9 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> RecordA::getPacket() const
+    PacketData RecordA::getPacket() const
     {
-        std::vector<uint8_t> packet( 4 );
+        PacketData packet( 4 );
         packet[0] = ( sin_addr >>  0 ) & 0xff;
         packet[1] = ( sin_addr >>  8 ) & 0xff;
         packet[2] = ( sin_addr >> 16 ) & 0xff;
@@ -436,7 +429,7 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> RecordAAAA::getPacket() const
+    PacketData RecordAAAA::getPacket() const
     {
         return std::vector< uint8_t >( sin_addr,
 				       sin_addr + sizeof( sin_addr ) );
@@ -460,7 +453,7 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> RecordNS::getPacket() const
+    PacketData RecordNS::getPacket() const
     {
         return convert_domainname_string_to_binary( domainname );
     }
@@ -500,10 +493,10 @@ namespace dns
     }
 
 
-    std::vector<uint8_t> RecordSOA::getPacket() const
+    PacketData RecordSOA::getPacket() const
     {
-        std::vector<uint8_t> packet       = convert_domainname_string_to_binary( mname );
-        std::vector<uint8_t> rname_packet = convert_domainname_string_to_binary( rname );
+        PacketData packet       = convert_domainname_string_to_binary( mname );
+        PacketData rname_packet = convert_domainname_string_to_binary( rname );
         packet.insert( packet.end(), rname_packet.begin(), rname_packet.end() );
         packet.resize( packet.size() + sizeof(SOAField) );
         uint8_t *p = packet.data();
@@ -577,9 +570,9 @@ namespace dns
 	return os.str();
     }
 
-    std::vector<uint8_t> RecordOpt::getPacket() const
+    PacketData RecordOpt::getPacket() const
     {
-	std::vector<uint8_t> result;
+	PacketData result;
 	result.resize( 1 + // domain name "."  
 		       2 + // TYPE OPT
 		       2 + // CLASS payload size
@@ -600,7 +593,7 @@ namespace dns
 	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
 	      i != options.end() ;
 	      ++i ) {
-	    std::vector<uint8_t> opt_data = (*i)->getPacket();
+	    PacketData opt_data = (*i)->getPacket();
 	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );
 	}
 
@@ -664,9 +657,9 @@ namespace dns
 	return ResourceDataPtr( new RecordOpt( payload_size, rcode, options ) );
     }
 
-    std::vector<uint8_t> NSIDOption::getPacket() const
+    PacketData NSIDOption::getPacket() const
     {
-	std::vector<uint8_t> result;
+	PacketData result;
 	result.resize( 2 + 2 + nsid.size() );
 	uint8_t *pos = &result[0];
 

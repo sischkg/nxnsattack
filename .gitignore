@@ -18,4 +18,5 @@ src/edns0_tcp
 src/uncompress_loop
 src/uncompress_loop_tcp
 src/dnsclient_raw
+src/dns_server
 

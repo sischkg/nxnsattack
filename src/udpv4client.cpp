@@ -188,9 +188,9 @@ namespace udpv4
         }
 
         sockaddr_in recv_socket_address;
-        recv_socket_address.sin_family      = AF_INET;
-        recv_socket_address.sin_addr.s_addr = htonl( INADDR_ANY );
-        recv_socket_address.sin_port        = htons( bind_port );
+        recv_socket_address.sin_family = AF_INET;
+        recv_socket_address.sin_addr   = convert_address_string_to_binary( bind_address );
+        recv_socket_address.sin_port   = htons( bind_port );
         if ( bind( udp_socket,
                    reinterpret_cast<const sockaddr *>( &recv_socket_address ),
                    sizeof(recv_socket_address) ) < 0 ) {
