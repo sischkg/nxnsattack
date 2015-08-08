@@ -321,32 +321,37 @@ namespace dns
     };
 
 
-    class RecordOpt : public ResourceData
+    class RecordOptionsData : public ResourceData
     {
     public:
-	uint16_t    payload_size;
-	uint8_t     rcode;
 	std::vector<OptPseudoRROptPtr> options;
-	uint16_t    rdata_size;
-	std::string domainname;
 
     public:
-	RecordOpt( uint16_t in_payload_size     = 1280,
-		   uint8_t  in_rcode            = 0,
-		   const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>(),
-		   uint32_t in_rdata_size       = 0xffffffff,
-		   const std::string &in_domain = "" );
+	RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
+	    : options( in_options )
+	{}
 
 	virtual std::string toString() const;
 	virtual std::vector<uint8_t> getPacket() const;
 	virtual uint16_t type() const { return TYPE_OPT; }
-	virtual uint16_t size() const { return 1 + 2 + 2 + 4 + 2 + rdata_size; }
+	virtual uint16_t size() const { return getPacket().size(); }
 
 	const std::vector<OptPseudoRROptPtr> &getOptions() const { return options; }
         static ResourceDataPtr parse( const uint8_t *packet,
-				      const uint8_t *entry_begin,
 				      const uint8_t *begin,
 				      const uint8_t *end );
+    };
+
+    struct OptPseudoRecord
+    {
+	std::string       domainname;
+	uint16_t          payload_size;
+	uint8_t           rcode;
+	boost::shared_ptr<ResourceData> record_options_data;
+
+	OptPseudoRecord()
+	    : domainname( "." ), payload_size( 1280 ), rcode( 0 )
+	{}
     };
 
 
@@ -413,27 +418,21 @@ namespace dns
 	Opcode    opcode;
         bool      recursion;
 	bool      edns0;
-	bool      tkey;
         std::vector<QuestionSectionEntry> question;
-	RecordOpt opt_pseudo_rr;
-	RecordTKey tkey_rr;
+	OptPseudoRecord opt_pseudo_rr;
 
 	QueryPacketInfo( uint16_t in_id        = 0,
 			 Opcode   in_opcode    = OPCODE_QUERY,
 			 bool     in_recursion = false,
 			 bool     in_edns0     = false,
-			 bool     in_tkey      = false,
 			 const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
-			 const RecordOpt  &in_opt_pseudo_rr = RecordOpt(),
-			 const RecordTKey &in_tkey_rr       = RecordTKey() )
+			 const OptPseudoRecord &in_opt_pseudo_rr = OptPseudoRecord() )
 	    : id( in_id ),
 	      opcode( in_opcode ),
 	      recursion( in_recursion ),
 	      edns0( in_edns0 ),
-	      tkey( in_tkey ),
-	    question( in_question ),
-	    opt_pseudo_rr( in_opt_pseudo_rr ),
-	    tkey_rr( in_tkey_rr )
+	      question( in_question ),
+	      opt_pseudo_rr( in_opt_pseudo_rr )
 	{}
     };
 
@@ -448,10 +447,8 @@ namespace dns
         bool     checking_disabled;
         uint8_t  response_code;
 	bool     edns0;
-	bool     tkey;
 
-	RecordOpt opt_pseudo_rr;
-	RecordTKey tkey_rr;
+	OptPseudoRecord opt_pseudo_rr;
 
         std::vector<QuestionSectionEntry> question;
         std::vector<ResponseSectionEntry> answer;
@@ -467,8 +464,7 @@ namespace dns
 	     authentic_data( false ),
 	     checking_disabled( false ),
 	     response_code( 0 ),
-	     edns0( false ),
-	     tkey( false )
+	     edns0( false )
 	{}
     };
 
@@ -488,10 +484,8 @@ namespace dns
         uint8_t  response_code;
 
 	bool     edns0;
-	bool     tkey;
 
-	RecordOpt opt_pseudo_rr;
-	RecordTKey tkey_rr;
+	OptPseudoRecord opt_pseudo_rr;
 
         std::vector<QuestionSectionEntry> question_section;
         std::vector<ResponseSectionEntry> answer_section;
@@ -508,11 +502,11 @@ namespace dns
 	     recursion_available( false ),
 	     checking_disabled( false ),
 	     response_code( 0 ),
-	     edns0( false ),
-	     tkey( false )
+	     edns0( false )
 	{}
 
     };
+
 
     std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
@@ -555,6 +549,12 @@ namespace dns
         uint32_t minimum;
     };
 
+    PacketData generate_dns_packet( const PacketHeaderField &header,
+				    const std::vector<QuestionSectionEntry> &question,
+				    const std::vector<ResponseSectionEntry> &answer,
+				    const std::vector<ResponseSectionEntry> &authority,
+				    const std::vector<ResponseSectionEntry> &additional );
+
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
 							      uint16_t compress_offset = 0xffff );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
@@ -567,6 +567,10 @@ namespace dns
     typedef std::pair<ResponseSectionEntry, const uint8_t *> ResponseSectionEntryPair;
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *section );
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *section );
+
+    ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
+    OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
+    
 
     template<typename Type>
     uint8_t *set_bytes( Type v, uint8_t *pos )

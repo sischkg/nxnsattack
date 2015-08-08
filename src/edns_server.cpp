@@ -13,42 +13,53 @@ const int   SUBDOMAIN_SIZE  = 30;
 const int   BUF_SIZE        = 256 * 256;
 
 
-PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry question_section )
+PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query )
 {
+    std::vector<dns::QuestionSectionEntry> question_section;
+    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+
     dns::QuestionSectionEntry question;
-    question.q_domainname = question_section.q_domainname;
-    question.q_type       = question_section.q_type;
-    question.q_class      = question_section.q_class;
+    question.q_domainname = query.q_domainname;
+    question.q_type       = query.q_type;
+    question.q_class      = query.q_class;
+    question_section.push_back( question );
 
     dns::ResponseSectionEntry answer;
-    answer.r_domainname = question_section.q_domainname;
+    answer.r_domainname = query.q_domainname;
     answer.r_type       = dns::TYPE_A;
     answer.r_class      = dns::CLASS_IN;
     answer.r_ttl        = 30;
     answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
+    answer_section.push_back( answer );
 
     dns::ResponseSectionEntry authority;
-    authority.r_domainname = question_section.q_domainname;
+    authority.r_domainname = query.q_domainname;
     authority.r_type       = dns::TYPE_SOA;
     authority.r_class      = dns::CLASS_IN;
     authority.r_ttl        = 30;
-    authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( question_section.q_domainname,
-									  "hostmaster." + question_section.q_domainname,
+    authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( query.q_domainname,
+									  "hostmaster." + question.q_domainname,
 									  1,      // serial
 									  300,    // refresh
 									  1000,   // retry
 									  10000,  // exipire
 									  30 ) ); // minimum
-								     
+    authority_section.push_back( authority );
+
     std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
     edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
     edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bbbbbbbbb" ) ) );
 
-    dns::RecordOpt opt_rr_1( 1024, 0, edns_options_1 );
-    dns::RecordOpt opt_rr_2( 1024, 0, edns_options_2 );
+    dns::OptPseudoRecord opt_rr_1, opt_rr_2;
+    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
+    opt_rr_1.payload_size = 1024;
+    opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
+    opt_rr_2.payload_size = 1024;
+    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
 
     dns::PacketHeaderField header;
-    header.id                   = htons( id );
+    header.id                   = id;
     header.opcode               = 0;
     header.query_response       = 1;
     header.authoritative_answer = 1;
@@ -60,41 +71,11 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry quest
     header.checking_disabled    = 1;
     header.response_code        = dns::NO_ERROR;
 
-    header.question_count              = htons( 1 );
-    header.answer_count                = htons( 1 );
-    header.authority_count             = htons( 0 );
-    header.additional_infomation_count = htons( 2 );
-
-    PacketData packet;
-    PacketData question_packet     = dns::generate_question_section( question );
-    PacketData answer_packet       = dns::generate_response_section( answer );
-    PacketData authority_packet    = dns::generate_response_section( authority );
-    PacketData opt_pseudo_packet_1 = opt_rr_1.getPacket();
-    PacketData opt_pseudo_packet_2 = opt_rr_2.getPacket();
-
-    std::insert_iterator<PacketData> pos( packet, packet.begin() );
-    pos = std::copy( reinterpret_cast<const uint8_t *>( &header ),
-		     reinterpret_cast<const uint8_t *>( &header ) + sizeof(header),
-		     pos );
-    pos = std::copy( question_packet.begin(),
-		     question_packet.end(),
-		     pos );
-    pos = std::copy( answer_packet.begin(),
-		     answer_packet.end(),
-		     pos );
-    pos = std::copy( opt_pseudo_packet_1.begin(),
-		     opt_pseudo_packet_1.end(),
-		     pos );
-    /*
-    pos = std::copy( authority_packet.begin(),
-		     authority_packet.end(),
-		     pos );
-    */
-    pos = std::copy( opt_pseudo_packet_2.begin(),
-		     opt_pseudo_packet_2.end(),
-		     pos );
-
-    return packet;
+    return dns::generate_dns_packet( header,
+				     question_section,
+				     answer_section,
+				     authority_section,
+				     additional_infomation_section );
 }
 
 

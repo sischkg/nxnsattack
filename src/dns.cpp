@@ -14,6 +14,49 @@
 namespace dns
 {
 
+    PacketData generate_dns_packet( const PacketHeaderField &header,
+				    const std::vector<QuestionSectionEntry> &question,
+				    const std::vector<ResponseSectionEntry> &answer,
+				    const std::vector<ResponseSectionEntry> &authority,
+				    const std::vector<ResponseSectionEntry> &additional )
+    {
+	PacketHeaderField h = header;
+        h.question_count              = htons( question.size() );
+        h.answer_count                = htons( answer.size() );
+        h.authority_count             = htons( authority.size() );
+        h.additional_infomation_count = htons( additional.size() );
+
+        PacketData packet;
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+	pos = std::copy( reinterpret_cast<const uint8_t *>( &h ),
+			 reinterpret_cast<const uint8_t *>( &h ) + sizeof(h),
+			 pos );
+
+        for( std::vector<QuestionSectionEntry>::const_iterator q = question.begin() ;
+             q != question.end() ; ++q ) {
+            PacketData entry = generate_question_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = answer.begin() ;
+             q != answer.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = authority.begin() ;
+             q != authority.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = additional.begin() ;
+             q != additional.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+
+        return packet;
+    }
+
+
     PacketData generate_dns_packet( const PacketInfo &info )
     {
 	PacketHeaderField header;
@@ -29,53 +72,17 @@ namespace dns
         header.checking_disabled    = info.checking_disabled;
         header.response_code        = info.response_code;
 
-	int additional_infomation_count = info.additional_infomation_section.size();
-	if ( info.edns0 )
-	    additional_infomation_count++;
-	if ( info.tkey )
-	    additional_infomation_count++;
+	std::vector<ResponseSectionEntry> additional = info.additional_infomation_section;
 
-        header.question_count              = htons( info.question_section.size() );
-        header.answer_count                = htons( info.answer_section.size() );
-        header.authority_count             = htons( info.authority_section.size() );
-        header.additional_infomation_count = htons( additional_infomation_count );
-
-        PacketData packet;
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-	pos = std::copy( reinterpret_cast<const uint8_t *>( &header ),
-			 reinterpret_cast<const uint8_t *>( &header ) + sizeof(header),
-			 pos );
-
-        for( std::vector<QuestionSectionEntry>::const_iterator q = info.question_section.begin() ;
-             q != info.question_section.end() ; ++q ) {
-            PacketData entry = generate_question_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = info.answer_section.begin() ;
-             q != info.answer_section.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = info.authority_section.begin() ;
-             q != info.authority_section.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = info.additional_infomation_section.begin() ;
-             q != info.additional_infomation_section.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
 	if ( info.edns0 ) {
-            PacketData edns_data = info.opt_pseudo_rr.getPacket();
-	    pos = std::copy( edns_data.begin(), edns_data.end(), pos );
-	}
-	if ( info.tkey ) {
-            PacketData tkey_data = info.tkey_rr.getPacket();
-	    pos = std::copy( tkey_data.begin(), tkey_data.end(), pos );
+	    additional.push_back( generate_opt_pseudo_record( info.opt_pseudo_rr ) );
 	}
 
-        return packet;
+        return generate_dns_packet( header,
+				    info.question_section,
+				    info.answer_section,
+				    info.authority_section,
+				    additional );
     }
 
 
@@ -94,8 +101,6 @@ namespace dns
 
 	info.edns0                = query.edns0;
 	info.opt_pseudo_rr        = query.opt_pseudo_rr;
-	info.tkey                 = query.tkey;
-	info.tkey_rr              = query.tkey_rr;
 
 	info.question_section = query.question;
 
@@ -118,8 +123,6 @@ namespace dns
 
 	info.edns0                = response.edns0;
 	info.opt_pseudo_rr        = response.opt_pseudo_rr;
-	info.tkey                 = response.tkey;
-	info.tkey_rr              = response.tkey_rr;
 
 	info.question_section              = response.question;
 	info.answer_section                = response.answer;
@@ -361,7 +364,7 @@ namespace dns
             parsed_data = RecordSOA::parse( packet, p, p + data_length );
             break;
         case TYPE_OPT:
-            parsed_data = RecordOpt::parse( packet, begin, p, p + data_length );
+            parsed_data = RecordOptionsData::parse( packet, p, p + data_length );
             break;
         default:
 	    std::ostringstream msg;
@@ -722,8 +725,8 @@ namespace dns
 
 
     ResourceDataPtr RecordCNAME::parse( const uint8_t *packet,
-                                     const uint8_t *begin,
-                                     const uint8_t *end )
+					const uint8_t *begin,
+					const uint8_t *end )
     {
         std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
         return ResourceDataPtr( new RecordCNAME( pair.first ) );
@@ -799,74 +802,23 @@ namespace dns
                                                expire,
                                                minimum ) );
     }
-
-
-    RecordOpt::RecordOpt( uint16_t in_payload_size,
-			  uint8_t  in_rcode,
-			  const std::vector<OptPseudoRROptPtr> &in_options,
-			  uint32_t in_rdata_size,
-			  const std::string &in_domain )
-	: payload_size( in_payload_size ),
-	  rcode( in_rcode ),
-	  options( in_options ),
-	  domainname( in_domain )
-    {
-	if ( in_rdata_size == 0xffffffff ) {
-	    rdata_size = 0;
-	    for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin() ;
-		  i != options.end() ;
-		  ++i ) {
-		rdata_size = boost::numeric_cast<uint16_t>( boost::numeric_cast<uint32_t>( (*i)->size() ) + rdata_size ); 
-	    }
-	}
-	else
-	    rdata_size = in_rdata_size;
-    }
-
-    std::string RecordOpt::toString() const
+ 
+    std::string RecordOptionsData::toString() const
     {
 	std::ostringstream os;
 
-	os << "ENS0: " << std::endl; 
-	os << "Payload Size: " << payload_size << std::endl;
-
-	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
-	      i != options.end() ;
-	      ++i ) {
+	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin(); i != options.end() ; ++i )
 	    os << (*i)->toString();
-	}
-
+    
 	return os.str();
     }
 
 
-    struct OptField {
-	uint16_t type;
-	uint16_t payload_size;
-	uint8_t  rcode;
-	uint8_t  version;
-	uint16_t flags;
-	uint16_t rdata_size;
-    };
-
-    PacketData RecordOpt::getPacket() const
+    PacketData RecordOptionsData::getPacket() const
     {
 	PacketData packet;
 	
-	PacketData domainname_packet = convert_domainname_string_to_binary( domainname );
-	OptField field;
-	field.type         = htons( TYPE_OPT );
-	field.payload_size = htons( payload_size );
-	field.rcode        = rcode;
-	field.version      = 0;
-	field.flags        = 0;
-	field.rdata_size   = htons( rdata_size );
-
 	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-	pos = std::copy( domainname_packet.begin(), domainname_packet.end(), pos );
-	pos = std::copy( reinterpret_cast<const uint8_t *>( &field ),
-			 reinterpret_cast<const uint8_t *>( &field ) + sizeof(field),
-			 pos );
 
 	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
 	      i != options.end() ;
@@ -878,45 +830,31 @@ namespace dns
 	return packet;
     }
 
-    ResourceDataPtr RecordOpt::parse( const uint8_t *packet,
-				      const uint8_t *entry_begin,
-				      const uint8_t *begin,
-				      const uint8_t *end )
+    ResourceDataPtr RecordOptionsData::parse( const uint8_t *packet,
+					      const uint8_t *begin,
+					      const uint8_t *end )
     {
-	if ( end - entry_begin < 11 ) {
+	if ( end - begin < 2 ) {
 	    std::ostringstream os;
-	    os << "size " << end - entry_begin << " is too few Opt Pseudo RR size.";
+	    os << "size " << end - begin << " is too few Opt Pseudo RR size.";
 	    throw FormatError( os.str() );
 	}
-	const uint8_t *pos = entry_begin;
-	if ( *pos != 0 )
-	    throw FormatError( "Domain name of Opt Pseudo RR must be '.'." );
-	pos++;
-
-	uint16_t type = ntohs( get_bytes<uint16_t>( &pos ) );
-	if ( type != TYPE_OPT )
-	    throw std::logic_error( "type must be TYPE_OPT" );
-
-	uint16_t payload_size = ntohs( get_bytes<uint16_t>( &pos ) );
-	uint8_t  rcode        = get_bytes<uint8_t >( &pos );
-	uint8_t  edns_vesion  = get_bytes<uint8_t >( &pos );
-	uint16_t flags        = ntohs( get_bytes<uint16_t>( &pos ) );
-	uint16_t rdata_size   = ntohs( get_bytes<uint16_t>( &pos ) );
+	const uint8_t *pos = begin;
 
 	std::vector<OptPseudoRROptPtr> options;
 	uint16_t read_size = 0;
-	while ( pos < end && read_size < rdata_size ) {
-	    if ( end - pos < 4 || rdata_size - read_size < 4  ) {
+	while ( pos < end ) {
+	    if ( end - pos < 4 ) {
 		std::ostringstream os;
-		os << "remains data " << end - pos << ":" << rdata_size - read_size << " is too few size.";
+		os << "remains data " << end - pos << " is too few size.";
 		throw FormatError( os.str() );
 	    }
-	    uint16_t option_code = ntohs( get_bytes<uint16_t>( &pos ) ); read_size += 2;
-	    uint16_t option_size = ntohs( get_bytes<uint16_t>( &pos ) ); read_size += 2;
+	    uint16_t option_code = ntohs( get_bytes<uint16_t>( &pos ) );
+	    uint16_t option_size = ntohs( get_bytes<uint16_t>( &pos ) );
 
 	    if ( option_size == 0 )
 		continue;
-	    if ( pos + option_size > end || read_size + option_size > rdata_size ) {
+	    if ( pos + option_size > end ) {
 		std::ostringstream os;
 		os << "option data size is missmatch: option_size: " << option_size << "; remain size " << end - pos;
 		throw FormatError( os.str() );
@@ -931,8 +869,35 @@ namespace dns
 	    }
 	    pos += option_size;
 	}
-	return ResourceDataPtr( new RecordOpt( payload_size, rcode, options ) );
+    
+	return ResourceDataPtr( new RecordOptionsData( options ) );
     }
+
+    ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord &opt )
+    {
+	ResponseSectionEntry entry;
+	entry.r_domainname    = opt.domainname;
+	entry.r_type          = TYPE_OPT;
+	entry.r_class         = opt.payload_size;
+	entry.r_ttl           = ((uint32_t)opt.rcode) << 24;
+	entry.r_resource_data = opt.record_options_data;
+	entry.r_offset        = 0;
+
+	return entry;
+    }
+
+
+    OptPseudoRecord parse_opt_pseudo_record( const ResponseSectionEntry &record )
+    {
+	OptPseudoRecord opt;
+	opt.domainname          = record.r_domainname;
+	opt.payload_size        = record.r_class;
+	opt.rcode               = record.r_ttl >> 24;
+	opt.record_options_data = record.r_resource_data;
+
+	return opt;
+    }
+
 
     PacketData NSIDOption::getPacket() const
     {

@@ -6,45 +6,53 @@
 
 int main()
 {
+    std::vector<dns::QuestionSectionEntry> question_section;
+    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+
     dns::QuestionSectionEntry question;
-    question.q_domainname = "www.siskrn.co";
+    question.q_domainname = "www.example.com";
     question.q_type       = dns::TYPE_TKEY;
     question.q_class      = dns::CLASS_IN;
- 
-    dns::QueryPacketInfo query;
-    query.id        = 0x1234;
-    query.recursion = false;
-    query.question.push_back( question );
-    query.tkey      = true;
-    query.edns0     = false;
+    question_section.push_back( question );
 
-    query.tkey_rr.domain     = "www.siskrn.co";
-    query.tkey_rr.inception  = time( NULL ) - 1000;
-    query.tkey_rr.expiration = time( NULL ) + 1000;
-    query.tkey_rr.mode       = 2;
+    dns::ResponseSectionEntry additonal;
+    additonal.r_domainname = "www.example.com";
+    additonal.r_type       = dns::TYPE_A;
+    additonal.r_class      = dns::CLASS_IN;
+    additonal.r_ttl        = 30;
+    additonal.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
+    additional_infomation_section.push_back( additonal );
 
-    std::vector<uint8_t> dns_query_packet = dns::generate_dns_query_packet( query );
+    dns::PacketHeaderField header;
+    header.id                   = htons( 1234 );
+    header.opcode               = 0;
+    header.query_response       = 0;
+    header.authoritative_answer = 0;
+    header.truncation           = 0;
+    header.recursion_desired    = false;
+    header.recursion_available  = 0;
+    header.zero_field           = 0;
+    header.authentic_data       = 0;
+    header.checking_disabled    = 0;
+    header.response_code        = 0;
 
-    udpv4::ClientParameters udp_param;
+    std::vector<uint8_t> packet = dns::generate_dns_packet( header,
+							    question_section,
+							    answer_section,
+							    authority_section,
+							    additional_infomation_section );
+
+     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "49.212.193.254";
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
-    udp.sendPacket( dns_query_packet.data(), dns_query_packet.size() );
+    udp.sendPacket( packet.data(), packet.size() );
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 
     dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
                                                                   received_packet.end() );
     std::cout << res;
-
-    tcpv4::ClientParameters params;
-    params.destination_address = "49.212.193.254";
-    params.destination_port    = 53;
-    tcpv4::Client tcp( params );
-    uint16_t length = htons( (uint16_t)dns_query_packet.size() );
-    tcp.send( reinterpret_cast<uint8_t *>( &length ), 2 );
-    tcp.send( dns_query_packet );
-    tcp.receive();
 
     return 0;
 }

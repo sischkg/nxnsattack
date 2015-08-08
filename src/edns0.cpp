@@ -17,67 +17,45 @@ int main( int argc, char **argv )
 	target_server = argv[1];
     }
 
-    dns::QuestionSectionEntry question;
-    question.q_domainname = "text.siskrn.co";
-    question.q_type       = dns::TYPE_TXT;
-    question.q_class      = dns::CLASS_IN;
 
-    std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
+    std::vector<dns::QuestionSectionEntry> question_section;
+    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+
+    dns::QuestionSectionEntry question;
+    question.q_domainname = "www.example.com";
+    question.q_type       = dns::TYPE_A;
+    question.q_class      = dns::CLASS_IN;
+    question_section.push_back( question );
+
+    std::vector<dns::OptPseudoRROptPtr> options;
     std::string nsid = "";
 
-    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
+    options.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
+    dns::OptPseudoRecord opt;
+    opt.payload_size = 1280;
+    opt.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options ) );
 
-    dns::QueryPacketInfo query;
-    query.id        = 0x1234;
-    query.recursion = true;
-    query.question.push_back( question );
-    query.edns0     = true;
-    query.opt_pseudo_rr = dns::RecordOpt( 1280, 0, edns_options_1 );
-    query.opt_pseudo_rr.domainname = "www.yahoo.co.jp";
-    query.opt_pseudo_rr.payload_size = 512;
-
-    dns::RecordOpt opt2( 560, 0, edns_options_2 );
+    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
 
     dns::PacketHeaderField header;
-    header.id                   = htons( query.id );
+    header.id                   = htons( 1234 );
     header.opcode               = 0;
     header.query_response       = 0;
     header.authoritative_answer = 0;
     header.truncation           = 0;
-    header.recursion_desired    = query.recursion;
+    header.recursion_desired    = false;
     header.recursion_available  = 0;
     header.zero_field           = 0;
     header.authentic_data       = 0;
     header.checking_disabled    = 0;
     header.response_code        = 0;
 
-    header.question_count              = htons( 1 );
-    header.answer_count                = htons( 0 );
-    header.authority_count             = htons( 0 );
-    header.additional_infomation_count = htons( 1 );
+    std::vector<uint8_t> packet = dns::generate_dns_packet( header,
+							    question_section,
+							    answer_section,
+							    authority_section,
+							    additional_infomation_section );
 
-    std::vector<uint8_t> packet;
-    std::vector<uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
-    std::vector<uint8_t> opt_pseudo_packet_1 = query.opt_pseudo_rr.getPacket();
-    std::vector<uint8_t> opt_pseudo_packet_2 = opt2.getPacket();
-    
-    int packet_size = sizeof(header) + question_packet.size() + opt_pseudo_packet_1.size();
-    //    int packet_size = sizeof(header) + question_packet.size() + opt_pseudo_packet_1.size() + opt_pseudo_packet_2.size();
-    packet.resize( packet_size );
-
-    uint8_t *pos = &packet[0];
-    pos = std::copy( reinterpret_cast<uint8_t *>( &header ),
-		     reinterpret_cast<uint8_t *>( &header ) + sizeof(header),
-		     pos );
-    pos = std::copy( question_packet.begin(),
-		     question_packet.end(),
-		     pos );
-    pos = std::copy( opt_pseudo_packet_1.begin(),
-		     opt_pseudo_packet_1.end(),
-		     pos );
-    //    pos = std::copy( opt_pseudo_packet_2.begin(),
-    //		     opt_pseudo_packet_2.end(),
-    //		     pos );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = target_server;

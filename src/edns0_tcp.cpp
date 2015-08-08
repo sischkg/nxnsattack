@@ -12,65 +12,43 @@ const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 
 int main()
 {
+    std::vector<dns::QuestionSectionEntry> question_section;
+    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+
     dns::QuestionSectionEntry question;
     question.q_domainname = "www.example.com";
-    question.q_type       = dns::TYPE_A;
+    question.q_type       = dns::TYPE_TXT;
     question.q_class      = dns::CLASS_IN;
+    question_section.push_back( question );
 
-    std::vector<dns::OptPseudoRROptPtr> edns_options;
-    std::string nsid;
-    edns_options.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
+    std::vector<dns::OptPseudoRROptPtr> options;
+    std::string nsid = "";
 
-    dns::QueryPacketInfo query;
-    query.id        = 0x1234;
-    query.recursion = true;
-    query.question.push_back( question );
-    query.edns0     = true;
-    query.opt_pseudo_rr = dns::RecordOpt( 1280, 0, edns_options );
+    options.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
+    dns::OptPseudoRecord opt;
+    opt.payload_size = 1280;
+    opt.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options ) );
 
-    /*
+    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
+
     dns::PacketHeaderField header;
-    header.id                   = htons( query.id );
+    header.id                   = htons( 1234 );
     header.opcode               = 0;
     header.query_response       = 0;
     header.authoritative_answer = 0;
     header.truncation           = 0;
-    header.recursion_desired    = query.recursion;
+    header.recursion_desired    = false;
     header.recursion_available  = 0;
     header.zero_field           = 0;
     header.authentic_data       = 0;
     header.checking_disabled    = 0;
     header.response_code        = 0;
 
-    header.question_count              = htons( 1 );
-    header.answer_count                = htons( 0 );
-    header.authority_count             = htons( 0 );
-    header.additional_infomation_count = htons( 1 );
-
-    std::vector<uint8_t> packet;
-    std::vector<uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
-    std::vector<uint8_t> additional_packet_1 = dns::generate_edns0_section( edns0_1 );
-    std::vector<uint8_t> additional_packet_2 = dns::generate_edns0_section( edns0_2 );
-    
-    int packet_size = sizeof(header) + question_packet.size();
-    int opt_count = 1;
-    for ( int i = 0 ; i < opt_count ; i++ ) {
-	packet_size += additional_packet_1.size();
-	//	packet_size += additional_packet_2.size();
-    }
-    packet.resize( packet_size );
-
-    uint8_t *pos = &packet[0];
-    std::memcpy( pos, &header, sizeof(header) ); pos += sizeof(header);
-    pos = std::copy( question_packet.begin(),   question_packet.end(),   pos );
-
-    for ( int i = 0 ; i < opt_count ; i++ ) {
-	pos = std::copy( additional_packet_1.begin(), additional_packet_1.end(), pos );
-	//	pos = std::copy( additional_packet_2.begin(), additional_packet_2.end(), pos );
-    }
-    */
-
-    std::vector<uint8_t> packet = dns::generate_dns_query_packet( query );
+    std::vector<uint8_t> packet = dns::generate_dns_packet( header,
+							    question_section,
+							    answer_section,
+							    authority_section,
+							    additional_infomation_section );
 
     tcpv4::ClientParameters tcp_param;
     tcp_param.destination_address = DNS_SERVER_ADDRESS;
