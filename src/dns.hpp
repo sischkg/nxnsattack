@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
+#include "utils.hpp"
 
 namespace dns
 {
@@ -20,11 +21,19 @@ namespace dns
     const Class CLASS_IN = 1;
 
     typedef uint16_t Type;
-    const Type TYPE_A    = 1;
-    const Type TYPE_NS   = 2;
-    const Type TYPE_SOA  = 6;
-    const Type TYPE_AAAA = 28;
-    const Type TYPE_OPT  = 41;
+    const Type TYPE_A     = 1;
+    const Type TYPE_NS    = 2;
+    const Type TYPE_CNAME = 5;
+    const Type TYPE_SOA   = 6;
+    const Type TYPE_MX    = 15;
+    const Type TYPE_TXT   = 16;
+    const Type TYPE_KEY   = 25;
+    const Type TYPE_AAAA  = 28;
+    const Type TYPE_OPT   = 41;
+    const Type TYPE_TKEY  = 249;
+    const Type TYPE_IXFR  = 251;
+    const Type TYPE_AXFR  = 252;
+    const Type TYPE_ANY   = 255;
 
     typedef uint16_t OptType;
     const OptType OPT_NSID = 3;
@@ -120,6 +129,61 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+    class RecordMX : public ResourceData
+    {
+    private:
+	uint16_t    priority;
+        std::string domainname;
+
+    public:
+        RecordMX( uint16_t pri, const std::string &name );
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_MX;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordTXT : public ResourceData
+    {
+    private:
+        std::string data;
+
+    public:
+        RecordTXT( const std::string &data );
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_TXT;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordCNAME : public ResourceData
+    {
+    private:
+        std::string domainname;
+
+    public:
+        RecordCNAME( const std::string &name );
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_CNAME;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
     class RecordSOA : public ResourceData
     {
     private:
@@ -134,11 +198,11 @@ namespace dns
     public:
         RecordSOA( const std::string &mname,
                    const std::string &rname,
-                    uint32_t          serial,
-                    uint32_t          refresh,
-                    uint32_t          retry,
-                    uint32_t          expire,
-                    uint32_t          minimum );
+		   uint32_t          serial,
+		   uint32_t          refresh,
+		   uint32_t          retry,
+		   uint32_t          expire,
+		   uint32_t          minimum );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
@@ -152,6 +216,59 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+
+    const uint8_t PROTOCOL_TLS    = 0x01;
+    const uint8_t PROTOCOL_MAIL   = 0x02;
+    const uint8_t PROTOCOL_DNSSEC = 0x03;
+    const uint8_t PROTOCOL_IPSEC  = 0x04;
+    const uint8_t PROTOCOL_ANY    = 0xFF;
+
+    const uint8_t ALGORITHM_DH    = 0x02;
+
+    class RecordKey : public ResourceData
+    {
+    public:
+	uint8_t ac;
+	uint8_t xt;
+	uint8_t namtyp;
+	uint8_t sig;
+
+	uint8_t protocol;
+	uint8_t algorithm;
+	PacketData public_key;
+
+    public:
+        RecordKey( uint8_t in_ac        = 0,
+		   uint8_t in_xt        = 0,
+		   uint8_t in_namtyp    = 0,
+		   uint8_t in_sig       = 0,
+		   uint8_t in_protocol  = PROTOCOL_DNSSEC,
+		   uint8_t in_algorithm = ALGORITHM_DH )
+	    : ac( 0 ),
+	      xt( 0 ),
+	      namtyp( 0 ),
+	      sig( 0 ),
+	      protocol( in_protocol ),
+	      algorithm( in_algorithm )
+	{}
+
+	virtual std::string toString() const { return ""; }
+        virtual std::vector<uint8_t> getPacket() const
+	{
+	    PacketData result;
+	    result.resize( 4 );
+	    result[0] = result[1] = 0;
+	    result[2] = protocol;
+	    result[3] = algorithm;
+
+	    return result;
+	}
+        virtual uint16_t type() const
+        {
+            return TYPE_KEY;
+        }
+
+    };
 
     class OptPseudoRROption
     {
@@ -206,17 +323,19 @@ namespace dns
 
     class RecordOpt : public ResourceData
     {
-    private:
-	uint16_t payload_size;
-	uint8_t rcode;
+    public:
+	uint16_t    payload_size;
+	uint8_t     rcode;
 	std::vector<OptPseudoRROptPtr> options;
-	uint16_t rdata_size;
+	uint16_t    rdata_size;
+	std::string domainname;
 
     public:
-	RecordOpt( uint16_t in_payload_size                  = 1280,
-		   uint8_t  in_rcode                         = 0,
+	RecordOpt( uint16_t in_payload_size     = 1280,
+		   uint8_t  in_rcode            = 0,
 		   const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>(),
-		   uint32_t in_rdata_size                    = 0xffffffff );
+		   uint32_t in_rdata_size       = 0xffffffff,
+		   const std::string &in_domain = "" );
 
 	virtual std::string toString() const;
 	virtual std::vector<uint8_t> getPacket() const;
@@ -231,13 +350,51 @@ namespace dns
     };
 
 
+    class RecordTKey
+    {
+    public:
+	std::string domain;
+	std::string algorithm;
+	uint32_t    inception;
+	uint32_t    expiration;
+	uint16_t    mode;
+	uint16_t    error;
+	PacketData  key;
+	PacketData  other_data;
+    public:
+
+	RecordTKey( const std::string &dom  = "",
+		    const std::string &algo = "HMAC-MD5.SIG-ALG.REG.INT",
+		    uint32_t    incept = 0,
+		    uint32_t    expire = 0,
+		    uint16_t    m      = 0,
+		    uint16_t    err    = 0,
+		    PacketData  k      = PacketData(),
+		    PacketData  other  = PacketData() )
+	    : domain( dom ),
+	      algorithm( algo ),
+	      inception( incept ),
+	      expiration( expire ),
+	      mode( m ),
+	      error( err ),
+	      key( k ),
+	      other_data( other )
+	{}
+
+	PacketData getPacket() const;
+	uint16_t type() const { return TYPE_TKEY; }
+	uint16_t size() const;
+
+	uint16_t getResourceDataSize() const;
+    };
+
 
     struct QuestionSectionEntry
     {
-        std::string     q_domainname;
-	uint16_t q_type;
-	uint16_t q_class;
-	uint16_t q_offset;
+        std::string q_domainname;
+	uint16_t    q_type;
+	uint16_t    q_class;
+	uint16_t    q_offset;
     };
 
     struct ResponseSectionEntry
@@ -252,42 +409,67 @@ namespace dns
 
     struct QueryPacketInfo
     {
-        uint16_t id;
-	Opcode          opcode;
-        bool            recursion;
-	bool            edns0;
+        uint16_t  id;
+	Opcode    opcode;
+        bool      recursion;
+	bool      edns0;
+	bool      tkey;
         std::vector<QuestionSectionEntry> question;
-	RecordOpt       opt_pseudo_rr;
+	RecordOpt opt_pseudo_rr;
+	RecordTKey tkey_rr;
 
 	QueryPacketInfo( uint16_t in_id        = 0,
-			 Opcode          in_opcode    = OPCODE_QUERY,
-			 bool            in_recursion = false,
-			 bool            in_edns0     = false,
+			 Opcode   in_opcode    = OPCODE_QUERY,
+			 bool     in_recursion = false,
+			 bool     in_edns0     = false,
+			 bool     in_tkey      = false,
 			 const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
-			 const RecordOpt &in_opt_pseudo_rr = RecordOpt() )
+			 const RecordOpt  &in_opt_pseudo_rr = RecordOpt(),
+			 const RecordTKey &in_tkey_rr       = RecordTKey() )
 	    : id( in_id ),
 	      opcode( in_opcode ),
 	      recursion( in_recursion ),
 	      edns0( in_edns0 ),
-	      question( in_question ),
-	      opt_pseudo_rr( in_opt_pseudo_rr )
+	      tkey( in_tkey ),
+	    question( in_question ),
+	    opt_pseudo_rr( in_opt_pseudo_rr ),
+	    tkey_rr( in_tkey_rr )
 	{}
     };
 
     struct ResponsePacketInfo
     {
         uint16_t id;
+	uint16_t opcode;
         bool     recursion_available;
         bool     authoritative_answer;
         bool     truncation;
         bool     authentic_data;
         bool     checking_disabled;
         uint8_t  response_code;
+	bool     edns0;
+	bool     tkey;
+
+	RecordOpt opt_pseudo_rr;
+	RecordTKey tkey_rr;
 
         std::vector<QuestionSectionEntry> question;
         std::vector<ResponseSectionEntry> answer;
         std::vector<ResponseSectionEntry> authority;
         std::vector<ResponseSectionEntry> additional_infomation;
+
+	ResponsePacketInfo()
+	    :id( 0 ),
+	     opcode( 0 ),
+	     recursion_available( false ),
+	     authoritative_answer( false ),
+	     truncation( false ),
+	     authentic_data( false ),
+	     checking_disabled( false ),
+	     response_code( 0 ),
+	     edns0( false ),
+	     tkey( false )
+	{}
     };
 
 
@@ -297,18 +479,39 @@ namespace dns
 
         uint8_t  query_response;
         uint8_t  opcode;
-        bool            authoritative_answer;
-        bool            truncation;
-        bool            recursion_desired;
+        bool     authoritative_answer;
+        bool     truncation;
+        bool     recursion_desired;
 
-        bool            recursion_available;
-        bool            checking_disabled;
+        bool     recursion_available;
+        bool     checking_disabled;
         uint8_t  response_code;
+
+	bool     edns0;
+	bool     tkey;
+
+	RecordOpt opt_pseudo_rr;
+	RecordTKey tkey_rr;
 
         std::vector<QuestionSectionEntry> question_section;
         std::vector<ResponseSectionEntry> answer_section;
         std::vector<ResponseSectionEntry> authority_section;
         std::vector<ResponseSectionEntry> additional_infomation_section;
+
+	PacketInfo()
+	    :id( 0 ),
+	     query_response( 0 ),
+	     opcode( 0 ),
+	     authoritative_answer( 0 ),
+	     truncation( false ),
+	     recursion_desired( false ),
+	     recursion_available( false ),
+	     checking_disabled( false ),
+	     response_code( 0 ),
+	     edns0( false ),
+	     tkey( false )
+	{}
+
     };
 
     std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
@@ -317,6 +520,9 @@ namespace dns
     ResponsePacketInfo   parse_dns_response_packet( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query );
     std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &response );
+    std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
+    std::string type_code_to_string( Type t );
+    std::string response_code_to_string( uint8_t rcode );
 
     struct PacketHeaderField
     {

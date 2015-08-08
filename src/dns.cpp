@@ -9,11 +9,12 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace dns
 {
 
-    PacketData generate_dns_packet( const PacketInfo &info)
+    PacketData generate_dns_packet( const PacketInfo &info )
     {
 	PacketHeaderField header;
         header.id                   = htons( info.id );
@@ -28,10 +29,16 @@ namespace dns
         header.checking_disabled    = info.checking_disabled;
         header.response_code        = info.response_code;
 
+	int additional_infomation_count = info.additional_infomation_section.size();
+	if ( info.edns0 )
+	    additional_infomation_count++;
+	if ( info.tkey )
+	    additional_infomation_count++;
+
         header.question_count              = htons( info.question_section.size() );
         header.answer_count                = htons( info.answer_section.size() );
         header.authority_count             = htons( info.authority_section.size() );
-        header.additional_infomation_count = htons( info.additional_infomation_section.size() );
+        header.additional_infomation_count = htons( additional_infomation_count );
 
         PacketData packet;
 	std::insert_iterator<PacketData> pos( packet, packet.begin() );
@@ -59,6 +66,14 @@ namespace dns
             PacketData entry = generate_response_section( *q );
 	    pos = std::copy( entry.begin(), entry.end(), pos );
         }
+	if ( info.edns0 ) {
+            PacketData edns_data = info.opt_pseudo_rr.getPacket();
+	    pos = std::copy( edns_data.begin(), edns_data.end(), pos );
+	}
+	if ( info.tkey ) {
+            PacketData tkey_data = info.tkey_rr.getPacket();
+	    pos = std::copy( tkey_data.begin(), tkey_data.end(), pos );
+	}
 
         return packet;
     }
@@ -67,15 +82,20 @@ namespace dns
     PacketData generate_dns_query_packet( const QueryPacketInfo &query )
     {
 	PacketInfo info;
-	info.id     = query.id;
-	info.opcode = 0;
-	info.query_response = 0;
+	info.id                   = query.id;
+	info.opcode               = 0;
+	info.query_response       = 0;
 	info.authoritative_answer = 0;
 	info.truncation           = 0;
         info.recursion_desired    = query.recursion;
         info.recursion_available  = 0;
         info.checking_disabled    = 0;
         info.response_code        = 0;
+
+	info.edns0                = query.edns0;
+	info.opt_pseudo_rr        = query.opt_pseudo_rr;
+	info.tkey                 = query.tkey;
+	info.tkey_rr              = query.tkey_rr;
 
 	info.question_section = query.question;
 
@@ -95,6 +115,11 @@ namespace dns
         info.recursion_available  = response.recursion_available;
         info.checking_disabled    = 0;
         info.response_code        = response.response_code;
+
+	info.edns0                = response.edns0;
+	info.opt_pseudo_rr        = response.opt_pseudo_rr;
+	info.tkey                 = response.tkey;
+	info.tkey_rr              = response.tkey_rr;
 
 	info.question_section              = response.question;
 	info.answer_section                = response.answer;
@@ -181,6 +206,11 @@ namespace dns
         PacketData bin;
         PacketData label;
 
+	if ( domainname == "." || domainname == "" ) {
+	    bin.push_back( 0 );
+	    return bin;
+	}
+
         for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
             if ( *i == '.' ) {
                 if ( label.size() != 0 ) {
@@ -264,8 +294,8 @@ namespace dns
 
         QuestionSectionEntry sec;
         sec.q_domainname = pair.first;
-        sec.q_type  = get_bytes<uint16_t>( &p );
-        sec.q_class = get_bytes<uint16_t>( &p );
+        sec.q_type  = ntohs( get_bytes<uint16_t>( &p ) );
+        sec.q_class = ntohs( get_bytes<uint16_t>( &p ) );
 
         return QuestionSectionEntryPair( sec, p );
     }
@@ -276,11 +306,11 @@ namespace dns
         PacketData packet_name = convert_domainname_string_to_binary( response.r_domainname );
         PacketData packet_rd   = response.r_resource_data->getPacket();
         PacketData packet( packet_name.size() +
-				     2 +
-				     2 +
-				     4 +
-				     2 +
-				     packet_rd.size() );
+			   2 +
+			   2 +
+			   4 +
+			   2 +
+			   packet_rd.size() );
         uint8_t *p = packet.data();
 
         std::memcpy( p, packet_name.data(), packet_name.size() ); p += packet_name.size();
@@ -318,6 +348,15 @@ namespace dns
         case TYPE_NS:
             parsed_data = RecordNS::parse( packet, p, p + data_length );
             break;
+        case TYPE_CNAME:
+            parsed_data = RecordCNAME::parse( packet, p, p + data_length );
+            break;
+        case TYPE_MX:
+            parsed_data = RecordMX::parse( packet, p, p + data_length );
+            break;
+        case TYPE_TXT:
+            parsed_data = RecordTXT::parse( packet, p, p + data_length );
+            break;
         case TYPE_SOA:
             parsed_data = RecordSOA::parse( packet, p, p + data_length );
             break;
@@ -325,8 +364,8 @@ namespace dns
             parsed_data = RecordOpt::parse( packet, begin, p, p + data_length );
             break;
         default:
-            std::ostringstream msg;
-            msg << "not suppert type \"" << sec.r_type << "\".";
+	    std::ostringstream msg;
+	    msg << "not support type \"" << sec.r_type << "\".";
             throw std::runtime_error( msg.str() );
         }
         p += data_length;
@@ -336,12 +375,119 @@ namespace dns
     }
 
 
-    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &res )
+    std::ostream &print_header( std::ostream &os, const PacketInfo &packet )
     {
-	std::cout << "ID: " << res.id << std::endl;
-	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
-	      i != res.question.end() ; ++i )
-	    std::cout << "Query: " << i->q_domainname << std::endl;
+	os << "ID: "                   << packet.id                   << std::endl
+	   << "Query/Response: "       << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
+	   << "OpCode:"                << packet.opcode               << std::endl
+	   << "Authoritative Answwer:" << packet.authoritative_answer << std::endl
+	   << "Truncation: "           << packet.truncation           << std::endl
+	   << "Recursion Desired: "    << packet.recursion_desired    << std::endl
+	   << "Recursion Available: "  << packet.recursion_available  << std::endl
+	   << "Checking Disabled: "    << packet.checking_disabled    << std::endl
+	   << "Response Code: "        << response_code_to_string( packet.response_code ) << std::endl;
+
+	return os;
+    }
+
+    std::string type_code_to_string( Type t )
+    {
+	std::string res;
+
+	switch( t ) {
+	case TYPE_A:
+	    res = "A";
+	    break;
+	case TYPE_NS:
+	    res = "NS";
+	    break;
+	case TYPE_CNAME:
+	    res = "CNAME";
+	    break;
+	case TYPE_MX:
+	    res = "MX";
+	    break;
+	case TYPE_TXT:
+	    res = "TXT";
+	    break;
+	case TYPE_SOA:
+	    res = "SOA";
+	    break;
+	case TYPE_KEY:
+	    res = "KEY";
+	    break;
+	case TYPE_AAAA:
+	    res = "AAAA";
+	    break;
+	case TYPE_OPT:
+	    res = "OPT";
+	    break;
+	case TYPE_TKEY:
+	    res = "TKEY";
+	    break;
+	case TYPE_IXFR:
+	    res = "IXFR";
+	    break;
+	case TYPE_AXFR:
+	    res = "AXFR";
+	    break;
+	case TYPE_ANY:
+	    res = "ANY";
+	    break;
+	default:
+	    res = boost::lexical_cast<std::string>( t );
+	}
+	return res;
+    }
+
+    std::string response_code_to_string( uint8_t rcode )
+    {
+	std::string res;
+
+	const char *rcode2str[] = {
+	    "NoError   No Error",
+	    "FormErr   Format Error",
+	    "ServFail  Server Failure",
+	    "NXDomain  Non-Existent Domain",
+	    "NotImp    Not Implemented",
+	    "Refused   Query Refused",
+	    "YXDomain  Name Exists when it should not",
+	    "YXRRSet   RR Set Exists when it should not",
+	    "NXRRSet   RR Set that should exist does not",
+	    "NotAuth   Server Not Authoritative for zone",
+	    "NotZone   Name not contained in zone",
+	    "11        available for assignment",
+	    "12        available for assignment",
+	    "13        available for assignment",
+	    "14        available for assignment",
+	    "15        available for assignment",
+	    "BADVERS   Bad OPT Version",                   
+	    "BADSIG    TSIG Signature Failure",     
+	    "BADKEY    Key not recognized",
+	    "BADTIME   Signature out of time window",
+	    "BADMODE   Bad TKEY Mode",
+	    "BADNAME   Duplicate key name",
+	    "BADALG    Algorithm not supported",
+	};
+
+	if ( rcode < sizeof(rcode2str)/sizeof(char *) )
+	    res = rcode2str[ rcode ];
+	else
+	    res = "n         available for assignment";
+
+	return res;
+    }
+
+    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query )
+    {
+	os << "ID: "                   << query.id        << std::endl
+	   << "OpCode:"                << query.opcode    << std::endl
+	   << "Query/Response: "       << "Query"         << std::endl
+	   << "Recursion Desired: "    << query.recursion << std::endl;
+
+	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = query.question.begin() ;
+	      i != query.question.end() ; ++i )
+	    os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << std::endl;
 
 	return os;
     }
@@ -349,21 +495,40 @@ namespace dns
 
     std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &res )
     {
-	std::cout << "ID: " << res.id << std::endl;
+	os << "ID: "                   << res.id                   << std::endl
+	   << "Query/Response: "       << "Response"               << std::endl
+	   << "OpCode:"                << res.opcode               << std::endl
+	   << "Authoritative Answwer:" << res.authoritative_answer << std::endl
+	   << "Truncation: "           << res.truncation           << std::endl
+	   << "Recursion Available: "  << res.recursion_available  << std::endl
+	   << "Checking Disabled: "    << res.checking_disabled    << std::endl
+	   << "Response Code: "        << response_code_to_string( res.response_code ) << std::endl;
+
 	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
 	      i != res.question.end() ; ++i )
-	    std::cout << "Query: " << i->q_domainname << std::endl;
+	    os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << "  ?" << std::endl;
 	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.answer.begin() ;
 	      i != res.answer.end() ; ++i ) {
-	    std::cout << "Answer: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	    std::cout << "Answer: "
+		      << i->r_domainname                  << " "
+		      << i->r_ttl                         << " "
+		      << type_code_to_string( i->r_type ) << " "
+		      << i->r_resource_data->toString()   << std::endl;
 	}
 	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.authority.begin() ;
 	      i != res.authority.end() ; ++i ) {
-	    std::cout << "Authority: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	    std::cout << "Authority: "
+		      << i->r_ttl                         << " "
+		      << type_code_to_string( i->r_type ) << " "
+		      << i->r_resource_data->toString()   << std::endl;
 	}
 	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.additional_infomation.begin() ;
 	      i != res.additional_infomation.end() ; ++i ) {
-	    std::cout << "Additional: " << i->r_domainname << " " << i->r_ttl << " " << i->r_type << " " << i->r_resource_data->toString() << std::endl;
+	    std::cout << "Additional: "
+		      << i->r_domainname                  << " "
+		      << i->r_ttl                         << " "
+		      << type_code_to_string( i->r_type ) << " "
+		      << i->r_resource_data->toString()   << std::endl;
 	}
 
 	return os;
@@ -446,7 +611,6 @@ namespace dns
         : domainname( name )
     {}
 
-
     std::string RecordNS::toString() const
     {
         return domainname;
@@ -467,6 +631,103 @@ namespace dns
         return ResourceDataPtr( new RecordNS( pair.first ) );
     }
 
+
+    RecordMX::RecordMX( uint16_t pri, const std::string &name )
+        : priority( pri ), domainname( name )
+    {}
+
+    std::string RecordMX::toString() const
+    {
+	std::ostringstream os;
+	os << priority << " " << domainname;
+        return os.str();
+    }
+
+
+    PacketData RecordMX::getPacket() const
+    {
+	PacketData packet;
+	packet.resize( 2 );
+	*( reinterpret_cast<uint16_t *>( &packet[0] ) ) = htons( priority );
+	PacketData name = convert_domainname_string_to_binary( domainname );
+	packet.insert( packet.end(), name.begin(), name.end() );
+	return packet;
+    }
+
+
+    ResourceDataPtr RecordMX::parse( const uint8_t *packet,
+				     const uint8_t *begin,
+				     const uint8_t *end )
+    {
+	if ( end - begin < 3 )
+	    throw FormatError( "too few length for MX record," );
+	const uint8_t *pos = begin;
+	uint16_t priority = get_bytes<uint16_t>( &pos );
+        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, pos );
+        return ResourceDataPtr( new RecordMX( priority, pair.first ) );
+    }
+
+
+    RecordTXT::RecordTXT( const std::string &d )
+        : data( d )
+    {}
+
+    std::string RecordTXT::toString() const
+    {
+        return data;
+    }
+
+
+    PacketData RecordTXT::getPacket() const
+    {
+	PacketData d;
+	for ( std::string::const_iterator i = data.begin() ; i != data.end() ; ++i )
+	    d.push_back( *i );
+        return d;
+    }
+
+
+    ResourceDataPtr RecordTXT::parse( const uint8_t *packet,
+				      const uint8_t *begin,
+				      const uint8_t *end )
+    {
+	for ( const uint8_t *p = begin ; p != end ; p++ )
+	    std::cerr << "\"" << *p << "\"";
+	std::cerr << std::endl << (int)( end - begin ) << std::endl;
+	if ( end - begin < 4 )
+	    throw FormatError( "too few length for TXT record" );
+	const uint8_t *pos = begin;
+	uint16_t length = ntohs( get_bytes<uint16_t>( &pos ) );
+	std::cerr << std::endl << length << std::endl;
+	if ( end - begin != 2 + length )
+	    throw FormatError( "txt length + 2 dose not equal to rdlength" );
+
+        return ResourceDataPtr( new RecordTXT( std::string( pos, end ) ) );
+    }
+
+    RecordCNAME::RecordCNAME( const std::string &name )
+        : domainname( name )
+    {}
+
+    std::string RecordCNAME::toString() const
+    {
+        return domainname;
+    }
+
+
+    PacketData RecordCNAME::getPacket() const
+    {
+        return convert_domainname_string_to_binary( domainname );
+    }
+
+
+    ResourceDataPtr RecordCNAME::parse( const uint8_t *packet,
+                                     const uint8_t *begin,
+                                     const uint8_t *end )
+    {
+        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
+        return ResourceDataPtr( new RecordCNAME( pair.first ) );
+    }
 
     RecordSOA::RecordSOA( const std::string &mn,
 			  const std::string &rn,
@@ -495,16 +756,23 @@ namespace dns
 
     PacketData RecordSOA::getPacket() const
     {
-        PacketData packet       = convert_domainname_string_to_binary( mname );
+	PacketData packet;
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+
+        PacketData mname_packet = convert_domainname_string_to_binary( mname );
         PacketData rname_packet = convert_domainname_string_to_binary( rname );
-        packet.insert( packet.end(), rname_packet.begin(), rname_packet.end() );
-        packet.resize( packet.size() + sizeof(SOAField) );
-        uint8_t *p = packet.data();
-        p = dns::set_bytes<uint32_t>( htonl( serial ),  p );
-        p = dns::set_bytes<uint32_t>( htonl( refresh ), p );
-        p = dns::set_bytes<uint32_t>( htonl( retry ),   p );
-        p = dns::set_bytes<uint32_t>( htonl( expire ),  p );
-        p = dns::set_bytes<uint32_t>( htonl( minimum ), p );
+	pos = std::copy( mname_packet.begin(), mname_packet.end(), pos );
+	pos = std::copy( rname_packet.begin(), rname_packet.end(), pos );
+	SOAField soa_param;
+	soa_param.serial  = htonl( serial );
+	soa_param.refresh = htonl( refresh );
+	soa_param.retry   = htonl( retry );
+	soa_param.expire  = htonl( expire );
+	soa_param.minimum = htonl( minimum );
+
+	pos = std::copy( reinterpret_cast<uint8_t *>( &soa_param ),
+			 reinterpret_cast<uint8_t *>( &soa_param ) + sizeof( soa_param ),
+			 pos );
 
         return packet;
     }
@@ -517,11 +785,11 @@ namespace dns
         std::pair<std::string, const uint8_t *> mname_pair = convert_domainname_binary_to_string( packet, begin );
         std::pair<std::string, const uint8_t *> rname_pair = convert_domainname_binary_to_string( packet, mname_pair.second );
         const uint8_t *p = rname_pair.second;
-        uint32_t serial  = htonl( get_bytes<uint32_t>( &p ) );
-        uint32_t refresh = htonl( get_bytes<uint32_t>( &p ) );
-        uint32_t retry   = htonl( get_bytes<uint32_t>( &p ) );
-        uint32_t expire  = htonl( get_bytes<uint32_t>( &p ) );
-        uint32_t minimum = htonl( get_bytes<uint32_t>( &p ) );
+        uint32_t serial  = ntohl( get_bytes<uint32_t>( &p ) );
+        uint32_t refresh = ntohl( get_bytes<uint32_t>( &p ) );
+        uint32_t retry   = ntohl( get_bytes<uint32_t>( &p ) );
+        uint32_t expire  = ntohl( get_bytes<uint32_t>( &p ) );
+        uint32_t minimum = ntohl( get_bytes<uint32_t>( &p ) );
 
         return ResourceDataPtr( new RecordSOA( mname_pair.first,
                                                rname_pair.first,
@@ -536,17 +804,18 @@ namespace dns
     RecordOpt::RecordOpt( uint16_t in_payload_size,
 			  uint8_t  in_rcode,
 			  const std::vector<OptPseudoRROptPtr> &in_options,
-			  uint32_t in_rdata_size )
+			  uint32_t in_rdata_size,
+			  const std::string &in_domain )
 	: payload_size( in_payload_size ),
 	  rcode( in_rcode ),
-	  options( in_options )
+	  options( in_options ),
+	  domainname( in_domain )
     {
 	if ( in_rdata_size == 0xffffffff ) {
 	    rdata_size = 0;
 	    for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin() ;
 		  i != options.end() ;
 		  ++i ) {
-		rdata_size += (*i)->size();
 		rdata_size = boost::numeric_cast<uint16_t>( boost::numeric_cast<uint32_t>( (*i)->size() ) + rdata_size ); 
 	    }
 	}
@@ -558,7 +827,7 @@ namespace dns
     {
 	std::ostringstream os;
 
-	os << "ENS0" << std::endl; 
+	os << "ENS0: " << std::endl; 
 	os << "Payload Size: " << payload_size << std::endl;
 
 	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
@@ -570,25 +839,34 @@ namespace dns
 	return os.str();
     }
 
+
+    struct OptField {
+	uint16_t type;
+	uint16_t payload_size;
+	uint8_t  rcode;
+	uint8_t  version;
+	uint16_t flags;
+	uint16_t rdata_size;
+    };
+
     PacketData RecordOpt::getPacket() const
     {
-	PacketData result;
-	result.resize( 1 + // domain name "."  
-		       2 + // TYPE OPT
-		       2 + // CLASS payload size
-		       4 + // TTL
-		       2 + // RDATA SIZE
-		       rdata_size );
+	PacketData packet;
+	
+	PacketData domainname_packet = convert_domainname_string_to_binary( domainname );
+	OptField field;
+	field.type         = htons( TYPE_OPT );
+	field.payload_size = htons( payload_size );
+	field.rcode        = rcode;
+	field.version      = 0;
+	field.flags        = 0;
+	field.rdata_size   = htons( rdata_size );
 
-	uint8_t *pos = &result[0];
-
-	pos = set_bytes<uint8_t >( 0,                     pos ); // domain name "."
-	pos = set_bytes<uint16_t>( htons( TYPE_OPT ),     pos ); //   
-	pos = set_bytes<uint16_t>( htons( payload_size ), pos ); // payload size
-	pos = set_bytes<uint8_t >( rcode,                 pos ); // extended rcode
-	pos = set_bytes<uint8_t >( 0,                     pos ); // EDNS version
-	pos = set_bytes<uint16_t>( 0,                     pos ); // 
-	pos = set_bytes<uint16_t>( htons( rdata_size ),   pos ); // rdata_size
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+	pos = std::copy( domainname_packet.begin(), domainname_packet.end(), pos );
+	pos = std::copy( reinterpret_cast<const uint8_t *>( &field ),
+			 reinterpret_cast<const uint8_t *>( &field ) + sizeof(field),
+			 pos );
 
 	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
 	      i != options.end() ;
@@ -597,7 +875,7 @@ namespace dns
 	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );
 	}
 
-	return result;
+	return packet;
     }
 
     ResourceDataPtr RecordOpt::parse( const uint8_t *packet,
@@ -622,7 +900,7 @@ namespace dns
 	uint16_t payload_size = ntohs( get_bytes<uint16_t>( &pos ) );
 	uint8_t  rcode        = get_bytes<uint8_t >( &pos );
 	uint8_t  edns_vesion  = get_bytes<uint8_t >( &pos );
-	uint16_t flags        = get_bytes<uint16_t>( &pos );
+	uint16_t flags        = ntohs( get_bytes<uint16_t>( &pos ) );
 	uint16_t rdata_size   = ntohs( get_bytes<uint16_t>( &pos ) );
 
 	std::vector<OptPseudoRROptPtr> options;
@@ -653,7 +931,6 @@ namespace dns
 	    }
 	    pos += option_size;
 	}
-
 	return ResourceDataPtr( new RecordOpt( payload_size, rcode, options ) );
     }
 
@@ -674,6 +951,61 @@ namespace dns
     {
 	std::string nsid( begin, end );
 	return OptPseudoRROptPtr( new NSIDOption( nsid ) );
+    }
+
+
+    uint16_t RecordTKey::size() const
+    {
+	PacketData domain_data = convert_domainname_string_to_binary( domain );
+
+	return domain_data.size() + 
+	    2 + // TYPE
+	    2 + // CLASS
+	    4 + // TTL
+	    2 + // RDLEN
+	    getResourceDataSize(); // ResourceData
+    }
+
+    uint16_t RecordTKey::getResourceDataSize() const
+    {
+	PacketData algorithm_data = convert_domainname_string_to_binary( algorithm );
+
+	return algorithm_data.size() + //
+	    4 + // inception
+	    4 + // expiration
+	    2 + // mode
+	    2 + // error
+	    2 + // key size
+	    key.size() + // key
+	    2 + // other data size
+	    other_data.size();
+    }
+
+    PacketData RecordTKey::getPacket() const
+    {
+	PacketData packet;
+	packet.resize( size() );
+
+	PacketData domain_data    = convert_domainname_string_to_binary( domain );
+	PacketData algorithm_data = convert_domainname_string_to_binary( algorithm );
+
+	uint8_t *pos = &packet[0];
+	pos = std::copy( domain_data.begin(), domain_data.end(), pos );
+	pos = set_bytes<uint16_t>( htons( TYPE_TKEY ),  pos );
+	pos = set_bytes<uint16_t>( htons( 1 ),          pos );
+	pos = set_bytes<uint32_t>( 0,                   pos );
+	pos = set_bytes<uint16_t>( htons( getResourceDataSize() ), pos );
+	pos = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
+	pos = set_bytes<uint32_t>( htonl( inception ),  pos );
+	pos = set_bytes<uint32_t>( htonl( expiration ), pos );
+	pos = set_bytes<uint16_t>( htons( mode ),       pos );
+	pos = set_bytes<uint16_t>( htons( error ),      pos );
+	pos = set_bytes<uint16_t>( htons( key.size() ), pos );
+	pos = std::copy( key.begin(), key.end(), pos );
+	pos = set_bytes<uint16_t>( htons( other_data.size() ), pos );
+	pos = std::copy( other_data.begin(), other_data.end(), pos );
+
+	return packet;
     }
 
 }

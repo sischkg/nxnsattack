@@ -8,13 +8,13 @@
 const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 // const char *DNS_SERVER_ADDRESS = "192.168.33.11";
 // const char *DNS_SERVER_ADDRESS = "172.16.253.81";
-//const char *DNS_SERVER_ADDRESS = "49.212.193.254";
+// const char *DNS_SERVER_ADDRESS = "49.212.193.254";
 
 int main()
 {
     dns::QuestionSectionEntry question;
-    question.q_domainname = "mail.example.com";
-    question.q_type       = dns::TYPE_A;
+    question.q_domainname = "text.siskrn.co";
+    question.q_type       = dns::TYPE_TXT;
     question.q_class      = dns::CLASS_IN;
 
     std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
@@ -24,10 +24,12 @@ int main()
 
     dns::QueryPacketInfo query;
     query.id        = 0x1234;
-    query.recursion = false;
+    query.recursion = true;
     query.question.push_back( question );
     query.edns0     = true;
     query.opt_pseudo_rr = dns::RecordOpt( 1280, 0, edns_options_1 );
+    query.opt_pseudo_rr.domainname = "www.yahoo.co.jp";
+    query.opt_pseudo_rr.payload_size = 512;
 
     dns::RecordOpt opt2( 560, 0, edns_options_2 );
 
@@ -47,14 +49,15 @@ int main()
     header.question_count              = htons( 1 );
     header.answer_count                = htons( 0 );
     header.authority_count             = htons( 0 );
-    header.additional_infomation_count = htons( 2 );
+    header.additional_infomation_count = htons( 1 );
 
     std::vector<uint8_t> packet;
     std::vector<uint8_t> question_packet   = dns::generate_question_section( query.question[0] );
     std::vector<uint8_t> opt_pseudo_packet_1 = query.opt_pseudo_rr.getPacket();
     std::vector<uint8_t> opt_pseudo_packet_2 = opt2.getPacket();
     
-    int packet_size = sizeof(header) + question_packet.size() + opt_pseudo_packet_1.size() + opt_pseudo_packet_2.size();
+    int packet_size = sizeof(header) + question_packet.size() + opt_pseudo_packet_1.size();
+    //    int packet_size = sizeof(header) + question_packet.size() + opt_pseudo_packet_1.size() + opt_pseudo_packet_2.size();
     packet.resize( packet_size );
 
     uint8_t *pos = &packet[0];
@@ -67,9 +70,9 @@ int main()
     pos = std::copy( opt_pseudo_packet_1.begin(),
 		     opt_pseudo_packet_1.end(),
 		     pos );
-    pos = std::copy( opt_pseudo_packet_2.begin(),
-		     opt_pseudo_packet_2.end(),
-		     pos );
+    //    pos = std::copy( opt_pseudo_packet_2.begin(),
+    //		     opt_pseudo_packet_2.end(),
+    //		     pos );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = DNS_SERVER_ADDRESS;
