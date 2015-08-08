@@ -89,7 +89,7 @@ int main( int argc, char **argv )
         query.recursion = true;
         query.question.push_back( question );
 
-        std::vector<8_t> dns_query_packet = dns::generate_dns_query_packet( query );
+        std::vector<uint8_t> dns_query_packet = dns::generate_dns_query_packet( query );
 
         udpv4::ClientParameters udp_param;
         udp_param.destination_address = target_dns_server;

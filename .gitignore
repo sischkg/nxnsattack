@@ -2,6 +2,7 @@
 *.c
 \#*
 .\#*
+*.a
 src/echo
 src/dns
 src/poison

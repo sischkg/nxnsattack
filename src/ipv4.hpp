@@ -96,10 +96,10 @@ namespace ipv4
             return data.size();
         }
 
-	const uint8_t *getPayload() const { payload.get(); }
-	const uint8_t *getHeader()  const { header.get();  }
-	const uint16_t getPayloadSize() const { payload_length; }
-	const uint16_t getHeaderSize() const { header_length; } 
+	const uint8_t *getPayload() const { return payload.get(); }
+	const uint8_t *getHeader()  const { return header.get();  }
+	const uint16_t getPayloadSize() const { return payload_length; }
+	const uint16_t getHeaderSize() const { return header_length; } 
    };
 
 

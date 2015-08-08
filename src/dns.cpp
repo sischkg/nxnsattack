@@ -143,9 +143,9 @@ namespace dns
         packet_info.recursion = header->recursion_desired;
 
         int question_count              = ntohs( header->question_count );
-        int answer_count                = ntohs( header->answer_count );
-        int authority_count             = ntohs( header->authority_count );
-        int additional_infomation_count = ntohs( header->additional_infomation_count );
+        // int answer_count                = ntohs( header->answer_count );
+        // int authority_count             = ntohs( header->authority_count );
+        // int additional_infomation_count = ntohs( header->additional_infomation_count );
 
         packet += sizeof(PacketHeaderField);
         for ( int i = 0 ; i < question_count ; i++ ) {
@@ -583,14 +583,14 @@ namespace dns
 
     RecordAAAA::RecordAAAA( const uint8_t *addr )
     {
-        std::memcpy( sin_addr, addr, sizeof(addr) );
+        std::memcpy( sin_addr, addr, 32 );
     }
 
     std::string RecordAAAA::toString() const
     {
         std::stringstream buff;
         buff << std::hex << (uint32_t)sin_addr[0];
-        for ( int i = 1 ; i < sizeof(sin_addr) ; i++ ) {
+        for ( unsigned int i = 1 ; i < sizeof(sin_addr) ; i++ ) {
             buff << ":" << (uint32_t)sin_addr[i];
         }
         return buff.str();
@@ -842,7 +842,6 @@ namespace dns
 	const uint8_t *pos = begin;
 
 	std::vector<OptPseudoRROptPtr> options;
-	uint16_t read_size = 0;
 	while ( pos < end ) {
 	    if ( end - pos < 4 ) {
 		std::ostringstream os;

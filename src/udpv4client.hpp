@@ -34,11 +34,11 @@ namespace udpv4
         uint16_t sendPacket( const uint8_t *data, uint16_t size );
         uint16_t sendPacket( const uint8_t *begin, const uint8_t *end )
         {
-            sendPacket( begin, end - begin );
+            return sendPacket( begin, end - begin );
         }
         uint16_t sendPacket( const std::vector<uint8_t> &packet )
         {
-            sendPacket( packet.data(), packet.size() );
+            return sendPacket( packet.data(), packet.size() );
         }
 
         PacketInfo receivePacket( bool is_nonblocking = false );

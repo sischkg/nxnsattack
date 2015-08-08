@@ -119,12 +119,11 @@ int main( int argc, char **argv )
     dst_socket_address.sin_family = AF_INET;
     dst_socket_address.sin_port   = htons( raw_tcp_packet_info.destination_port );
 
-    uint16_t sent_size;
-    if ( sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-			     reinterpret_cast<const sockaddr *>( &dst_socket_address ),
-			     sizeof(dst_socket_address) ) < 0 ) {
+    uint16_t sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
+				 reinterpret_cast<const sockaddr *>( &dst_socket_address ),
+				 sizeof(dst_socket_address) );
+    if ( sent_size < 0 )
 	perror( "cannot send packet" );
-    }
 
     close( raw_socket );
 

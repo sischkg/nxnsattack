@@ -106,7 +106,7 @@ namespace udpv4
 
     bool Client::isReadable()
     {
-
+	return true;
     }
 
 
@@ -167,11 +167,11 @@ namespace udpv4
         dst_socket_address.sin_port   = htons( udp_packet_info.destination_port );
 
         uint16_t sent_size;
-        if ( sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-                                 reinterpret_cast<const sockaddr *>( &dst_socket_address ),
-                                 sizeof(dst_socket_address) ) < 0 ) {
+        sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
+			    reinterpret_cast<const sockaddr *>( &dst_socket_address ),
+			    sizeof(dst_socket_address) );
+        if ( sent_size < 0 )
             throw SocketError( get_error_message( "cannot send packet", errno ) );
-        }
 
         return sent_size;
     }
