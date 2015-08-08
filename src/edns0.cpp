@@ -4,19 +4,42 @@
 #include <iostream>
 #include <algorithm>
 #include <arpa/inet.h>
+#include <boost/program_options.hpp>
 
 const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 // const char *DNS_SERVER_ADDRESS = "192.168.33.11";
 // const char *DNS_SERVER_ADDRESS = "172.16.253.81";
 // const char *DNS_SERVER_ADDRESS = "49.212.193.254";
 
+namespace po = boost::program_options;
+
 int main( int argc, char **argv )
 {
     std::string target_server = DNS_SERVER_ADDRESS;
-    if ( argc >= 1 ) {
-	target_server = argv[1];
-    }
+    int test_version = 0;
 
+    po::options_description desc("UDP Echo client.");
+    desc.add_options()
+        ("help,h",
+         "print this message")
+
+        ("server,s",
+         po::value<std::string>(&target_server)->default_value( DNS_SERVER_ADDRESS ),
+         "target server address")
+
+        ("test_version,t",
+         po::value<int>(&test_version)->default_value( 0 ),
+         "test version")
+        ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line( argc, argv, desc), vm);
+    po::notify(vm);
+
+    if ( vm.count("help") ) {
+        std::cerr << desc << "\n";
+        return 1;
+    }
 
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
@@ -26,6 +49,8 @@ int main( int argc, char **argv )
     question.q_type       = dns::TYPE_A;
     question.q_class      = dns::CLASS_IN;
     question_section.push_back( question );
+
+
 
     std::vector<dns::OptPseudoRROptPtr> options;
     std::string nsid = "";
