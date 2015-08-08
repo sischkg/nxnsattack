@@ -10,8 +10,13 @@ const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 // const char *DNS_SERVER_ADDRESS = "172.16.253.81";
 // const char *DNS_SERVER_ADDRESS = "49.212.193.254";
 
-int main()
+int main( int argc, char **argv )
 {
+    std::string target_server = DNS_SERVER_ADDRESS;
+    if ( argc >= 1 ) {
+	target_server = argv[1];
+    }
+
     dns::QuestionSectionEntry question;
     question.q_domainname = "text.siskrn.co";
     question.q_type       = dns::TYPE_TXT;
@@ -75,7 +80,7 @@ int main()
     //		     pos );
 
     udpv4::ClientParameters udp_param;
-    udp_param.destination_address = DNS_SERVER_ADDRESS;
+    udp_param.destination_address = target_server;
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
     udp.sendPacket( packet.data(), packet.size() );
