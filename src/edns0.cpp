@@ -44,23 +44,144 @@ int main( int argc, char **argv )
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
-    dns::QuestionSectionEntry question;
-    question.q_domainname = "www.example.com";
-    question.q_type       = dns::TYPE_A;
-    question.q_class      = dns::CLASS_IN;
-    question_section.push_back( question );
+    switch ( test_version ) {
+    case 1:
+	/* multiple opt-pseudo-records in additional infomation section. */
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
 
+	    std::vector<dns::OptPseudoRROptPtr> options1, options2;
+	    dns::OptPseudoRecord opt_pseudo_rr_1, opt_pseudo_rr_2;
 
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
 
-    std::vector<dns::OptPseudoRROptPtr> options;
-    std::string nsid = "";
+	    options2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_2.payload_size        = 1280;
+	    opt_pseudo_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options2 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_2 ) );
+	}
+	break;
 
-    options.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
-    dns::OptPseudoRecord opt;
-    opt.payload_size = 1280;
-    opt.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options ) );
+    case 2:
+	/* opt-pseudo-record in answer section. */
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
 
-    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    answer_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    case 3:
+	/* opt-pseudo-record in authority section. */
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    authority_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    case 4:
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.domainname          = "www.example.com";
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    case 5:
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bad client" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    case 6:
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    default:
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+    }
 
     dns::PacketHeaderField header;
     header.id                   = htons( 1234 );
@@ -68,11 +189,11 @@ int main( int argc, char **argv )
     header.query_response       = 0;
     header.authoritative_answer = 0;
     header.truncation           = 0;
-    header.recursion_desired    = false;
+    header.recursion_desired    = 0;
     header.recursion_available  = 0;
     header.zero_field           = 0;
     header.authentic_data       = 0;
-    header.checking_disabled    = 0;
+    header.checking_disabled    = 1;
     header.response_code        = 0;
 
     std::vector<uint8_t> packet = dns::generate_dns_packet( header,

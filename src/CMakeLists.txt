@@ -10,7 +10,7 @@ add_library(
   libipv4
   utils.cpp
   ipv4.cpp udpv4.cpp udpv4client.cpp udpv4server.cpp
-  tcpv4.cpp tcpv4client.cpp )
+  tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
 add_library( libdns dns.cpp )
 
 add_executable( echo                echo.cpp  )
@@ -38,7 +38,7 @@ target_link_libraries( idns_server         libdns libipv4)
 target_link_libraries( uncompress_loop     libdns libipv4)
 target_link_libraries( uncompress_loop_tcp libdns libipv4)
 target_link_libraries( edns0        boost_program_options libipv4 libdns)
-target_link_libraries( edns0_server libipv4 libdns)
+target_link_libraries( edns0_server boost_thread boost_system libipv4 libdns)
 target_link_libraries( edns0_tcp    libipv4 libdns)
 target_link_libraries( tkey         libipv4 libdns)
 
