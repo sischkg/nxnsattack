@@ -15,7 +15,7 @@ int main()
     query.recursion = false;
     query.question.push_back( question );
 
-    udpv4::Sender sender;
+    udpv4::Sender sender( udpv4::Sender::ChecksumPtr( new udpv4::BadChecksumCalculator ) );
     udpv4::Receiver receiver( 10000 );
 
     udpv4::PacketInfo udp_param;

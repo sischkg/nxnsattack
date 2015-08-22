@@ -155,7 +155,6 @@ int main( int argc, char **argv )
         if ( res.response_code == dns::SERVER_ERROR )
             break;
     }
-poisoned:
 
     std::cout << res;
 

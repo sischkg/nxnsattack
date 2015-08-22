@@ -107,6 +107,11 @@ namespace udpv4
 	virtual uint16_t operator()( const PacketInfo & ) const;
     };
 
+    struct BadChecksumCalculator : public ChecksumCalculatable
+    {
+	virtual uint16_t operator()( const PacketInfo & ) const;
+    };
+
     Packet generate_udpv4_packet( const PacketInfo &,
 				  const ChecksumCalculatable &checksum = StandardChecksumCalculator() );
 }

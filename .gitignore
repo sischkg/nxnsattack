@@ -23,5 +23,8 @@ src/dns_server
 src/edns0_server
 src/edns_server
 src/tkey
+src/echo_client
+src/echo_server
+
 
 

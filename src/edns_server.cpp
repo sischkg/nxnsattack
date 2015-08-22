@@ -26,11 +26,7 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     dns::QuestionSectionEntry question;
     question.q_domainname = query.q_domainname;
     question.q_type       = query.q_type;
-    question.q_class      = query.q_class;
-    question_section.push_back( question );
-    /*
-    dns::ResponseSectionEntry answer;
-    answer.r_domainname = query.q_domainname;
+    question.q_class      = query.q_class;e;
     answer.r_type       = dns::TYPE_A;
     answer.r_class      = dns::CLASS_IN;
     answer.r_ttl        = 30;
@@ -38,18 +34,20 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     answer_section.push_back( answer );
 
     dns::ResponseSectionEntry authority;
-    authority.r_domainname = query.q_domainname;
-    authority.r_type       = dns::TYPE_SOA;
+    authority.r_domainname = "example.com";
+    authority.r_type       = dns::TYPE_NS;
     authority.r_class      = dns::CLASS_IN;
     authority.r_ttl        = 30;
-    authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( query.q_domainname,
-									  "hostmaster." + question.q_domainname,
-									  1,      // serial
-									  300,    // refresh
-									  1000,   // retry
-									  10000,  // exipire
-									  30 ) ); // minimum
+    authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( "ns1.example.com" ) );
     authority_section.push_back( authority );
+
+    dns::ResponseSectionEntry additional;
+    additional.r_domainname = "ns1.example.com";
+    additional.r_type       = dns::TYPE_A;
+    additional.r_class      = dns::CLASS_IN;
+    additional.r_ttl        = 30;
+    additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
+    additional_infomation_section.push_back( additional );
 
     std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
     edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
@@ -58,17 +56,20 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     dns::OptPseudoRecord opt_rr_1, opt_rr_2;
     opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
     opt_rr_1.payload_size = 1024;
+    opt_rr_1.rcode        = 1;
     opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
     opt_rr_2.payload_size = 1024;
+    opt_rr_2.rcode        = 0;
     additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
-    */
+    //    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+
+
     dns::PacketHeaderField header;
     header.id                   = htons( id );
     header.opcode               = 0;
     header.query_response       = 1;
     header.authoritative_answer = 1;
-    header.truncation           = 1;
+    header.truncation           = 0;
     header.recursion_desired    = 0;
     header.recursion_available  = 0;
     header.zero_field           = 0;
@@ -76,8 +77,10 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     header.checking_disabled    = 1;
     header.response_code        = dns::NO_ERROR;
 
+    std::cerr << "send response" << std::endl;
+
     return dns::generate_dns_packet( header,
-				     question_section,
+				     question_section, 
 				     answer_section,
 				     authority_section,
 				     additional_infomation_section );
@@ -149,7 +152,7 @@ void tcp_server()
 		connection->send( response_packet );
 	    }
 	    catch( std::runtime_error &e ) {
-		std::cerr << "send response failed," << std::endl;
+		std::cerr << "send response failed(" << e.what() << ")." << std::endl;
 		std::exit(1 );
 	    }
 	}

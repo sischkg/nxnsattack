@@ -66,11 +66,11 @@ namespace tcpv4
         uint16_t send( const uint8_t *data, uint16_t size );
         uint16_t send( const uint8_t *begin, const uint8_t *end )
         {
-            send( begin, end - begin );
+            return send( begin, end - begin );
         }
         uint16_t send( const std::vector<uint8_t> &packet )
         {
-            send( packet.data(), packet.size() );
+            return send( packet.data(), packet.size() );
         }
 
         ConnectionInfo receive( bool is_nonblocking = false );

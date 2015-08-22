@@ -10,6 +10,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <boost/scoped_array.hpp>
+#include <iostream>
 #include "utils.hpp"
 
 
@@ -72,7 +73,7 @@ namespace udpv4
 				reinterpret_cast<const sockaddr *>( &socket_address ), sizeof(socket_address) );
         if ( sent_size < 0 ) {
 	    std::ostringstream s;
-	    s << "cannot to to " << dest.destination_address << ":" << dest.destination_port << ".";
+	    s << "cannot send to " << dest.destination_address << ":" << dest.destination_port << ".";
             std::string msg = get_error_message( s.str(), errno );
             throw SocketError( msg );
         }
@@ -97,9 +98,11 @@ namespace udpv4
                                   receive_buffer.data(), UDP_RECEIVE_BUFFER_SIZE,
                                   flags,
                                   reinterpret_cast<sockaddr *>( &peer_address ), &peer_address_size );
+	std::cerr << "recv" << std::endl;
         if ( recv_size < 0 ) {
             int error_num = errno;
             if ( error_num == EAGAIN ) {
+		std::cerr << "EAGAIN" << std::endl;
                 PacketInfo info;
                 return info;
             }
@@ -110,7 +113,7 @@ namespace udpv4
         PacketInfo info;
         info.source_address = convert_address_binary_to_string( peer_address.sin_addr );
         info.source_port    = ntohs( peer_address.sin_port );
-        info.payload        = receive_buffer;
+        info.payload.insert( info.payload.end(), receive_buffer.begin(), receive_buffer.begin() + recv_size );
         return info;
     }
 

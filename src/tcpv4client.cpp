@@ -94,8 +94,6 @@ namespace tcpv4
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
 
-        sockaddr_in peer_address;
-        socklen_t   peer_address_size = sizeof(peer_address);
 	std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
 	int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
 
@@ -119,10 +117,6 @@ namespace tcpv4
 	if ( tcp_socket < 0 )
             openSocket();
 
-        int flags = 0;
-
-        sockaddr_in peer_address;
-        socklen_t   peer_address_size = sizeof(peer_address);
 	std::vector<uint8_t> receive_buffer( size );
 	int recv_size = read( tcp_socket, receive_buffer.data(), size );
 
@@ -144,7 +138,7 @@ namespace tcpv4
 
     bool Client::isReadable()
     {
-
+	return true;
     }
 
 

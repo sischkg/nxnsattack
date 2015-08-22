@@ -33,7 +33,7 @@ namespace udpv4
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "pseudoheader:" );
-        for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
+        for ( uint16_t i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
         }
         printf( "\n" );
@@ -43,7 +43,7 @@ namespace udpv4
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "udpv4header:" );
-        for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
+        for ( uint16_t i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
         }
         printf( "\n" );
@@ -53,7 +53,7 @@ namespace udpv4
     {
         printf( "length: %hd\n", length );
         printf( "payload:" );
-        for ( int i = 0 ; i < length ; i++ ) {
+        for ( uint16_t i = 0 ; i < length ; i++ ) {
             printf( " \"%c\"", data[i] );
         }
         printf( "\n" );
@@ -116,6 +116,11 @@ namespace udpv4
     uint16_t StandardChecksumCalculator::operator()( const PacketInfo &info ) const
     {
 	return compute_udpv4_checksum( info );
+    }
+
+    uint16_t BadChecksumCalculator::operator()( const PacketInfo &info ) const
+    {
+	return compute_udpv4_checksum( info ) + 1;
     }
 
 }

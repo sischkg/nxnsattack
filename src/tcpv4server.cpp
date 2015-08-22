@@ -99,7 +99,7 @@ namespace tcpv4
     ConnectionPtr Server::acceptConnection()
     {
 	sockaddr_in socket_address;
-	socklen_t   socket_address_size;
+	socklen_t   socket_address_size = sizeof(socket_address);
 
     retry:
 	int new_connection = accept( tcp_socket, reinterpret_cast<sockaddr *>( &socket_address ), &socket_address_size );
