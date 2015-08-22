@@ -9,9 +9,9 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/thread.hpp>
 
-const char *MY_ADDRESS      = "192.168.33.100";
+const char *MY_ADDRESS      = "192.168.33.101";
 const char *MY_DOMAIN       = "example.com";
-const char *BIND_ADDRESS    = "192.168.33.100";
+const char *BIND_ADDRESS    = "192.168.33.101";
 const int   TTL             = 600;
 const int   NS_RECORD_COUNT = 2;
 const int   SUBDOMAIN_SIZE  = 30;
