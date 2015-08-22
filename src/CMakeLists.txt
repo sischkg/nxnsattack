@@ -1,6 +1,6 @@
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(Boost_ADDITIONAL_VERSIONS "1.59" )
-find_package( Boost 1.59 )
+set(Boost_ADDITIONAL_VERSIONS "1.55" )
+find_package( Boost 1.55 )
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 # set(Boost_USE_STATIC_LIBS        ON)

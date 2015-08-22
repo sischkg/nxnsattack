@@ -26,10 +26,14 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     dns::QuestionSectionEntry question;
     question.q_domainname = query.q_domainname;
     question.q_type       = query.q_type;
-    question.q_class      = query.q_class;e;
-    answer.r_type       = dns::TYPE_A;
-    answer.r_class      = dns::CLASS_IN;
-    answer.r_ttl        = 30;
+    question.q_class      = query.q_class;
+    question_section.push_back( question );
+
+    dns::ResponseSectionEntry answer;
+    answer.r_domainname    = query.q_domainname;
+    answer.r_type          = dns::TYPE_A;
+    answer.r_class         = dns::CLASS_IN;
+    answer.r_ttl           = 30;
     answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
     answer_section.push_back( answer );
 
