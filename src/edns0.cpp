@@ -18,7 +18,7 @@ int main( int argc, char **argv )
     std::string target_server = DNS_SERVER_ADDRESS;
     int test_version = 0;
 
-    po::options_description desc("UDP Echo client.");
+    po::options_description desc("EDNS0 Validation Tester");
     desc.add_options()
         ("help,h",
          "print this message")
@@ -137,6 +137,27 @@ int main( int argc, char **argv )
 	    std::vector<dns::OptPseudoRROptPtr> options1;
 	    dns::OptPseudoRecord opt_pseudo_rr_1;
 
+	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
+	    opt_pseudo_rr_1.domainname          = "";
+	    opt_pseudo_rr_1.payload_size        = 1280;
+	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+	    opt_pseudo_rr_1.offset              = sizeof(dns::PacketHeaderField) + 16;  // www.example.com"." = 3www7example3com"0"
+	    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
+	}
+	break;
+
+
+    case 6:
+	{
+	    dns::QuestionSectionEntry question;
+	    question.q_domainname = "www.example.com";
+	    question.q_type       = dns::TYPE_A;
+	    question.q_class      = dns::CLASS_IN;
+	    question_section.push_back( question );
+
+	    std::vector<dns::OptPseudoRROptPtr> options1;
+	    dns::OptPseudoRecord opt_pseudo_rr_1;
+
 	    options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bad client" ) ) );
 	    opt_pseudo_rr_1.payload_size        = 1280;
 	    opt_pseudo_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
@@ -144,7 +165,7 @@ int main( int argc, char **argv )
 	}
 	break;
 
-    case 6:
+    case 7:
 	{
 	    dns::QuestionSectionEntry question;
 	    question.q_domainname = "www.example.com";

@@ -25,6 +25,7 @@ src/edns_server
 src/tkey
 src/echo_client
 src/echo_server
+src/edns0_auth_server
 
 
 

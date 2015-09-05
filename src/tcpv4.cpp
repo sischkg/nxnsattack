@@ -44,7 +44,7 @@ namespace tcpv4
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "pseudoheader:" );
-        for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
+        for ( unsigned int i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
         }
         printf( "\n" );
@@ -54,7 +54,7 @@ namespace tcpv4
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "tcpv4header:" );
-        for ( int i = 0 ; i < sizeof( header ) ; i++ ) {
+        for ( unsigned int i = 0 ; i < sizeof( header ) ; i++ ) {
             printf( " %x", data[i] );
         }
         printf( "\n" );

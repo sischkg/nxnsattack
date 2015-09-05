@@ -36,6 +36,14 @@ namespace udpv4
             std::string msg = get_error_message( "cannot create socket", errno );
             throw SocketError( msg );
         }
+
+	int one = 1;
+	int err = setsockopt( udp_socket, IPPROTO_IP, IP_PKTINFO, &one, sizeof(one) );
+	if ( err ) {
+            std::string msg = get_error_message( "cannot setsocketopt", errno );
+            throw SocketError( msg );
+	} 
+
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof(socket_address) );
         socket_address.sin_family = AF_INET;
@@ -91,29 +99,53 @@ namespace udpv4
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
 
-        sockaddr_in peer_address;
-        socklen_t   peer_address_size = sizeof(peer_address);
-        std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
-        int recv_size = recvfrom( udp_socket,
-                                  receive_buffer.data(), UDP_RECEIVE_BUFFER_SIZE,
-                                  flags,
-                                  reinterpret_cast<sockaddr *>( &peer_address ), &peer_address_size );
-	std::cerr << "recv" << std::endl;
-        if ( recv_size < 0 ) {
-            int error_num = errno;
-            if ( error_num == EAGAIN ) {
-		std::cerr << "EAGAIN" << std::endl;
-                PacketInfo info;
-                return info;
-            }
-            std::perror( "cannot recv" );
-            throw SocketError( get_error_message( "cannot recv packet", error_num ) );
-        }
+        std::vector<uint8_t> receive_buffer;
+	receive_buffer.resize( UDP_RECEIVE_BUFFER_SIZE );
+	struct msghdr      msg;
+	struct iovec       iov[1];
+	struct cmsghdr     *cmsg;
+	uint8_t            cbuf[512];
+	struct in_pktinfo  *pktinfo;
+	struct sockaddr_in sin;
+
+	iov[0].iov_base = &receive_buffer[0];
+	iov[0].iov_len  = receive_buffer.size();
+	
+	std::memset( &msg, 0, sizeof(msg) );
+	msg.msg_name       = &sin;
+	msg.msg_namelen    = sizeof(sin);
+	msg.msg_iov        = iov;
+	msg.msg_iovlen     = 1;
+	msg.msg_control    = cbuf;
+	msg.msg_controllen = sizeof(cbuf);
+
+	int recv_size = recvmsg( udp_socket, &msg, 0);
+	if ( recv_size < 0 ){
+            std::string msg = get_error_message( "cannot recvmsg", errno );
+            throw SocketError( msg );
+	}
+
+	pktinfo = NULL;
+	for( cmsg = CMSG_FIRSTHDR( &msg ); cmsg != NULL ; cmsg = CMSG_NXTHDR( &msg, cmsg ) ) {
+	    if( cmsg->cmsg_level == IPPROTO_IP &&
+	        cmsg->cmsg_type  == IP_PKTINFO ) {
+		pktinfo = (struct in_pktinfo *)CMSG_DATA( cmsg );
+		break;
+	    }
+	}
+
+	if ( pktinfo == NULL ) {
+            throw SocketError( "cannot found pkginfo" );
+	}
 
         PacketInfo info;
-        info.source_address = convert_address_binary_to_string( peer_address.sin_addr );
-        info.source_port    = ntohs( peer_address.sin_port );
-        info.payload.insert( info.payload.end(), receive_buffer.begin(), receive_buffer.begin() + recv_size );
+        info.source_address = convert_address_binary_to_string( sin.sin_addr );
+        info.source_port    = ntohs( sin.sin_port );
+	info.destination_address = convert_address_binary_to_string( pktinfo->ipi_addr );
+	info.payload.insert( info.payload.end(),
+			     receive_buffer.begin(),
+			     receive_buffer.begin() + recv_size );
+
         return info;
     }
 

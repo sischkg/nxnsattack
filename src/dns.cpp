@@ -204,14 +204,20 @@ namespace dns
 
 
     PacketData convert_domainname_string_to_binary( const std::string &domainname,
-						    uint16_t compress_offset )
+						    uint32_t compress_offset )
     {
         PacketData bin;
         PacketData label;
 
 	if ( domainname == "." || domainname == "" ) {
-	    bin.push_back( 0 );
-	    return bin;
+	    if ( compress_offset == 0xffff ) {
+		bin.push_back( 0 );
+		return bin;
+	    }
+	    else {
+		bin.push_back( 0xC0 | (uint8_t)( compress_offset >> 8 ) );  
+		bin.push_back( 0xff & (uint8_t)compress_offset );
+	    }
 	}
 
         for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
@@ -230,8 +236,8 @@ namespace dns
 	    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
 	    bin.insert( bin.end(), label.begin(), label.end() );
 	    if ( compress_offset != 0xffff ) {
-		bin.push_back( 0xC0 | ( compress_offset >> 8 ) );  
-		bin.push_back( 0xff & compress_offset );  
+		bin.push_back( 0xC0 | ( compress_offset >> 8 ) );
+		bin.push_back( 0xff & compress_offset );
 	    }
 	    else {
 		bin.push_back( 0 );
@@ -306,7 +312,7 @@ namespace dns
 
     PacketData generate_response_section( const ResponseSectionEntry &response )
     {
-        PacketData packet_name = convert_domainname_string_to_binary( response.r_domainname );
+        PacketData packet_name = convert_domainname_string_to_binary( response.r_domainname, response.r_offset );
         PacketData packet_rd   = response.r_resource_data->getPacket();
         PacketData packet( packet_name.size() +
 			   2 +
@@ -880,7 +886,7 @@ namespace dns
 	entry.r_class         = opt.payload_size;
 	entry.r_ttl           = ((uint32_t)opt.rcode) << 24;
 	entry.r_resource_data = opt.record_options_data;
-	entry.r_offset        = 0;
+	entry.r_offset        = opt.offset;
 
 	return entry;
     }

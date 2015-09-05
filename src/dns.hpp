@@ -348,9 +348,10 @@ namespace dns
 	uint16_t          payload_size;
 	uint8_t           rcode;
 	boost::shared_ptr<ResourceData> record_options_data;
+	uint32_t          offset;
 
 	OptPseudoRecord()
-	    : domainname( "." ), payload_size( 1280 ), rcode( 0 )
+	    : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( 0xffff )
 	{}
     };
 
@@ -409,7 +410,11 @@ namespace dns
 	uint16_t r_class;
 	uint32_t r_ttl;
         ResourceDataPtr r_resource_data;
-	uint16_t r_offset;
+	uint32_t r_offset;
+
+	ResponseSectionEntry()
+	    : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( 0xffff )
+	{}
     };
 
     struct QueryPacketInfo
@@ -556,7 +561,7 @@ namespace dns
 				    const std::vector<ResponseSectionEntry> &additional );
 
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-							      uint16_t compress_offset = 0xffff );
+							      uint32_t compress_offset = 0xffff );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
 										 const uint8_t *domainame,
 										 int recur = 0 ) throw(FormatError);

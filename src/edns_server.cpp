@@ -4,18 +4,55 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <time.h>
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 
-const char *MY_ADDRESS      = "192.168.33.101";
+const char *MY_ADDRESS      = "192.168.33.1";
 const char *MY_DOMAIN       = "example.com";
-const char *BIND_ADDRESS    = "192.168.33.101";
+const char *BIND_ADDRESS    = "192.168.33.1";
 const int   TTL             = 600;
 const int   NS_RECORD_COUNT = 2;
 const int   SUBDOMAIN_SIZE  = 30;
 const int   BUF_SIZE        = 256 * 256;
+
+
+std::string generate_subdomain( const std::string &qname, bool &is_update )
+{
+    std::ostringstream os;
+    uint32_t begin_time = 0;
+    uint32_t now = time( NULL );
+
+    static boost::basic_regex<char> reg( "ns([0-9]+).([0-9]+).example.com" );
+    boost::match_results<std::string::const_iterator> results;
+
+    if ( boost::regex_match(qname.begin(), qname.end(), results, reg) ) {
+	std::string str( results[2].first, results[2].second );
+	begin_time = boost::lexical_cast<uint32_t>( str );
+
+	if ( now - begin_time > 3 ) {
+	    begin_time = now;
+	    is_update  = true;
+	    std::cerr << "updated" << std::endl;
+	}
+	else {
+	    is_update = false;
+	}
+    }
+    else {
+	begin_time = now;
+	is_update  = true;
+	std::cerr << "unmatched:" << qname << std::endl;
+    }
+
+    os << begin_time;
+
+    return os.str();
+}
 
 
 PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query )
@@ -35,38 +72,47 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     answer.r_class         = dns::CLASS_IN;
     answer.r_ttl           = 30;
     answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
-    answer_section.push_back( answer );
+    //    answer_section.push_back( answer );
 
-    dns::ResponseSectionEntry authority;
-    authority.r_domainname = "example.com";
-    authority.r_type       = dns::TYPE_NS;
-    authority.r_class      = dns::CLASS_IN;
-    authority.r_ttl        = 30;
-    authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( "ns1.example.com" ) );
-    authority_section.push_back( authority );
+    bool is_update = false;
+    std::string subdomain = generate_subdomain( query.q_domainname, is_update );
+    for ( int i = 0 ; i < 8 ; i++ ) {
+	std::ostringstream os;
+	os << "ns" << i << "." << subdomain << "." << MY_DOMAIN;
+	std::string nameserver_name = os.str();
 
-    dns::ResponseSectionEntry additional;
-    additional.r_domainname = "ns1.example.com";
-    additional.r_type       = dns::TYPE_A;
-    additional.r_class      = dns::CLASS_IN;
-    additional.r_ttl        = 30;
-    additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
-    additional_infomation_section.push_back( additional );
+	dns::ResponseSectionEntry authority;
+	authority.r_domainname = query.q_domainname;
+	authority.r_type       = dns::TYPE_NS;
+	authority.r_class      = dns::CLASS_IN;
+	authority.r_ttl        = 6;
+	authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( nameserver_name ) );
+	authority_section.push_back( authority );
 
-    std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
-    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
-    edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bbbbbbbbb" ) ) );
+	dns::ResponseSectionEntry additional;
+	additional.r_domainname = "ns1.example.com";
+	additional.r_type       = dns::TYPE_A;
+	additional.r_class      = dns::CLASS_IN;
+	additional.r_ttl        = 6;
+	additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
+	//	additional_infomation_section.push_back( additional );
+    }
 
-    dns::OptPseudoRecord opt_rr_1, opt_rr_2;
-    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-    opt_rr_1.payload_size = 1024;
-    opt_rr_1.rcode        = 1;
-    opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
-    opt_rr_2.payload_size = 1024;
-    opt_rr_2.rcode        = 0;
-    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-    //    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+    if ( ! is_update ) {
+	std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
+	edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
+	edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bbbbbbbbb" ) ) );
 
+	dns::OptPseudoRecord opt_rr_1, opt_rr_2;
+	opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
+	opt_rr_1.payload_size = 1024;
+	opt_rr_1.rcode        = 1;
+	opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
+	opt_rr_2.payload_size = 1024;
+	opt_rr_2.rcode        = 0;
+	additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+	//    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+    }
 
     dns::PacketHeaderField header;
     header.id                   = htons( id );
@@ -80,8 +126,6 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     header.authentic_data       = 1;
     header.checking_disabled    = 1;
     header.response_code        = dns::NO_ERROR;
-
-    std::cerr << "send response" << std::endl;
 
     return dns::generate_dns_packet( header,
 				     question_section, 
@@ -107,8 +151,6 @@ void udp_server()
 
 		recv_data = dns_receiver.receivePacket();
 		query = dns::parse_dns_query_packet( recv_data.begin(), recv_data.end() );
-		std::cerr << "received" << std::endl;
-
 		response_packet = generate_response( query.id, query.question[0] );
 
 		udpv4::ClientParameters client;
