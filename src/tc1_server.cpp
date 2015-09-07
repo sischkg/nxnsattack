@@ -21,40 +21,6 @@ const int   SUBDOMAIN_SIZE  = 30;
 const int   BUF_SIZE        = 256 * 256;
 
 
-std::string generate_subdomain( const std::string &qname, bool &is_update )
-{
-    std::ostringstream os;
-    uint32_t begin_time = 0;
-    uint32_t now = time( NULL );
-
-    static boost::basic_regex<char> reg( "ns([0-9]+).([0-9]+).example.com" );
-    boost::match_results<std::string::const_iterator> results;
-
-    if ( boost::regex_match(qname.begin(), qname.end(), results, reg) ) {
-	std::string str( results[2].first, results[2].second );
-	begin_time = boost::lexical_cast<uint32_t>( str );
-
-	if ( now - begin_time > 3 ) {
-	    begin_time = now;
-	    is_update  = true;
-	    std::cerr << "updated" << std::endl;
-	}
-	else {
-	    is_update = false;
-	}
-    }
-    else {
-	begin_time = now;
-	is_update  = true;
-	std::cerr << "unmatched:" << qname << std::endl;
-    }
-
-    os << begin_time;
-
-    return os.str();
-}
-
-
 PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query )
 {
     std::vector<dns::QuestionSectionEntry> question_section;
@@ -74,54 +40,12 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
     answer_section.push_back( answer );
 
-    /*
-    bool is_update = false;
-    std::string subdomain = generate_subdomain( query.q_domainname, is_update );
-    for ( int i = 0 ; i < 8 ; i++ ) {
-	std::ostringstream os;
-	os << "ns" << i << "." << subdomain << "." << MY_DOMAIN;
-	std::string nameserver_name = os.str();
-
-	dns::ResponseSectionEntry authority;
-	authority.r_domainname = query.q_domainname;
-	authority.r_type       = dns::TYPE_NS;
-	authority.r_class      = dns::CLASS_IN;
-	authority.r_ttl        = 6;
-	authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( nameserver_name ) );
-	authority_section.push_back( authority );
-
-	dns::ResponseSectionEntry additional;
-	additional.r_domainname = "ns1.example.com";
-	additional.r_type       = dns::TYPE_A;
-	additional.r_class      = dns::CLASS_IN;
-	additional.r_ttl        = 6;
-	additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
-	//	additional_infomation_section.push_back( additional );
-    }
-    */
-
-    //    if ( ! is_update ) {
-	std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
-	edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
-	edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bbbbbbbbb" ) ) );
-
-	dns::OptPseudoRecord opt_rr_1, opt_rr_2;
-	opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-	opt_rr_1.payload_size = 1024;
-	opt_rr_1.rcode        = 1;
-	opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
-	opt_rr_2.payload_size = 1024;
-	opt_rr_2.rcode        = 0;
-	additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-	//    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
-	//    }
-
     dns::PacketHeaderField header;
     header.id                   = htons( id );
     header.opcode               = 0;
     header.query_response       = 1;
     header.authoritative_answer = 1;
-    header.truncation           = 0;
+    header.truncation           = 1;
     header.recursion_desired    = 0;
     header.recursion_available  = 0;
     header.zero_field           = 0;

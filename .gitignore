@@ -26,6 +26,9 @@ src/tkey
 src/echo_client
 src/echo_server
 src/edns0_auth_server
+src/edns0_badvers_server
+src/tc1_server
+
 
 
 
