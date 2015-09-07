@@ -1,147 +1,83 @@
-#include "udpv4server.hpp"
-#include "tcpv4server.hpp"
-#include "dns.hpp"
-#include <string>
-#include <stdexcept>
-#include <iostream>
-#include <time.h>
-#include <boost/cstdint.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/numeric/conversion/cast.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
-#include <boost/regex.hpp>
-
-const char *MY_ADDRESS      = "192.168.33.1";
-const char *MY_DOMAIN       = "example.com";
-const char *BIND_ADDRESS    = "192.168.33.1";
-const int   TTL             = 600;
-const int   NS_RECORD_COUNT = 2;
-const int   SUBDOMAIN_SIZE  = 30;
-const int   BUF_SIZE        = 256 * 256;
+#include "dns_server.hpp"
+#include <boost/program_options.hpp>
 
 
-PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query )
+const int   TTL          = 600;
+const char *RESPONSE_A   = "192.168.0.100";
+const char *MY_ADDRESS   = "192.168.33.1";
+const char *BIND_ADDRESS = "192.168.33.1";
+
+class TC1Server : public dns::DNSServer
 {
-    std::vector<dns::QuestionSectionEntry> question_section;
-    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+public:
+    TC1Server( const std::string addr, uint16_t port )
+	: dns::DNSServer( addr, port )
+    {}
 
-    dns::QuestionSectionEntry question;
-    question.q_domainname = query.q_domainname;
-    question.q_type       = query.q_type;
-    question.q_class      = query.q_class;
-    question_section.push_back( question );
+    dns::ResponseInfo generateResponse( const dns::QueryPacketInfo &query )
+    {
+	dns::ResponseInfo response;
+	dns::QuestionSectionEntry query_question = query.question[0];
 
-    dns::ResponseSectionEntry answer;
-    answer.r_domainname    = query.q_domainname;
-    answer.r_type          = dns::TYPE_A;
-    answer.r_class         = dns::CLASS_IN;
-    answer.r_ttl           = 30;
-    answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
-    answer_section.push_back( answer );
+	dns::QuestionSectionEntry question;
+	question.q_domainname = query_question.q_domainname;
+	question.q_type       = query_question.q_type;
+	question.q_class      = query_question.q_class;
+	response.question_section.push_back( question );
 
-    dns::PacketHeaderField header;
-    header.id                   = htons( id );
-    header.opcode               = 0;
-    header.query_response       = 1;
-    header.authoritative_answer = 1;
-    header.truncation           = 1;
-    header.recursion_desired    = 0;
-    header.recursion_available  = 0;
-    header.zero_field           = 0;
-    header.authentic_data       = 1;
-    header.checking_disabled    = 1;
-    header.response_code        = dns::NO_ERROR;
+	dns::ResponseSectionEntry answer;
+	answer.r_domainname    = query_question.q_domainname;
+	answer.r_type          = dns::TYPE_A;
+	answer.r_class         = dns::CLASS_IN;
+	answer.r_ttl           = TTL;
+	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
+	response.answer_section.push_back( answer );
+  
+	response.header.id                   = htons( query.id );
+	response.header.opcode               = 0;
+	response.header.query_response       = 1;
+	response.header.authoritative_answer = 1;
+	response.header.truncation           = 1;
+	response.header.recursion_desired    = 0;
+	response.header.recursion_available  = 0;
+	response.header.zero_field           = 0;
+	response.header.authentic_data       = 1;
+	response.header.checking_disabled    = 1;
+	response.header.response_code        = dns::NO_ERROR;
 
-    return dns::generate_dns_packet( header,
-				     question_section, 
-				     answer_section,
-				     authority_section,
-				     additional_infomation_section );
-}
+	return response;
+    }
+};
 
-void udp_server()
+
+int main( int argc, char **argv )
 {
-   try {
-	udpv4::ServerParameters params;
-	params.bind_address = BIND_ADDRESS;
-	params.bind_port    = 53;
-	udpv4::Server dns_receiver( params );
+    namespace po = boost::program_options;
 
-	while( true ) {
+    std::string bind_address;
+    int         case_id;
 
-	    try {
-		udpv4::PacketInfo recv_data;
-		PacketData response_packet;
-		dns::QueryPacketInfo query;
+    po::options_description desc("TC=1 Server");
+    desc.add_options()
+        ("help,h",
+         "print this message")
 
-		recv_data = dns_receiver.receivePacket();
-		query = dns::parse_dns_query_packet( recv_data.begin(), recv_data.end() );
-		response_packet = generate_response( query.id, query.question[0] );
+        ("bind,b",
+         po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ),
+         "bind address")
+        ;
 
-		udpv4::ClientParameters client;
-		client.destination_address = recv_data.source_address;
-		client.destination_port    = recv_data.source_port;
+    po::variables_map vm;
+    po::store(po::parse_command_line( argc, argv, desc), vm);
+    po::notify(vm);
 
-		dns_receiver.sendPacket( client, response_packet );
-	    }
-	    catch( std::runtime_error &e ) {
-		std::cerr << "send response failed," << std::endl;
-		std::exit(1 );
-	    }
-	}
+    if ( vm.count("help") ) {
+        std::cerr << desc << "\n";
+        return 1;
     }
-    catch ( std::runtime_error &e ) {
-	std::cerr << "caught " << e.what() << std::endl;
-    }
-}
 
-
-void tcp_server()
-{
-   try {
-	tcpv4::ServerParameters params;
-	params.bind_address = BIND_ADDRESS;
-	params.bind_port    = 53;
-
-	tcpv4::Server dns_receiver( params );
-
-	while( true ) {
-
-	    try {
-		tcpv4::ConnectionPtr connection = dns_receiver.acceptConnection();
-		PacketData size_data = connection->receive( 2 );
-		uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[0] ) ) );
-
-		PacketData recv_data = connection->receive( size );
-		dns::QueryPacketInfo query = dns::parse_dns_query_packet( &recv_data[0], &recv_data[0] + recv_data.size() );
-		std::cerr << "tcp recv" << std::endl;
-
-		PacketData response_packet = generate_response( query.id, query.question[0] );
-		
-		uint16_t send_size = htons( response_packet.size() );
-		connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-		connection->send( response_packet );
-	    }
-	    catch( std::runtime_error &e ) {
-		std::cerr << "send response failed(" << e.what() << ")." << std::endl;
-		std::exit(1 );
-	    }
-	}
-    }
-    catch ( std::runtime_error &e ) {
-	std::cerr << "caught " << e.what() << std::endl;
-    }
-}
-
-
-int main( int arc, char **argv )
-{
-    boost::thread udp_server_thread( udp_server );
-    boost::thread tcp_server_thread( tcp_server );
-
-    udp_server_thread.join();
-    tcp_server_thread.join();
+    TC1Server server( bind_address, 53 );
+    server.start();
 
     return 0;
 }
