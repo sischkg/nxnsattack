@@ -486,6 +486,8 @@ namespace dns
 
         bool     recursion_available;
         bool     checking_disabled;
+        bool     zero_field;
+        bool     authentic_data;
         uint8_t  response_code;
 
 	bool     edns0;
@@ -506,6 +508,8 @@ namespace dns
 	     recursion_desired( false ),
 	     recursion_available( false ),
 	     checking_disabled( false ),
+	     zero_field( 0 ),
+	     authentic_data( false ),
 	     response_code( 0 ),
 	     edns0( false )
 	{}
@@ -513,8 +517,10 @@ namespace dns
     };
 
 
+    std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
     std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
+    PacketInfo           parse_dns_packet( const uint8_t *begin, const uint8_t *end );
     QueryPacketInfo      parse_dns_query_packet( const uint8_t *begin, const uint8_t *end );
     ResponsePacketInfo   parse_dns_response_packet( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query );
@@ -554,11 +560,6 @@ namespace dns
         uint32_t minimum;
     };
 
-    PacketData generate_dns_packet( const PacketHeaderField &header,
-				    const std::vector<QuestionSectionEntry> &question,
-				    const std::vector<ResponseSectionEntry> &answer,
-				    const std::vector<ResponseSectionEntry> &authority,
-				    const std::vector<ResponseSectionEntry> &additional );
 
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
 							      uint32_t compress_offset = 0xffff );

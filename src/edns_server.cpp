@@ -57,6 +57,7 @@ std::string generate_subdomain( const std::string &qname, bool &is_update )
 
 PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query )
 {
+    dns::PacketInfo packet_info;
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -64,7 +65,7 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     question.q_domainname = query.q_domainname;
     question.q_type       = query.q_type;
     question.q_class      = query.q_class;
-    question_section.push_back( question );
+    packet_info.question_section.push_back( question );
 
     dns::ResponseSectionEntry answer;
     answer.r_domainname    = query.q_domainname;
@@ -72,7 +73,7 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     answer.r_class         = dns::CLASS_IN;
     answer.r_ttl           = 30;
     answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
-    answer_section.push_back( answer );
+    packet_info.answer_section.push_back( answer );
 
     /*
     bool is_update = false;
@@ -88,15 +89,15 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
 	authority.r_class      = dns::CLASS_IN;
 	authority.r_ttl        = 6;
 	authority.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( nameserver_name ) );
-	authority_section.push_back( authority );
+	packet_info.authority_section.push_back( authority );
 
 	dns::ResponseSectionEntry additional;
 	additional.r_domainname = "ns1.example.com";
 	additional.r_type       = dns::TYPE_A;
 	additional.r_class      = dns::CLASS_IN;
 	additional.r_ttl        = 6;
-	additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
-	//	additional_infomation_section.push_back( additional );
+	packet_info.additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.2.1" ) );
+	//	packet_info.additional_infomation_section.push_back( additional );
     }
     */
 
@@ -112,28 +113,24 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
 	opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
 	opt_rr_2.payload_size = 1024;
 	opt_rr_2.rcode        = 0;
-	additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-	//    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+	packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+	//    packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
 	//    }
 
     dns::PacketHeaderField header;
-    header.id                   = htons( id );
-    header.opcode               = 0;
-    header.query_response       = 1;
-    header.authoritative_answer = 1;
-    header.truncation           = 0;
-    header.recursion_desired    = 0;
-    header.recursion_available  = 0;
-    header.zero_field           = 0;
-    header.authentic_data       = 1;
-    header.checking_disabled    = 1;
-    header.response_code        = dns::NO_ERROR;
+    packet_info.id                   = id;
+    packet_info.opcode               = 0;
+    packet_info.query_response       = 1;
+    packet_info.authoritative_answer = 1;
+    packet_info.truncation           = 0;
+    packet_info.recursion_desired    = 0;
+    packet_info.recursion_available  = 0;
+    packet_info.zero_field           = 0;
+    packet_info.authentic_data       = 1;
+    packet_info.checking_disabled    = 1;
+    packet_info.response_code        = dns::NO_ERROR;
 
-    return dns::generate_dns_packet( header,
-				     question_section, 
-				     answer_section,
-				     authority_section,
-				     additional_infomation_section );
+    return dns::generate_dns_packet( packet_info );
 }
 
 void udp_server()

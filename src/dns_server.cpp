@@ -22,14 +22,10 @@ namespace dns
 	    while( true ) {
 		try {
 		    udpv4::PacketInfo recv_data     = dns_receiver.receivePacket();
-		    QueryPacketInfo   query         = parse_dns_query_packet( recv_data.begin(), recv_data.end() );
-		    ResponseInfo      response_info = generateResponse( query );
+		    PacketInfo        query         = parse_dns_packet( recv_data.begin(), recv_data.end() );
+		    PacketInfo        response_info = generateResponse( query, false );
 
-		    PacketData response_packet = generate_dns_packet( response_info.header,
-								      response_info.question_section, 
-								      response_info.answer_section,
-								      response_info.authority_section,
-								      response_info.additional_infomation_section );
+		    PacketData response_packet = generate_dns_packet( response_info );
 		
 		    udpv4::ClientParameters client;
 		    client.destination_address = recv_data.source_address;
@@ -37,7 +33,7 @@ namespace dns
 		    dns_receiver.sendPacket( client, response_packet );
 		}
 		catch( std::runtime_error &e ) {
-		    std::cerr << "send response failed," << std::endl;
+		    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
 		    std::exit(1 );
 		}
 	    }
@@ -64,22 +60,18 @@ namespace dns
 		    PacketData size_data = connection->receive( 2 );
 		    uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[0] ) ) );
 
-		    PacketData      recv_data     = connection->receive( size );
-		    QueryPacketInfo query         = parse_dns_query_packet( &recv_data[0], &recv_data[0] + recv_data.size() );
-		    ResponseInfo    response_info = generateResponse( query );
+		    PacketData recv_data     = connection->receive( size );
+		    PacketInfo query         = parse_dns_packet( &recv_data[0], &recv_data[0] + recv_data.size() );
+		    PacketInfo response_info = generateResponse( query, true );
 
-		    PacketData response_packet = generate_dns_packet( response_info.header,
-								      response_info.question_section, 
-								      response_info.answer_section,
-								      response_info.authority_section,
-								      response_info.additional_infomation_section );
+		    PacketData response_packet = generate_dns_packet( response_info );
 		
 		    uint16_t send_size = htons( response_packet.size() );
 		    connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
 		    connection->send( response_packet );
 		}
 		catch( std::runtime_error &e ) {
-		    std::cerr << "send response failed(" << e.what() << ")." << std::endl;
+		    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
 		    std::exit(1 );
 		}
 	    }

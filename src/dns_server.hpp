@@ -33,7 +33,7 @@ namespace dns
 
 	~DNSServer(){}
 
-	virtual ResponseInfo generateResponse( const QueryPacketInfo &query ) = 0;
+	virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
 
 	void start();
     };

@@ -12,6 +12,7 @@ const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 
 int main()
 {
+    dns::PacketInfo packet_info;
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -19,7 +20,7 @@ int main()
     question.q_domainname = "www.example.com";
     question.q_type       = dns::TYPE_TXT;
     question.q_class      = dns::CLASS_IN;
-    question_section.push_back( question );
+    packet_info.question_section.push_back( question );
 
     std::vector<dns::OptPseudoRROptPtr> options;
     std::string nsid = "";
@@ -29,26 +30,21 @@ int main()
     opt.payload_size = 1280;
     opt.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options ) );
 
-    additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
+    packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
 
-    dns::PacketHeaderField header;
-    header.id                   = htons( 1234 );
-    header.opcode               = 0;
-    header.query_response       = 0;
-    header.authoritative_answer = 0;
-    header.truncation           = 0;
-    header.recursion_desired    = false;
-    header.recursion_available  = 0;
-    header.zero_field           = 0;
-    header.authentic_data       = 0;
-    header.checking_disabled    = 0;
-    header.response_code        = 0;
+    packet_info.id                   = 1234;
+    packet_info.opcode               = 0;
+    packet_info.query_response       = 0;
+    packet_info.authoritative_answer = 0;
+    packet_info.truncation           = 0;
+    packet_info.recursion_desired    = false;
+    packet_info.recursion_available  = 0;
+    packet_info.zero_field           = 0;
+    packet_info.authentic_data       = 0;
+    packet_info.checking_disabled    = 0;
+    packet_info.response_code        = 0;
 
-    std::vector<uint8_t> packet = dns::generate_dns_packet( header,
-							    question_section,
-							    answer_section,
-							    authority_section,
-							    additional_infomation_section );
+    std::vector<uint8_t> packet = dns::generate_dns_packet( packet_info );
 
     tcpv4::ClientParameters tcp_param;
     tcp_param.destination_address = DNS_SERVER_ADDRESS;

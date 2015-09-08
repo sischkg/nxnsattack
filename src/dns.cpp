@@ -14,49 +14,6 @@
 namespace dns
 {
 
-    PacketData generate_dns_packet( const PacketHeaderField &header,
-				    const std::vector<QuestionSectionEntry> &question,
-				    const std::vector<ResponseSectionEntry> &answer,
-				    const std::vector<ResponseSectionEntry> &authority,
-				    const std::vector<ResponseSectionEntry> &additional )
-    {
-	PacketHeaderField h = header;
-        h.question_count              = htons( question.size() );
-        h.answer_count                = htons( answer.size() );
-        h.authority_count             = htons( authority.size() );
-        h.additional_infomation_count = htons( additional.size() );
-
-        PacketData packet;
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-	pos = std::copy( reinterpret_cast<const uint8_t *>( &h ),
-			 reinterpret_cast<const uint8_t *>( &h ) + sizeof(h),
-			 pos );
-
-        for( std::vector<QuestionSectionEntry>::const_iterator q = question.begin() ;
-             q != question.end() ; ++q ) {
-            PacketData entry = generate_question_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = answer.begin() ;
-             q != answer.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = authority.begin() ;
-             q != authority.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = additional.begin() ;
-             q != additional.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
-        }
-
-        return packet;
-    }
-
-
     PacketData generate_dns_packet( const PacketInfo &info )
     {
 	PacketHeaderField header;
@@ -78,11 +35,39 @@ namespace dns
 	    additional.push_back( generate_opt_pseudo_record( info.opt_pseudo_rr ) );
 	}
 
-        return generate_dns_packet( header,
-				    info.question_section,
-				    info.answer_section,
-				    info.authority_section,
-				    additional );
+        header.question_count              = htons( info.question_section.size() );
+        header.answer_count                = htons( info.answer_section.size() );
+        header.authority_count             = htons( info.authority_section.size() );
+        header.additional_infomation_count = htons( additional.size() );
+
+        PacketData packet;
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+	pos = std::copy( reinterpret_cast<const uint8_t *>( &header ),
+			 reinterpret_cast<const uint8_t *>( &header ) + sizeof(header),
+			 pos );
+
+        for( std::vector<QuestionSectionEntry>::const_iterator q = info.question_section.begin() ;
+             q != info.question_section.end() ; ++q ) {
+            PacketData entry = generate_question_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = info.answer_section.begin() ;
+             q != info.answer_section.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = info.authority_section.begin() ;
+             q != info.authority_section.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+        for( std::vector<ResponseSectionEntry>::const_iterator q = additional.begin() ;
+             q != additional.end() ; ++q ) {
+            PacketData entry = generate_response_section( *q );
+	    pos = std::copy( entry.begin(), entry.end(), pos );
+        }
+
+        return packet;
     }
 
 
@@ -133,44 +118,23 @@ namespace dns
     }
 
 
-    QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end )
-    {
-	const uint8_t *packet = begin;
-        QueryPacketInfo packet_info;
-        const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( packet );
-
-        packet_info.id        = ntohs( header->id );
-        packet_info.recursion = header->recursion_desired;
-
-        int question_count              = ntohs( header->question_count );
-        // int answer_count                = ntohs( header->answer_count );
-        // int authority_count             = ntohs( header->authority_count );
-        // int additional_infomation_count = ntohs( header->additional_infomation_count );
-
-        packet += sizeof(PacketHeaderField);
-        for ( int i = 0 ; i < question_count ; i++ ) {
-            QuestionSectionEntryPair pair = parse_question_section( begin, packet );
-            packet_info.question.push_back( pair.first );
-            packet = pair.second;
-        }
-        return packet_info;
-    }
-
-
-    ResponsePacketInfo parse_dns_response_packet( const uint8_t *begin, const uint8_t *end )
+    PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *packet = begin;
 
-        ResponsePacketInfo packet_info;
+        PacketInfo packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
 
         packet_info.id                   = ntohs( header->id );
-        packet_info.truncation           = header->truncation;
+	packet_info.query_response       = header->query_response;
+	packet_info.opcode               = header->opcode;
         packet_info.authoritative_answer = header->authoritative_answer;
-        packet_info.response_code        = header->response_code;
+        packet_info.truncation           = header->truncation;
+        packet_info.recursion_available  = header->recursion_available;
+        packet_info.recursion_desired    = header->recursion_desired;
         packet_info.checking_disabled    = header->checking_disabled;
         packet_info.authentic_data       = header->authentic_data;
-        packet_info.recursion_available  = header->recursion_available;
+        packet_info.response_code        = header->response_code;
 
         int question_count              = ntohs( header->question_count );
         int answer_count                = ntohs( header->answer_count );
@@ -180,26 +144,61 @@ namespace dns
         packet += sizeof(PacketHeaderField);
         for ( int i = 0 ; i < question_count ; i++ ) {
             QuestionSectionEntryPair pair = parse_question_section( begin, packet );
-            packet_info.question.push_back( pair.first );
+            packet_info.question_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0 ; i < answer_count ; i++ ) {
             ResponseSectionEntryPair pair = parse_response_section( begin, packet );
-            packet_info.answer.push_back( pair.first );
+            packet_info.answer_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0 ; i < authority_count ; i++ ) {
             ResponseSectionEntryPair pair = parse_response_section( begin, packet );
-            packet_info.authority.push_back( pair.first );
+            packet_info.authority_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0 ; i < additional_infomation_count ; i++ ) {
             ResponseSectionEntryPair pair = parse_response_section( begin, packet );
-            packet_info.additional_infomation.push_back( pair.first );
+            packet_info.additional_infomation_section.push_back( pair.first );
             packet = pair.second;
         }
 
         return packet_info;
+    }
+
+
+    QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end )
+    {
+	PacketInfo packet_info = parse_dns_packet( begin, end );
+
+	QueryPacketInfo query_info;
+	query_info.id        = packet_info.id;
+	query_info.recursion = packet_info.recursion_desired;
+	query_info.question  = packet_info.question_section;
+
+        return query_info;
+    }
+
+
+    ResponsePacketInfo parse_dns_response_packet( const uint8_t *begin, const uint8_t *end )
+    {
+	PacketInfo packet_info = parse_dns_packet( begin, end );
+
+	ResponsePacketInfo response_info;
+        response_info.id                   = packet_info.id;
+        response_info.truncation           = packet_info.truncation;
+        response_info.authoritative_answer = packet_info.authoritative_answer;
+        response_info.response_code        = packet_info.response_code;
+        response_info.checking_disabled    = packet_info.checking_disabled;
+        response_info.authentic_data       = packet_info.authentic_data;
+        response_info.recursion_available  = packet_info.recursion_available;
+
+	response_info.question              = packet_info.question_section;
+	response_info.answer                = packet_info.answer_section;
+	response_info.authority             = packet_info.authority_section;
+	response_info.additional_infomation = packet_info.additional_infomation_section;
+
+        return response_info;
     }
 
 
@@ -840,11 +839,6 @@ namespace dns
 					      const uint8_t *begin,
 					      const uint8_t *end )
     {
-	if ( end - begin < 2 ) {
-	    std::ostringstream os;
-	    os << "size " << end - begin << " is too few Opt Pseudo RR size.";
-	    throw FormatError( os.str() );
-	}
 	const uint8_t *pos = begin;
 
 	std::vector<OptPseudoRROptPtr> options;

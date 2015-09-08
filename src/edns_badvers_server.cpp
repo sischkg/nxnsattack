@@ -14,10 +14,10 @@ public:
 	: dns::DNSServer( addr, port )
     {}
 
-    dns::ResponseInfo generateResponse( const dns::QueryPacketInfo &query )
+    dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
-	dns::ResponseInfo response;
-	dns::QuestionSectionEntry query_question = query.question[0];
+	dns::PacketInfo response;
+	dns::QuestionSectionEntry query_question = query.question_section[0];
 
 	dns::QuestionSectionEntry question;
 	question.q_domainname = query_question.q_domainname;
@@ -42,18 +42,17 @@ public:
 	opt_rr_1.rcode        = 1;
 	response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
 
-  
-	response.header.id                   = htons( query.id );
-	response.header.opcode               = 0;
-	response.header.query_response       = 1;
-	response.header.authoritative_answer = 1;
-	response.header.truncation           = 0;
-	response.header.recursion_desired    = 0;
-	response.header.recursion_available  = 0;
-	response.header.zero_field           = 0;
-	response.header.authentic_data       = 1;
-	response.header.checking_disabled    = 1;
-	response.header.response_code        = dns::NO_ERROR;
+  	response.id                   = query.id;
+	response.opcode               = 0;
+	response.query_response       = 1;
+	response.authoritative_answer = 1;
+	response.truncation           = 0;
+	response.recursion_desired    = 0;
+	response.recursion_available  = 0;
+	response.zero_field           = 0;
+	response.authentic_data       = 1;
+	response.checking_disabled    = 1;
+	response.response_code        = dns::NO_ERROR;
 
 	return response;
     }
@@ -65,7 +64,6 @@ int main( int argc, char **argv )
     namespace po = boost::program_options;
 
     std::string bind_address;
-    int         case_id;
 
     po::options_description desc("EDNS0 BADVERS Server");
     desc.add_options()
