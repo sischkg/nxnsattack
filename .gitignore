@@ -28,3 +28,4 @@ src/echo_server
 src/edns_auth_server
 src/edns_badvers_server
 src/tc1_server
+src/cname_server
