@@ -713,8 +713,8 @@ namespace dns
         return ResourceDataPtr( new RecordTXT( std::string( pos, end ) ) );
     }
 
-    RecordCNAME::RecordCNAME( const std::string &name )
-        : domainname( name )
+    RecordCNAME::RecordCNAME( const std::string &name, uint16_t off )
+        : domainname( name ), offset( off )
     {}
 
     std::string RecordCNAME::toString() const
@@ -725,7 +725,7 @@ namespace dns
 
     PacketData RecordCNAME::getPacket() const
     {
-        return convert_domainname_string_to_binary( domainname );
+        return convert_domainname_string_to_binary( domainname, offset );
     }
 
 

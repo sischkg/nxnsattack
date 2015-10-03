@@ -170,9 +170,10 @@ namespace dns
     {
     private:
         std::string domainname;
+	uint16_t    offset;
 
     public:
-        RecordCNAME( const std::string &name );
+        RecordCNAME( const std::string &name, uint16_t off = 0xffff );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
