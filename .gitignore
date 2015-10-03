@@ -29,3 +29,9 @@ src/edns_auth_server
 src/edns_badvers_server
 src/tc1_server
 src/cname_server
+src/axfr
+src/axfr_server
+src/axfr_udp
+src/edns0_compress
+src/txt_server
+
