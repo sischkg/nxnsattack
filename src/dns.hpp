@@ -151,10 +151,11 @@ namespace dns
     class RecordTXT : public ResourceData
     {
     private:
-        std::string data;
+	std::vector<std::string> data;
 
     public:
         RecordTXT( const std::string &data );
+        RecordTXT( const std::vector<std::string> &data );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;

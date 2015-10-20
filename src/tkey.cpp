@@ -24,7 +24,6 @@ int main()
     additonal.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
     packet_info.additional_infomation_section.push_back( additonal );
 
-    dns::PacketHeaderField header;
     packet_info.id                   = 1234;
     packet_info.opcode               = 0;
     packet_info.query_response       = 0;

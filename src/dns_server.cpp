@@ -7,9 +7,14 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
+#include <signal.h>
 
 namespace dns
 {
+    void ignore_sigpipe( int )
+    {
+    }
+
 
     void DNSServer::startUDPServer()
     {
@@ -84,6 +89,8 @@ namespace dns
 
     void DNSServer::start()
     {
+	signal( SIGPIPE, ignore_sigpipe );
+
 	boost::thread udp_server_thread( &DNSServer::startUDPServer, this );
 	boost::thread tcp_server_thread( &DNSServer::startTCPServer, this );
 

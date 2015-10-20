@@ -48,13 +48,13 @@ public:
             ( query_question.q_domainname.size() + 2 + 2 + 2 ) +
             ( query_question.q_domainname.size() + 2 + 2 + 2 + 4 + 2 );
 
-        for ( int i = 0 ; i < 0x30 ; i++ ) {
+        for ( int i = 0 ; i < 0x40 ; i++ ) {
             std::string data;
 
             offset++;
 	    if ( i == 0 ) {
-		data.push_back( 1 );
-		data.push_back( 'a' );
+		data.push_back( 0 );
+		data.push_back( 0 );
 		data.push_back( 0 );
 		uint16_t d = ( 0xC000 + offset );
 		data.push_back( (uint8_t)( d >> 8) );

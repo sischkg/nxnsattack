@@ -677,20 +677,34 @@ namespace dns
 
 
     RecordTXT::RecordTXT( const std::string &d )
-        : data( d )
-    {}
+    {
+	data.push_back( d );
+    }
+
+    RecordTXT::RecordTXT( const std::vector<std::string> &d )
+	: data( d )
+    {
+    }
 
     std::string RecordTXT::toString() const
     {
-        return data;
+	std::ostringstream os;
+	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
+	    os << "\"" << data[i] << "\" "; 
+	}
+
+        return os.str();
     }
 
 
     PacketData RecordTXT::getPacket() const
     {
 	PacketData d;
-	for ( std::string::const_iterator i = data.begin() ; i != data.end() ; ++i )
-	    d.push_back( *i );
+	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
+	    d.push_back( data[i].size() & 0xff );
+	    for ( unsigned int j = 0 ; j < data[i].size() ; j++ )
+		d.push_back( data[i][j] );
+	}
         return d;
     }
 
@@ -699,14 +713,10 @@ namespace dns
 				      const uint8_t *begin,
 				      const uint8_t *end )
     {
-	for ( const uint8_t *p = begin ; p != end ; p++ )
-	    std::cerr << "\"" << *p << "\"";
-	std::cerr << std::endl << (int)( end - begin ) << std::endl;
 	if ( end - begin < 4 )
 	    throw FormatError( "too few length for TXT record" );
 	const uint8_t *pos = begin;
 	uint16_t length = ntohs( get_bytes<uint16_t>( &pos ) );
-	std::cerr << std::endl << length << std::endl;
 	if ( end - begin != 2 + length )
 	    throw FormatError( "txt length + 2 dose not equal to rdlength" );
 
