@@ -34,4 +34,6 @@ src/axfr_server
 src/axfr_udp
 src/edns0_compress
 src/txt_server
+src/long_server
+
 
