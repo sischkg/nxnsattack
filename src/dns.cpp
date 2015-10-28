@@ -14,6 +14,38 @@
 namespace dns
 {
 
+    std::string Domainname::toString() const
+    {
+	std::string result;
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    result += labels[i];
+	    result += ".";
+	}
+	return result;
+    }
+
+    PacketData Domainname::getPacket( uint16_t offset ) const
+    {
+        PacketData bin;
+
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    bin.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		bin.push_back( labels[i][j] );
+	}
+
+	if ( offset == 0xffff ) {
+	    bin.push_back( 0 );
+	    return bin;
+	}
+	else {
+	    bin.push_back( 0xC0 | (uint8_t)( offset >> 8 ) );
+	    bin.push_back( 0xff & (uint8_t)offset );
+	}
+
+        return bin;
+    }
+
     PacketData generate_dns_packet( const PacketInfo &info )
     {
 	PacketHeaderField header;

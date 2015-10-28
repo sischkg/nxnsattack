@@ -62,6 +62,21 @@ namespace dns
 	{}
     };
 
+
+    class Domainname
+    {
+    private:
+	std::vector<std::string> labels;
+
+    public:
+	Domainname( const std::vector<std::string> &l )
+	    : labels( l )
+	{}
+
+	std::string toString() const;
+	PacketData  getPacket( uint16_t offset = 0xffff ) const;
+    };
+
     class ResourceData
     {
     public:
