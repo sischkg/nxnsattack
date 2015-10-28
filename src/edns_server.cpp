@@ -117,7 +117,6 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
 	//    packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
 	//    }
 
-    dns::PacketHeaderField header;
     packet_info.id                   = id;
     packet_info.opcode               = 0;
     packet_info.query_response       = 1;

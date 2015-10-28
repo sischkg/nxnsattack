@@ -67,13 +67,17 @@ namespace dns
 
 		    PacketData recv_data     = connection->receive( size );
 		    PacketInfo query         = parse_dns_packet( &recv_data[0], &recv_data[0] + recv_data.size() );
-		    PacketInfo response_info = generateResponse( query, true );
-
-		    PacketData response_packet = generate_dns_packet( response_info );
+		    if ( query.question_section[0].q_type == dns::TYPE_AXFR ) {
+			generateAXFRResponse( query, connection );
+		    }
+		    else {
+			PacketInfo response_info = generateResponse( query, true );
+			PacketData response_packet = generate_dns_packet( response_info );
 		
-		    uint16_t send_size = htons( response_packet.size() );
-		    connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-		    connection->send( response_packet );
+			uint16_t send_size = htons( response_packet.size() );
+			connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
+			connection->send( response_packet );
+		    }
 		}
 		catch( std::runtime_error &e ) {
 		    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;

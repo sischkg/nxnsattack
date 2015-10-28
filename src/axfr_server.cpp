@@ -30,26 +30,27 @@ private:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	dns::ResponseSectionEntry answer;
-	answer.r_domainname    = query_question.q_domainname;
-	answer.r_type          = dns::TYPE_SOA;
-	answer.r_class         = dns::CLASS_IN;
-	answer.r_ttl           = TTL;
-	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( "mname.example.com",
+	dns::ResponseSectionEntry answer1;
+	answer1.r_domainname    = query_question.q_domainname;
+	answer1.r_type          = dns::TYPE_SOA;
+	answer1.r_class         = dns::CLASS_IN;
+	answer1.r_ttl           = TTL;
+	answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( "mname.example.com",
 									   "ns.example.com",
 									   0,
 									   360000,
 									   10000,
 									   3600000,
 									   3600 ) );
-	response.answer_section.push_back( answer );
+	response.answer_section.push_back( answer1 );
 
-	answer.r_domainname    = "www." + query_question.q_domainname;
-	answer.r_type          = dns::TYPE_A;
-	answer.r_class         = dns::CLASS_IN;
-	answer.r_ttl           = TTL;
-	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
-	response.answer_section.push_back( answer );
+	dns::ResponseSectionEntry answer2;
+	answer2.r_domainname    = "www." + query_question.q_domainname;
+	answer2.r_type          = dns::TYPE_A;
+	answer2.r_class         = dns::CLASS_IN;
+	answer2.r_ttl           = TTL;
+	answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
+	response.answer_section.push_back( answer2 );
 
 	response.id                   = query.id;
 	response.opcode               = 0;

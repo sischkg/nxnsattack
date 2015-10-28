@@ -13,6 +13,37 @@
 
 namespace dns
 {
+    static void string_to_labels( const char *name, std::vector<std::string> &labels )
+    {
+	labels.clear();
+
+	if ( name == NULL || name[0] == 0 )
+	    return;
+
+	unsigned int name_length = std::strlen( name );
+	std::string label;
+	for ( unsigned int i = 0 ; i < name_length ; i++ ) {
+	    if ( name[i] == '.' ) {
+		labels.push_back( label );
+		label = "";
+	    }
+	    else {
+		label.push_back( name[i] );
+	    }
+	}
+	if ( label != "" )
+	    labels.push_back( label );
+    }
+
+    Domainname::Domainname( const char *name )
+    {
+	string_to_labels( name, labels );
+    }
+
+    Domainname::Domainname( const std::string &name )
+    {
+	string_to_labels( name.c_str(), labels );
+    }
 
     std::string Domainname::toString() const
     {
@@ -34,7 +65,7 @@ namespace dns
 		bin.push_back( labels[i][j] );
 	}
 
-	if ( offset == 0xffff ) {
+	if ( offset == NO_COMPRESSION ) {
 	    bin.push_back( 0 );
 	    return bin;
 	}
@@ -241,7 +272,7 @@ namespace dns
         PacketData label;
 
 	if ( domainname == "." || domainname == "" ) {
-	    if ( compress_offset == 0xffff ) {
+	    if ( compress_offset == NO_COMPRESSION ) {
 		bin.push_back( 0 );
 		return bin;
 	    }
@@ -266,7 +297,7 @@ namespace dns
         if ( ! label.empty() ) {
 	    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
 	    bin.insert( bin.end(), label.begin(), label.end() );
-	    if ( compress_offset != 0xffff ) {
+	    if ( compress_offset != NO_COMPRESSION ) {
 		bin.push_back( 0xC0 | ( compress_offset >> 8 ) );
 		bin.push_back( 0xff & compress_offset );
 	    }
@@ -647,19 +678,19 @@ namespace dns
     }
 
 
-    RecordNS::RecordNS( const std::string &name )
-        : domainname( name )
+    RecordNS::RecordNS( const Domainname &name, Offset off )
+        : domainname( name ), offset( off )
     {}
 
     std::string RecordNS::toString() const
     {
-        return domainname;
+        return domainname.toString();
     }
 
 
     PacketData RecordNS::getPacket() const
     {
-        return convert_domainname_string_to_binary( domainname );
+        return domainname.getPacket( offset );
     }
 
 
@@ -672,14 +703,14 @@ namespace dns
     }
 
 
-    RecordMX::RecordMX( uint16_t pri, const std::string &name )
-        : priority( pri ), domainname( name )
+    RecordMX::RecordMX( uint16_t pri, const Domainname &name, Offset off )
+        : priority( pri ), domainname( name ), offset( off )
     {}
 
     std::string RecordMX::toString() const
     {
 	std::ostringstream os;
-	os << priority << " " << domainname;
+	os << priority << " " << domainname.toString();
         return os.str();
     }
 
@@ -689,7 +720,7 @@ namespace dns
 	PacketData packet;
 	packet.resize( 2 );
 	*( reinterpret_cast<uint16_t *>( &packet[0] ) ) = htons( priority );
-	PacketData name = convert_domainname_string_to_binary( domainname );
+	PacketData name = domainname.getPacket( offset );
 	packet.insert( packet.end(), name.begin(), name.end() );
 	return packet;
     }
@@ -755,19 +786,19 @@ namespace dns
         return ResourceDataPtr( new RecordTXT( std::string( pos, end ) ) );
     }
 
-    RecordCNAME::RecordCNAME( const std::string &name, uint16_t off )
+    RecordCNAME::RecordCNAME( const Domainname &name, uint16_t off )
         : domainname( name ), offset( off )
     {}
 
     std::string RecordCNAME::toString() const
     {
-        return domainname;
+        return domainname.toString();
     }
 
 
     PacketData RecordCNAME::getPacket() const
     {
-        return convert_domainname_string_to_binary( domainname, offset );
+        return domainname.getPacket( offset );
     }
 
 
@@ -779,26 +810,29 @@ namespace dns
         return ResourceDataPtr( new RecordCNAME( pair.first ) );
     }
 
-    RecordSOA::RecordSOA( const std::string &mn,
-			  const std::string &rn,
+    RecordSOA::RecordSOA( const Domainname &mn,
+			  const Domainname &rn,
 			  uint32_t sr,
 			  uint32_t rf,
 			  uint32_t rt,
 			  uint32_t ex,
-			  uint32_t min )
-        : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min )
+			  uint32_t min,
+			  Offset   moff,
+			  Offset   roff )
+        : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min ),
+	  mname_offset( moff ), rname_offset( roff )
     {}
 
 
     std::string RecordSOA::toString() const
     {
         std::ostringstream soa_str;
-        soa_str << mname   << " "
-                << rname   << " "
-                << serial  << " "
-                << refresh << " "
-                << retry   << " "
-                << expire  << " "
+        soa_str << mname.toString() << " "
+                << rname.toString() << " "
+                << serial           << " "
+                << refresh          << " "
+                << retry            << " "
+                << expire           << " "
                 << minimum;
         return soa_str.str();
     }
@@ -809,8 +843,8 @@ namespace dns
 	PacketData packet;
 	std::insert_iterator<PacketData> pos( packet, packet.begin() );
 
-        PacketData mname_packet = convert_domainname_string_to_binary( mname );
-        PacketData rname_packet = convert_domainname_string_to_binary( rname );
+        PacketData mname_packet = mname.getPacket( mname_offset );
+        PacketData rname_packet = rname.getPacket( rname_offset );
 	pos = std::copy( mname_packet.begin(), mname_packet.end(), pos );
 	pos = std::copy( rname_packet.begin(), rname_packet.end(), pos );
 	SOAField soa_param;

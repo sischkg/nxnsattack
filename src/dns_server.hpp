@@ -34,6 +34,7 @@ namespace dns
 	~DNSServer(){}
 
 	virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
+	virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
 
 	void start();
     };

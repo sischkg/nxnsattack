@@ -13,6 +13,9 @@ namespace dns
     typedef std::vector<uint8_t>::iterator       PacketIterator;
     typedef std::vector<uint8_t>::const_iterator ConstPacketIterator;
 
+    typedef uint16_t Offset;
+    const Offset NO_COMPRESSION = 0xffff;
+
     typedef uint8_t Opcode;
     const Opcode OPCODE_QUERY  = 0;
     const Opcode OPCODE_NOTIFY = 4;
@@ -73,8 +76,11 @@ namespace dns
 	    : labels( l )
 	{}
 
+	Domainname( const std::string &name );
+	Domainname( const char *name );
+
 	std::string toString() const;
-	PacketData  getPacket( uint16_t offset = 0xffff ) const;
+	PacketData  getPacket( uint16_t offset = NO_COMPRESSION ) const;
     };
 
     class ResourceData
@@ -129,10 +135,11 @@ namespace dns
     class RecordNS : public ResourceData
     {
     private:
-        std::string domainname;
+        Domainname domainname;
+	Offset     offset;
 
     public:
-        RecordNS( const std::string &name );
+        RecordNS( const Domainname &name, Offset off = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
@@ -147,11 +154,12 @@ namespace dns
     class RecordMX : public ResourceData
     {
     private:
-	uint16_t    priority;
-        std::string domainname;
+	uint16_t   priority;
+        Domainname domainname;
+	Offset     offset;
 
     public:
-        RecordMX( uint16_t pri, const std::string &name );
+        RecordMX( uint16_t pri, const Domainname &name, Offset off = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
@@ -185,11 +193,11 @@ namespace dns
     class RecordCNAME : public ResourceData
     {
     private:
-        std::string domainname;
-	uint16_t    offset;
+        Domainname domainname;
+	uint16_t   offset;
 
     public:
-        RecordCNAME( const std::string &name, uint16_t off = 0xffff );
+        RecordCNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
@@ -204,22 +212,26 @@ namespace dns
     class RecordSOA : public ResourceData
     {
     private:
-        std::string mname;
-        std::string rname;
-        uint32_t    serial;
-        uint32_t    refresh;
-        uint32_t    retry;
-        uint32_t    expire;
-        uint32_t    minimum;
+        Domainname mname;
+        Domainname rname;
+        uint32_t   serial;
+        uint32_t   refresh;
+        uint32_t   retry;
+        uint32_t   expire;
+        uint32_t   minimum;
+	Offset     mname_offset;
+	Offset     rname_offset;
 
     public:
-        RecordSOA( const std::string &mname,
-                   const std::string &rname,
+        RecordSOA( const Domainname &mname,
+                   const Domainname &rname,
 		   uint32_t          serial,
 		   uint32_t          refresh,
 		   uint32_t          retry,
 		   uint32_t          expire,
-		   uint32_t          minimum );
+		   uint32_t          minimum,
+		   Offset            moff = NO_COMPRESSION,
+		   Offset            roff = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
@@ -228,7 +240,8 @@ namespace dns
             return TYPE_SOA;
         }
 
-        const std::string &getMName() const { return mname; }
+        const std::string getMName() const { return mname.toString(); }
+        const std::string getRName() const { return rname.toString(); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -368,7 +381,7 @@ namespace dns
 	uint32_t          offset;
 
 	OptPseudoRecord()
-	    : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( 0xffff )
+	    : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( NO_COMPRESSION )
 	{}
     };
 
@@ -430,7 +443,7 @@ namespace dns
 	uint32_t r_offset;
 
 	ResponseSectionEntry()
-	    : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( 0xffff )
+	    : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
 	{}
     };
 
@@ -579,7 +592,7 @@ namespace dns
 
 
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-							      uint32_t compress_offset = 0xffff );
+							      uint32_t compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
 										 const uint8_t *domainame,
 										 int recur = 0 ) throw(FormatError);
