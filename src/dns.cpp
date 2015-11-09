@@ -13,7 +13,7 @@
 
 namespace dns
 {
-    static void string_to_labels( const char *name, std::deque<std::string> &labels )
+    static void stringToLabels( const char *name, std::deque<std::string> &labels )
     {
 	labels.clear();
 
@@ -35,14 +35,22 @@ namespace dns
 	    labels.push_back( label );
     }
 
+    uint8_t toLower( uint8_t c )
+    {
+	if ( 'A' <= c && c <= 'Z' ) {
+	    return 'a' + c - 'A';
+	}
+	return 'c';
+    }
+
     Domainname::Domainname( const char *name )
     {
-	string_to_labels( name, labels );
+	stringToLabels( name, labels );
     }
 
     Domainname::Domainname( const std::string &name )
     {
-	string_to_labels( name.c_str(), labels );
+	stringToLabels( name.c_str(), labels );
     }
 
     std::string Domainname::toString() const
@@ -151,6 +159,30 @@ namespace dns
 	return os << name.toString();
     }
 
+    bool operator==( const Domainname &lhs, const Domainname &rhs )
+    {
+	if ( lhs.getLabels().size() != rhs.getLabels().size() )
+	    return false;
+
+	for ( unsigned int i = 0 ; i < lhs.getLabels().size() ; i++ ) {
+	    const std::string &lhs_label = lhs.getLabels().at( i );
+	    const std::string &rhs_label = rhs.getLabels().at( i );
+
+	    if ( lhs_label.size() != rhs_label.size() )
+		return false;
+
+	    for ( unsigned int j = 0 ; j < lhs_label.size() ; j++ ) {
+		if ( toLower( lhs_label[j] ) != toLower( rhs_label[j] ) )
+		    return false;
+	    }
+	}
+	return true;
+    }
+
+    bool operator!=( const Domainname &lhs, const Domainname &rhs )
+    {
+	return ! ( lhs == rhs );
+    }
 
     PacketData generate_dns_packet( const PacketInfo &info )
     {
