@@ -101,7 +101,7 @@ uint8_t *append_label( const char *label, uint8_t *buf )
 
 std::vector<uint8_t> gen_question_section( const dns::QuestionSectionEntry &question )
 {
-    std::vector<uint8_t> packet = convert_domainname_string_to_binary( question.q_domainname, question.q_offset );
+    std::vector<uint8_t> packet = question.q_domainname.getPacket( question.q_offset );
     packet.resize( packet.size() + sizeof(uint16_t) + sizeof(uint16_t) );
     uint8_t *p = packet.data() + packet.size() - sizeof(uint16_t) - sizeof(uint16_t);
     p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );

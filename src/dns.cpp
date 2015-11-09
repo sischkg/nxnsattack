@@ -13,7 +13,7 @@
 
 namespace dns
 {
-    static void string_to_labels( const char *name, std::vector<std::string> &labels )
+    static void string_to_labels( const char *name, std::deque<std::string> &labels )
     {
 	labels.clear();
 
@@ -76,6 +76,81 @@ namespace dns
 
         return bin;
     }
+    
+    const uint8_t* Domainname::parsePacket( Domainname &ref_domainname,
+					    const uint8_t *packet,
+					    const uint8_t *begin,
+					    int recur ) throw(FormatError)
+    {
+	if ( recur > 100 ) {
+	    throw FormatError( "detected domainname decompress loop" );
+	}
+	
+	std::string label;
+	const uint8_t *p = begin;
+        while ( *p != 0 ) {
+            // メッセージ圧縮を行っている場合
+            if ( *p & 0xC0 ) {
+                int offset = ntohs( *( reinterpret_cast<const uint16_t *>( p ) ) ) & 0x0bff;
+		if ( packet + offset > begin - 2 ) {
+		    throw FormatError( "detected forword reference of domainname decompress" );
+		}
+
+		return parsePacket( ref_domainname, packet, p + offset, recur + 1 );
+            }
+
+            uint8_t label_length = *p;
+            p++;
+            for ( uint8_t i = 0 ; i < label_length ; i++, p++ ) {
+                label.push_back( *p );
+            }
+	    ref_domainname.addSuffix( label );
+	    label = "";
+        }
+
+        p++;
+	return p;
+    }
+
+
+    unsigned int Domainname::size() const
+    {
+	return toString().size();
+    }
+
+    Domainname Domainname::operator+( const Domainname &rhs ) const
+    {
+	Domainname new_domainname = *this;
+	new_domainname += rhs;
+	return new_domainname;
+    }
+
+    Domainname &Domainname::operator+=( const Domainname &rhs )
+    {
+	labels.insert( labels.end(), rhs.getLabels().begin(), rhs.getLabels().end() );
+	return *this;
+    }
+
+    void Domainname::addSubdomain( const std::string &label )
+    {
+	labels.push_front( label );
+    }
+
+    void Domainname::addSuffix( const std::string &label )
+    {
+	labels.push_back( label );
+    }
+
+    std::ostream &operator<<( const Domainname &name, std::ostream &os )
+    {
+	return os << name.toString();
+    }
+
+    std::ostream &operator<<( std::ostream &os, const Domainname &name )
+    {
+	return os << name.toString();
+    }
+
 
     PacketData generate_dns_packet( const PacketInfo &info )
     {
@@ -349,7 +424,7 @@ namespace dns
 
     PacketData generate_question_section( const QuestionSectionEntry &question )
     {
-        PacketData packet = convert_domainname_string_to_binary( question.q_domainname );
+        PacketData packet = question.q_domainname.getPacket();
         packet.resize( packet.size() + sizeof(uint16_t) + sizeof(uint16_t) );
         uint8_t *p = packet.data() + packet.size() - sizeof(uint16_t) - sizeof(uint16_t);
         p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );
@@ -360,21 +435,19 @@ namespace dns
 
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *p )
     {
-        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, p );
-        p = pair.second;
+        QuestionSectionEntry question;
+	const uint8_t *pos = Domainname::parsePacket( question.q_domainname, packet, p );
 
-        QuestionSectionEntry sec;
-        sec.q_domainname = pair.first;
-        sec.q_type  = ntohs( get_bytes<uint16_t>( &p ) );
-        sec.q_class = ntohs( get_bytes<uint16_t>( &p ) );
+        question.q_type  = ntohs( get_bytes<uint16_t>( &pos ) );
+        question.q_class = ntohs( get_bytes<uint16_t>( &pos ) );
 
-        return QuestionSectionEntryPair( sec, p );
+        return QuestionSectionEntryPair( question, pos );
     }
 
 
     PacketData generate_response_section( const ResponseSectionEntry &response )
     {
-        PacketData packet_name = convert_domainname_string_to_binary( response.r_domainname, response.r_offset );
+        PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
         PacketData packet_rd   = response.r_resource_data->getPacket();
         PacketData packet( packet_name.size() +
 			   2 +
@@ -398,51 +471,52 @@ namespace dns
 
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
     {
-        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
-        const uint8_t *p = pair.second;
-
         ResponseSectionEntry sec;
-        sec.r_domainname     = pair.first;
-        sec.r_type           = ntohs( get_bytes<uint16_t>( &p ) );
-        sec.r_class          = ntohs( get_bytes<uint16_t>( &p ) );
-        sec.r_ttl            = ntohl( get_bytes<uint32_t>( &p ) );
-        uint16_t data_length = ntohs( get_bytes<uint16_t>( &p ) );
+
+	const uint8_t *pos = Domainname::parsePacket( sec.r_domainname, packet, begin );
+        sec.r_type           = ntohs( get_bytes<uint16_t>( &pos ) );
+        sec.r_class          = ntohs( get_bytes<uint16_t>( &pos ) );
+        sec.r_ttl            = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint16_t data_length = ntohs( get_bytes<uint16_t>( &pos ) );
 
         ResourceDataPtr parsed_data;
         switch ( sec.r_type ) {
         case TYPE_A:
-            parsed_data = RecordA::parse( p, p + data_length );
+            parsed_data = RecordA::parse( pos, pos + data_length );
             break;
         case TYPE_AAAA:
-            parsed_data = RecordAAAA::parse( p, p + data_length );
+            parsed_data = RecordAAAA::parse( pos, pos + data_length );
             break;
         case TYPE_NS:
-            parsed_data = RecordNS::parse( packet, p, p + data_length );
+            parsed_data = RecordNS::parse( packet, pos, pos + data_length );
             break;
         case TYPE_CNAME:
-            parsed_data = RecordCNAME::parse( packet, p, p + data_length );
+            parsed_data = RecordCNAME::parse( packet, pos, pos + data_length );
+            break;
+        case TYPE_DNAME:
+            parsed_data = RecordDNAME::parse( packet, pos, pos + data_length );
             break;
         case TYPE_MX:
-            parsed_data = RecordMX::parse( packet, p, p + data_length );
+            parsed_data = RecordMX::parse( packet, pos, pos + data_length );
             break;
         case TYPE_TXT:
-            parsed_data = RecordTXT::parse( packet, p, p + data_length );
+            parsed_data = RecordTXT::parse( packet, pos, pos + data_length );
             break;
         case TYPE_SOA:
-            parsed_data = RecordSOA::parse( packet, p, p + data_length );
+            parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
             break;
         case TYPE_OPT:
-            parsed_data = RecordOptionsData::parse( packet, p, p + data_length );
+            parsed_data = RecordOptionsData::parse( packet, pos, pos + data_length );
             break;
         default:
 	    std::ostringstream msg;
 	    msg << "not support type \"" << sec.r_type << "\".";
             throw std::runtime_error( msg.str() );
         }
-        p += data_length;
+        pos += data_length;
 
         sec.r_resource_data = parsed_data;
-        return ResponseSectionEntryPair( sec, p );
+        return ResponseSectionEntryPair( sec, pos );
     }
 
 
@@ -474,6 +548,9 @@ namespace dns
 	    break;
 	case TYPE_CNAME:
 	    res = "CNAME";
+	    break;
+	case TYPE_DNAME:
+	    res = "DNAME";
 	    break;
 	case TYPE_MX:
 	    res = "MX";
@@ -698,8 +775,9 @@ namespace dns
                                      const uint8_t *begin,
                                      const uint8_t *end )
     {
-        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
-        return ResourceDataPtr( new RecordNS( pair.first ) );
+	Domainname name;
+	Domainname::parsePacket( name, packet, begin );
+        return ResourceDataPtr( new RecordNS( name ) );
     }
 
 
@@ -734,8 +812,10 @@ namespace dns
 	    throw FormatError( "too few length for MX record," );
 	const uint8_t *pos = begin;
 	uint16_t priority = get_bytes<uint16_t>( &pos );
-        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, pos );
-        return ResourceDataPtr( new RecordMX( priority, pair.first ) );
+
+	Domainname name;
+	Domainname::parsePacket( name, packet, pos );
+        return ResourceDataPtr( new RecordMX( priority, name ) );
     }
 
 
@@ -806,8 +886,34 @@ namespace dns
 					const uint8_t *begin,
 					const uint8_t *end )
     {
-        std::pair<std::string, const uint8_t *> pair = convert_domainname_binary_to_string( packet, begin );
-        return ResourceDataPtr( new RecordCNAME( pair.first ) );
+	Domainname name;
+	Domainname::parsePacket( name, packet, begin );
+        return ResourceDataPtr( new RecordCNAME( name ) );
+    }
+
+    RecordDNAME::RecordDNAME( const Domainname &name, uint16_t off )
+        : domainname( name ), offset( off )
+    {}
+
+    std::string RecordDNAME::toString() const
+    {
+        return domainname.toString();
+    }
+
+
+    PacketData RecordDNAME::getPacket() const
+    {
+        return domainname.getPacket( offset );
+    }
+
+
+    ResourceDataPtr RecordDNAME::parse( const uint8_t *packet,
+					const uint8_t *begin,
+					const uint8_t *end )
+    {
+	Domainname name;
+	Domainname::parsePacket( name, packet, begin );
+        return ResourceDataPtr( new RecordDNAME( name ) );
     }
 
     RecordSOA::RecordSOA( const Domainname &mn,
@@ -866,17 +972,18 @@ namespace dns
                                       const uint8_t *begin,
                                       const uint8_t *end )
     {
-        std::pair<std::string, const uint8_t *> mname_pair = convert_domainname_binary_to_string( packet, begin );
-        std::pair<std::string, const uint8_t *> rname_pair = convert_domainname_binary_to_string( packet, mname_pair.second );
-        const uint8_t *p = rname_pair.second;
-        uint32_t serial  = ntohl( get_bytes<uint32_t>( &p ) );
-        uint32_t refresh = ntohl( get_bytes<uint32_t>( &p ) );
-        uint32_t retry   = ntohl( get_bytes<uint32_t>( &p ) );
-        uint32_t expire  = ntohl( get_bytes<uint32_t>( &p ) );
-        uint32_t minimum = ntohl( get_bytes<uint32_t>( &p ) );
+	Domainname mname_result, rname_result;
+	const uint8_t *pos = begin;
+	pos = Domainname::parsePacket( mname_result, packet, pos );
+	pos = Domainname::parsePacket( rname_result, packet, pos );
+        uint32_t serial  = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint32_t refresh = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint32_t retry   = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint32_t expire  = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint32_t minimum = ntohl( get_bytes<uint32_t>( &pos ) );
 
-        return ResourceDataPtr( new RecordSOA( mname_pair.first,
-                                               rname_pair.first,
+        return ResourceDataPtr( new RecordSOA( mname_result,
+                                               rname_result,
                                                serial,
                                                refresh,
                                                retry,

@@ -32,7 +32,7 @@ public:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	if ( query_question.q_domainname != cname ) {
+	if ( query_question.q_domainname.toString() != cname ) {
 	    dns::ResponseSectionEntry answer1;
 	    answer1.r_domainname    = query_question.q_domainname;
 	    answer1.r_type          = dns::TYPE_CNAME;

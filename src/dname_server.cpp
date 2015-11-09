@@ -3,10 +3,10 @@
 
 const int   TTL          = 600;
 
-class LongServer : public dns::DNSServer
+class DNameServer : public dns::DNSServer
 {
 public:
-    LongServer( const std::string addr, uint16_t port )
+    DNameServer( const std::string addr, uint16_t port )
 	: dns::DNSServer( addr, port )
     {}
 
@@ -21,32 +21,38 @@ public:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	std::string cname;
-	for ( int i = 0 ; i < 1 ; i++ ) {
-	    cname += "a.";
-	}
-
-	dns::Domainname new_domainname;
-	for ( int i = 0 ; i < query_question.q_domainname.getLabels().size() ; i++ ) {
+	dns::Domainname new_domainname, new_new_domainname;
+	new_domainname.addSuffix( "a" );
+	new_new_domainname.addSuffix( "a" );
+	new_new_domainname.addSuffix( "a" );
+	for ( unsigned int i = 0 ; i < query_question.q_domainname.getLabels().size() ; i++ ) {
 	    new_domainname.addSuffix( query_question.q_domainname.getLabels().at( i ) );
+	    new_new_domainname.addSuffix( query_question.q_domainname.getLabels().at( i ) );
 	}
 
 	dns::ResponseSectionEntry answer1;
 	answer1.r_domainname    = query_question.q_domainname;
-	answer1.r_type          = dns::TYPE_CNAME;
+	answer1.r_type          = dns::TYPE_DNAME;
 	answer1.r_class         = dns::CLASS_IN;
 	answer1.r_ttl           = 30;
-	answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( new_domainname ) );
+	answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordDNAME( new_domainname, sizeof(dns::PacketHeaderField) ) );
 	response.answer_section.push_back( answer1 );
- 
 	/*
 	dns::ResponseSectionEntry answer2;
-	answer2.r_domainname    = cname;
+	answer2.r_domainname    = new_domainname;
 	answer2.r_type          = dns::TYPE_CNAME;
 	answer2.r_class         = dns::CLASS_IN;
 	answer2.r_ttl           = 30;
-	answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( "a.a." + query_question.q_domainname.toString() ) );
+	answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( new_new_domainname, sizeof(dns::PacketHeaderField) ) );
 	response.answer_section.push_back( answer2 );
+	
+	dns::ResponseSectionEntry answer3;
+	answer3.r_domainname    = new_new_domainname;
+	answer3.r_type          = dns::TYPE_A;
+	answer3.r_class         = dns::CLASS_IN;
+	answer3.r_ttl           = 30;
+	answer3.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "127.0.0.1" ) );
+	response.answer_section.push_back( answer3 );
 	*/
   	response.id                   = query.id;
 	response.opcode               = 0;
@@ -90,7 +96,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    LongServer server( bind_address, 53 );
+    DNameServer server( bind_address, 53 );
     server.start();
 
     return 0;

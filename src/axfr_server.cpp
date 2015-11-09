@@ -45,7 +45,7 @@ private:
 	response.answer_section.push_back( answer1 );
 
 	dns::ResponseSectionEntry answer2;
-	answer2.r_domainname    = "www." + query_question.q_domainname;
+	answer2.r_domainname    = "www." + query_question.q_domainname.toString();
 	answer2.r_type          = dns::TYPE_A;
 	answer2.r_class         = dns::CLASS_IN;
 	answer2.r_ttl           = TTL;

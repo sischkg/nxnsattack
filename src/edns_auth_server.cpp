@@ -28,7 +28,7 @@ public:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname == "www.example.com" ) {
+	if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname.toString() == "www.example.com" ) {
 	    dns::ResponseSectionEntry answer;
 	    answer.r_domainname    = query_question.q_domainname;
 	    answer.r_type          = dns::TYPE_A;
@@ -37,7 +37,7 @@ public:
 	    answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
 	    response.answer_section.push_back( answer );
 	}
-	else if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname == "ns1.example.com" ) {
+	else if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname.toString() == "ns1.example.com" ) {
 	    dns::ResponseSectionEntry answer;
 	    answer.r_domainname    = query_question.q_domainname;
 	    answer.r_type          = dns::TYPE_A;
@@ -63,7 +63,7 @@ public:
 	additional.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( MY_ADDRESS ) );
 	response.additional_infomation_section.push_back( additional );
 
-	if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname == "www.example.com" ) {
+	if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname.toString() == "www.example.com" ) {
 	    switch ( case_id ) {
 	    case 1:
 		{

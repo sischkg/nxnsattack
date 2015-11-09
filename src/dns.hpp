@@ -2,6 +2,7 @@
 #define DNS_HPP
 
 #include <vector>
+#include <deque>
 #include <string>
 #include <stdexcept>
 #include <boost/cstdint.hpp>
@@ -32,6 +33,7 @@ namespace dns
     const Type TYPE_TXT   = 16;
     const Type TYPE_KEY   = 25;
     const Type TYPE_AAAA  = 28;
+    const Type TYPE_DNAME = 39;
     const Type TYPE_OPT   = 41;
     const Type TYPE_TKEY  = 249;
     const Type TYPE_IXFR  = 251;
@@ -69,19 +71,35 @@ namespace dns
     class Domainname
     {
     private:
-	std::vector<std::string> labels;
+	std::deque<std::string> labels;
 
     public:
-	Domainname( const std::vector<std::string> &l )
+	Domainname( const std::deque<std::string> &l = std::deque<std::string>() )
 	    : labels( l )
 	{}
 
 	Domainname( const std::string &name );
 	Domainname( const char *name );
 
-	std::string toString() const;
-	PacketData  getPacket( uint16_t offset = NO_COMPRESSION ) const;
+	std::string  toString() const;
+	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
+	unsigned int size() const;
+	const std::deque<std::string> &getLabels() const { return labels; }
+
+	Domainname operator+( const Domainname & ) const;
+	Domainname &operator+=( const Domainname & );
+	void addSubdomain( const std::string & );
+	void addSuffix( const std::string & );
+
+	static const uint8_t *parsePacket( Domainname &ref_domainname,
+					   const uint8_t *packet,
+					   const uint8_t *begin,
+					   int recur = 0 ) throw(FormatError);
     };
+
+    std::ostream &operator<<( const Domainname &name, std::ostream &os );
+    std::ostream &operator<<( std::ostream &os, const Domainname &name );
+
 
     class ResourceData
     {
@@ -204,6 +222,25 @@ namespace dns
         virtual uint16_t type() const
         {
             return TYPE_CNAME;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordDNAME : public ResourceData
+    {
+    private:
+        Domainname domainname;
+	uint16_t   offset;
+
+    public:
+        RecordDNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_DNAME;
         }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
@@ -374,11 +411,11 @@ namespace dns
 
     struct OptPseudoRecord
     {
-	std::string       domainname;
-	uint16_t          payload_size;
-	uint8_t           rcode;
+	Domainname domainname;
+	uint16_t   payload_size;
+	uint8_t    rcode;
 	boost::shared_ptr<ResourceData> record_options_data;
-	uint32_t          offset;
+	uint32_t   offset;
 
 	OptPseudoRecord()
 	    : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( NO_COMPRESSION )
@@ -427,20 +464,20 @@ namespace dns
 
     struct QuestionSectionEntry
     {
-        std::string q_domainname;
-	uint16_t    q_type;
-	uint16_t    q_class;
-	uint16_t    q_offset;
+        Domainname q_domainname;
+	uint16_t   q_type;
+	uint16_t   q_class;
+	uint16_t   q_offset;
     };
 
     struct ResponseSectionEntry
     {
-        std::string r_domainname;
-	uint16_t r_type;
-	uint16_t r_class;
-	uint32_t r_ttl;
+	Domainname      r_domainname;
+	uint16_t        r_type;
+	uint16_t        r_class;
+	uint32_t        r_ttl;
         ResourceDataPtr r_resource_data;
-	uint32_t r_offset;
+	uint32_t        r_offset;
 
 	ResponseSectionEntry()
 	    : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
