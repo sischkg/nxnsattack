@@ -746,6 +746,23 @@ namespace dns
     }
 
 
+    std::string RecordRaw::toString() const
+    {
+	std::ostringstream os;
+	os << "type: " << rrtype << ", data: ";
+	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
+	    os << std::hex << (unsigned int) data[i] << " ";
+	}
+	return os.str();
+    }
+
+
+    PacketData RecordRaw::getPacket() const
+    {
+	return data;
+    }
+
+
     RecordA::RecordA( uint32_t addr )
         : sin_addr( addr )
     {}

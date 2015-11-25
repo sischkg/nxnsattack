@@ -116,6 +116,26 @@ namespace dns
     };
 
 
+    class RecordRaw : public ResourceData
+    {
+    private:
+        uint16_t rrtype;
+	std::vector<uint8_t> data;
+
+    public:
+        RecordRaw( uint8_t t, const std::vector<uint8_t> &d )
+	    : rrtype(t), data(d)
+	{}
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual Type type() const
+        {
+            return rrtype;
+        }
+
+    };
+
     class RecordA : public ResourceData
     {
     private:
