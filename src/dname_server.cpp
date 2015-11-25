@@ -1,4 +1,5 @@
 #include "dns_server.hpp"
+#include <iostream>
 #include <boost/program_options.hpp>
 
 const int   TTL          = 600;

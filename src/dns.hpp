@@ -33,15 +33,18 @@ namespace dns
     const Type TYPE_TXT   = 16;
     const Type TYPE_KEY   = 25;
     const Type TYPE_AAAA  = 28;
+    const Type TYPE_NAPTR = 35;
     const Type TYPE_DNAME = 39;
     const Type TYPE_OPT   = 41;
+    const Type TYPE_TLSA  = 52;
     const Type TYPE_TKEY  = 249;
     const Type TYPE_IXFR  = 251;
     const Type TYPE_AXFR  = 252;
     const Type TYPE_ANY   = 255;
 
     typedef uint16_t OptType;
-    const OptType OPT_NSID = 3;
+    const OptType OPT_NSID          = 3;
+    const OptType OPT_CLIENT_SUBNET = 8;
 
     typedef uint8_t ResponseCode;
     const ResponseCode NO_ERROR       = 0;
@@ -228,6 +231,37 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+
+    class RecordNAPTR : public ResourceData
+    {
+    private:
+        uint16_t    order;
+        uint16_t    preference;
+        std::string flags;
+        std::string services;
+        std::string regexp;
+        Domainname  replacement;
+	uint16_t    offset;
+
+    public:
+        RecordNAPTR( uint16_t          in_order,
+                     uint16_t          in_preference,
+                     const std::string &in_flags,
+                     const std::string &in_services,
+                     const std::string &in_regexp,
+                     const Domainname  &in_replacement,
+                     uint16_t          in_offset = NO_COMPRESSION );
+
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getPacket() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_NAPTR;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
     class RecordDNAME : public ResourceData
     {
     private:
@@ -384,6 +418,34 @@ namespace dns
 	virtual std::vector<uint8_t> getPacket() const;
 	virtual uint16_t code() const { return OPT_NSID; }
 	virtual uint16_t size() const { return 2 + 2 + nsid.size(); }
+
+	static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+    };
+
+    class ClientSubnetOption : public OptPseudoRROption
+    {
+    private:
+	uint16_t    family;
+	uint8_t     source_prefix;
+	uint8_t     scope_prefix;
+	std::string address;
+
+	static unsigned int getAddressSize( uint8_t prefix );
+    public:
+	static const int IPv4 = 1;
+	static const int IPv6 = 2;
+
+	ClientSubnetOption( uint16_t fam,
+			    uint8_t  source,
+			    uint8_t  scope,
+			    const std::string &addr )
+	    : family( fam ), source_prefix( source ), scope_prefix( scope ), address( addr )
+	{}
+
+	virtual std::string toString() const;
+	virtual std::vector<uint8_t> getPacket() const;
+	virtual uint16_t code() const { return OPT_CLIENT_SUBNET; }
+	virtual uint16_t size() const;
 
 	static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };

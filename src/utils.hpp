@@ -58,4 +58,17 @@ uint16_t compute_checksum( const uint8_t *data, size_t length );
 in_addr convert_address_string_to_binary( const std::string &str ) throw ( InvalidAddressFormatError );
 std::string convert_address_binary_to_string( in_addr bin ) throw ( InvalidAddressFormatError );
 
+
+char *encode_to_base64( const uint8_t *begin, const uint8_t *end,
+			char *output );
+uint8_t *decode_from_base64( const char *begin, const char *end,
+			     uint8_t *output );
+uint8_t *decode_from_base64( const char *data, uint8_t *output );
+
+uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end );
+uint32_t decode_from_base64_size( const char *begin, const char *end );
+
+void md5( const uint8_t *d, uint32_t size, uint8_t result[16] );
+
+
 #endif

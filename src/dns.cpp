@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/lexical_cast.hpp>
@@ -35,13 +37,33 @@ namespace dns
 	    labels.push_back( label );
     }
 
-    uint8_t toLower( uint8_t c )
+    static uint8_t toLower( uint8_t c )
     {
 	if ( 'A' <= c && c <= 'Z' ) {
 	    return 'a' + c - 'A';
 	}
 	return 'c';
     }
+
+    static const uint8_t *parseCharacterString( const uint8_t *begin, const uint8_t *packet_end,
+                                               std::string &ref_output )
+    {
+        if ( begin == NULL || packet_end == NULL )
+            throw std::logic_error( "begin, packet end must not be NULL" );
+        if ( begin == packet_end )
+            throw FormatError( "character-string length >= 1" );
+
+        const uint8_t *pos = begin;
+        uint8_t size = get_bytes<uint8_t>( &pos );
+
+        if ( pos + size > packet_end )
+            throw FormatError( "character-string size is too long than end of packet" );
+
+        ref_output.assign( reinterpret_cast<const char *>( pos ), size );
+        pos += size;
+        return pos;
+    }
+
 
     Domainname::Domainname( const char *name )
     {
@@ -68,6 +90,8 @@ namespace dns
         PacketData bin;
 
 	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
 	    bin.push_back( labels[i].size() );
 	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
 		bin.push_back( labels[i][j] );
@@ -101,13 +125,14 @@ namespace dns
             if ( *p & 0xC0 ) {
                 int offset = ntohs( *( reinterpret_cast<const uint16_t *>( p ) ) ) & 0x0bff;
 		if ( packet + offset > begin - 2 ) {
-		    throw FormatError( "detected forword reference of domainname decompress" );
+		    throw FormatError( "detected forword reference of domainname decompress..." );
 		}
 
-		return parsePacket( ref_domainname, packet, p + offset, recur + 1 );
+		parsePacket( ref_domainname, packet, packet + offset, recur + 1 );
+		return p + 2;
             }
 
-            uint8_t label_length = *p;
+	    uint8_t label_length = *p;
             p++;
             for ( uint8_t i = 0 ; i < label_length ; i++, p++ ) {
                 label.push_back( *p );
@@ -525,6 +550,9 @@ namespace dns
         case TYPE_CNAME:
             parsed_data = RecordCNAME::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_NAPTR:
+            parsed_data = RecordNAPTR::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_DNAME:
             parsed_data = RecordDNAME::parse( packet, pos, pos + data_length );
             break;
@@ -580,6 +608,9 @@ namespace dns
 	    break;
 	case TYPE_CNAME:
 	    res = "CNAME";
+	    break;
+	case TYPE_NAPTR:
+	    res = "NAPTR";
 	    break;
 	case TYPE_DNAME:
 	    res = "DNAME";
@@ -923,6 +954,82 @@ namespace dns
         return ResourceDataPtr( new RecordCNAME( name ) );
     }
 
+
+    RecordNAPTR::RecordNAPTR( uint16_t          in_order,
+                              uint16_t          in_preference,
+                              const std::string &in_flags,
+                              const std::string &in_services,
+                              const std::string &in_regexp,
+                              const Domainname  &in_replacement,
+                              uint16_t          in_offset )
+        : order( in_order ),
+          preference( in_preference ),
+          flags( in_flags ),
+        services( in_services ),
+        regexp( in_regexp ),
+        replacement( in_replacement ),
+        offset( in_offset )
+    {}
+
+    std::string RecordNAPTR::toString() const
+    {
+        std::stringstream os;
+        os << "order: "  << order  << ", preference: "  << preference
+           << "flags: "  << flags  << ", services: "    << services
+           << "regexp: " << regexp << ", replacement: " << replacement;
+        return os.str();
+    }
+
+
+    PacketData RecordNAPTR::getPacket() const
+    {
+	PacketData packet;
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+
+        uint16_t n_order      = htons( order );
+        uint16_t n_preference = htons( preference );
+	pos = std::copy( reinterpret_cast<uint8_t *>( &n_order ),
+			 reinterpret_cast<uint8_t *>( &n_order ) + sizeof( n_order ),
+			 pos );
+	pos = std::copy( reinterpret_cast<uint8_t *>( &n_preference ),
+			 reinterpret_cast<uint8_t *>( &n_preference ) + sizeof( n_preference ),
+			 pos );
+
+        *pos++ = flags.size();
+	pos = std::copy( flags.c_str(), flags.c_str() + flags.size(), pos );
+        *pos++ = services.size();
+	pos = std::copy( services.c_str(), services.c_str() + services.size(), pos );
+        *pos++ = regexp.size();
+	pos = std::copy( regexp.c_str(), regexp.c_str() + regexp.size(), pos );
+  
+        PacketData replacement_packet = replacement.getPacket( offset );
+	pos = std::copy( replacement_packet.begin(), replacement_packet.end(), pos );
+        return packet;
+    }
+
+
+    ResourceDataPtr RecordNAPTR::parse( const uint8_t *packet,
+					const uint8_t *begin,
+					const uint8_t *end )
+    {
+        if ( end - begin < 2 + 2 + 1 + 1 + 1 + 1 )
+            throw FormatError( "too short for NAPTR RR" );
+
+        const uint8_t *pos = begin;
+        uint16_t in_order      = ntohs( get_bytes<uint16_t>( &pos ) );
+        uint16_t in_preference = ntohs( get_bytes<uint16_t>( &pos ) );
+
+        std::string in_flags, in_services, in_regexp;
+        pos = parseCharacterString( pos, end, in_flags );
+        pos = parseCharacterString( pos, end, in_services );
+        pos = parseCharacterString( pos, end, in_regexp );
+            
+	Domainname in_replacement;
+	Domainname::parsePacket( in_replacement, packet, pos );
+        return ResourceDataPtr( new RecordNAPTR( in_order, in_preference, in_flags, in_services, in_regexp, in_replacement ) );
+    }
+
+
     RecordDNAME::RecordDNAME( const Domainname &name, uint16_t off )
         : domainname( name ), offset( off )
     {}
@@ -1130,6 +1237,109 @@ namespace dns
     {
 	std::string nsid( begin, end );
 	return OptPseudoRROptPtr( new NSIDOption( nsid ) );
+    }
+
+    unsigned int ClientSubnetOption::getAddressSize( uint8_t prefix )
+    {
+	return ( prefix - 1 )/8 + 1;
+    }
+
+    PacketData ClientSubnetOption::getPacket() const
+    {
+	PacketData result;
+	result.resize( size() );
+	uint8_t *pos = &result[0];
+
+	pos = set_bytes<uint16_t>( htons( OPT_CLIENT_SUBNET ), pos );
+	pos = set_bytes<uint16_t>( htons( size() ),            pos );
+	pos = set_bytes<uint16_t>( htons( family ),            pos );
+	pos = set_bytes<uint8_t>( source_prefix,               pos );
+	pos = set_bytes<uint8_t>( scope_prefix,                pos );
+	
+	uint8_t addr_buf[16];
+	if ( family == IPv4 ) {
+	    inet_pton( AF_INET, address.c_str(), addr_buf );	    
+	}
+	else {
+	    inet_pton( AF_INET6, address.c_str(), addr_buf );	    
+	}
+	std::memcpy( pos, addr_buf, result.size() - ( 2 + 2 + 2 + 1 + 1 ) );
+	return result;
+    }
+
+    uint16_t ClientSubnetOption::size() const
+    {
+	if ( source_prefix == 0 )
+	    return 2 + 2 +  2 + 1 + 1;
+
+	return 2 + 2 + 2 + 1 + getAddressSize( source_prefix );
+    }
+
+    std::string ClientSubnetOption::toString() const
+    {
+	std::ostringstream os;
+	os << "EDNSClientSubnet: "
+	   << "source:  " << (int)source_prefix
+	   << "scope:   " << (int)scope_prefix
+	   << "address: " << address;
+	return os.str();
+    }
+
+    OptPseudoRROptPtr ClientSubnetOption::parse( const uint8_t *begin, const uint8_t *end )
+    {
+	const uint8_t *pos = begin;
+
+	uint16_t fam    = ntohs( get_bytes<uint16_t>( &pos ) );
+	uint8_t  source =        get_bytes<uint8_t>( &pos );
+	uint8_t  scope  =        get_bytes<uint8_t>( &pos );
+
+	if ( fam == 1 ) {
+	    if ( source > 32 ) {
+		throw FormatError( "invalid source prefix length of EDNS-Client-Subet" );
+	    }
+	    if ( scope > 32 ) {
+		throw FormatError( "invalid scope prefix length of EDNS-Client-Subet" );
+	    }
+
+	    if ( source == 0 )
+		return OptPseudoRROptPtr( new ClientSubnetOption( fam, source, scope, "0.0.0.0" ) );
+
+	    uint8_t addr_buf[4];
+	    char    addr_str[INET_ADDRSTRLEN];
+
+	    std::memset( addr_buf, 0, sizeof( addr_buf ) );
+	    std::memset( addr_str, 0, sizeof( addr_str ) );
+			 
+	    std::memcpy( addr_buf, pos, getAddressSize( source ) );
+	    inet_ntop( AF_INET, addr_buf, addr_str, sizeof(addr_buf) );
+
+	    return OptPseudoRROptPtr( new ClientSubnetOption( fam, source, scope, addr_str ) );
+	}
+	else if ( fam == 2 ) {
+	    if ( source > 32 ) {
+		throw FormatError( "invalid source prefix length of EDNS-Client-Subet" );
+	    }
+	    if ( scope > 32 ) {
+		throw FormatError( "invalid scope prefix length of EDNS-Client-Subet" );
+	    }
+
+	    if ( source == 0 )
+		return OptPseudoRROptPtr( new ClientSubnetOption( fam, source, scope, "::0" ) );
+
+	    uint8_t addr_buf[16];
+	    char    addr_str[INET6_ADDRSTRLEN];
+
+	    std::memset( addr_buf, 0, sizeof( addr_buf ) );
+	    std::memset( addr_str, 0, sizeof( addr_str ) );
+			 
+	    std::memcpy( addr_buf, pos, getAddressSize( source ) );
+	    inet_ntop( AF_INET6, addr_buf, addr_str, sizeof(addr_buf) );
+
+	    return OptPseudoRROptPtr( new ClientSubnetOption( fam, source, scope, addr_str ) );
+	}
+	else {
+	    throw FormatError( "invalid family of EDNS-Client-Subet" );
+	}
     }
 
 

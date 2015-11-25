@@ -4,22 +4,23 @@
 #include <stdexcept>
 #include <iostream>
 
-const char *MY_ADDRESS      = "192.168.0.102";
+const char *MY_ADDRESS      = "192.168.33.1";
 const char *MY_DOMAIN       = "example.com";
-const char *BIND_ADDRESS    = "0.0.0.0";
+const char *BIND_ADDRESS    = "192.168.33.1";
 const int   TTL             = 600;
-const int   NS_RECORD_COUNT = 2;
+const int   NS_RECORD_COUNT = 8;
 const int   SUBDOMAIN_SIZE  = 30;
 const int   BUF_SIZE        = 256 * 256;
 
 std::string generate_domainname()
 {
     std::string subdomain;
-    subdomain.resize( SUBDOMAIN_SIZE );
+    //    subdomain.resize( SUBDOMAIN_SIZE );
     for ( int i = 0 ; i < SUBDOMAIN_SIZE ; i++ ) {
-	subdomain[i] = 'a' + (char)(std::rand()%26);
+	subdomain.push_back( 'a' + (char)(std::rand()%26) );
+	subdomain.push_back( '.' );
     }
-    return "ns." + subdomain + "." + MY_DOMAIN;
+    return "ns." + subdomain + MY_DOMAIN;
 }
 
 
@@ -35,8 +36,8 @@ dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSecti
 
     dns::QuestionSectionEntry question;
     question.q_domainname = question_section.q_domainname;
-    question.q_class      = dns::CLASS_IN;
-    question.q_type       = dns::TYPE_A;
+    question.q_class      = question_section.q_class;
+    question.q_type       = question_section.q_type;
     response.question.push_back( question );
 
     for ( int i = 0 ; i < NS_RECORD_COUNT ; i++ ) {

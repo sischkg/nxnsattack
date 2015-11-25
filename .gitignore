@@ -3,11 +3,13 @@
 \#*
 .\#*
 *.a
+Testing
 src/echo
 src/dns
 src/poison
 CMakeCache.txt
 CMakeFiles
+CTestTestfile.cmake
 Makefile
 cmake_install.cmake
 src/idns_server
@@ -36,5 +38,13 @@ src/axfr_udp
 src/edns0_compress
 src/txt_server
 src/long_server
+src/ednssubnet
+src/tkey_tc
+src/ednssubnet.cpp
+src/naptr
+tests/test-base64
+tests/test-md5
+
+
 
 

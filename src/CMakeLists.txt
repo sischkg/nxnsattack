@@ -1,11 +1,3 @@
-set(CMAKE_VERBOSE_MAKEFILE ON)
-set(Boost_ADDITIONAL_VERSIONS "1.55" )
-find_package( Boost 1.55 )
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-# set(Boost_USE_STATIC_LIBS        ON)
-add_definitions("-Wall -std=c++11")
-
 add_library(
   libipv4
   utils.cpp
@@ -36,6 +28,7 @@ add_executable( axfr_server         axfr_server.cpp )
 add_executable( long_server         long_server.cpp )
 add_executable( edns0_tcp           edns0_tcp.cpp )
 add_executable( tkey                tkey.cpp )
+add_executable( naptr               naptr.cpp )
 add_executable( echo_server         udpv4echoserver.cpp )
 add_executable( echo_client         udpv4echoclient.cpp )
 target_link_libraries( echo   boost_program_options libipv4)
@@ -60,6 +53,7 @@ target_link_libraries( dname_server        boost_program_options libdnsserver bo
 target_link_libraries( long_server         boost_program_options libdnsserver boost_thread boost_system libipv4 libdns)
 target_link_libraries( edns0_tcp    libdns libipv4)
 target_link_libraries( tkey         libipv4 libdns)
+target_link_libraries( naptr        libipv4 libdns)
 target_link_libraries( echo_server  boost_program_options libipv4)
 target_link_libraries( echo_client  boost_program_options libipv4)
 
