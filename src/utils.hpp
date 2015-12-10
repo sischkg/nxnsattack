@@ -70,5 +70,6 @@ uint32_t decode_from_base64_size( const char *begin, const char *end );
 
 void md5( const uint8_t *d, uint32_t size, uint8_t result[16] );
 
+std::string printPacketData( const PacketData &p );
 
 #endif

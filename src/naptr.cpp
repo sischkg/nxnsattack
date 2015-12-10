@@ -94,7 +94,7 @@ PacketData RecordBadNAPTR::getPacket() const
     const unsigned int label_size = 10;
     for ( int k = 0 ; k < 21 ; k++ ) {
 	replacement_packet.push_back( label_size );
-	for ( int l = 0 ; l < label_size ; l++) {
+	for ( unsigned int l = 0 ; l < label_size ; l++) {
 	    replacement_packet.push_back( 40 + k );
 	}
     }

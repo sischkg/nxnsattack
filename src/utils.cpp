@@ -433,3 +433,13 @@ void hmac_md5( const uint8_t *data, unsigned int size,
     calc_md5( opad_key, key_size + sizeof(ipad_md5), result );
 }
 
+std::string printPacketData( const PacketData &p )
+{
+    std::ostringstream os;
+    os << std::hex;
+    for ( unsigned int i = 0 ; i < p.size() ; i++ ) {
+        os << p[i] << " ";
+    }
+
+    return os.str();
+}

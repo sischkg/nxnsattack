@@ -1488,10 +1488,10 @@ namespace dns
 	os << "algorigthm: "  << algorithm   << ", "
 	   << "signed time: " << signed_time << ", "
 	   << "fudge: "       << fudge       << ", "
-	   << "MAC:";
-	for ( unsigned int i = 0 ; i < mac.size() ; i++ ) {
-	    os << " " << mac[i];
-	}
+	   << "MAC: "         << printPacketData( mac )
+           << "Original ID: " << original_id << ", "
+           << "Error: "       << error;
+
 	return os.str();
     }
 
