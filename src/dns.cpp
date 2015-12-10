@@ -608,15 +608,15 @@ namespace dns
 
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet )
     {
-	os << "ID: "                   << packet.id                   << std::endl
-	   << "Query/Response: "       << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
-	   << "OpCode:"                << packet.opcode               << std::endl
-	   << "Authoritative Answwer:" << packet.authoritative_answer << std::endl
-	   << "Truncation: "           << packet.truncation           << std::endl
-	   << "Recursion Desired: "    << packet.recursion_desired    << std::endl
-	   << "Recursion Available: "  << packet.recursion_available  << std::endl
-	   << "Checking Disabled: "    << packet.checking_disabled    << std::endl
-	   << "Response Code: "        << response_code_to_string( packet.response_code ) << std::endl;
+	os << "ID: "                  << packet.id                   << std::endl
+	   << "Query/Response: "      << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
+	   << "OpCode:"               << packet.opcode               << std::endl
+	   << "Authoritative Answer:" << packet.authoritative_answer << std::endl
+	   << "Truncation: "          << packet.truncation           << std::endl
+	   << "Recursion Desired: "   << packet.recursion_desired    << std::endl
+	   << "Recursion Available: " << packet.recursion_available  << std::endl
+	   << "Checking Disabled: "   << packet.checking_disabled    << std::endl
+	   << "Response Code: "       << response_code_to_string( packet.response_code ) << std::endl;
 
 	return os;
     }
