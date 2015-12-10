@@ -12,6 +12,12 @@
 #include <arpa/inet.h>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/lexical_cast.hpp>
+#include <openssl/hmac.h>
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+
+#include <endian.h>
 
 namespace dns
 {
@@ -42,7 +48,7 @@ namespace dns
 	if ( 'A' <= c && c <= 'Z' ) {
 	    return 'a' + c - 'A';
 	}
-	return 'c';
+	return c;
     }
 
     static const uint8_t *parseCharacterString( const uint8_t *begin, const uint8_t *packet_end,
@@ -108,6 +114,23 @@ namespace dns
 
         return bin;
     }
+
+    PacketData Domainname::getCanonicalWireFormat() const
+    {
+        PacketData bin;
+
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
+	    bin.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		bin.push_back( toLower( labels[i][j] ) );
+	}
+	bin.push_back( 0 );
+
+	return bin;
+    }
+
     
     const uint8_t* Domainname::parsePacket( Domainname &ref_domainname,
 					    const uint8_t *packet,
@@ -148,7 +171,7 @@ namespace dns
 
     unsigned int Domainname::size() const
     {
-	return toString().size();
+	return getPacket().size();
     }
 
     Domainname Domainname::operator+( const Domainname &rhs ) const
@@ -565,6 +588,9 @@ namespace dns
         case TYPE_SOA:
             parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_TSIG:
+            parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_OPT:
             parsed_data = RecordOptionsData::parse( packet, pos, pos + data_length );
             break;
@@ -632,6 +658,9 @@ namespace dns
 	    break;
 	case TYPE_OPT:
 	    res = "OPT";
+	    break;
+	case TYPE_TSIG:
+	    res = "TSIG";
 	    break;
 	case TYPE_TKEY:
 	    res = "TKEY";
@@ -1412,6 +1441,201 @@ namespace dns
 	pos = std::copy( other_data.begin(), other_data.end(), pos );
 
 	return packet;
+    }
+
+
+    uint16_t RecordTSIGData::size() const
+    {
+	return
+	    algorithm.size() + // ALGORITHM
+	    6 +           // signed time
+	    2 +           // FUDGE
+	    2 +           // MAC SIZE
+	    mac.size() +  // MAC
+	    2 +           // ORIGINAL ID
+	    2 +           // ERROR
+	    2 +           // OTHER LENGTH
+	    other.size(); // OTHER
+    }
+
+
+    PacketData RecordTSIGData::getPacket() const
+    {
+	PacketData packet;
+	packet.resize( size() );
+
+	PacketData algorithm_data = algorithm.getCanonicalWireFormat();
+	uint32_t time_high = signed_time >> 16;
+	uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
+
+	uint8_t *pos = &packet[0];
+	pos = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
+	pos = set_bytes<uint32_t>( htonl( time_high ),   pos );
+	pos = set_bytes<uint32_t>( htonl( time_low ),    pos );
+	pos = set_bytes<uint16_t>( htons( mac_size ),    pos );
+	pos = std::copy( mac.begin(), mac.end(), pos );
+	pos = set_bytes<uint16_t>( htons( original_id ), pos );
+	pos = set_bytes<uint16_t>( htons( error ),       pos );
+	pos = set_bytes<uint16_t>( htons( other_length ), pos );
+	pos = std::copy( other.begin(), other.end(), pos );
+
+	return packet;
+    }
+
+    std::string RecordTSIGData::toString() const
+    {
+	std::ostringstream os;
+	os << "algorigthm: "  << algorithm   << ", "
+	   << "signed time: " << signed_time << ", "
+	   << "fudge: "       << fudge       << ", "
+	   << "MAC:";
+	for ( unsigned int i = 0 ; i < mac.size() ; i++ ) {
+	    os << " " << mac[i];
+	}
+	return os.str();
+    }
+
+    ResourceDataPtr RecordTSIGData::parse( const uint8_t *packet,
+					   const uint8_t *begin,
+					   const uint8_t *end )
+    {
+	const uint8_t *pos = begin;
+
+	Domainname algorithm;
+	pos = Domainname::parsePacket( algorithm, packet, pos );
+	if ( pos >= end )
+	    throw FormatError( "too short message for TSIG RR" );
+
+	uint64_t time_high = ntohs( get_bytes<uint32_t>( &pos ) );
+	uint32_t time_low  = ntohs( get_bytes<uint32_t>( &pos ) );
+	if ( pos >= end )
+	    throw FormatError( "too short message for TSIG RR" );
+	uint64_t signed_time = ( time_high << 16 ) + ( time_low >> 16 );
+	uint16_t fudge       = time_low >> 16;
+
+	uint16_t mac_size  = ntohs( get_bytes<uint16_t>( &pos ) );
+	if ( pos + mac_size >= end )
+	    throw FormatError( "too short message for TSIG RR" );
+	PacketData mac;
+	mac.insert( mac.end(), pos, pos + mac_size ); pos += mac_size;
+
+	uint16_t original_id  = ntohs( get_bytes<uint16_t>( &pos ) );
+	uint16_t error        = ntohs( get_bytes<uint16_t>( &pos ) );
+	if ( pos >= end )
+	    throw FormatError( "too short message for TSIG RR" );
+
+	uint16_t other_length  = ntohs( get_bytes<uint16_t>( &pos ) );
+	if ( pos + other_length > end )
+	    throw FormatError( "too short message for TSIG RR" );
+	PacketData other;
+	mac.insert( other.end(), pos, pos + other_length ); pos += other_length;
+	
+	return ResourceDataPtr( new RecordTSIGData( algorithm.toString(),
+						    signed_time,
+						    fudge,
+						    mac_size,
+						    mac,
+						    original_id,
+						    error,
+						    other_length,
+						    other ) );
+    }
+
+
+    struct TSIGHash
+    {
+	Domainname  name;
+	Domainname  algorithm;
+	uint64_t    signed_time;
+	uint16_t    fudge;
+	uint16_t    error;
+	uint16_t    other_length;
+	PacketData  other;
+
+	PacketData getPacket() const;
+	uint16_t   size() const;
+    };
+
+    uint16_t TSIGHash::size() const
+    {
+	return name.size() + 2 + 4 + algorithm.size() + 6 + 2 + 2 + 2 + other.size();
+    }
+
+    PacketData TSIGHash::getPacket() const
+    {
+	PacketData packet;
+	packet.resize( size() );
+
+	PacketData name_data      = name.getCanonicalWireFormat();
+	PacketData algorithm_data = algorithm.getCanonicalWireFormat();
+
+	uint32_t time_high = signed_time >> 16;
+	uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
+
+	uint8_t *pos = &packet[0];
+	pos = std::copy( name_data.begin(),      name_data.end(),      pos );	
+	pos = set_bytes<uint16_t>( htons( CLASS_ANY ),     pos );
+	pos = set_bytes<uint32_t>( htonl( 0 ),             pos );
+	pos = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
+	pos = set_bytes<uint32_t>( htonl( time_high ),     pos );
+	pos = set_bytes<uint32_t>( htonl( time_low ),      pos );
+	pos = set_bytes<uint16_t>( htons( error ),         pos );
+	pos = set_bytes<uint16_t>( htons( other_length ),  pos );
+	pos = std::copy( other.begin(),          other.end(),          pos );
+
+	return packet;
+    }
+
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet )
+    {        
+        PacketData mac( EVP_MAX_MD_SIZE );
+        unsigned int mac_size = EVP_MAX_MD_SIZE;
+
+	PacketData hash_data = packet;
+	PacketHeaderField *h = reinterpret_cast<PacketHeaderField *>( &hash_data[0] );
+	h->id = htons( tsig_info.original_id );
+
+	TSIGHash tsig_hash;
+	tsig_hash.name         = tsig_info.name;
+	tsig_hash.algorithm    = tsig_info.algorithm;
+	tsig_hash.signed_time  = tsig_info.signed_time;
+	tsig_hash.fudge        = tsig_info.fudge;
+	tsig_hash.error        = tsig_info.error;
+	tsig_hash.other_length = tsig_info.other.size();
+	tsig_hash.other        = tsig_info.other;
+	PacketData tsig_hash_data = tsig_hash.getPacket();
+	hash_data.insert( hash_data.end(), tsig_hash_data.begin(), tsig_hash_data.end() );
+
+        HMAC( EVP_md5(),
+	      tsig_info.key.c_str(), tsig_info.key.size(),
+	      reinterpret_cast<const unsigned char *>( &hash_data[0] ), hash_data.size(),
+	      reinterpret_cast<unsigned char *>( &mac[0] ), &mac_size );
+        mac.resize( mac_size );
+
+	ResponseSectionEntry entry;
+	entry.r_domainname    = tsig_info.name;
+	entry.r_type          = TYPE_TSIG;
+	entry.r_class         = CLASS_ANY;
+	entry.r_ttl           = 0;
+	entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.algorithm,
+								     tsig_info.signed_time,
+								     tsig_info.fudge,
+                                                                     mac_size,
+                                                                     mac,
+								     tsig_info.original_id,
+								     tsig_info.error,
+								     tsig_info.other.size(),
+								     tsig_info.other ) );
+	entry.r_offset        = NO_COMPRESSION;
+
+	PacketData tsig_data = generate_response_section( entry );
+	PacketHeaderField *header = reinterpret_cast<PacketHeaderField *>( &packet[0] );
+	uint16_t arcount = ntohs( header->additional_infomation_count );
+        arcount++;
+	header->additional_infomation_count = htons( arcount );
+
+        packet.insert( packet.end(), tsig_data.begin(), tsig_data.end() );
+        std::cerr << "added tsig" << std::endl;
     }
 
 }

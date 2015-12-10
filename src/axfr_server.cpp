@@ -84,7 +84,7 @@ private:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	offset += ( question.q_domainname.size() + 2 + 2 + 2 );
+	offset += ( question.q_domainname.size() + 1 + 2 + 2 );
 
 	std::ostringstream os;
 	os << SUBDOMAIN << "." << SUBDOMAIN << "." << SUBDOMAIN << "."

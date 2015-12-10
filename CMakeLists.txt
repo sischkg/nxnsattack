@@ -9,7 +9,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
-add_definitions("-Wall -std=c++11")
+add_definitions("-Wall -std=c++11 -g")
 
 add_subdirectory( src )
 

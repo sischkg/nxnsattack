@@ -22,7 +22,8 @@ namespace dns
     const Opcode OPCODE_NOTIFY = 4;
 
     typedef uint16_t Class;
-    const Class CLASS_IN = 1;
+    const Class CLASS_IN  = 1;
+    const Class CLASS_ANY = 255;
 
     typedef uint16_t Type;
     const Type TYPE_A     = 1;
@@ -38,6 +39,7 @@ namespace dns
     const Type TYPE_OPT   = 41;
     const Type TYPE_TLSA  = 52;
     const Type TYPE_TKEY  = 249;
+    const Type TYPE_TSIG  = 250;
     const Type TYPE_IXFR  = 251;
     const Type TYPE_AXFR  = 252;
     const Type TYPE_ANY   = 255;
@@ -55,6 +57,9 @@ namespace dns
     const ResponseCode NXDOMAIN       = 3;
     const ResponseCode NOT_IMPLEENTED = 4;
     const ResponseCode REFUSED        = 5;
+    const ResponseCode BADSIG         = 16;
+    const ResponseCode BADKEY         = 17;
+    const ResponseCode BADTIME        = 18;
 
     class ResourceData;
     typedef boost::shared_ptr<ResourceData> ResourceDataPtr;
@@ -86,6 +91,9 @@ namespace dns
 
 	std::string  toString() const;
 	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
+	PacketData   getWireFormat( uint16_t offset = NO_COMPRESSION ) const
+	{ return getPacket( offset ); }
+	PacketData   getCanonicalWireFormat() const;
 	unsigned int size() const;
 	const std::deque<std::string> &getLabels() const { return labels; }
 
@@ -338,6 +346,8 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+    
+
 
     const uint8_t PROTOCOL_TLS    = 0x01;
     const uint8_t PROTOCOL_MAIL   = 0x02;
@@ -545,6 +555,109 @@ namespace dns
     };
 
 
+    struct TSIGInfo {
+	std::string name;
+	std::string key;
+	std::string algorithm;
+	uint64_t    signed_time;
+	uint16_t    fudge;
+	uint16_t    original_id;
+	uint16_t    error;
+	PacketData  other;
+
+	TSIGInfo()
+	    : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ),
+	      signed_time( 0 ), fudge( 0 ), original_id( 0 ), error( 0 ), other()
+	{}
+    };
+
+    class RecordTSIGData : public ResourceData
+    {
+    public:
+	Domainname  algorithm;
+	uint64_t    signed_time;
+	uint16_t    fudge;
+	uint16_t    mac_size;
+	PacketData  mac;
+	uint16_t    original_id;
+	uint16_t    error;
+	uint16_t    other_length;
+	PacketData  other;
+
+    public:
+
+	RecordTSIGData( const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+                        uint64_t           in_signed_time  = 0,
+                        uint16_t           in_fudge        = 0,
+                        uint16_t           in_mac_size     = 0,
+                        const PacketData  &in_mac          = PacketData(),
+                        uint16_t           in_original_id  = 0,
+                        uint16_t           in_error        = 0,
+                        uint16_t           in_other_length = 0,
+                        const PacketData  &in_other        = PacketData() )
+        : algorithm( in_algo ),
+	    signed_time( in_signed_time ),
+	    fudge( in_fudge ),
+	    mac_size( in_mac_size ),
+	    mac( in_mac ),
+	    original_id( in_original_id ),
+	    error( in_error ),
+	    other_length( in_other_length ),
+	    other( in_other )
+	{}
+
+	virtual std::string toString() const;
+	virtual std::vector<uint8_t> getPacket() const;
+	virtual uint16_t type() const { return TYPE_TSIG; }
+ 	virtual uint16_t size() const;
+
+        static ResourceDataPtr parse( const uint8_t *packet,
+				      const uint8_t *begin,
+				      const uint8_t *end );
+    };
+
+    class RecordTSIG
+    {
+    public:
+	Domainname name;
+	Domainname algorithm;
+	uint64_t    signed_time;
+	uint16_t    fudge;
+	uint16_t    mac_size;
+	PacketData  mac;
+	uint16_t    original_id;
+	uint16_t    error;
+	uint16_t    other_length;
+	PacketData  other;
+
+    public:
+
+	RecordTSIG( const std::string &in_name         = "",
+		    const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+		    uint64_t           in_signed_time  = 0,
+		    uint16_t           in_fudge        = 0,
+		    uint16_t           in_mac_size     = 0,
+		    PacketData         in_mac          = PacketData(),
+		    uint16_t           in_original_id  = 0,
+		    uint16_t           in_error        = 0,
+		    uint16_t           in_other_length = 0,
+		    PacketData         in_other        = PacketData() )
+	    :
+	    name( in_name ),
+	    algorithm( in_algo ),
+	    signed_time( in_signed_time ),
+	    fudge( in_fudge ),
+	    mac_size( in_mac_size ),
+	    mac( in_mac ),
+	    original_id( in_original_id ),
+	    error( in_error ),
+	    other_length( in_other_length ),
+	    other( in_other )
+	{}
+
+    };
+
+
     struct QuestionSectionEntry
     {
         Domainname q_domainname;
@@ -726,6 +839,8 @@ namespace dns
 
     ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
     OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
+
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet );
     
 
     template<typename Type>

@@ -377,7 +377,7 @@ void md5( const uint8_t *d, uint32_t size, uint8_t result[16] )
 
 static void generate_pad( uint8_t pad[64], uint8_t v )
 {
-    std::memset( pad, v, sizeof(pad) );
+    std::memset( pad, v, sizeof(pad)/sizeof(uint8_t) );
 }
 
 static void calc_md5( const uint8_t *data, unsigned int size, uint8_t hash[16] )

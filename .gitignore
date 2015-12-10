@@ -40,8 +40,8 @@ src/txt_server
 src/long_server
 src/ednssubnet
 src/tkey_tc
-src/ednssubnet.cpp
 src/naptr
+src/tsig_axfr
 tests/test-base64
 tests/test-md5
 
