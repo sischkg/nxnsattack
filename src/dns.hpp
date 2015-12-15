@@ -91,9 +91,11 @@ namespace dns
 
 	std::string  toString() const;
 	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
+	void         outputWireFormat( PacketData &, Offset offset = NO_COMPRESSION ) const;
 	PacketData   getWireFormat( uint16_t offset = NO_COMPRESSION ) const
 	{ return getPacket( offset ); }
 	PacketData   getCanonicalWireFormat() const;
+	void         outputCanonicalWireFormat( PacketData & ) const;
 	unsigned int size() const;
 	const std::deque<std::string> &getLabels() const { return labels; }
 

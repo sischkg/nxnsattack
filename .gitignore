@@ -44,7 +44,6 @@ src/naptr
 src/tsig_axfr
 tests/test-base64
 tests/test-md5
-
-
+tests/test-wireformat
 
 

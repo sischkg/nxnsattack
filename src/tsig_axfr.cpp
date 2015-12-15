@@ -94,6 +94,7 @@ int main( int argc, char **argv )
 
 	dns::addTSIGResourceRecord( tsig_info, query_stream );
 
+
         std::cerr << "connecting" << std::endl;
 	tcpv4::ClientParameters tcp_param;
 	tcp_param.destination_address = target_server;

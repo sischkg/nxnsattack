@@ -115,6 +115,26 @@ namespace dns
         return bin;
     }
 
+    void Domainname::outputWireFormat( PacketData &message, uint16_t offset ) const
+    {
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
+	    message.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		message.push_back( labels[i][j] );
+	}
+
+	if ( offset == NO_COMPRESSION ) {
+	    message.push_back( 0 );
+	}
+	else {
+	    message.push_back( 0xC0 | (uint8_t)( offset >> 8 ) );
+	    message.push_back( 0xff & (uint8_t)offset );
+	}
+    }
+
+
     PacketData Domainname::getCanonicalWireFormat() const
     {
         PacketData bin;
@@ -129,6 +149,18 @@ namespace dns
 	bin.push_back( 0 );
 
 	return bin;
+    }
+
+    void Domainname::outputCanonicalWireFormat( PacketData &message ) const
+    {
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
+	    message.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		message.push_back( toLower( labels[i][j] ) );
+	}
+	message.push_back( 0 );
     }
 
     
@@ -504,13 +536,14 @@ namespace dns
 
     PacketData generate_question_section( const QuestionSectionEntry &question )
     {
-        PacketData packet = question.q_domainname.getPacket();
-        packet.resize( packet.size() + sizeof(uint16_t) + sizeof(uint16_t) );
-        uint8_t *p = packet.data() + packet.size() - sizeof(uint16_t) - sizeof(uint16_t);
+	PacketData message;
+        question.q_domainname.outputWireFormat( message );
+        message.resize( message.size() + sizeof(uint16_t) + sizeof(uint16_t) );
+        uint8_t *p = message.data() + message.size() - sizeof(uint16_t) - sizeof(uint16_t);
         p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );
         p = dns::set_bytes<uint16_t>( htons( question.q_class ), p );
 
-        return packet;
+        return message;
     }
 
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *p )
