@@ -72,11 +72,12 @@ namespace dns
 		    }
 		    else {
 			PacketInfo response_info = generateResponse( query, true );
-			WireFormat response_packet( generate_dns_packet( response_info ) );
+			WireFormat response_stream;
+			generate_dns_packet( response_info, response_stream );
 		
-			uint16_t send_size = htons( response_packet.size() );
+			uint16_t send_size = htons( response_stream.size() );
 			connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-			connection->send( response_packet );
+			connection->send( response_stream );
 		    }
 		}
 		catch( std::runtime_error &e ) {

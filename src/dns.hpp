@@ -94,12 +94,12 @@ namespace dns
 	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
 	void         outputWireFormat( PacketData &, Offset offset = NO_COMPRESSION ) const;
 	void         outputWireFormat( WireFormat &, Offset offset = NO_COMPRESSION ) const;
-	PacketData   getWireFormat( uint16_t offset = NO_COMPRESSION ) const
+	PacketData   getWireFormat( Offset offset = NO_COMPRESSION ) const
 	{ return getPacket( offset ); }
 	PacketData   getCanonicalWireFormat() const;
 	void         outputCanonicalWireFormat( PacketData & ) const;
 	void         outputCanonicalWireFormat( WireFormat & ) const;
-	unsigned int size() const;
+	unsigned int size( Offset offset = NO_COMPRESSION ) const;
 	const std::deque<std::string> &getLabels() const { return labels; }
 
 	Domainname operator+( const Domainname & ) const;
@@ -124,13 +124,9 @@ namespace dns
         virtual ~ResourceData() {}
 
         virtual std::string toString() const = 0;
-        virtual std::vector<uint8_t> getPacket() const = 0;
-        virtual void outputWireFormat( WireFormat &message ) const
-        {
-            PacketData data = getPacket();
-            message.pushBuffer( &data[0], &data[0] + data.size() );
-        }
+        virtual void outputWireFormat( WireFormat &message ) const = 0;
         virtual Type type() const = 0;
+	virtual uint16_t size() const = 0;
     };
 
 
@@ -146,12 +142,12 @@ namespace dns
 	{}
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return rrtype;
         }
-
+	virtual uint16_t size() const { return data.size(); }
     };
 
     class RecordA : public ResourceData
@@ -164,13 +160,12 @@ namespace dns
         RecordA( const std::string &in_address );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_A;
         }
-
+	virtual uint16_t size() const { return sizeof(sin_addr); }
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
@@ -184,12 +179,12 @@ namespace dns
         RecordAAAA( const std::string &address );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_AAAA;
         }
+	virtual uint16_t size() const { return sizeof(sin_addr); }
 
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
@@ -204,12 +199,12 @@ namespace dns
         RecordNS( const Domainname &name, Offset off = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NS;
         }
+	virtual uint16_t size() const { return domainname.size(); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -225,12 +220,12 @@ namespace dns
         RecordMX( uint16_t pri, const Domainname &name, Offset off = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_MX;
         }
+	virtual uint16_t size() const { return sizeof(priority) + domainname.size(); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -245,12 +240,12 @@ namespace dns
         RecordTXT( const std::vector<std::string> &data );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_TXT;
         }
+	virtual uint16_t size() const;
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -265,12 +260,12 @@ namespace dns
         RecordCNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_CNAME;
         }
+	virtual uint16_t size() const { return domainname.size(); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -297,12 +292,12 @@ namespace dns
                      uint16_t          in_offset = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NAPTR;
         }
+	virtual uint16_t size() const;
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -317,12 +312,12 @@ namespace dns
         RecordDNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_DNAME;
         }
+	virtual uint16_t size() const { return domainname.size(); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -352,12 +347,12 @@ namespace dns
 		   Offset            roff = NO_COMPRESSION );
 
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_SOA;
         }
+	virtual uint16_t size() const;
 
         const std::string getMName() const { return mname.toString(); }
         const std::string getRName() const { return rname.toString(); }
@@ -404,16 +399,6 @@ namespace dns
 	{}
 
 	virtual std::string toString() const { return ""; }
-        virtual std::vector<uint8_t> getPacket() const
-	{
-	    PacketData result;
-	    result.resize( 4 );
-	    result[0] = result[1] = 0;
-	    result[2] = protocol;
-	    result[3] = algorithm;
-
-	    return result;
-	}
 
         virtual void outputWireFormat( WireFormat &message )
         {
@@ -422,6 +407,7 @@ namespace dns
             message.pushUInt8( protocol );
             message.pushUInt8( algorithm );
         }
+	virtual uint16_t size() const { return 4; }
 
         virtual uint16_t type() const
         {
@@ -519,10 +505,9 @@ namespace dns
 	{}
 
 	virtual std::string toString() const;
-	virtual std::vector<uint8_t> getPacket() const;
 	virtual void outputWireFormat( WireFormat &message ) const;
 	virtual uint16_t type() const { return TYPE_OPT; }
-	virtual uint16_t size() const { return getPacket().size(); }
+	virtual uint16_t size() const;
 
 	const std::vector<OptPseudoRROptPtr> &getOptions() const { return options; }
         static ResourceDataPtr parse( const uint8_t *packet,
@@ -575,7 +560,6 @@ namespace dns
 	      other_data( other )
 	{}
 
-	PacketData getPacket() const;
         void outputWireFormat( WireFormat & ) const;
 	uint16_t type() const { return TYPE_TKEY; }
 	uint16_t size() const;
@@ -636,7 +620,6 @@ namespace dns
 	{}
 
 	virtual std::string toString() const;
-	virtual std::vector<uint8_t> getPacket() const;
         virtual void outputWireFormat( WireFormat & ) const;
 	virtual uint16_t type() const { return TYPE_TSIG; }
  	virtual uint16_t size() const;

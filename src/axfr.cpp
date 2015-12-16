@@ -61,7 +61,8 @@ int main( int argc, char **argv )
     packet_info.checking_disabled    = 1;
     packet_info.response_code        = 0;
 
-    std::vector<uint8_t> query_stream = dns::generate_dns_packet( packet_info );
+    WireFormat query_stream;
+    dns::generate_dns_packet( packet_info, query_stream );
 
     tcpv4::ClientParameters tcp_param;
     tcp_param.destination_address = target_server;
@@ -72,7 +73,7 @@ int main( int argc, char **argv )
 
 	uint16_t query_size_data = htons( query_stream.size() );
 	tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data ), 2 );
-	tcp.send( query_stream.data(), query_stream.size() );
+	tcp.send( query_stream );
 
 	tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
 	uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );

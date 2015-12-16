@@ -91,7 +91,7 @@ namespace dns
 	return result;
     }
 
-    PacketData Domainname::getPacket( uint16_t offset ) const
+    PacketData Domainname::getPacket( Offset offset ) const
     {
         PacketData bin;
 
@@ -115,7 +115,7 @@ namespace dns
         return bin;
     }
 
-    void Domainname::outputWireFormat( PacketData &message, uint16_t offset ) const
+    void Domainname::outputWireFormat( PacketData &message, Offset offset ) const
     {
 	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
 	    if ( labels[i].size() == 0 )
@@ -134,7 +134,7 @@ namespace dns
 	}
     }
 
-    void Domainname::outputWireFormat( WireFormat &message, uint16_t offset ) const
+    void Domainname::outputWireFormat( WireFormat &message, Offset offset ) const
     {
 	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
 	    if ( labels[i].size() == 0 )
@@ -232,9 +232,9 @@ namespace dns
     }
 
 
-    unsigned int Domainname::size() const
+    unsigned int Domainname::size( Offset offset ) const
     {
-	return getPacket().size();
+	return getPacket( offset ).size();
     }
 
     Domainname Domainname::operator+( const Domainname &rhs ) const
@@ -610,8 +610,11 @@ namespace dns
 
     PacketData generate_response_section( const ResponseSectionEntry &response )
     {
+	WireFormat w;
+        response.r_resource_data->outputWireFormat( w );
+
         PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
-        PacketData packet_rd   = response.r_resource_data->getPacket();
+        PacketData packet_rd   = w.get();
         PacketData packet( packet_name.size() +
 			   2 +
 			   2 +
@@ -634,14 +637,12 @@ namespace dns
 
     void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
     {
-        PacketData packet_rd   = response.r_resource_data->getPacket();
-
         response.r_domainname.outputWireFormat( message );
         message.pushUInt16HtoN( response.r_type );
         message.pushUInt16HtoN( response.r_class );
         message.pushUInt32HtoN( response.r_ttl );
-        message.pushUInt16HtoN( packet_rd.size() );
-        message.pushBuffer( packet_rd );
+        message.pushUInt16HtoN( response.r_resource_data->size() );
+	response.r_resource_data->outputWireFormat( message );
     }
 
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
@@ -833,7 +834,7 @@ namespace dns
 	os << "ID: "                   << res.id                   << std::endl
 	   << "Query/Response: "       << "Response"               << std::endl
 	   << "OpCode:"                << res.opcode               << std::endl
-	   << "Authoritative Answwer:" << res.authoritative_answer << std::endl
+	   << "Authoritative Anwwer: " << res.authoritative_answer << std::endl
 	   << "Truncation: "           << res.truncation           << std::endl
 	   << "Recursion Available: "  << res.recursion_available  << std::endl
 	   << "Checking Disabled: "    << res.checking_disabled    << std::endl
@@ -881,9 +882,9 @@ namespace dns
     }
 
 
-    PacketData RecordRaw::getPacket() const
+    void RecordRaw::outputWireFormat( WireFormat &message ) const
     {
-	return data;
+	message.pushBuffer( data );
     }
 
 
@@ -911,17 +912,6 @@ namespace dns
         return std::string( buf );
     }
 
-
-    PacketData RecordA::getPacket() const
-    {
-        PacketData packet( 4 );
-        packet[0] = ( sin_addr >>  0 ) & 0xff;
-        packet[1] = ( sin_addr >>  8 ) & 0xff;
-        packet[2] = ( sin_addr >> 16 ) & 0xff;
-        packet[3] = ( sin_addr >> 24 ) & 0xff;
-
-        return packet;
-    }
 
     void RecordA::outputWireFormat( WireFormat &message ) const
     {
@@ -954,12 +944,6 @@ namespace dns
     }
 
 
-    PacketData RecordAAAA::getPacket() const
-    {
-        return std::vector< uint8_t >( sin_addr,
-				       sin_addr + sizeof( sin_addr ) );
-    }
-
     void RecordAAAA::outputWireFormat( WireFormat &message ) const
     {
         message.pushBuffer( reinterpret_cast<const uint8_t *>( &sin_addr ),
@@ -984,11 +968,6 @@ namespace dns
         return domainname.toString();
     }
 
-
-    PacketData RecordNS::getPacket() const
-    {
-        return domainname.getPacket( offset );
-    }
 
     void RecordNS::outputWireFormat( WireFormat &message ) const
     {
@@ -1016,16 +995,6 @@ namespace dns
         return os.str();
     }
 
-
-    PacketData RecordMX::getPacket() const
-    {
-	PacketData packet;
-	packet.resize( 2 );
-	*( reinterpret_cast<uint16_t *>( &packet[0] ) ) = htons( priority );
-	PacketData name = domainname.getPacket( offset );
-	packet.insert( packet.end(), name.begin(), name.end() );
-	return packet;
-    }
 
     void RecordMX::outputWireFormat( WireFormat &message ) const
     {
@@ -1070,17 +1039,6 @@ namespace dns
     }
 
 
-    PacketData RecordTXT::getPacket() const
-    {
-	PacketData d;
-	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
-	    d.push_back( data[i].size() & 0xff );
-	    for ( unsigned int j = 0 ; j < data[i].size() ; j++ )
-		d.push_back( data[i][j] );
-	}
-        return d;
-    }
-
     void RecordTXT::outputWireFormat( WireFormat &message ) const
     {
 	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
@@ -1089,6 +1047,17 @@ namespace dns
 		message.push_back( data[i][j] );
 	}
     }
+
+    uint16_t RecordTXT::size() const
+    {
+	uint16_t s = 0;
+	for ( auto i = data.begin() ; i != data.end() ; i++ ) {
+	    s++;
+	    s += i->size();
+	}
+        return s;
+    }
+
 
     ResourceDataPtr RecordTXT::parse( const uint8_t *packet,
 				      const uint8_t *begin,
@@ -1113,11 +1082,6 @@ namespace dns
         return domainname.toString();
     }
 
-
-    PacketData RecordCNAME::getPacket() const
-    {
-        return domainname.getPacket( offset );
-    }
 
     void RecordCNAME::outputWireFormat( WireFormat &message ) const
     {
@@ -1144,10 +1108,10 @@ namespace dns
         : order( in_order ),
           preference( in_preference ),
           flags( in_flags ),
-        services( in_services ),
-        regexp( in_regexp ),
-        replacement( in_replacement ),
-        offset( in_offset )
+	  services( in_services ),
+	  regexp( in_regexp ),
+	  replacement( in_replacement ),
+	  offset( in_offset )
     {}
 
     std::string RecordNAPTR::toString() const
@@ -1160,31 +1124,6 @@ namespace dns
     }
 
 
-    PacketData RecordNAPTR::getPacket() const
-    {
-	PacketData packet;
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-
-        uint16_t n_order      = htons( order );
-        uint16_t n_preference = htons( preference );
-	pos = std::copy( reinterpret_cast<uint8_t *>( &n_order ),
-			 reinterpret_cast<uint8_t *>( &n_order ) + sizeof( n_order ),
-			 pos );
-	pos = std::copy( reinterpret_cast<uint8_t *>( &n_preference ),
-			 reinterpret_cast<uint8_t *>( &n_preference ) + sizeof( n_preference ),
-			 pos );
-
-        *pos++ = flags.size();
-	pos = std::copy( flags.c_str(), flags.c_str() + flags.size(), pos );
-        *pos++ = services.size();
-	pos = std::copy( services.c_str(), services.c_str() + services.size(), pos );
-        *pos++ = regexp.size();
-	pos = std::copy( regexp.c_str(), regexp.c_str() + regexp.size(), pos );
-  
-        PacketData replacement_packet = replacement.getPacket( offset );
-	pos = std::copy( replacement_packet.begin(), replacement_packet.end(), pos );
-        return packet;
-    }
 
     void RecordNAPTR::outputWireFormat( WireFormat &message ) const
     {
@@ -1197,6 +1136,18 @@ namespace dns
         message.pushBuffer( reinterpret_cast<const uint8_t *>( regexp.c_str() ),
                             reinterpret_cast<const uint8_t *>( regexp.c_str() ) + regexp.size() );
         replacement.outputWireFormat( message, offset );
+    }
+
+    uint16_t RecordNAPTR::size() const
+    {
+	return
+	    sizeof(order) +
+	    sizeof(preference) +
+	    1 +
+	    flags.size() +
+	    1 +
+	    regexp.size() +
+	    replacement.size();
     }
 
 
@@ -1231,11 +1182,6 @@ namespace dns
         return domainname.toString();
     }
 
-
-    PacketData RecordDNAME::getPacket() const
-    {
-        return domainname.getPacket( offset );
-    }
 
     void RecordDNAME::outputWireFormat( WireFormat &message ) const
     {
@@ -1280,29 +1226,6 @@ namespace dns
     }
 
 
-    PacketData RecordSOA::getPacket() const
-    {
-	PacketData packet;
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-
-        PacketData mname_packet = mname.getPacket( mname_offset );
-        PacketData rname_packet = rname.getPacket( rname_offset );
-	pos = std::copy( mname_packet.begin(), mname_packet.end(), pos );
-	pos = std::copy( rname_packet.begin(), rname_packet.end(), pos );
-	SOAField soa_param;
-	soa_param.serial  = htonl( serial );
-	soa_param.refresh = htonl( refresh );
-	soa_param.retry   = htonl( retry );
-	soa_param.expire  = htonl( expire );
-	soa_param.minimum = htonl( minimum );
-
-	pos = std::copy( reinterpret_cast<uint8_t *>( &soa_param ),
-			 reinterpret_cast<uint8_t *>( &soa_param ) + sizeof( soa_param ),
-			 pos );
-
-        return packet;
-    }
-
     void RecordSOA::outputWireFormat( WireFormat &message ) const
     {
         mname.outputWireFormat( message, mname_offset );
@@ -1312,6 +1235,17 @@ namespace dns
         message.pushUInt32HtoN( retry );
         message.pushUInt32HtoN( expire );
         message.pushUInt32HtoN( minimum );
+    }
+
+    uint16_t RecordSOA::size() const
+    {
+	return 
+	    mname.size() +
+	    rname.size() +
+	    sizeof( serial ) +
+	    sizeof( retry ) +
+	    sizeof( expire ) +
+	    sizeof( minimum );
     }
 
 
@@ -1349,20 +1283,14 @@ namespace dns
     }
 
 
-    PacketData RecordOptionsData::getPacket() const
+
+    uint16_t RecordOptionsData::size() const
     {
-	PacketData packet;
-	
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-
-	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
-	      i != options.end() ;
-	      ++i ) {
-	    PacketData opt_data = (*i)->getPacket();
-	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );
+	uint16_t rr_size = 0;
+	for ( auto i = options.begin() ; i != options.end() ; i++ ) {
+	    rr_size += (*i)->size();
 	}
-
-	return packet;
+	return rr_size;
     }
 
 
@@ -1592,33 +1520,6 @@ namespace dns
 	    other_data.size();
     }
 
-    PacketData RecordTKey::getPacket() const
-    {
-	PacketData packet;
-	packet.resize( size() );
-
-	PacketData domain_data    = domain.getPacket();
-	PacketData algorithm_data = algorithm.getPacket();
-
-	uint8_t *pos = &packet[0];
-	pos = std::copy( domain_data.begin(), domain_data.end(), pos );
-	pos = set_bytes<uint16_t>( htons( TYPE_TKEY ),  pos );
-	pos = set_bytes<uint16_t>( htons( 1 ),          pos );
-	pos = set_bytes<uint32_t>( 0,                   pos );
-	pos = set_bytes<uint16_t>( htons( getResourceDataSize() ), pos );
-	pos = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
-	pos = set_bytes<uint32_t>( htonl( inception ),  pos );
-	pos = set_bytes<uint32_t>( htonl( expiration ), pos );
-	pos = set_bytes<uint16_t>( htons( mode ),       pos );
-	pos = set_bytes<uint16_t>( htons( error ),      pos );
-	pos = set_bytes<uint16_t>( htons( key.size() ), pos );
-	pos = std::copy( key.begin(), key.end(), pos );
-	pos = set_bytes<uint16_t>( htons( other_data.size() ), pos );
-	pos = std::copy( other_data.begin(), other_data.end(), pos );
-
-	return packet;
-    }
-
 
     void RecordTKey::outputWireFormat( WireFormat &message ) const
     {
@@ -1651,30 +1552,6 @@ namespace dns
 	    2 +           // ERROR
 	    2 +           // OTHER LENGTH
 	    other.size(); // OTHER
-    }
-
-
-    PacketData RecordTSIGData::getPacket() const
-    {
-	PacketData packet;
-	packet.resize( size() );
-
-	PacketData algorithm_data = algorithm.getCanonicalWireFormat();
-	uint32_t time_high = signed_time >> 16;
-	uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
-
-	uint8_t *pos = &packet[0];
-	pos = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
-	pos = set_bytes<uint32_t>( htonl( time_high ),   pos );
-	pos = set_bytes<uint32_t>( htonl( time_low ),    pos );
-	pos = set_bytes<uint16_t>( htons( mac_size ),    pos );
-	pos = std::copy( mac.begin(), mac.end(), pos );
-	pos = set_bytes<uint16_t>( htons( original_id ), pos );
-	pos = set_bytes<uint16_t>( htons( error ),       pos );
-	pos = set_bytes<uint16_t>( htons( other_length ), pos );
-	pos = std::copy( other.begin(), other.end(), pos );
-
-	return packet;
     }
 
 

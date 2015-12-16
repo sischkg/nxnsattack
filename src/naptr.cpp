@@ -9,7 +9,7 @@
 class RecordBadNAPTR : public dns::ResourceData
 {
 private:
-    int size;
+    int rr_size;
     uint16_t    order;
     uint16_t    preference;
     std::string flags;
@@ -30,11 +30,12 @@ public:
 
     virtual std::string toString() const;
     virtual std::vector<uint8_t> getPacket() const;
+    virtual void outputWireFormat( WireFormat & ) const;
     virtual uint16_t type() const
     {
         return dns::TYPE_NAPTR;
     }
-
+    virtual uint16_t size() const { return rr_size; }
 };
 
 
@@ -46,14 +47,14 @@ RecordBadNAPTR::RecordBadNAPTR( int s,
                                 const std::string &in_regexp,
                                 const dns::Domainname  &in_replacement,
                                 uint16_t          in_offset )
-    : size( s ),
+    : rr_size( s ),
       order( in_order ),
       preference( in_preference ),
-    flags( in_flags ),
-    services( in_services ),
-    regexp( in_regexp ),
-    replacement( in_replacement ),
-    offset( in_offset )
+      flags( in_flags ),
+      services( in_services ),
+      regexp( in_regexp ),
+      replacement( in_replacement ),
+      offset( in_offset )
 {}
 
 std::string RecordBadNAPTR::toString() const
@@ -84,7 +85,7 @@ PacketData RecordBadNAPTR::getPacket() const
     pos = std::copy( flags.c_str(), flags.c_str() + flags.size(), pos );
     *pos++ = services.size();
     pos = std::copy( services.c_str(), services.c_str() + services.size(), pos );
-    *pos++ = size;
+    *pos++ = rr_size;
     //*pos++ = regexp.size();
     pos = std::copy( regexp.c_str(), regexp.c_str() + regexp.size(), pos );
   
@@ -102,6 +103,23 @@ PacketData RecordBadNAPTR::getPacket() const
 
     pos = std::copy( replacement_packet.begin(), replacement_packet.end(), pos );
     return packet;
+}
+
+
+void RecordBadNAPTR::outputWireFormat( WireFormat &message ) const
+{
+    PacketData packet;
+    std::insert_iterator<PacketData> pos( packet, packet.begin() );
+
+    message.pushUInt16HtoN( order );
+    message.pushUInt16HtoN( preference );
+    message.pushUInt8( flags.size() );
+    message.pushBuffer( reinterpret_cast<const uint8_t *>( flags.c_str() ),
+                        reinterpret_cast<const uint8_t *>( flags.c_str() ) + flags.size() );
+    message.pushUInt8( regexp.size() );
+    message.pushBuffer( reinterpret_cast<const uint8_t *>( regexp.c_str() ),
+                        reinterpret_cast<const uint8_t *>( regexp.c_str() ) + regexp.size() );
+    replacement.outputWireFormat( message, offset );
 }
 
 

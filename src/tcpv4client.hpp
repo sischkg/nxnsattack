@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/cstdint.hpp>
 #include <vector>
+#include "wireformat.hpp"
 
 namespace tcpv4
 {
@@ -72,6 +73,7 @@ namespace tcpv4
         {
             return send( packet.data(), packet.size() );
         }
+        uint16_t send( const WireFormat & );
 
         ConnectionInfo receive( bool is_nonblocking = false );
         ConnectionInfo receive_data( int size );

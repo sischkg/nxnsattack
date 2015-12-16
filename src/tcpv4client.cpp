@@ -83,6 +83,14 @@ namespace tcpv4
         return sent_size;
     }
 
+    uint16_t Client::send( const WireFormat &data )
+    {
+        if ( tcp_socket < 0 )
+            openSocket();
+	
+	return data.send( tcp_socket, NULL, 0, 0 );
+    }
+
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     ConnectionInfo Client::receive( bool is_nonblocking )
