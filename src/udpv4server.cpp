@@ -88,6 +88,21 @@ namespace udpv4
         return sent_size;
     }
 
+    uint16_t Server::sendPacket( const ClientParameters &dest, const WireFormat &data )
+    {
+        if ( udp_socket < 0 )
+            openSocket();
+
+        sockaddr_in socket_address;
+        std::memset( &socket_address, 0, sizeof(socket_address) );
+        socket_address.sin_family = AF_INET;
+        socket_address.sin_addr   = convert_address_string_to_binary( dest.destination_address );
+        socket_address.sin_port   = htons( dest.destination_port );
+        return data.send( udp_socket,
+			  reinterpret_cast<const sockaddr *>( &socket_address ),
+			  sizeof(socket_address) );
+    }
+
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     PacketInfo Server::receivePacket( bool is_nonblocking )

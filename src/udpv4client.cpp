@@ -68,6 +68,14 @@ namespace udpv4
         return sent_size;
     }
 
+    uint16_t Client::sendPacket( const WireFormat &data )
+    {
+        if ( udp_socket < 0 )
+            openSocket();
+
+	return data.send( udp_socket, NULL, 0 );
+    }
+
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     PacketInfo Client::receivePacket( bool is_nonblocking )

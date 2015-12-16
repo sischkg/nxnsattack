@@ -8,6 +8,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 #include "utils.hpp"
+#include "wireformat.hpp"
 
 namespace dns
 {
@@ -92,10 +93,12 @@ namespace dns
 	std::string  toString() const;
 	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
 	void         outputWireFormat( PacketData &, Offset offset = NO_COMPRESSION ) const;
+	void         outputWireFormat( WireFormat &, Offset offset = NO_COMPRESSION ) const;
 	PacketData   getWireFormat( uint16_t offset = NO_COMPRESSION ) const
 	{ return getPacket( offset ); }
 	PacketData   getCanonicalWireFormat() const;
 	void         outputCanonicalWireFormat( PacketData & ) const;
+	void         outputCanonicalWireFormat( WireFormat & ) const;
 	unsigned int size() const;
 	const std::deque<std::string> &getLabels() const { return labels; }
 
@@ -785,6 +788,9 @@ namespace dns
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
     std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
+    void generate_dns_packet( const PacketInfo &query, WireFormat & );
+    void generate_dns_query_packet( const QueryPacketInfo &query, WireFormat & );
+    void generate_dns_response_packet( const ResponsePacketInfo &response, WireFormat & );
     PacketInfo           parse_dns_packet( const uint8_t *begin, const uint8_t *end );
     QueryPacketInfo      parse_dns_query_packet( const uint8_t *begin, const uint8_t *end );
     ResponsePacketInfo   parse_dns_response_packet( const uint8_t *begin, const uint8_t *end );
@@ -833,6 +839,8 @@ namespace dns
 										 int recur = 0 ) throw(FormatError);
     std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &q );
     std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &r );
+    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
+    void generate_response_section( const ResponseSectionEntry &r, WireFormat &message );
 
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResponseSectionEntry, const uint8_t *> ResponseSectionEntryPair;

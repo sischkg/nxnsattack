@@ -10,6 +10,8 @@
 #define _BSD_SOURCE
 #endif
 #include <endian.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 class WireFormat
 {
@@ -28,6 +30,7 @@ private:
 public:
 
     WireFormat( uint16_t buffer_size = 512 );
+    WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size = 512 );
     ~WireFormat();
 
     void push_back( uint8_t v )
@@ -121,7 +124,8 @@ public:
         }
     }
 
-
+    uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const throw(std::runtime_error );
+    std::vector<uint8_t> get() const;
 };
 
 #endif

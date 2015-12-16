@@ -30,7 +30,7 @@ namespace dns
 		    PacketInfo        query         = parse_dns_packet( recv_data.begin(), recv_data.end() );
 		    PacketInfo        response_info = generateResponse( query, false );
 
-		    PacketData response_packet = generate_dns_packet( response_info );
+		    WireFormat response_packet( generate_dns_packet( response_info ) );
 		
 		    udpv4::ClientParameters client;
 		    client.destination_address = recv_data.source_address;
@@ -72,7 +72,7 @@ namespace dns
 		    }
 		    else {
 			PacketInfo response_info = generateResponse( query, true );
-			PacketData response_packet = generate_dns_packet( response_info );
+			WireFormat response_packet( generate_dns_packet( response_info ) );
 		
 			uint16_t send_size = htons( response_packet.size() );
 			connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );

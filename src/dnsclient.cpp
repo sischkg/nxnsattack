@@ -14,13 +14,14 @@ int main()
     query.recursion = false;
     query.question.push_back( question );
 
-    std::vector<uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
+    WireFormat dns_query_packet;
+    dns::generate_dns_query_packet( query, dns_query_packet );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "49.212.193.254";
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
-    udp.sendPacket( dns_query_packet.data(), dns_query_packet.size() );
+    udp.sendPacket( dns_query_packet );
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 

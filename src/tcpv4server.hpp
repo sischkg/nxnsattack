@@ -3,6 +3,7 @@
 
 #include <boost/noncopyable.hpp>
 #include "utils.hpp"
+#include "wireformat.hpp"
 
 namespace tcpv4
 {
@@ -28,6 +29,7 @@ namespace tcpv4
 	ssize_t send( const PacketData & );	
 	ssize_t send( const uint8_t *begin, const uint8_t *end );
 	ssize_t send( const uint8_t *data, int size );
+	ssize_t send( const WireFormat & );
 
 	void shutdownSend();
 	void shutdownReceive();

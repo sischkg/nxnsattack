@@ -134,6 +134,25 @@ namespace dns
 	}
     }
 
+    void Domainname::outputWireFormat( WireFormat &message, uint16_t offset ) const
+    {
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
+	    message.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		message.push_back( labels[i][j] );
+	}
+
+	if ( offset == NO_COMPRESSION ) {
+	    message.push_back( 0 );
+	}
+	else {
+	    message.push_back( 0xC0 | (uint8_t)( offset >> 8 ) );
+	    message.push_back( 0xff & (uint8_t)offset );
+	}
+    }
+
 
     PacketData Domainname::getCanonicalWireFormat() const
     {
@@ -152,6 +171,18 @@ namespace dns
     }
 
     void Domainname::outputCanonicalWireFormat( PacketData &message ) const
+    {
+	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
+	    if ( labels[i].size() == 0 )
+		break;
+	    message.push_back( labels[i].size() );
+	    for ( unsigned int j = 0 ; j < labels[i].size() ; j++ )
+		message.push_back( toLower( labels[i][j] ) );
+	}
+	message.push_back( 0 );
+    }
+
+    void Domainname::outputCanonicalWireFormat( WireFormat &message ) const
     {
 	for ( unsigned int i = 0 ; i < labels.size() ; i++ ) {
 	    if ( labels[i].size() == 0 )
@@ -266,6 +297,13 @@ namespace dns
 
     PacketData generate_dns_packet( const PacketInfo &info )
     {
+        WireFormat message;
+        generate_dns_packet( info, message );
+        return message.get();
+    }
+
+    void generate_dns_packet( const PacketInfo &info, WireFormat &message )
+    {
 	PacketHeaderField header;
         header.id                   = htons( info.id );
 	header.opcode               = info.opcode;
@@ -290,38 +328,36 @@ namespace dns
         header.authority_count             = htons( info.authority_section.size() );
         header.additional_infomation_count = htons( additional.size() );
 
-        PacketData packet;
-	std::insert_iterator<PacketData> pos( packet, packet.begin() );
-	pos = std::copy( reinterpret_cast<const uint8_t *>( &header ),
-			 reinterpret_cast<const uint8_t *>( &header ) + sizeof(header),
-			 pos );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
+                            reinterpret_cast<const uint8_t *>( &header ) + sizeof(header) );
 
         for( std::vector<QuestionSectionEntry>::const_iterator q = info.question_section.begin() ;
              q != info.question_section.end() ; ++q ) {
-            PacketData entry = generate_question_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
+            generate_question_section( *q, message );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator q = info.answer_section.begin() ;
              q != info.answer_section.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
+            generate_response_section( *q, message );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator q = info.authority_section.begin() ;
              q != info.authority_section.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
+            generate_response_section( *q, message );
         }
         for( std::vector<ResponseSectionEntry>::const_iterator q = additional.begin() ;
              q != additional.end() ; ++q ) {
-            PacketData entry = generate_response_section( *q );
-	    pos = std::copy( entry.begin(), entry.end(), pos );
+            generate_response_section( *q, message );
         }
-
-        return packet;
     }
 
 
     PacketData generate_dns_query_packet( const QueryPacketInfo &query )
+    {
+        WireFormat message;
+        generate_dns_query_packet( query, message );
+        return message.get();
+    }
+
+    void generate_dns_query_packet( const QueryPacketInfo &query, WireFormat &message )
     {
 	PacketInfo info;
 	info.id                   = query.id;
@@ -339,11 +375,18 @@ namespace dns
 
 	info.question_section = query.question;
 
-	return generate_dns_packet( info );
+	return generate_dns_packet( info, message );
     }
 
 
     PacketData generate_dns_response_packet( const ResponsePacketInfo &response )
+    {
+        WireFormat message;
+        generate_dns_response_packet( response, message );
+        return message.get();
+    }
+
+    void generate_dns_response_packet( const ResponsePacketInfo &response, WireFormat &message )
     {
 	PacketInfo info;
 	info.id                   = response.id;
@@ -364,7 +407,7 @@ namespace dns
 	info.authority_section             = response.authority;
 	info.additional_infomation_section = response.additional_infomation;
 
-	return generate_dns_packet( info );
+	return generate_dns_packet( info, message );
     }
 
 
@@ -546,6 +589,13 @@ namespace dns
         return message;
     }
 
+    void generate_question_section( const QuestionSectionEntry &question, WireFormat &message )
+    {
+        question.q_domainname.outputWireFormat( message );
+        message.pushUInt16HtoN( question.q_type );
+        message.pushUInt16HtoN( question.q_class );
+    }
+
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *p )
     {
         QuestionSectionEntry question;
@@ -580,6 +630,18 @@ namespace dns
         std::memcpy( p, packet_rd.data(), packet_rd.size() );
 
         return packet;
+    }
+
+    void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
+    {
+        PacketData packet_rd   = response.r_resource_data->getPacket();
+
+        response.r_domainname.outputWireFormat( message );
+        message.pushUInt16HtoN( response.r_type );
+        message.pushUInt16HtoN( response.r_class );
+        message.pushUInt32HtoN( response.r_ttl );
+        message.pushUInt16HtoN( packet_rd.size() );
+        message.pushBuffer( &packet_rd[0], &packet_rd[0] + packet_rd.size() );
     }
 
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
@@ -870,7 +932,7 @@ namespace dns
 
     RecordAAAA::RecordAAAA( const uint8_t *addr )
     {
-        std::memcpy( sin_addr, addr, 32 );
+        std::memcpy( sin_addr, addr, sizeof(sin_addr) );
     }
 
     std::string RecordAAAA::toString() const
@@ -893,6 +955,8 @@ namespace dns
 
     ResourceDataPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t*end )
     {
+        if ( end - begin != 16 )
+            throw FormatError( "invalid AAAA Record length" );
         return ResourceDataPtr( new RecordAAAA( begin ) );
     }
 

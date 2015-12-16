@@ -40,14 +40,14 @@ int main()
     response.authority.push_back( authority );
     response.additional_infomation.push_back( additional_infomation );
 
-    std::vector<uint8_t> dns_query_packet    = dns::generate_dns_query_packet( query );
+    WireFormat dns_query_packet( dns::generate_dns_query_packet( query ) );
     std::vector<uint8_t> dns_response_packet = dns::generate_dns_response_packet( response );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "127.0.0.1";
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
-    udp.sendPacket( dns_query_packet.data(), dns_query_packet.size() );
+    udp.sendPacket( dns_query_packet );
     udp.sendPacket( dns_response_packet.data(), dns_response_packet.size() );
 
 

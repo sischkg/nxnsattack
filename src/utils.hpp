@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <vector>
 #include <stdexcept>
+#include <cerrno>
 #include <boost/cstdint.hpp>
 #include <boost/shared_array.hpp>
 

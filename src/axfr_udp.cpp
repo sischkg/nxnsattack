@@ -61,7 +61,7 @@ int main( int argc, char **argv )
     packet_info.checking_disabled    = 1;
     packet_info.response_code        = 0;
 
-    std::vector<uint8_t> query = dns::generate_dns_packet( packet_info );
+    WireFormat query( dns::generate_dns_packet( packet_info ) );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = target_server;
@@ -69,7 +69,7 @@ int main( int argc, char **argv )
     udpv4::Client udp( udp_param );
 
     while ( true ) {
-	udp.sendPacket( query.data(), query.size() );
+	udp.sendPacket( query );
 	udpv4::PacketInfo response = udp.receivePacket();
 
 	dns::ResponsePacketInfo res = dns::parse_dns_response_packet( response.begin(), response.end() );

@@ -5,6 +5,7 @@
 #include <boost/cstdint.hpp>
 #include <vector>
 #include "udpv4.hpp"
+#include "wireformat.hpp"
 
 namespace udpv4
 {
@@ -40,6 +41,7 @@ namespace udpv4
         {
             return sendPacket( packet.data(), packet.size() );
         }
+	uint16_t sendPacket( const WireFormat & );
 
         PacketInfo receivePacket( bool is_nonblocking = false );
         bool isReadable();

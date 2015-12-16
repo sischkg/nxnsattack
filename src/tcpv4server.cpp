@@ -66,6 +66,11 @@ namespace tcpv4
     }
 
 
+    ssize_t Connection::send( const WireFormat &data )
+    {
+	return data.send( tcp_socket, NULL, 0 );
+    }
+
     Server::Server( const ServerParameters &parameters )
     {
 	tcp_socket = socket( AF_INET, SOCK_STREAM, 0 );

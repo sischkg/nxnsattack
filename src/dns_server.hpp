@@ -4,6 +4,7 @@
 #include "udpv4server.hpp"
 #include "tcpv4server.hpp"
 #include "dns.hpp"
+#include "wireformat.hpp"
 #include <string>
 
 namespace dns

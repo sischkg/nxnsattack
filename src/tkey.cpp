@@ -36,13 +36,14 @@ int main()
     packet_info.checking_disabled    = 0;
     packet_info.response_code        = 0;
 
-    std::vector<uint8_t> packet = dns::generate_dns_packet( packet_info );
+    WireFormat message;
+    dns::generate_dns_packet( packet_info, message );
 
     udpv4::ClientParameters udp_param;
     udp_param.destination_address = "49.212.193.254";
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
-    udp.sendPacket( packet.data(), packet.size() );
+    udp.sendPacket( message );
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 

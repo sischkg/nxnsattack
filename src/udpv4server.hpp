@@ -6,6 +6,7 @@
 #include <vector>
 #include "udpv4.hpp"
 #include "udpv4client.hpp"
+#include "wireformat.hpp"
 
 namespace udpv4
 {
@@ -40,6 +41,7 @@ namespace udpv4
         {
             return sendPacket( dest, packet.data(), packet.size() );
         }
+        uint16_t sendPacket( const ClientParameters &dest , const WireFormat & );
 
         PacketInfo receivePacket( bool is_nonblocking = false );
         bool isReadable();
