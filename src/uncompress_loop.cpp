@@ -45,7 +45,7 @@ std::vector<uint8_t> gen_dns_query_packet( const dns::QueryPacketInfo &query )
     std::vector<uint8_t> packet;
     std::copy( (uint8_t *)&header, (uint8_t *)&header + sizeof(header), std::back_inserter( packet ) );
 
-    for( std::vector<dns::QuestionSectionEntry>::const_iterator i = query.question.begin() ;
+    for( auto i = query.question.begin() ;
 	 i != query.question.end() ; ++i ) {
 	std::vector<uint8_t> question = gen_question_section( *i );
 	std::copy( question.begin(), question.end(), std::back_inserter( packet ) );

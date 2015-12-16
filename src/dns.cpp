@@ -331,19 +331,19 @@ namespace dns
         message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
                             reinterpret_cast<const uint8_t *>( &header ) + sizeof(header) );
 
-        for( std::vector<QuestionSectionEntry>::const_iterator q = info.question_section.begin() ;
+        for( auto q = info.question_section.begin() ;
              q != info.question_section.end() ; ++q ) {
             generate_question_section( *q, message );
         }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = info.answer_section.begin() ;
+        for( auto q = info.answer_section.begin() ;
              q != info.answer_section.end() ; ++q ) {
             generate_response_section( *q, message );
         }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = info.authority_section.begin() ;
+        for( auto q = info.authority_section.begin() ;
              q != info.authority_section.end() ; ++q ) {
             generate_response_section( *q, message );
         }
-        for( std::vector<ResponseSectionEntry>::const_iterator q = additional.begin() ;
+        for( auto q = additional.begin() ;
              q != additional.end() ; ++q ) {
             generate_response_section( *q, message );
         }
@@ -512,7 +512,7 @@ namespace dns
 	    }
 	}
 
-        for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
+        for( auto i = domainname.begin() ; i != domainname.end() ; ++i ) {
             if ( *i == '.' ) {
                 if ( label.size() != 0 ) {
                     bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
@@ -821,8 +821,7 @@ namespace dns
 	   << "Query/Response: "       << "Query"         << std::endl
 	   << "Recursion Desired: "    << query.recursion << std::endl;
 
-	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = query.question.begin() ;
-	      i != query.question.end() ; ++i )
+	for ( auto i = query.question.begin() ; i != query.question.end() ; ++i )
 	    os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << std::endl;
 
 	return os;
@@ -840,26 +839,22 @@ namespace dns
 	   << "Checking Disabled: "    << res.checking_disabled    << std::endl
 	   << "Response Code: "        << response_code_to_string( res.response_code ) << std::endl;
 
-	for ( std::vector<dns::QuestionSectionEntry>::const_iterator i = res.question.begin() ;
-	      i != res.question.end() ; ++i )
+	for ( auto i = res.question.begin() ; i != res.question.end() ; ++i )
 	    os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << "  ?" << std::endl;
-	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.answer.begin() ;
-	      i != res.answer.end() ; ++i ) {
+	for ( auto i = res.answer.begin() ; i != res.answer.end() ; ++i ) {
 	    std::cout << "Answer: "
 		      << i->r_domainname                  << " "
 		      << i->r_ttl                         << " "
 		      << type_code_to_string( i->r_type ) << " "
 		      << i->r_resource_data->toString()   << std::endl;
 	}
-	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.authority.begin() ;
-	      i != res.authority.end() ; ++i ) {
+	for ( auto i = res.authority.begin() ; i != res.authority.end() ; ++i ) {
 	    std::cout << "Authority: "
 		      << i->r_ttl                         << " "
 		      << type_code_to_string( i->r_type ) << " "
 		      << i->r_resource_data->toString()   << std::endl;
 	}
-	for ( std::vector<dns::ResponseSectionEntry>::const_iterator i = res.additional_infomation.begin() ;
-	      i != res.additional_infomation.end() ; ++i ) {
+	for ( auto i = res.additional_infomation.begin() ; i != res.additional_infomation.end() ; ++i ) {
 	    std::cout << "Additional: "
 		      << i->r_domainname                  << " "
 		      << i->r_ttl                         << " "
@@ -1276,7 +1271,7 @@ namespace dns
     {
 	std::ostringstream os;
 
-	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin(); i != options.end() ; ++i )
+	for ( auto i = options.begin(); i != options.end() ; ++i )
 	    os << (*i)->toString();
     
 	return os.str();
@@ -1300,8 +1295,7 @@ namespace dns
 	
 	std::insert_iterator<PacketData> pos( packet, packet.begin() );
 
-	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
-	      i != options.end() ;
+	for ( auto i = options.begin(); i != options.end() ;
 	      ++i ) {
 	    PacketData opt_data = (*i)->getPacket();
 	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );

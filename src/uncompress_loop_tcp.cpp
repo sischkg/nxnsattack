@@ -45,8 +45,7 @@ std::vector<uint8_t> gen_dns_query_packet( const dns::QueryPacketInfo &query )
     std::vector<uint8_t> packet;
     std::copy( (uint8_t *)&header, (uint8_t *)&header + sizeof(header), std::back_inserter( packet ) );
 
-    for( std::vector<dns::QuestionSectionEntry>::const_iterator i = query.question.begin() ;
-	 i != query.question.end() ; ++i ) {
+    for( auto i = query.question.begin() ; i != query.question.end() ; ++i ) {
 	std::vector<uint8_t> question = gen_question_section( *i );
 	std::copy( question.begin(), question.end(), std::back_inserter( packet ) );
     }
@@ -59,7 +58,7 @@ std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &dom
     std::vector<uint8_t> bin;
     std::vector<uint8_t> label;
 
-    for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
+    for( auto i = domainname.begin() ; i != domainname.end() ; ++i ) {
 	if ( *i == '.' ) {
 	    if ( label.size() != 0 ) {
 		bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
