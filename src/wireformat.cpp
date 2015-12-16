@@ -16,9 +16,16 @@ WireFormat::WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size )
 
 WireFormat::~WireFormat()
 {
+    clear();
+}
+
+void WireFormat::clear()
+{
     for ( auto i = mBuffers.begin() ; i != mBuffers.end() ; ++i ) {
 	delete [] *i;
     }
+    mBuffers.resize( 0 );
+    mEnd = 0;
 }
 
 uint16_t WireFormat::send( int fd, const sockaddr *dest, socklen_t dest_length, int flags ) const throw( std::runtime_error)

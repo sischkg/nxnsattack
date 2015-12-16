@@ -12,6 +12,7 @@
 #include <endian.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include "utils.hpp"
 
 class WireFormat
 {
@@ -50,6 +51,8 @@ public:
         mEnd--;
         return ret;
     }
+
+    void clear();
 
     void pushUInt8( uint8_t v )
     {
@@ -90,6 +93,11 @@ public:
     {
 	for ( ; begin != end ; begin++ )
 	    push_back( *begin );
+    }
+
+    void pushBuffer( const PacketData &data )
+    {
+        pushBuffer( &data[0], &data[0] + data.size() );
     }
 
     const uint8_t& operator[]( uint16_t i ) const throw( std::runtime_error )

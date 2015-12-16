@@ -641,7 +641,7 @@ namespace dns
         message.pushUInt16HtoN( response.r_class );
         message.pushUInt32HtoN( response.r_ttl );
         message.pushUInt16HtoN( packet_rd.size() );
-        message.pushBuffer( &packet_rd[0], &packet_rd[0] + packet_rd.size() );
+        message.pushBuffer( packet_rd );
     }
 
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
@@ -923,6 +923,14 @@ namespace dns
         return packet;
     }
 
+    void RecordA::outputWireFormat( WireFormat &message ) const
+    {
+        message.push_back( ( sin_addr >>  0 ) & 0xff );
+        message.push_back( ( sin_addr >>  8 ) & 0xff );
+        message.push_back( ( sin_addr >> 16 ) & 0xff );
+        message.push_back( ( sin_addr >> 24 ) & 0xff );
+    }
+
 
     ResourceDataPtr RecordA::parse( const uint8_t *begin, const uint8_t*end )
     {
@@ -952,6 +960,12 @@ namespace dns
 				       sin_addr + sizeof( sin_addr ) );
     }
 
+    void RecordAAAA::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( &sin_addr ),
+                            reinterpret_cast<const uint8_t *>( &sin_addr ) + sizeof( sin_addr ) );
+    }
+
 
     ResourceDataPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t*end )
     {
@@ -976,6 +990,10 @@ namespace dns
         return domainname.getPacket( offset );
     }
 
+    void RecordNS::outputWireFormat( WireFormat &message ) const
+    {
+        domainname.outputWireFormat( message, offset );
+    }
 
     ResourceDataPtr RecordNS::parse( const uint8_t *packet,
                                      const uint8_t *begin,
@@ -1007,6 +1025,12 @@ namespace dns
 	PacketData name = domainname.getPacket( offset );
 	packet.insert( packet.end(), name.begin(), name.end() );
 	return packet;
+    }
+
+    void RecordMX::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( priority );
+        domainname.outputWireFormat( message, offset );
     }
 
 
@@ -1057,6 +1081,14 @@ namespace dns
         return d;
     }
 
+    void RecordTXT::outputWireFormat( WireFormat &message ) const
+    {
+	for ( unsigned int i = 0 ; i < data.size() ; i++ ) {
+	    message.push_back( data[i].size() & 0xff );
+	    for ( unsigned int j = 0 ; j < data[i].size() ; j++ )
+		message.push_back( data[i][j] );
+	}
+    }
 
     ResourceDataPtr RecordTXT::parse( const uint8_t *packet,
 				      const uint8_t *begin,
@@ -1087,6 +1119,10 @@ namespace dns
         return domainname.getPacket( offset );
     }
 
+    void RecordCNAME::outputWireFormat( WireFormat &message ) const
+    {
+        domainname.outputWireFormat( message, offset );
+    }
 
     ResourceDataPtr RecordCNAME::parse( const uint8_t *packet,
 					const uint8_t *begin,
@@ -1150,6 +1186,19 @@ namespace dns
         return packet;
     }
 
+    void RecordNAPTR::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( order );
+        message.pushUInt16HtoN( preference );
+        message.pushUInt8( flags.size() );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( flags.c_str() ),
+                            reinterpret_cast<const uint8_t *>( flags.c_str() ) + flags.size() );
+        message.pushUInt8( regexp.size() );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( regexp.c_str() ),
+                            reinterpret_cast<const uint8_t *>( regexp.c_str() ) + regexp.size() );
+        replacement.outputWireFormat( message, offset );
+    }
+
 
     ResourceDataPtr RecordNAPTR::parse( const uint8_t *packet,
 					const uint8_t *begin,
@@ -1186,6 +1235,11 @@ namespace dns
     PacketData RecordDNAME::getPacket() const
     {
         return domainname.getPacket( offset );
+    }
+
+    void RecordDNAME::outputWireFormat( WireFormat &message ) const
+    {
+        domainname.outputWireFormat( message, offset );
     }
 
 
@@ -1249,6 +1303,17 @@ namespace dns
         return packet;
     }
 
+    void RecordSOA::outputWireFormat( WireFormat &message ) const
+    {
+        mname.outputWireFormat( message, mname_offset );
+        rname.outputWireFormat( message, rname_offset );
+        message.pushUInt32HtoN( serial );
+        message.pushUInt32HtoN( refresh );
+        message.pushUInt32HtoN( retry );
+        message.pushUInt32HtoN( expire );
+        message.pushUInt32HtoN( minimum );
+    }
+
 
     ResourceDataPtr RecordSOA::parse( const uint8_t *packet,
                                       const uint8_t *begin,
@@ -1299,6 +1364,24 @@ namespace dns
 
 	return packet;
     }
+
+
+    void RecordOptionsData::outputWireFormat( WireFormat &message ) const
+    {
+	PacketData packet;
+	
+	std::insert_iterator<PacketData> pos( packet, packet.begin() );
+
+	for ( std::vector<OptPseudoRROptPtr>::const_iterator i = options.begin();
+	      i != options.end() ;
+	      ++i ) {
+	    PacketData opt_data = (*i)->getPacket();
+	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );
+	}
+
+        message.pushBuffer( packet );
+    }
+
 
     ResourceDataPtr RecordOptionsData::parse( const uint8_t *packet,
 					      const uint8_t *begin,
@@ -1488,9 +1571,7 @@ namespace dns
 
     uint16_t RecordTKey::size() const
     {
-	PacketData domain_data = convert_domainname_string_to_binary( domain );
-
-	return domain_data.size() + 
+	return domain.size() + 
 	    2 + // TYPE
 	    2 + // CLASS
 	    4 + // TTL
@@ -1500,9 +1581,7 @@ namespace dns
 
     uint16_t RecordTKey::getResourceDataSize() const
     {
-	PacketData algorithm_data = convert_domainname_string_to_binary( algorithm );
-
-	return algorithm_data.size() + //
+	return algorithm.size() + //
 	    4 + // inception
 	    4 + // expiration
 	    2 + // mode
@@ -1518,8 +1597,8 @@ namespace dns
 	PacketData packet;
 	packet.resize( size() );
 
-	PacketData domain_data    = convert_domainname_string_to_binary( domain );
-	PacketData algorithm_data = convert_domainname_string_to_binary( algorithm );
+	PacketData domain_data    = domain.getPacket();
+	PacketData algorithm_data = algorithm.getPacket();
 
 	uint8_t *pos = &packet[0];
 	pos = std::copy( domain_data.begin(), domain_data.end(), pos );
@@ -1538,6 +1617,25 @@ namespace dns
 	pos = std::copy( other_data.begin(), other_data.end(), pos );
 
 	return packet;
+    }
+
+
+    void RecordTKey::outputWireFormat( WireFormat &message ) const
+    {
+        domain.outputWireFormat( message );
+        message.pushUInt16HtoN( TYPE_TKEY );
+        message.pushUInt16HtoN( 1 );
+        message.pushUInt32HtoN( 0 );
+        message.pushUInt16HtoN( getResourceDataSize() );
+        algorithm.outputWireFormat( message );
+        message.pushUInt32HtoN( inception );
+        message.pushUInt32HtoN( expiration );
+        message.pushUInt16HtoN( mode );
+        message.pushUInt16HtoN( error );
+        message.pushUInt16HtoN( key.size() );
+        message.pushBuffer( key );
+        message.pushUInt16HtoN( other_data.size() );
+        message.pushBuffer( other_data );
     }
 
 
@@ -1577,6 +1675,23 @@ namespace dns
 	pos = std::copy( other.begin(), other.end(), pos );
 
 	return packet;
+    }
+
+
+    void RecordTSIGData::outputWireFormat( WireFormat &message ) const
+    {
+	uint32_t time_high = signed_time >> 16;
+	uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
+
+        algorithm.outputWireFormat( message );
+        message.pushUInt32HtoN( time_high );
+        message.pushUInt32HtoN( time_low );
+        message.pushUInt16HtoN( mac_size );
+        message.pushBuffer( mac );
+        message.pushUInt16HtoN( original_id );
+        message.pushUInt16HtoN( error );
+        message.pushUInt16HtoN( other_length );
+        message.pushBuffer( other );
     }
 
     std::string RecordTSIGData::toString() const
@@ -1684,7 +1799,7 @@ namespace dns
     }
 
     void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet )
-    {        
+    {
         PacketData mac( EVP_MAX_MD_SIZE );
         unsigned int mac_size = EVP_MAX_MD_SIZE;
 
@@ -1733,6 +1848,61 @@ namespace dns
 
         packet.insert( packet.end(), tsig_data.begin(), tsig_data.end() );
         std::cerr << "added tsig" << std::endl;
+    }
+
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message )
+    {        
+        PacketData packet = message.get();
+        PacketData mac( EVP_MAX_MD_SIZE );
+        unsigned int mac_size = EVP_MAX_MD_SIZE;
+
+	PacketData hash_data = message.get();
+	PacketHeaderField *h = reinterpret_cast<PacketHeaderField *>( &hash_data[0] );
+	h->id = htons( tsig_info.original_id );
+
+	TSIGHash tsig_hash;
+	tsig_hash.name         = tsig_info.name;
+	tsig_hash.algorithm    = tsig_info.algorithm;
+	tsig_hash.signed_time  = tsig_info.signed_time;
+	tsig_hash.fudge        = tsig_info.fudge;
+	tsig_hash.error        = tsig_info.error;
+	tsig_hash.other_length = tsig_info.other.size();
+	tsig_hash.other        = tsig_info.other;
+	PacketData tsig_hash_data = tsig_hash.getPacket();
+	hash_data.insert( hash_data.end(), tsig_hash_data.begin(), tsig_hash_data.end() );
+
+        HMAC( EVP_md5(),
+	      tsig_info.key.c_str(), tsig_info.key.size(),
+	      reinterpret_cast<const unsigned char *>( &hash_data[0] ), hash_data.size(),
+	      reinterpret_cast<unsigned char *>( &mac[0] ), &mac_size );
+        mac.resize( mac_size );
+
+	ResponseSectionEntry entry;
+	entry.r_domainname    = tsig_info.name;
+	entry.r_type          = TYPE_TSIG;
+	entry.r_class         = CLASS_ANY;
+	entry.r_ttl           = 0;
+	entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.algorithm,
+								     tsig_info.signed_time,
+								     tsig_info.fudge,
+                                                                     mac_size,
+                                                                     mac,
+								     tsig_info.original_id,
+								     tsig_info.error,
+								     tsig_info.other.size(),
+								     tsig_info.other ) );
+	entry.r_offset        = NO_COMPRESSION;
+
+	PacketHeaderField *header = reinterpret_cast<PacketHeaderField *>( &packet[0] );
+	uint16_t arcount = ntohs( header->additional_infomation_count );
+        arcount++;
+	header->additional_infomation_count = htons( arcount );
+
+	PacketData tsig_packet = generate_response_section( entry );
+        packet.insert( packet.end(), tsig_packet.begin(), tsig_packet.end() );
+
+        message.clear();
+        message.pushBuffer( packet );
     }
 
 }

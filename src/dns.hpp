@@ -125,6 +125,11 @@ namespace dns
 
         virtual std::string toString() const = 0;
         virtual std::vector<uint8_t> getPacket() const = 0;
+        virtual void outputWireFormat( WireFormat &message ) const
+        {
+            PacketData data = getPacket();
+            message.pushBuffer( &data[0], &data[0] + data.size() );
+        }
         virtual Type type() const = 0;
     };
 
@@ -160,6 +165,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_A;
@@ -179,6 +185,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_AAAA;
@@ -198,6 +205,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NS;
@@ -218,6 +226,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_MX;
@@ -237,6 +246,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_TXT;
@@ -256,6 +266,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_CNAME;
@@ -287,6 +298,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NAPTR;
@@ -306,6 +318,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_DNAME;
@@ -340,6 +353,7 @@ namespace dns
 
         virtual std::string toString() const;
         virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_SOA;
@@ -400,6 +414,15 @@ namespace dns
 
 	    return result;
 	}
+
+        virtual void outputWireFormat( WireFormat &message )
+        {
+            message.pushUInt8( 0 );
+            message.pushUInt8( 0 );
+            message.pushUInt8( protocol );
+            message.pushUInt8( algorithm );
+        }
+
         virtual uint16_t type() const
         {
             return TYPE_KEY;
@@ -490,7 +513,6 @@ namespace dns
     {
     public:
 	std::vector<OptPseudoRROptPtr> options;
-
     public:
 	RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
 	    : options( in_options )
@@ -498,6 +520,7 @@ namespace dns
 
 	virtual std::string toString() const;
 	virtual std::vector<uint8_t> getPacket() const;
+	virtual void outputWireFormat( WireFormat &message ) const;
 	virtual uint16_t type() const { return TYPE_OPT; }
 	virtual uint16_t size() const { return getPacket().size(); }
 
@@ -524,8 +547,8 @@ namespace dns
     class RecordTKey
     {
     public:
-	std::string domain;
-	std::string algorithm;
+	Domainname  domain;
+	Domainname  algorithm;
 	uint32_t    inception;
 	uint32_t    expiration;
 	uint16_t    mode;
@@ -553,6 +576,7 @@ namespace dns
 	{}
 
 	PacketData getPacket() const;
+        void outputWireFormat( WireFormat & ) const;
 	uint16_t type() const { return TYPE_TKEY; }
 	uint16_t size() const;
 
@@ -613,6 +637,7 @@ namespace dns
 
 	virtual std::string toString() const;
 	virtual std::vector<uint8_t> getPacket() const;
+        virtual void outputWireFormat( WireFormat & ) const;
 	virtual uint16_t type() const { return TYPE_TSIG; }
  	virtual uint16_t size() const;
 
@@ -851,6 +876,7 @@ namespace dns
     OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
 
     void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet );
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message );
     
 
     template<typename Type>
