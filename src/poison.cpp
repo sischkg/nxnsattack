@@ -99,7 +99,7 @@ int main( int argc, char **argv )
 
         udpv4::PacketInfo received_packet;
         for ( int id = 0 ; id < 0xffff ; id++ ) {
-	    
+        
             dns::ResponseSectionEntry authority;
             authority.r_domainname    = target_domainname;
             authority.r_type          = dns::TYPE_NS;
@@ -141,7 +141,7 @@ int main( int argc, char **argv )
             if ( received_packet.getPayloadLength() > 0 )
                 break;
 
-	    usleep( 1000 * interval_mili_second );
+            usleep( 1000 * interval_mili_second );
         }
 
         if ( received_packet.getPayloadLength() == 0 )

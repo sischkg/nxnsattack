@@ -19,20 +19,20 @@ namespace tcpv4
     struct TCPv4HeaderField {
         uint16_t source_port;
         uint16_t destination_port;
-	uint32_t sequence_number;
-	uint32_t acknowledgment_number;
-	uint8_t  reserved_1: 4;
-	uint8_t  offset:     4;
-	uint8_t  fin:        1;
-	uint8_t  syn:        1;
-	uint8_t  rst:        1;
-	uint8_t  psh:        1;
-	uint8_t  ack:        1;
-	uint8_t  urg:        1;
-	uint8_t  reserved_2: 2;
-	uint16_t window;
-	uint16_t checksum;
-	uint16_t urgent_pointer;
+        uint32_t sequence_number;
+        uint32_t acknowledgment_number;
+        uint8_t  reserved_1: 4;
+        uint8_t  offset:     4;
+        uint8_t  fin:        1;
+        uint8_t  syn:        1;
+        uint8_t  rst:        1;
+        uint8_t  psh:        1;
+        uint8_t  ack:        1;
+        uint8_t  urg:        1;
+        uint8_t  reserved_2: 2;
+        uint16_t window;
+        uint16_t checksum;
+        uint16_t urgent_pointer;
     };
 
     union TCPv4Header {
@@ -73,11 +73,11 @@ namespace tcpv4
     uint16_t compute_tcpv4_checksum( const PacketInfo & );
 
     Packet::Packet( const uint8_t *header,  uint16_t header_size,
-		    const uint8_t *payload, uint16_t payload_size )
+                    const uint8_t *payload, uint16_t payload_size )
     {
-	data.resize( header_size + payload_size );
-	std::copy( header,  header  + header_size,  data.data() );
-	std::copy( payload, payload + payload_size, data.data() + header_size );
+        data.resize( header_size + payload_size );
+        std::copy( header,  header  + header_size,  data.data() );
+        std::copy( payload, payload + payload_size, data.data() + header_size );
     }
 
 
@@ -91,18 +91,18 @@ namespace tcpv4
         tcpv4_header.field.offset                = TCPV4_HEADER_LENGTH/4;
         tcpv4_header.field.reserved_1            = 0;
         tcpv4_header.field.reserved_2            = 0;
-	tcpv4_header.field.urg                   = info.urg;
+        tcpv4_header.field.urg                   = info.urg;
         tcpv4_header.field.ack                   = info.ack;
         tcpv4_header.field.psh                   = info.psh;
         tcpv4_header.field.rst                   = info.rst;
         tcpv4_header.field.syn                   = info.syn;
         tcpv4_header.field.fin                   = info.fin;
-	tcpv4_header.field.window                = htons( info.window );
+        tcpv4_header.field.window                = htons( info.window );
         tcpv4_header.field.checksum              = compute_tcpv4_checksum( info ); 
-	tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
+        tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
 
         return Packet( reinterpret_cast<const uint8_t *>( &tcpv4_header ),  sizeof(tcpv4_header),
-		       info.getData(), info.getPayloadLength() );
+                       info.getData(), info.getPayloadLength() );
     }
 
 
@@ -123,15 +123,15 @@ namespace tcpv4
         tcpv4_header.field.offset                = TCPV4_HEADER_LENGTH/4;
         tcpv4_header.field.reserved_1            = 0;
         tcpv4_header.field.reserved_2            = 0;
-	tcpv4_header.field.urg                   = info.urg;
+        tcpv4_header.field.urg                   = info.urg;
         tcpv4_header.field.ack                   = info.ack;
         tcpv4_header.field.psh                   = info.psh;
         tcpv4_header.field.rst                   = info.rst;
         tcpv4_header.field.syn                   = info.syn;
         tcpv4_header.field.fin                   = info.fin;
-	tcpv4_header.field.window                = htons( info.window );
+        tcpv4_header.field.window                = htons( info.window );
         tcpv4_header.field.checksum              = 0;
-	tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
+        tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
 
         size_t checksum_buffer_length = sizeof(pseudo_header) + info.getLength();
         std::vector<uint8_t> checksum_buffer( checksum_buffer_length );

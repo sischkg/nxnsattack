@@ -21,148 +21,148 @@ private:
 
     void sendFirstResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
-	dns::PacketInfo response;
-	dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo response;
+        dns::QuestionSectionEntry query_question = query.question_section[0];
 
-	dns::QuestionSectionEntry question;
-	question.q_domainname = query_question.q_domainname;
-	question.q_type       = query_question.q_type;
-	question.q_class      = query_question.q_class;
-	response.question_section.push_back( question );
+        dns::QuestionSectionEntry question;
+        question.q_domainname = query_question.q_domainname;
+        question.q_type       = query_question.q_type;
+        question.q_class      = query_question.q_class;
+        response.question_section.push_back( question );
 
-	dns::ResponseSectionEntry answer1;
-	answer1.r_domainname    = query_question.q_domainname;
-	answer1.r_type          = dns::TYPE_SOA;
-	answer1.r_class         = dns::CLASS_IN;
-	answer1.r_ttl           = TTL;
-	answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( "mname.example.com",
+        dns::ResponseSectionEntry answer1;
+        answer1.r_domainname    = query_question.q_domainname;
+        answer1.r_type          = dns::TYPE_SOA;
+        answer1.r_class         = dns::CLASS_IN;
+        answer1.r_ttl           = TTL;
+        answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( "mname.example.com",
                                                                             "ns.example.com",
                                                                             0,
                                                                             360000,
                                                                             10000,
                                                                             3600000,
                                                                             3600 ) );
-	response.answer_section.push_back( answer1 );
+        response.answer_section.push_back( answer1 );
 
-	dns::ResponseSectionEntry answer2;
-	answer2.r_domainname    = "www." + query_question.q_domainname.toString();
-	answer2.r_type          = dns::TYPE_A;
-	answer2.r_class         = dns::CLASS_IN;
-	answer2.r_ttl           = TTL;
-	answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
-	response.answer_section.push_back( answer2 );
+        dns::ResponseSectionEntry answer2;
+        answer2.r_domainname    = "www." + query_question.q_domainname.toString();
+        answer2.r_type          = dns::TYPE_A;
+        answer2.r_class         = dns::CLASS_IN;
+        answer2.r_ttl           = TTL;
+        answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
+        response.answer_section.push_back( answer2 );
 
-	response.id                   = query.id;
-	response.opcode               = 0;
-	response.query_response       = 1;
-	response.authoritative_answer = 1;
-	response.truncation           = 1;
-	response.recursion_desired    = 0;
-	response.recursion_available  = 0;
-	response.zero_field           = 0;
-	response.authentic_data       = 1;
-	response.checking_disabled    = 1;
-	response.response_code        = dns::NO_ERROR;
+        response.id                   = query.id;
+        response.opcode               = 0;
+        response.query_response       = 1;
+        response.authoritative_answer = 1;
+        response.truncation           = 1;
+        response.recursion_desired    = 0;
+        response.recursion_available  = 0;
+        response.zero_field           = 0;
+        response.authentic_data       = 1;
+        response.checking_disabled    = 1;
+        response.response_code        = dns::NO_ERROR;
 
         WireFormat response_message;
         dns::generate_dns_packet( response, response_message );
                         
-	uint16_t send_size = htons( response_message.size() );
-	conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-	conn->send( response_message );
+        uint16_t send_size = htons( response_message.size() );
+        conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
+        conn->send( response_message );
     }
 
     void sendResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
-	dns::PacketInfo response;
-	dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo response;
+        dns::QuestionSectionEntry query_question = query.question_section[0];
 
-	uint16_t offset = sizeof( dns::PacketHeaderField );
+        uint16_t offset = sizeof( dns::PacketHeaderField );
 
-	dns::QuestionSectionEntry question;
-	question.q_domainname = query_question.q_domainname;
-	question.q_type       = query_question.q_type;
-	question.q_class      = query_question.q_class;
-	response.question_section.push_back( question );
+        dns::QuestionSectionEntry question;
+        question.q_domainname = query_question.q_domainname;
+        question.q_type       = query_question.q_type;
+        question.q_class      = query_question.q_class;
+        response.question_section.push_back( question );
 
-	offset += ( question.q_domainname.size() + 2 + 2 );
+        offset += ( question.q_domainname.size() + 2 + 2 );
 
-	std::ostringstream os;
-	os << SUBDOMAIN2 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "."
-	   << query_question.q_domainname;
+        std::ostringstream os;
+        os << SUBDOMAIN2 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "."
+           << query_question.q_domainname;
 
-	dns::ResponseSectionEntry answer;
-	answer.r_domainname    = os.str();
-	answer.r_type          = dns::TYPE_A;
-	answer.r_class         = dns::CLASS_IN;
-	answer.r_ttl           = TTL;
-	answer.r_offset        = dns::NO_COMPRESSION;
-	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
-	response.answer_section.push_back( answer );
+        dns::ResponseSectionEntry answer;
+        answer.r_domainname    = os.str();
+        answer.r_type          = dns::TYPE_A;
+        answer.r_class         = dns::CLASS_IN;
+        answer.r_ttl           = TTL;
+        answer.r_offset        = dns::NO_COMPRESSION;
+        answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
+        response.answer_section.push_back( answer );
 
-	for ( int i = 0 ; i < 1000 ; i++ ) {
-	    dns::ResponseSectionEntry answer2;
+        for ( int i = 0 ; i < 1000 ; i++ ) {
+            dns::ResponseSectionEntry answer2;
 
-	    std::ostringstream os2;
-	    os2 << std::setfill( '0' ) << std::setw(16) << index;
-	    index++;
-	    answer2.r_domainname    = os2.str();
-	    answer2.r_type          = dns::TYPE_CNAME;
-	    answer2.r_class         = dns::CLASS_IN;
-	    answer2.r_ttl           = TTL;
-	    answer2.r_offset        = offset;
-	    answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( "", offset ) );
-	    response.answer_section.push_back( answer2 );
-	}
+            std::ostringstream os2;
+            os2 << std::setfill( '0' ) << std::setw(16) << index;
+            index++;
+            answer2.r_domainname    = os2.str();
+            answer2.r_type          = dns::TYPE_CNAME;
+            answer2.r_class         = dns::CLASS_IN;
+            answer2.r_ttl           = TTL;
+            answer2.r_offset        = offset;
+            answer2.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( "", offset ) );
+            response.answer_section.push_back( answer2 );
+        }
   
-	response.id                   = query.id;
-	response.opcode               = 0;
-	response.query_response       = 1;
-	response.authoritative_answer = 1;
-	response.truncation           = 1;
-	response.recursion_desired    = 0;
-	response.recursion_available  = 0;
-	response.zero_field           = 0;
-	response.authentic_data       = 1;
-	response.checking_disabled    = 1;
-	response.response_code        = dns::NO_ERROR;
+        response.id                   = query.id;
+        response.opcode               = 0;
+        response.query_response       = 1;
+        response.authoritative_answer = 1;
+        response.truncation           = 1;
+        response.recursion_desired    = 0;
+        response.recursion_available  = 0;
+        response.zero_field           = 0;
+        response.authentic_data       = 1;
+        response.checking_disabled    = 1;
+        response.response_code        = dns::NO_ERROR;
 
         WireFormat response_message;
         dns::generate_dns_packet( response, response_message );
                         
-	uint16_t send_size = htons( response_message.size() );
-	conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-	conn->send( response_message );
+        uint16_t send_size = htons( response_message.size() );
+        conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
+        conn->send( response_message );
     }
 
 public:
     AXFRServer( const std::string addr, uint16_t port )
-	: dns::DNSServer( addr, port ), index( 0 )
+        : dns::DNSServer( addr, port ), index( 0 )
     {}
 
     void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
-	sendFirstResponse( query, conn );
-	std::cerr << "sent first response" << std::endl;
-	while ( true ) {
-	    std::cerr << "sent response: " << index << std::endl;
-	    sendResponse( query, conn );
-	}
+        sendFirstResponse( query, conn );
+        std::cerr << "sent first response" << std::endl;
+        while ( true ) {
+            std::cerr << "sent response: " << index << std::endl;
+            sendResponse( query, conn );
+        }
     }
 
 
     dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
-	dns::PacketInfo response;
-	dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo response;
+        dns::QuestionSectionEntry query_question = query.question_section[0];
 
-	dns::QuestionSectionEntry question;
-	question.q_domainname = query_question.q_domainname;
-	question.q_type       = query_question.q_type;
-	question.q_class      = query_question.q_class;
-	response.question_section.push_back( question );
+        dns::QuestionSectionEntry question;
+        question.q_domainname = query_question.q_domainname;
+        question.q_type       = query_question.q_type;
+        question.q_class      = query_question.q_class;
+        response.question_section.push_back( question );
 
-	dns::ResponseSectionEntry answer;
+        dns::ResponseSectionEntry answer;
         if ( query_question.q_type == dns::TYPE_SOA ) { 
             answer.r_domainname    = query_question.q_domainname;
             answer.r_type          = dns::TYPE_SOA;
@@ -186,19 +186,19 @@ public:
             response.answer_section.push_back( answer );
         }
 
-	response.id                   = query.id;
-	response.opcode               = 0;
-	response.query_response       = 1;
-	response.authoritative_answer = 1;
-	response.truncation           = 1;
-	response.recursion_desired    = 0;
-	response.recursion_available  = 0;
-	response.zero_field           = 0;
-	response.authentic_data       = 1;
-	response.checking_disabled    = 1;
-	response.response_code        = dns::NO_ERROR;
+        response.id                   = query.id;
+        response.opcode               = 0;
+        response.query_response       = 1;
+        response.authoritative_answer = 1;
+        response.truncation           = 1;
+        response.recursion_desired    = 0;
+        response.recursion_available  = 0;
+        response.zero_field           = 0;
+        response.authentic_data       = 1;
+        response.checking_disabled    = 1;
+        response.response_code        = dns::NO_ERROR;
 
-	return response;
+        return response;
     }
 };
 

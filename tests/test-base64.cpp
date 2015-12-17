@@ -13,8 +13,8 @@ protected:
 public:
     virtual void SetUp()
     {
-	std::memset( decoded, 0, sizeof(decoded) );
-	std::memset( encoded, 0, sizeof(encoded) );
+    std::memset( decoded, 0, sizeof(decoded) );
+    std::memset( encoded, 0, sizeof(encoded) );
     }
 
     virtual void TearDown()

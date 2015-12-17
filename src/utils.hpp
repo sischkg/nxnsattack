@@ -17,7 +17,7 @@ class InvalidAddressFormatError : public std::runtime_error
 {
 public:
     InvalidAddressFormatError( const std::string &msg )
-	: std::runtime_error( msg )
+        : std::runtime_error( msg )
     {}
 };
 
@@ -31,12 +31,12 @@ private:
 
 public:
     InvalidPayloadLengthError( const std::string &msg, int len )
-	: std::runtime_error( msg ), length( len )
+        : std::runtime_error( msg ), length( len )
     {}
 
     int payload_length() const
     {
-	return length;
+        return length;
     }
 };
 
@@ -47,7 +47,7 @@ class SocketError : public std::runtime_error
 {
 public:
     SocketError( const std::string &msg )
-	: std::runtime_error( msg )
+        : std::runtime_error( msg )
     {}
 };
 
@@ -61,9 +61,9 @@ std::string convert_address_binary_to_string( in_addr bin ) throw ( InvalidAddre
 
 
 char *encode_to_base64( const uint8_t *begin, const uint8_t *end,
-			char *output );
+                        char *output );
 uint8_t *decode_from_base64( const char *begin, const char *end,
-			     uint8_t *output );
+                             uint8_t *output );
 uint8_t *decode_from_base64( const char *data, uint8_t *output );
 
 uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end );

@@ -68,7 +68,7 @@ int main( int argc, char **argv )
     }
 
     if ( vm.count( "wait" ) ) {
-	wait_response = true;
+        wait_response = true;
     }
 
     udpv4::PacketInfo raw_udp_packet_info;
@@ -85,13 +85,13 @@ int main( int argc, char **argv )
     udp_sender.sendPacket( raw_udp_packet_info );
 
     if ( wait_response ) {
-	udpv4::PacketInfo udp_packet_info = udp_receiver.receivePacket();
-	std::string responsed_data( udp_packet_info.begin(), udp_packet_info.end() );
+        udpv4::PacketInfo udp_packet_info = udp_receiver.receivePacket();
+        std::string responsed_data( udp_packet_info.begin(), udp_packet_info.end() );
 
-	std::cout << "raw socket response size: " << udp_packet_info.getPayloadLength() << std::endl;
-	std::cout << "raw socket response: "      << responsed_data                     << std::endl;
-	std::cout << "source address:"            << udp_packet_info.source_address     << std::endl;
-	std::cout << "source port:"               << udp_packet_info.source_port        << std::endl;
+        std::cout << "raw socket response size: " << udp_packet_info.getPayloadLength() << std::endl;
+        std::cout << "raw socket response: "      << responsed_data                     << std::endl;
+        std::cout << "source address:"            << udp_packet_info.source_address     << std::endl;
+        std::cout << "source port:"               << udp_packet_info.source_port        << std::endl;
     }
     return 0;
 }

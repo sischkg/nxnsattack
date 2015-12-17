@@ -82,16 +82,16 @@ int main( int argc, char **argv )
 
     int raw_socket = socket( AF_INET, SOCK_RAW, IPPROTO_RAW );
     if ( raw_socket < 0 ) {
-	perror( "cannot open socket" );
-	exit( 1 );
+        perror( "cannot open socket" );
+        exit( 1 );
     }
 
     int on = 1;
     int res = setsockopt( raw_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof(int) );
     if( res < 0 ) {
-	perror( "cannot setsockopt" );
-	close( raw_socket );
-	exit( 1 );
+        perror( "cannot setsockopt" );
+        close( raw_socket );
+        exit( 1 );
     }
 
     ipv4::PacketInfo ip_packet_info;
@@ -104,26 +104,26 @@ int main( int argc, char **argv )
     ip_packet_info.source      = raw_tcp_packet_info.source_address;
     ip_packet_info.destination = raw_tcp_packet_info.destination_address;
     ip_packet_info.payload.insert( ip_packet_info.payload.end(),
-				   tcp_packet.begin(),
-				   tcp_packet.end() );
+                                   tcp_packet.begin(),
+                                   tcp_packet.end() );
     ipv4::Packet ip_packet = ipv4::generate_ipv4_packet( ip_packet_info );
 
     sockaddr_in dst_socket_address;
     std::memset( &dst_socket_address, 0, sizeof(dst_socket_address) );
     if ( inet_pton( AF_INET, raw_tcp_packet_info.destination_address.c_str(), &dst_socket_address.sin_addr ) < 0 ) {
-	std::cerr << "cannot convert destination address" << std::endl;
-	close( raw_socket );
-	exit( 1 );
+        std::cerr << "cannot convert destination address" << std::endl;
+        close( raw_socket );
+        exit( 1 );
     }
 
     dst_socket_address.sin_family = AF_INET;
     dst_socket_address.sin_port   = htons( raw_tcp_packet_info.destination_port );
 
     uint16_t sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-				 reinterpret_cast<const sockaddr *>( &dst_socket_address ),
-				 sizeof(dst_socket_address) );
+                                 reinterpret_cast<const sockaddr *>( &dst_socket_address ),
+                                 sizeof(dst_socket_address) );
     if ( sent_size < 0 )
-	perror( "cannot send packet" );
+        perror( "cannot send packet" );
 
     close( raw_socket );
 

@@ -10,7 +10,7 @@ WireFormat::WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size )
     : mBufferSize( buffer_size ), mEnd( 0 )
 {
     for ( auto i = data.begin() ; i != data.end() ; i++ ) {
-	push_back( *i );
+        push_back( *i );
     }
 }
 
@@ -23,7 +23,7 @@ WireFormat::~WireFormat()
 void WireFormat::clear()
 {
     for ( auto i = mBuffers.begin() ; i != mBuffers.end() ; ++i ) {
-	delete [] *i;
+        delete [] *i;
     }
     mBuffers.resize( 0 );
     mEnd = 0;
@@ -32,7 +32,7 @@ void WireFormat::clear()
 uint16_t WireFormat::send( int fd, const sockaddr *dest, socklen_t dest_length, int flags ) const throw( std::runtime_error)
 {
     if ( mEnd == 0 )
-	return 0;
+        return 0;
 
     MessageHeader msg;
     msg.setDestination( dest, dest_length );
@@ -57,7 +57,7 @@ std::vector<uint8_t> WireFormat::get() const
     ret.resize( size() );
 
     for ( unsigned int i = 0 ; i < mEnd ; i++ ) {
-	ret[i] = at( i );
+        ret[i] = at( i );
     }
 
     return ret;
@@ -75,8 +75,8 @@ WireFormat::MessageHeader::~MessageHeader()
 }
 
 void WireFormat::MessageHeader::setBuffers( uint16_t size,
-                                const std::vector<uint8_t *> buffers,
-                                uint16_t buffer_size )
+                                            const std::vector<uint8_t *> buffers,
+                                            uint16_t buffer_size )
 {
     unsigned int buffer_count = ( size - 1 ) / buffer_size + 1;
     unsigned int last_buffer  = ( size - 1 ) / buffer_size;
@@ -90,9 +90,9 @@ void WireFormat::MessageHeader::setBuffers( uint16_t size,
     }
     header.msg_iov[last_buffer].iov_base = const_cast<uint8_t *>( buffers[last_buffer] );
     if ( size % buffer_size == 0 )
-	header.msg_iov[last_buffer].iov_len  = buffer_size;
+        header.msg_iov[last_buffer].iov_len  = buffer_size;
     else
-	header.msg_iov[last_buffer].iov_len  = size % buffer_size;
+        header.msg_iov[last_buffer].iov_len  = size % buffer_size;
 }
 
 void WireFormat::MessageHeader::setDestination( const sockaddr *dest, uint16_t len )

@@ -22,19 +22,19 @@ int main()
 
     std::vector<uint8_t> raw_data;
     uint16_t offset = sizeof(dns::PacketHeaderField) +
-	( question.q_domainname.size() + 2 + 2 + 2 ) +
-	( 1 + 2 + 2 + 4 + 2 +
-	  2 + 2 );
+        ( question.q_domainname.size() + 2 + 2 + 2 ) +
+        ( 1 + 2 + 2 + 4 + 2 +
+          2 + 2 );
 
     raw_data.push_back( 0 );  // "."
     raw_data.push_back( 0 );  // "."
     raw_data.push_back( 0 );  // "."
     offset += 3;
     for ( int i = 0 ; i < 0xb00/2 ; i++ ) {
-	uint16_t d = ( 0xC000 + offset - 2 );
-	raw_data.push_back( (uint8_t)(d >> 8) );
-	raw_data.push_back( (uint8_t)(d & 0xff) );
-	offset += 2;
+        uint16_t d = ( 0xC000 + offset - 2 );
+        raw_data.push_back( (uint8_t)(d >> 8) );
+        raw_data.push_back( (uint8_t)(d & 0xff) );
+        offset += 2;
     }    
 
     std::vector<dns::OptPseudoRROptPtr> options;

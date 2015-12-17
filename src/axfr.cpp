@@ -71,30 +71,30 @@ int main( int argc, char **argv )
 
     while ( true ) {
 
-	uint16_t query_size_data = htons( query_stream.size() );
-	tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data ), 2 );
-	tcp.send( query_stream );
+        uint16_t query_size_data = htons( query_stream.size() );
+        tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data ), 2 );
+        tcp.send( query_stream );
 
-	tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
-	uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
+        tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
+        uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
 
-	PacketData response_data;
-	while ( response_data.size() < response_size ) {
-	    tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
+        PacketData response_data;
+        while ( response_data.size() < response_size ) {
+            tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
     
-	    std::cerr << "received size: " << received_data.getLength() << std::endl;
-	    response_data.insert( response_data.end(),
-				  received_data.begin(),
-				  received_data.end() );
-	}
-	dns::ResponsePacketInfo res = dns::parse_dns_response_packet( &response_data[0],
-								      &response_data[0] + response_data.size() );
-	
-	std::cout << res;
+            std::cerr << "received size: " << received_data.getLength() << std::endl;
+            response_data.insert( response_data.end(),
+                                  received_data.begin(),
+                                  received_data.end() );
+        }
+        dns::ResponsePacketInfo res = dns::parse_dns_response_packet( &response_data[0],
+                                                                      &response_data[0] + response_data.size() );
+    
+        std::cout << res;
 
-	if ( res.answer.size() == 0 ||
-	     res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
-	    break;
+        if ( res.answer.size() == 0 ||
+             res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+            break;
     }
 
     return 0;

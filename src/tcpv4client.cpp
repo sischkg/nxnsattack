@@ -35,7 +35,7 @@ namespace tcpv4
         }
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof(socket_address) );
-	socket_address.sin_family = AF_INET;
+        socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convert_address_string_to_binary( parameters.destination_address );
         socket_address.sin_port   = htons( parameters.destination_port );
         if ( connect( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof(socket_address) ) < 0 ) {
@@ -62,21 +62,21 @@ namespace tcpv4
 
     void Client::shutdown_read()
     {
-	shutdown( SHUT_RD );
+        shutdown( SHUT_RD );
     }
 
     void Client::shutdown_write()
     {
-	shutdown( SHUT_WR );
+        shutdown( SHUT_WR );
     }
 
     uint16_t Client::send( const uint8_t *data, uint16_t size )
     {
         if ( tcp_socket < 0 )
             openSocket();
-	
-	int sent_size = write( tcp_socket, data, size );
-	if ( sent_size < 0 ) {
+    
+        int sent_size = write( tcp_socket, data, size );
+        if ( sent_size < 0 ) {
             std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
         }
@@ -87,23 +87,23 @@ namespace tcpv4
     {
         if ( tcp_socket < 0 )
             openSocket();
-	
-	return data.send( tcp_socket, NULL, 0, 0 );
+    
+        return data.send( tcp_socket, NULL, 0, 0 );
     }
 
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     ConnectionInfo Client::receive( bool is_nonblocking )
     {
-	if ( tcp_socket < 0 )
+        if ( tcp_socket < 0 )
             openSocket();
 
         int flags = 0;
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
 
-	std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
-	int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
+        std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
+        int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
 
         if ( recv_size < 0 ) {
             int error_num = errno;
@@ -113,20 +113,20 @@ namespace tcpv4
             }
             throw SocketError( get_error_message( "cannot recv packet", error_num ) );
         }
-	receive_buffer.resize( recv_size );
+        receive_buffer.resize( recv_size );
 
         ConnectionInfo info;
-	info.stream = receive_buffer;
+        info.stream = receive_buffer;
         return info;
     }
 
     ConnectionInfo Client::receive_data( int size )
     {
-	if ( tcp_socket < 0 )
+        if ( tcp_socket < 0 )
             openSocket();
 
-	std::vector<uint8_t> receive_buffer( size );
-	int recv_size = read( tcp_socket, receive_buffer.data(), size );
+        std::vector<uint8_t> receive_buffer( size );
+        int recv_size = read( tcp_socket, receive_buffer.data(), size );
 
         if ( recv_size < 0 ) {
             int error_num = errno;
@@ -136,19 +136,16 @@ namespace tcpv4
             }
             throw SocketError( get_error_message( "cannot recv packet", error_num ) );
         }
-	receive_buffer.resize( recv_size );
+        receive_buffer.resize( recv_size );
 
         ConnectionInfo info;
-	info.stream = receive_buffer;
+        info.stream = receive_buffer;
         return info;
     }
 
-
     bool Client::isReadable()
     {
-	return true;
+        return true;
     }
-
-
 
 }

@@ -49,8 +49,8 @@ namespace ipv4
     }
 
     Packet::Packet( boost::shared_array<uint8_t> h, uint16_t hl,
-		    boost::shared_array<uint8_t> p, uint16_t pl )
-	: header(h), header_length(hl), payload(p), payload_length(pl)
+                    boost::shared_array<uint8_t> p, uint16_t pl )
+        : header(h), header_length(hl), payload(p), payload_length(pl)
     {}
 
 

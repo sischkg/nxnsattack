@@ -71,46 +71,46 @@ namespace dns
     class FormatError : public std::runtime_error
     {
     public:
-	FormatError( const std::string &msg )
-	    : std::runtime_error( msg )
-	{}
+        FormatError( const std::string &msg )
+            : std::runtime_error( msg )
+        {}
     };
 
 
     class Domainname
     {
     private:
-	std::deque<std::string> labels;
+        std::deque<std::string> labels;
 
     public:
-	Domainname( const std::deque<std::string> &l = std::deque<std::string>() )
-	    : labels( l )
-	{}
+        Domainname( const std::deque<std::string> &l = std::deque<std::string>() )
+            : labels( l )
+        {}
 
-	Domainname( const std::string &name );
-	Domainname( const char *name );
+        Domainname( const std::string &name );
+        Domainname( const char *name );
 
-	std::string  toString() const;
-	PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
-	void         outputWireFormat( PacketData &, Offset offset = NO_COMPRESSION ) const;
-	void         outputWireFormat( WireFormat &, Offset offset = NO_COMPRESSION ) const;
-	PacketData   getWireFormat( Offset offset = NO_COMPRESSION ) const
-	{ return getPacket( offset ); }
-	PacketData   getCanonicalWireFormat() const;
-	void         outputCanonicalWireFormat( PacketData & ) const;
-	void         outputCanonicalWireFormat( WireFormat & ) const;
-	unsigned int size( Offset offset = NO_COMPRESSION ) const;
-	const std::deque<std::string> &getLabels() const { return labels; }
+        std::string  toString() const;
+        PacketData   getPacket( uint16_t offset = NO_COMPRESSION ) const;
+        void         outputWireFormat( PacketData &, Offset offset = NO_COMPRESSION ) const;
+        void         outputWireFormat( WireFormat &, Offset offset = NO_COMPRESSION ) const;
+        PacketData   getWireFormat( Offset offset = NO_COMPRESSION ) const
+        { return getPacket( offset ); }
+        PacketData   getCanonicalWireFormat() const;
+        void         outputCanonicalWireFormat( PacketData & ) const;
+        void         outputCanonicalWireFormat( WireFormat & ) const;
+        unsigned int size( Offset offset = NO_COMPRESSION ) const;
+        const std::deque<std::string> &getLabels() const { return labels; }
 
-	Domainname operator+( const Domainname & ) const;
-	Domainname &operator+=( const Domainname & );
-	void addSubdomain( const std::string & );
-	void addSuffix( const std::string & );
+        Domainname operator+( const Domainname & ) const;
+        Domainname &operator+=( const Domainname & );
+        void addSubdomain( const std::string & );
+        void addSuffix( const std::string & );
 
-	static const uint8_t *parsePacket( Domainname &ref_domainname,
-					   const uint8_t *packet,
-					   const uint8_t *begin,
-					   int recur = 0 ) throw(FormatError);
+        static const uint8_t *parsePacket( Domainname &ref_domainname,
+                                           const uint8_t *packet,
+                                           const uint8_t *begin,
+                                           int recur = 0 ) throw(FormatError);
     };
 
     std::ostream &operator<<( const Domainname &name, std::ostream &os );
@@ -126,7 +126,7 @@ namespace dns
         virtual std::string toString() const = 0;
         virtual void outputWireFormat( WireFormat &message ) const = 0;
         virtual Type type() const = 0;
-	virtual uint16_t size() const = 0;
+        virtual uint16_t size() const = 0;
     };
 
 
@@ -134,12 +134,12 @@ namespace dns
     {
     private:
         uint16_t rrtype;
-	std::vector<uint8_t> data;
+        std::vector<uint8_t> data;
 
     public:
         RecordRaw( uint8_t t, const std::vector<uint8_t> &d )
-	    : rrtype(t), data(d)
-	{}
+            : rrtype(t), data(d)
+        {}
 
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -147,7 +147,7 @@ namespace dns
         {
             return rrtype;
         }
-	virtual uint16_t size() const { return data.size(); }
+        virtual uint16_t size() const { return data.size(); }
     };
 
     class RecordA : public ResourceData
@@ -165,7 +165,7 @@ namespace dns
         {
             return TYPE_A;
         }
-	virtual uint16_t size() const { return sizeof(sin_addr); }
+        virtual uint16_t size() const { return sizeof(sin_addr); }
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
@@ -184,7 +184,7 @@ namespace dns
         {
             return TYPE_AAAA;
         }
-	virtual uint16_t size() const { return sizeof(sin_addr); }
+        virtual uint16_t size() const { return sizeof(sin_addr); }
 
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
@@ -193,7 +193,7 @@ namespace dns
     {
     private:
         Domainname domainname;
-	Offset     offset;
+        Offset     offset;
 
     public:
         RecordNS( const Domainname &name, Offset off = NO_COMPRESSION );
@@ -204,7 +204,7 @@ namespace dns
         {
             return TYPE_NS;
         }
-	virtual uint16_t size() const { return domainname.size( offset ); }
+        virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -212,9 +212,9 @@ namespace dns
     class RecordMX : public ResourceData
     {
     private:
-	uint16_t   priority;
+        uint16_t   priority;
         Domainname domainname;
-	Offset     offset;
+        Offset     offset;
 
     public:
         RecordMX( uint16_t pri, const Domainname &name, Offset off = NO_COMPRESSION );
@@ -225,7 +225,7 @@ namespace dns
         {
             return TYPE_MX;
         }
-	virtual uint16_t size() const { return sizeof(priority) + domainname.size( offset ); }
+        virtual uint16_t size() const { return sizeof(priority) + domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -233,7 +233,7 @@ namespace dns
     class RecordTXT : public ResourceData
     {
     private:
-	std::vector<std::string> data;
+        std::vector<std::string> data;
 
     public:
         RecordTXT( const std::string &data );
@@ -245,7 +245,7 @@ namespace dns
         {
             return TYPE_TXT;
         }
-	virtual uint16_t size() const;
+        virtual uint16_t size() const;
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -254,7 +254,7 @@ namespace dns
     {
     private:
         Domainname domainname;
-	uint16_t   offset;
+        uint16_t   offset;
 
     public:
         RecordCNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
@@ -265,7 +265,7 @@ namespace dns
         {
             return TYPE_CNAME;
         }
-	virtual uint16_t size() const { return domainname.size( offset ); }
+        virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -280,7 +280,7 @@ namespace dns
         std::string services;
         std::string regexp;
         Domainname  replacement;
-	uint16_t    offset;
+        uint16_t    offset;
 
     public:
         RecordNAPTR( uint16_t          in_order,
@@ -297,7 +297,7 @@ namespace dns
         {
             return TYPE_NAPTR;
         }
-	virtual uint16_t size() const;
+        virtual uint16_t size() const;
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -306,7 +306,7 @@ namespace dns
     {
     private:
         Domainname domainname;
-	uint16_t   offset;
+        uint16_t   offset;
 
     public:
         RecordDNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
@@ -317,7 +317,7 @@ namespace dns
         {
             return TYPE_DNAME;
         }
-	virtual uint16_t size() const { return domainname.size( offset ); }
+        virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -332,19 +332,19 @@ namespace dns
         uint32_t   retry;
         uint32_t   expire;
         uint32_t   minimum;
-	Offset     mname_offset;
-	Offset     rname_offset;
+        Offset     mname_offset;
+        Offset     rname_offset;
 
     public:
         RecordSOA( const Domainname &mname,
                    const Domainname &rname,
-		   uint32_t          serial,
-		   uint32_t          refresh,
-		   uint32_t          retry,
-		   uint32_t          expire,
-		   uint32_t          minimum,
-		   Offset            moff = NO_COMPRESSION,
-		   Offset            roff = NO_COMPRESSION );
+                   uint32_t          serial,
+                   uint32_t          refresh,
+                   uint32_t          retry,
+                   uint32_t          expire,
+                   uint32_t          minimum,
+                   Offset            moff = NO_COMPRESSION,
+                   Offset            roff = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -352,7 +352,7 @@ namespace dns
         {
             return TYPE_SOA;
         }
-	virtual uint16_t size() const;
+        virtual uint16_t size() const;
 
         const std::string getMName() const { return mname.toString(); }
         const std::string getRName() const { return rname.toString(); }
@@ -374,31 +374,31 @@ namespace dns
     class RecordKey : public ResourceData
     {
     public:
-	uint8_t ac;
-	uint8_t xt;
-	uint8_t namtyp;
-	uint8_t sig;
+        uint8_t ac;
+        uint8_t xt;
+        uint8_t namtyp;
+        uint8_t sig;
 
-	uint8_t protocol;
-	uint8_t algorithm;
-	PacketData public_key;
+        uint8_t protocol;
+        uint8_t algorithm;
+        PacketData public_key;
 
     public:
         RecordKey( uint8_t in_ac        = 0,
-		   uint8_t in_xt        = 0,
-		   uint8_t in_namtyp    = 0,
-		   uint8_t in_sig       = 0,
-		   uint8_t in_protocol  = PROTOCOL_DNSSEC,
-		   uint8_t in_algorithm = ALGORITHM_DH )
-	    : ac( 0 ),
-	      xt( 0 ),
-	      namtyp( 0 ),
-	      sig( 0 ),
-	      protocol( in_protocol ),
-	      algorithm( in_algorithm )
-	{}
+                   uint8_t in_xt        = 0,
+                   uint8_t in_namtyp    = 0,
+                   uint8_t in_sig       = 0,
+                   uint8_t in_protocol  = PROTOCOL_DNSSEC,
+                   uint8_t in_algorithm = ALGORITHM_DH )
+            : ac( 0 ),
+              xt( 0 ),
+              namtyp( 0 ),
+              sig( 0 ),
+              protocol( in_protocol ),
+              algorithm( in_algorithm )
+        {}
 
-	virtual std::string toString() const { return ""; }
+        virtual std::string toString() const { return ""; }
 
         virtual void outputWireFormat( WireFormat &message )
         {
@@ -407,7 +407,7 @@ namespace dns
             message.pushUInt8( protocol );
             message.pushUInt8( algorithm );
         }
-	virtual uint16_t size() const { return 4; }
+        virtual uint16_t size() const { return 4; }
 
         virtual uint16_t type() const
         {
@@ -419,11 +419,11 @@ namespace dns
     class OptPseudoRROption
     {
     public:
-	virtual ~OptPseudoRROption() {}
-	virtual std::string toString() const = 0;
-	virtual void outputWireFormat( WireFormat & ) const = 0;
-	virtual uint16_t code() const = 0;
-	virtual uint16_t size() const = 0;
+        virtual ~OptPseudoRROption() {}
+        virtual std::string toString() const = 0;
+        virtual void outputWireFormat( WireFormat & ) const = 0;
+        virtual uint16_t code() const = 0;
+        virtual uint16_t size() const = 0;
     };
 
     typedef boost::shared_ptr<OptPseudoRROption> OptPseudoRROptPtr;
@@ -431,175 +431,175 @@ namespace dns
     class RAWOption : public OptPseudoRROption
     {
     private:
-	uint16_t option_code;
-	uint16_t option_size;
-	std::vector<uint8_t> option_data;
+        uint16_t option_code;
+        uint16_t option_size;
+        std::vector<uint8_t> option_data;
 
     public:
-	RAWOption( uint16_t in_code,
-		   uint16_t in_size,
-		   const std::vector<uint8_t> &in_data )
-	    : option_code( in_code ),
-	      option_size( in_size ),
-	      option_data( in_data )
-	{}
+        RAWOption( uint16_t in_code,
+                   uint16_t in_size,
+                   const std::vector<uint8_t> &in_data )
+            : option_code( in_code ),
+              option_size( in_size ),
+              option_data( in_data )
+        {}
 
-	virtual std::string toString() const;
-	virtual void outputWireFormat( WireFormat & ) const;
-	virtual uint16_t code() const { return option_code; }
-	virtual uint16_t size() const { return option_size; }
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat & ) const;
+        virtual uint16_t code() const { return option_code; }
+        virtual uint16_t size() const { return option_size; }
     };
 
 
     class NSIDOption : public OptPseudoRROption
     {
     private:
-	std::string nsid;
+        std::string nsid;
     public:
-	NSIDOption( const std::string &id = "" ) : nsid(id) {}
+        NSIDOption( const std::string &id = "" ) : nsid(id) {}
 
-	virtual std::string toString() const { return "NSID: \"" + nsid + "\""; }
-	virtual void outputWireFormat( WireFormat & ) const;
-	virtual uint16_t code() const { return OPT_NSID; }
-	virtual uint16_t size() const { return 2 + 2 + nsid.size(); }
+        virtual std::string toString() const { return "NSID: \"" + nsid + "\""; }
+        virtual void outputWireFormat( WireFormat & ) const;
+        virtual uint16_t code() const { return OPT_NSID; }
+        virtual uint16_t size() const { return 2 + 2 + nsid.size(); }
 
-	static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+        static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
     class ClientSubnetOption : public OptPseudoRROption
     {
     private:
-	uint16_t    family;
-	uint8_t     source_prefix;
-	uint8_t     scope_prefix;
-	std::string address;
+        uint16_t    family;
+        uint8_t     source_prefix;
+        uint8_t     scope_prefix;
+        std::string address;
 
-	static unsigned int getAddressSize( uint8_t prefix );
+        static unsigned int getAddressSize( uint8_t prefix );
     public:
-	static const int IPv4 = 1;
-	static const int IPv6 = 2;
+        static const int IPv4 = 1;
+        static const int IPv6 = 2;
 
-	ClientSubnetOption( uint16_t fam,
-			    uint8_t  source,
-			    uint8_t  scope,
-			    const std::string &addr )
-	    : family( fam ), source_prefix( source ), scope_prefix( scope ), address( addr )
-	{}
+        ClientSubnetOption( uint16_t fam,
+                            uint8_t  source,
+                            uint8_t  scope,
+                            const std::string &addr )
+            : family( fam ), source_prefix( source ), scope_prefix( scope ), address( addr )
+        {}
 
-	virtual std::string toString() const;
-	virtual void outputWireFormat( WireFormat & ) const;
-	virtual uint16_t code() const { return OPT_CLIENT_SUBNET; }
-	virtual uint16_t size() const;
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat & ) const;
+        virtual uint16_t code() const { return OPT_CLIENT_SUBNET; }
+        virtual uint16_t size() const;
 
-	static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+        static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
 
     class RecordOptionsData : public ResourceData
     {
     public:
-	std::vector<OptPseudoRROptPtr> options;
+        std::vector<OptPseudoRROptPtr> options;
     public:
-	RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
-	    : options( in_options )
-	{}
+        RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
+            : options( in_options )
+        {}
 
-	virtual std::string toString() const;
-	virtual void outputWireFormat( WireFormat &message ) const;
-	virtual uint16_t type() const { return TYPE_OPT; }
-	virtual uint16_t size() const;
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t type() const { return TYPE_OPT; }
+        virtual uint16_t size() const;
 
-	const std::vector<OptPseudoRROptPtr> &getOptions() const { return options; }
+        const std::vector<OptPseudoRROptPtr> &getOptions() const { return options; }
         static ResourceDataPtr parse( const uint8_t *packet,
-				      const uint8_t *begin,
-				      const uint8_t *end );
+                                      const uint8_t *begin,
+                                      const uint8_t *end );
     };
 
     struct OptPseudoRecord
     {
-	Domainname domainname;
-	uint16_t   payload_size;
-	uint8_t    rcode;
-	boost::shared_ptr<ResourceData> record_options_data;
-	uint32_t   offset;
+        Domainname domainname;
+        uint16_t   payload_size;
+        uint8_t    rcode;
+        boost::shared_ptr<ResourceData> record_options_data;
+        uint32_t   offset;
 
-	OptPseudoRecord()
-	    : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( NO_COMPRESSION )
-	{}
+        OptPseudoRecord()
+            : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( NO_COMPRESSION )
+        {}
     };
 
 
     class RecordTKey
     {
     public:
-	Domainname  domain;
-	Domainname  algorithm;
-	uint32_t    inception;
-	uint32_t    expiration;
-	uint16_t    mode;
-	uint16_t    error;
-	PacketData  key;
-	PacketData  other_data;
+        Domainname  domain;
+        Domainname  algorithm;
+        uint32_t    inception;
+        uint32_t    expiration;
+        uint16_t    mode;
+        uint16_t    error;
+        PacketData  key;
+        PacketData  other_data;
     public:
 
-	RecordTKey( const std::string &dom  = "",
-		    const std::string &algo = "HMAC-MD5.SIG-ALG.REG.INT",
-		    uint32_t    incept = 0,
-		    uint32_t    expire = 0,
-		    uint16_t    m      = 0,
-		    uint16_t    err    = 0,
-		    PacketData  k      = PacketData(),
-		    PacketData  other  = PacketData() )
-	    : domain( dom ),
-	      algorithm( algo ),
-	      inception( incept ),
-	      expiration( expire ),
-	      mode( m ),
-	      error( err ),
-	      key( k ),
-	      other_data( other )
-	{}
+        RecordTKey( const std::string &dom  = "",
+                    const std::string &algo = "HMAC-MD5.SIG-ALG.REG.INT",
+                    uint32_t    incept = 0,
+                    uint32_t    expire = 0,
+                    uint16_t    m      = 0,
+                    uint16_t    err    = 0,
+                    PacketData  k      = PacketData(),
+                    PacketData  other  = PacketData() )
+            : domain( dom ),
+              algorithm( algo ),
+              inception( incept ),
+              expiration( expire ),
+            mode( m ),
+            error( err ),
+            key( k ),
+            other_data( other )
+        {}
 
         void outputWireFormat( WireFormat & ) const;
-	uint16_t type() const { return TYPE_TKEY; }
-	uint16_t size() const;
+        uint16_t type() const { return TYPE_TKEY; }
+        uint16_t size() const;
 
-	uint16_t getResourceDataSize() const;
+        uint16_t getResourceDataSize() const;
     };
 
 
     struct TSIGInfo {
-	std::string name;
-	std::string key;
-	std::string algorithm;
-	uint64_t    signed_time;
-	uint16_t    fudge;
-	uint16_t    original_id;
-	uint16_t    error;
-	PacketData  other;
+        std::string name;
+        std::string key;
+        std::string algorithm;
+        uint64_t    signed_time;
+        uint16_t    fudge;
+        uint16_t    original_id;
+        uint16_t    error;
+        PacketData  other;
 
-	TSIGInfo()
-	    : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ),
-	      signed_time( 0 ), fudge( 0 ), original_id( 0 ), error( 0 ), other()
-	{}
+        TSIGInfo()
+            : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ),
+              signed_time( 0 ), fudge( 0 ), original_id( 0 ), error( 0 ), other()
+        {}
     };
 
     class RecordTSIGData : public ResourceData
     {
     public:
-	Domainname  algorithm;
-	uint64_t    signed_time;
-	uint16_t    fudge;
-	uint16_t    mac_size;
-	PacketData  mac;
-	uint16_t    original_id;
-	uint16_t    error;
-	uint16_t    other_length;
-	PacketData  other;
+        Domainname  algorithm;
+        uint64_t    signed_time;
+        uint16_t    fudge;
+        uint16_t    mac_size;
+        PacketData  mac;
+        uint16_t    original_id;
+        uint16_t    error;
+        uint16_t    other_length;
+        PacketData  other;
 
     public:
 
-	RecordTSIGData( const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+        RecordTSIGData( const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
                         uint64_t           in_signed_time  = 0,
                         uint16_t           in_fudge        = 0,
                         uint16_t           in_mac_size     = 0,
@@ -609,64 +609,64 @@ namespace dns
                         uint16_t           in_other_length = 0,
                         const PacketData  &in_other        = PacketData() )
         : algorithm( in_algo ),
-	    signed_time( in_signed_time ),
-	    fudge( in_fudge ),
-	    mac_size( in_mac_size ),
-	    mac( in_mac ),
-	    original_id( in_original_id ),
-	    error( in_error ),
-	    other_length( in_other_length ),
-	    other( in_other )
-	{}
+            signed_time( in_signed_time ),
+            fudge( in_fudge ),
+            mac_size( in_mac_size ),
+            mac( in_mac ),
+            original_id( in_original_id ),
+            error( in_error ),
+            other_length( in_other_length ),
+            other( in_other )
+        {}
 
-	virtual std::string toString() const;
+        virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat & ) const;
-	virtual uint16_t type() const { return TYPE_TSIG; }
- 	virtual uint16_t size() const;
+        virtual uint16_t type() const { return TYPE_TSIG; }
+        virtual uint16_t size() const;
 
         static ResourceDataPtr parse( const uint8_t *packet,
-				      const uint8_t *begin,
-				      const uint8_t *end );
+                                      const uint8_t *begin,
+                                      const uint8_t *end );
     };
 
     class RecordTSIG
     {
     public:
-	Domainname name;
-	Domainname algorithm;
-	uint64_t    signed_time;
-	uint16_t    fudge;
-	uint16_t    mac_size;
-	PacketData  mac;
-	uint16_t    original_id;
-	uint16_t    error;
-	uint16_t    other_length;
-	PacketData  other;
+        Domainname name;
+        Domainname algorithm;
+        uint64_t    signed_time;
+        uint16_t    fudge;
+        uint16_t    mac_size;
+        PacketData  mac;
+        uint16_t    original_id;
+        uint16_t    error;
+        uint16_t    other_length;
+        PacketData  other;
 
     public:
 
-	RecordTSIG( const std::string &in_name         = "",
-		    const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
-		    uint64_t           in_signed_time  = 0,
-		    uint16_t           in_fudge        = 0,
-		    uint16_t           in_mac_size     = 0,
-		    PacketData         in_mac          = PacketData(),
-		    uint16_t           in_original_id  = 0,
-		    uint16_t           in_error        = 0,
-		    uint16_t           in_other_length = 0,
-		    PacketData         in_other        = PacketData() )
-	    :
-	    name( in_name ),
-	    algorithm( in_algo ),
-	    signed_time( in_signed_time ),
-	    fudge( in_fudge ),
-	    mac_size( in_mac_size ),
-	    mac( in_mac ),
-	    original_id( in_original_id ),
-	    error( in_error ),
-	    other_length( in_other_length ),
-	    other( in_other )
-	{}
+        RecordTSIG( const std::string &in_name         = "",
+                    const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+                    uint64_t           in_signed_time  = 0,
+                    uint16_t           in_fudge        = 0,
+                    uint16_t           in_mac_size     = 0,
+                    PacketData         in_mac          = PacketData(),
+                    uint16_t           in_original_id  = 0,
+                    uint16_t           in_error        = 0,
+                    uint16_t           in_other_length = 0,
+                    PacketData         in_other        = PacketData() )
+        :
+        name( in_name ),
+            algorithm( in_algo ),
+            signed_time( in_signed_time ),
+            fudge( in_fudge ),
+            mac_size( in_mac_size ),
+            mac( in_mac ),
+            original_id( in_original_id ),
+            error( in_error ),
+            other_length( in_other_length ),
+            other( in_other )
+        {}
 
     };
 
@@ -674,9 +674,9 @@ namespace dns
     struct QuestionSectionEntry
     {
         Domainname q_domainname;
-	uint16_t   q_type;
-	uint16_t   q_class;
-	uint16_t   q_offset;
+        uint16_t   q_type;
+        uint16_t   q_class;
+        uint16_t   q_offset;
 
         QuestionSectionEntry()
             : q_type( 0 ), q_class( 0 ), q_offset( NO_COMPRESSION )
@@ -685,72 +685,72 @@ namespace dns
 
     struct ResponseSectionEntry
     {
-	Domainname      r_domainname;
-	uint16_t        r_type;
-	uint16_t        r_class;
-	uint32_t        r_ttl;
+        Domainname      r_domainname;
+        uint16_t        r_type;
+        uint16_t        r_class;
+        uint32_t        r_ttl;
         ResourceDataPtr r_resource_data;
-	uint32_t        r_offset;
+        uint32_t        r_offset;
 
-	ResponseSectionEntry()
-	    : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
-	{}
+        ResponseSectionEntry()
+            : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
+        {}
     };
 
     struct QueryPacketInfo
     {
         uint16_t  id;
-	Opcode    opcode;
+        Opcode    opcode;
         bool      recursion;
-	bool      edns0;
+        bool      edns0;
         std::vector<QuestionSectionEntry> question;
-	OptPseudoRecord opt_pseudo_rr;
+        OptPseudoRecord opt_pseudo_rr;
 
-	QueryPacketInfo( uint16_t in_id        = 0,
-			 Opcode   in_opcode    = OPCODE_QUERY,
-			 bool     in_recursion = false,
-			 bool     in_edns0     = false,
-			 const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
-			 const OptPseudoRecord &in_opt_pseudo_rr = OptPseudoRecord() )
-	    : id( in_id ),
-	      opcode( in_opcode ),
-	      recursion( in_recursion ),
-	      edns0( in_edns0 ),
-	      question( in_question ),
-	      opt_pseudo_rr( in_opt_pseudo_rr )
-	{}
+        QueryPacketInfo( uint16_t in_id        = 0,
+                         Opcode   in_opcode    = OPCODE_QUERY,
+                         bool     in_recursion = false,
+                         bool     in_edns0     = false,
+                         const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
+                         const OptPseudoRecord &in_opt_pseudo_rr = OptPseudoRecord() )
+            : id( in_id ),
+              opcode( in_opcode ),
+              recursion( in_recursion ),
+            edns0( in_edns0 ),
+            question( in_question ),
+            opt_pseudo_rr( in_opt_pseudo_rr )
+        {}
     };
 
     struct ResponsePacketInfo
     {
         uint16_t id;
-	uint16_t opcode;
+        uint16_t opcode;
         bool     recursion_available;
         bool     authoritative_answer;
         bool     truncation;
         bool     authentic_data;
         bool     checking_disabled;
         uint8_t  response_code;
-	bool     edns0;
+        bool     edns0;
 
-	OptPseudoRecord opt_pseudo_rr;
+        OptPseudoRecord opt_pseudo_rr;
 
         std::vector<QuestionSectionEntry> question;
         std::vector<ResponseSectionEntry> answer;
         std::vector<ResponseSectionEntry> authority;
         std::vector<ResponseSectionEntry> additional_infomation;
 
-	ResponsePacketInfo()
-	    :id( 0 ),
-	     opcode( 0 ),
-	     recursion_available( false ),
-	     authoritative_answer( false ),
-	     truncation( false ),
-	     authentic_data( false ),
-	     checking_disabled( false ),
-	     response_code( 0 ),
-	     edns0( false )
-	{}
+        ResponsePacketInfo()
+            :id( 0 ),
+             opcode( 0 ),
+             recursion_available( false ),
+             authoritative_answer( false ),
+             truncation( false ),
+             authentic_data( false ),
+             checking_disabled( false ),
+             response_code( 0 ),
+             edns0( false )
+        {}
     };
 
 
@@ -770,29 +770,29 @@ namespace dns
         bool     authentic_data;
         uint8_t  response_code;
 
-	bool     edns0;
+        bool     edns0;
 
-	OptPseudoRecord opt_pseudo_rr;
+        OptPseudoRecord opt_pseudo_rr;
 
         std::vector<QuestionSectionEntry> question_section;
         std::vector<ResponseSectionEntry> answer_section;
         std::vector<ResponseSectionEntry> authority_section;
         std::vector<ResponseSectionEntry> additional_infomation_section;
 
-	PacketInfo()
-	    :id( 0 ),
-	     query_response( 0 ),
-	     opcode( 0 ),
-	     authoritative_answer( 0 ),
-	     truncation( false ),
-	     recursion_desired( false ),
-	     recursion_available( false ),
-	     checking_disabled( false ),
-	     zero_field( 0 ),
-	     authentic_data( false ),
-	     response_code( 0 ),
-	     edns0( false )
-	{}
+        PacketInfo()
+            :id( 0 ),
+             query_response( 0 ),
+             opcode( 0 ),
+             authoritative_answer( 0 ),
+             truncation( false ),
+             recursion_desired( false ),
+             recursion_available( false ),
+             checking_disabled( false ),
+             zero_field( 0 ),
+             authentic_data( false ),
+             response_code( 0 ),
+             edns0( false )
+        {}
 
     };
 
@@ -845,10 +845,10 @@ namespace dns
 
 
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-							      uint32_t compress_offset = NO_COMPRESSION );
+                                                              uint32_t compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
-										 const uint8_t *domainame,
-										 int recur = 0 ) throw(FormatError);
+                                                                                 const uint8_t *domainame,
+                                                                                 int recur = 0 ) throw(FormatError);
     std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &q );
     std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &r );
     void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );

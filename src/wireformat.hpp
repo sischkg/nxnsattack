@@ -24,8 +24,8 @@ private:
 
     void checkIndex( uint16_t i ) const throw( std::runtime_error )
     {
-	if ( i >= mEnd )
-	    throw std::runtime_error( "range error" );
+        if ( i >= mEnd )
+            throw std::runtime_error( "range error" );
     }
 
 
@@ -92,8 +92,8 @@ public:
 
     void pushBuffer( const uint8_t *begin, const uint8_t *end )
     {
-	for ( ; begin != end ; begin++ )
-	    push_back( *begin );
+        for ( ; begin != end ; begin++ )
+            push_back( *begin );
     }
 
     void pushBuffer( const PacketData &data )
@@ -103,21 +103,21 @@ public:
 
     const uint8_t& operator[]( uint16_t i ) const throw( std::runtime_error )
     {
-	checkIndex( i );
-	
-	return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
+        checkIndex( i );
+    
+        return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
     }
 
     uint8_t& operator[]( uint16_t i ) throw( std::runtime_error )
     {
-	checkIndex( i );
+        checkIndex( i );
 
-	return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
+        return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
     }
 
     const uint8_t& at( uint16_t i ) const throw( std::runtime_error )
     {
-	return (*this)[i];
+        return (*this)[i];
     }
 
     uint16_t size() const

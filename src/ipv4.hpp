@@ -67,18 +67,18 @@ namespace ipv4
     {
     private:
         std::vector<uint8_t>         data;
-	boost::shared_array<uint8_t> header;
-	uint16_t                     header_length;
-	boost::shared_array<uint8_t> payload;
-	uint16_t                     payload_length;
+        boost::shared_array<uint8_t> header;
+        uint16_t                     header_length;
+        boost::shared_array<uint8_t> payload;
+        uint16_t                     payload_length;
 
     public:
         Packet( const uint8_t *d, uint16_t len )
             : data( d, d + len ),
-	      header((uint8_t *)NULL),
-	      header_length(0),
-	      payload((uint8_t *)NULL),
-	      payload_length(0)
+              header((uint8_t *)NULL),
+              header_length(0),
+              payload((uint8_t *)NULL),
+              payload_length(0)
         {}
 
         Packet( const uint8_t *header,  uint16_t header_length,
@@ -88,7 +88,7 @@ namespace ipv4
 
         const uint8_t *getData() const
         {
-	    return data.data();
+            return data.data();
         }
 
         uint16_t getLength() const
@@ -96,11 +96,11 @@ namespace ipv4
             return data.size();
         }
 
-	const uint8_t *getPayload() const { return payload.get(); }
-	const uint8_t *getHeader()  const { return header.get();  }
-	const uint16_t getPayloadSize() const { return payload_length; }
-	const uint16_t getHeaderSize() const { return header_length; } 
-   };
+        const uint8_t *getPayload() const { return payload.get(); }
+        const uint8_t *getHeader()  const { return header.get();  }
+        const uint16_t getPayloadSize() const { return payload_length; }
+        const uint16_t getHeaderSize() const { return header_length; } 
+    };
 
 
     Packet generate_ipv4_packet( const PacketInfo & );

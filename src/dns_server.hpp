@@ -10,34 +10,34 @@
 namespace dns
 {
     struct ResponseInfo {
-	PacketHeaderField                 header;    
-	std::vector<QuestionSectionEntry> question_section;
-	std::vector<ResponseSectionEntry> answer_section;
-	std::vector<ResponseSectionEntry> authority_section;
-	std::vector<ResponseSectionEntry> additional_infomation_section;
+        PacketHeaderField                 header;    
+        std::vector<QuestionSectionEntry> question_section;
+        std::vector<ResponseSectionEntry> answer_section;
+        std::vector<ResponseSectionEntry> authority_section;
+        std::vector<ResponseSectionEntry> additional_infomation_section;
     };
 
     class DNSServer
     {
     private:
-	std::string bind_address;
-	uint16_t    bind_port;
+        std::string bind_address;
+        uint16_t    bind_port;
 
-	void startUDPServer();
-	void startTCPServer();
+        void startUDPServer();
+        void startTCPServer();
 
     public:
-	DNSServer( const std::string &address = "0.0.0.0",
-		   uint16_t           port = 53 )
-	    : bind_address( address ), bind_port( port )
-	{}
+        DNSServer( const std::string &address = "0.0.0.0",
+                   uint16_t           port = 53 )
+            : bind_address( address ), bind_port( port )
+        {}
 
-	~DNSServer(){}
+        ~DNSServer(){}
 
-	virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
-	virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
+        virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
+        virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
 
-	void start();
+        void start();
     };
     
 }

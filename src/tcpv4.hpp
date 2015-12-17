@@ -17,17 +17,17 @@ namespace tcpv4
         std::string destination_address;
         uint16_t    source_port;
         uint16_t    destination_port;
-	uint32_t    sequence_number;
-	uint32_t    acknowledgment_number;
-	bool        urg;
-	bool        ack;
-	bool        psh;
-	bool        rst;
-	bool        syn;
-	bool        fin;
-	uint16_t    window;
-	uint16_t    checksum;
-	uint16_t    urgent_pointer;
+        uint32_t    sequence_number;
+        uint32_t    acknowledgment_number;
+        bool        urg;
+        bool        ack;
+        bool        psh;
+        bool        rst;
+        bool        syn;
+        bool        fin;
+        uint16_t    window;
+        uint16_t    checksum;
+        uint16_t    urgent_pointer;
 
         std::vector<uint8_t> payload;
 
@@ -75,7 +75,7 @@ namespace tcpv4
         {}
 
         Packet( const uint8_t *header,  uint16_t header_size,
-		const uint8_t *payload, uint16_t payload_size );
+                const uint8_t *payload, uint16_t payload_size );
 
         const uint8_t *getData() const
         {

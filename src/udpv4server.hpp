@@ -32,8 +32,8 @@ namespace udpv4
 
         ~Server();
 
-	uint16_t sendPacket( const ClientParameters &dest, const uint8_t *data, uint16_t size );
-	uint16_t sendPacket( const ClientParameters &dest, const uint8_t *begin, const uint8_t *end )
+        uint16_t sendPacket( const ClientParameters &dest, const uint8_t *data, uint16_t size );
+        uint16_t sendPacket( const ClientParameters &dest, const uint8_t *begin, const uint8_t *end )
         {
             return sendPacket( dest, begin, end - begin );
         }

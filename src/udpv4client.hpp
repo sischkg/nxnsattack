@@ -41,7 +41,7 @@ namespace udpv4
         {
             return sendPacket( packet.data(), packet.size() );
         }
-	uint16_t sendPacket( const WireFormat & );
+        uint16_t sendPacket( const WireFormat & );
 
         PacketInfo receivePacket( bool is_nonblocking = false );
         bool isReadable();
@@ -51,10 +51,10 @@ namespace udpv4
     class Sender
     {
     public:
-	typedef boost::shared_ptr<ChecksumCalculatable> ChecksumPtr;
+        typedef boost::shared_ptr<ChecksumCalculatable> ChecksumPtr;
     private:
         int raw_socket;
-	ChecksumPtr udp_checksum;
+        ChecksumPtr udp_checksum;
 
         void openSocket();
         void closeSocket();
@@ -78,7 +78,7 @@ namespace udpv4
     {
     private:
         int udp_socket;
-	std::string bind_address;
+        std::string bind_address;
         uint16_t bind_port;
 
         void openSocket();

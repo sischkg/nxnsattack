@@ -17,9 +17,9 @@ int main( int argc, char **argv )
     udp_param.payload.push_back( 'd' );
 
     while (true) {
-	sender.sendPacket( udp_param );
-	//       udpv4::PacketInfo received_packet = receiver.receivePacket();
-	usleep( 10000 );
+        sender.sendPacket( udp_param );
+        //       udpv4::PacketInfo received_packet = receiver.receivePacket();
+        usleep( 10000 );
     }
 
     return 0;

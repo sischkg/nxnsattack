@@ -46,9 +46,9 @@ std::vector<uint8_t> gen_dns_query_packet( const dns::QueryPacketInfo &query )
     std::copy( (uint8_t *)&header, (uint8_t *)&header + sizeof(header), std::back_inserter( packet ) );
 
     for( auto i = query.question.begin() ;
-	 i != query.question.end() ; ++i ) {
-	std::vector<uint8_t> question = gen_question_section( *i );
-	std::copy( question.begin(), question.end(), std::back_inserter( packet ) );
+     i != query.question.end() ; ++i ) {
+    std::vector<uint8_t> question = gen_question_section( *i );
+    std::copy( question.begin(), question.end(), std::back_inserter( packet ) );
     }
 
     return packet;
@@ -60,27 +60,27 @@ std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &dom
     std::vector<uint8_t> label;
 
     for( std::string::const_iterator i = domainname.begin() ; i != domainname.end() ; ++i ) {
-	if ( *i == '.' ) {
-	    if ( label.size() != 0 ) {
-		bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
-		bin.insert( bin.end(), label.begin(), label.end() );
-		label.clear();
-	    }
-	}
-	else {
-	    label.push_back( boost::numeric_cast<uint8_t>( *i ) );
-	}
+    if ( *i == '.' ) {
+        if ( label.size() != 0 ) {
+        bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
+        bin.insert( bin.end(), label.begin(), label.end() );
+        label.clear();
+        }
+    }
+    else {
+        label.push_back( boost::numeric_cast<uint8_t>( *i ) );
+    }
     }
     if ( ! label.empty() ) {
-	bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
-	bin.insert( bin.end(), label.begin(), label.end() );
-	if ( reference_offset != 0xffff ) {
-	    bin.push_back( 0xC0 | ( reference_offset >> 8 ) );  
-	    bin.push_back( 0xff & reference_offset );  
-	}
-	else {
-	    bin.push_back( 0 );
-	}
+    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
+    bin.insert( bin.end(), label.begin(), label.end() );
+    if ( reference_offset != 0xffff ) {
+        bin.push_back( 0xC0 | ( reference_offset >> 8 ) );  
+        bin.push_back( 0xff & reference_offset );  
+    }
+    else {
+        bin.push_back( 0 );
+    }
     }
 
     return bin;
@@ -116,7 +116,7 @@ int main()
     std::string qname;
 
     for ( int i = 0 ; i < 30000 ; i++ ) {
-	qname += "1.";
+    qname += "1.";
     }
     qname += "siskrn.co";
 

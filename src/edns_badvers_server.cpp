@@ -12,50 +12,50 @@ class BadVersServer : public dns::DNSServer
 {
 public:
     BadVersServer( const std::string addr, uint16_t port )
-	: dns::DNSServer( addr, port )
+        : dns::DNSServer( addr, port )
     {}
 
     dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
-	dns::PacketInfo response;
-	dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo response;
+        dns::QuestionSectionEntry query_question = query.question_section[0];
 
-	dns::QuestionSectionEntry question;
-	question.q_domainname = query_question.q_domainname;
-	question.q_type       = query_question.q_type;
-	question.q_class      = query_question.q_class;
-	response.question_section.push_back( question );
+        dns::QuestionSectionEntry question;
+        question.q_domainname = query_question.q_domainname;
+        question.q_type       = query_question.q_type;
+        question.q_class      = query_question.q_class;
+        response.question_section.push_back( question );
 
-	dns::ResponseSectionEntry answer;
-	answer.r_domainname    = query_question.q_domainname;
-	answer.r_type          = dns::TYPE_A;
-	answer.r_class         = dns::CLASS_IN;
-	answer.r_ttl           = TTL;
-	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
-	response.answer_section.push_back( answer );
+        dns::ResponseSectionEntry answer;
+        answer.r_domainname    = query_question.q_domainname;
+        answer.r_type          = dns::TYPE_A;
+        answer.r_class         = dns::CLASS_IN;
+        answer.r_ttl           = TTL;
+        answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
+        response.answer_section.push_back( answer );
 
-	std::vector<dns::OptPseudoRROptPtr> edns_options_1;
-	edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
+        std::vector<dns::OptPseudoRROptPtr> edns_options_1;
+        edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
 
-	dns::OptPseudoRecord opt_rr_1;
-	opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-	opt_rr_1.payload_size = 1024;
-	opt_rr_1.rcode        = 1;
-	response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+        dns::OptPseudoRecord opt_rr_1;
+        opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
+        opt_rr_1.payload_size = 1024;
+        opt_rr_1.rcode        = 1;
+        response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
 
-  	response.id                   = query.id;
-	response.opcode               = 0;
-	response.query_response       = 1;
-	response.authoritative_answer = 1;
-	response.truncation           = 0;
-	response.recursion_desired    = 0;
-	response.recursion_available  = 0;
-	response.zero_field           = 0;
-	response.authentic_data       = 1;
-	response.checking_disabled    = 1;
-	response.response_code        = dns::NO_ERROR;
+        response.id                   = query.id;
+        response.opcode               = 0;
+        response.query_response       = 1;
+        response.authoritative_answer = 1;
+        response.truncation           = 0;
+        response.recursion_desired    = 0;
+        response.recursion_available  = 0;
+        response.zero_field           = 0;
+        response.authentic_data       = 1;
+        response.checking_disabled    = 1;
+        response.response_code        = dns::NO_ERROR;
 
-	return response;
+        return response;
     }
 };
 

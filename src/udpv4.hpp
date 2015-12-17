@@ -63,7 +63,7 @@ namespace udpv4
         {}
 
         Packet( const uint8_t *header,  uint16_t header_size,
-		const uint8_t *payload, uint16_t payload_size );
+                const uint8_t *payload, uint16_t payload_size );
 
         const uint8_t *getData() const
         {
@@ -98,22 +98,22 @@ namespace udpv4
 
     struct ChecksumCalculatable
     {
-	virtual ~ChecksumCalculatable() {}
-	virtual uint16_t operator()( const PacketInfo & ) const = 0;
+        virtual ~ChecksumCalculatable() {}
+        virtual uint16_t operator()( const PacketInfo & ) const = 0;
     };
 
     struct StandardChecksumCalculator : public ChecksumCalculatable
     {
-	virtual uint16_t operator()( const PacketInfo & ) const;
+        virtual uint16_t operator()( const PacketInfo & ) const;
     };
 
     struct BadChecksumCalculator : public ChecksumCalculatable
     {
-	virtual uint16_t operator()( const PacketInfo & ) const;
+        virtual uint16_t operator()( const PacketInfo & ) const;
     };
 
     Packet generate_udpv4_packet( const PacketInfo &,
-				  const ChecksumCalculatable &checksum = StandardChecksumCalculator() );
+                                  const ChecksumCalculatable &checksum = StandardChecksumCalculator() );
 }
 
 #endif

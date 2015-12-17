@@ -16,9 +16,9 @@ protected:
 public:
     virtual void SetUp()
     {
-	std::memset( data, 0, sizeof(data) );
-	std::memset( result, 0, sizeof(result) );
-	std::memset( result_text, 0, sizeof(result_text) );
+    std::memset( data, 0, sizeof(data) );
+    std::memset( result, 0, sizeof(result) );
+    std::memset( result_text, 0, sizeof(result_text) );
     }
 
     virtual void TearDown()
@@ -37,12 +37,12 @@ TEST_F(MD5Test, encodable_0_bytes)
     md5( data, sizeof(data), result );
     std::ostringstream os;
     for ( unsigned int i = 0; i < sizeof(result) ; i++ ){
-	os << (uint16_t)result[i];
-	std::cerr << (uint16_t)result[i] << std::endl;
+    os << (uint16_t)result[i];
+    std::cerr << (uint16_t)result[i] << std::endl;
     }
 
     for ( int i = 0 ; i< 16 ; i++ ) {
-	EXPECT_EQ( expected[i], result[i] );
+    EXPECT_EQ( expected[i], result[i] );
     }
 }
 

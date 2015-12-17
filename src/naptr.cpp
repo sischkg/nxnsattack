@@ -20,7 +20,7 @@ private:
 
 public:
     RecordBadNAPTR( int s,
-		    uint16_t          in_order,
+            uint16_t          in_order,
                     uint16_t          in_preference,
                     const std::string &in_flags,
                     const std::string &in_services,
@@ -40,7 +40,7 @@ public:
 
 
 RecordBadNAPTR::RecordBadNAPTR( int s,
-				uint16_t          in_order,
+                uint16_t          in_order,
                                 uint16_t          in_preference,
                                 const std::string &in_flags,
                                 const std::string &in_services,
@@ -94,10 +94,10 @@ PacketData RecordBadNAPTR::getPacket() const
 
     const unsigned int label_size = 10;
     for ( int k = 0 ; k < 21 ; k++ ) {
-	replacement_packet.push_back( label_size );
-	for ( unsigned int l = 0 ; l < label_size ; l++) {
-	    replacement_packet.push_back( 40 + k );
-	}
+    replacement_packet.push_back( label_size );
+    for ( unsigned int l = 0 ; l < label_size ; l++) {
+        replacement_packet.push_back( 40 + k );
+    }
     }
     replacement_packet.push_back( 0 );
 
@@ -127,53 +127,53 @@ int main()
 {
     for ( int i = 0 ; i < 256 * 256 ; i++ ) {
 
-	dns::PacketInfo packet_info;
-	std::vector<dns::QuestionSectionEntry> question_section;
-	std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
+    dns::PacketInfo packet_info;
+    std::vector<dns::QuestionSectionEntry> question_section;
+    std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
-	std::ostringstream os;
-	os << i << ".";
+    std::ostringstream os;
+    os << i << ".";
 
-	dns::QuestionSectionEntry question;
-	question.q_domainname = os.str() + "www.example.com";
-	question.q_type       = dns::TYPE_NAPTR;
-	question.q_class      = dns::CLASS_IN;
-	packet_info.question_section.push_back( question );
+    dns::QuestionSectionEntry question;
+    question.q_domainname = os.str() + "www.example.com";
+    question.q_type       = dns::TYPE_NAPTR;
+    question.q_class      = dns::CLASS_IN;
+    packet_info.question_section.push_back( question );
 
-	dns::ResponseSectionEntry additonal;
-	additonal.r_domainname = os.str() + "yyy.example.net";
-	additonal.r_type       = dns::TYPE_NAPTR;
-	additonal.r_class      = dns::CLASS_IN;
-	additonal.r_ttl        = 30;
-	additonal.r_resource_data = dns::ResourceDataPtr( new RecordBadNAPTR( 0xff & i, 0, 0, "a", "app", "regex", "a" ) );
-	packet_info.additional_infomation_section.push_back( additonal );
+    dns::ResponseSectionEntry additonal;
+    additonal.r_domainname = os.str() + "yyy.example.net";
+    additonal.r_type       = dns::TYPE_NAPTR;
+    additonal.r_class      = dns::CLASS_IN;
+    additonal.r_ttl        = 30;
+    additonal.r_resource_data = dns::ResourceDataPtr( new RecordBadNAPTR( 0xff & i, 0, 0, "a", "app", "regex", "a" ) );
+    packet_info.additional_infomation_section.push_back( additonal );
 
-	packet_info.id                   = i;
-	packet_info.opcode               = 0;
-	packet_info.query_response       = 0;
-	packet_info.authoritative_answer = 0;
-	packet_info.truncation           = 0;
-	packet_info.recursion_desired    = false;
-	packet_info.recursion_available  = 0;
-	packet_info.zero_field           = 0;
-	packet_info.authentic_data       = 0;
-	packet_info.checking_disabled    = 0;
-	packet_info.response_code        = 0;
+    packet_info.id                   = i;
+    packet_info.opcode               = 0;
+    packet_info.query_response       = 0;
+    packet_info.authoritative_answer = 0;
+    packet_info.truncation           = 0;
+    packet_info.recursion_desired    = false;
+    packet_info.recursion_available  = 0;
+    packet_info.zero_field           = 0;
+    packet_info.authentic_data       = 0;
+    packet_info.checking_disabled    = 0;
+    packet_info.response_code        = 0;
 
         WireFormat message;
-	dns::generate_dns_packet( packet_info, message );
+    dns::generate_dns_packet( packet_info, message );
 
-	udpv4::ClientParameters udp_param;
-	udp_param.destination_address = "192.168.33.14";
-	udp_param.destination_port    = 53;
-	udpv4::Client udp( udp_param );
-	udp.sendPacket( message );
+    udpv4::ClientParameters udp_param;
+    udp_param.destination_address = "192.168.33.14";
+    udp_param.destination_port    = 53;
+    udpv4::Client udp( udp_param );
+    udp.sendPacket( message );
 
-	udpv4::PacketInfo received_packet = udp.receivePacket();
+    udpv4::PacketInfo received_packet = udp.receivePacket();
 
-	dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
-								      received_packet.end() );
-    	std::cout << res;
+    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
+                                      received_packet.end() );
+        std::cout << res;
 
     }
 

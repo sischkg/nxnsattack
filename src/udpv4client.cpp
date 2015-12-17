@@ -73,7 +73,7 @@ namespace udpv4
         if ( udp_socket < 0 )
             openSocket();
 
-	return data.send( udp_socket, NULL, 0 );
+    return data.send( udp_socket, NULL, 0 );
     }
 
     const int RECEIVE_BUFFER_SIZE = 0xffff;
@@ -114,7 +114,7 @@ namespace udpv4
 
     bool Client::isReadable()
     {
-	return true;
+    return true;
     }
 
 
@@ -176,8 +176,8 @@ namespace udpv4
 
         uint16_t sent_size;
         sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-			    reinterpret_cast<const sockaddr *>( &dst_socket_address ),
-			    sizeof(dst_socket_address) );
+                reinterpret_cast<const sockaddr *>( &dst_socket_address ),
+                sizeof(dst_socket_address) );
         if ( sent_size < 0 )
             throw SocketError( get_error_message( "cannot send packet", errno ) );
 

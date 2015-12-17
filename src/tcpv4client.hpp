@@ -51,7 +51,7 @@ namespace tcpv4
     private:
         ClientParameters parameters;
         int tcp_socket;
-	void shutdown( int );
+        void shutdown( int );
     public:
         Client( const ClientParameters &param )
             : parameters( param ), tcp_socket( -1 )
@@ -61,8 +61,8 @@ namespace tcpv4
 
         void openSocket();
         void closeSocket();
-	void shutdown_read();
-	void shutdown_write();
+        void shutdown_read();
+        void shutdown_write();
 
         uint16_t send( const uint8_t *data, uint16_t size );
         uint16_t send( const uint8_t *begin, const uint8_t *end )
@@ -79,9 +79,6 @@ namespace tcpv4
         ConnectionInfo receive_data( int size );
         bool isReadable();
     };
-
-
-
 }
 
 #endif

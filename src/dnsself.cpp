@@ -17,7 +17,7 @@ int main()
     std::vector<uint8_t> dns_query_packet = dns::generate_dns_query_packet( query );
 
     dns::QueryPacketInfo parsed_query = dns::parse_dns_query_packet( dns_query_packet.data(),
-								     dns_query_packet.data() + dns_query_packet.size() );
+                                                                     dns_query_packet.data() + dns_query_packet.size() );
     std::cout << parsed_query;
 
 

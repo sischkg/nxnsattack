@@ -69,15 +69,15 @@ int main( int argc, char **argv )
     udpv4::Client udp( udp_param );
 
     while ( true ) {
-	udp.sendPacket( query );
-	udpv4::PacketInfo response = udp.receivePacket();
+        udp.sendPacket( query );
+        udpv4::PacketInfo response = udp.receivePacket();
 
-	dns::ResponsePacketInfo res = dns::parse_dns_response_packet( response.begin(), response.end() );
-	std::cout << res;
+        dns::ResponsePacketInfo res = dns::parse_dns_response_packet( response.begin(), response.end() );
+        std::cout << res;
 
-	if ( res.answer.size() == 0 ||
-	     res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
-	    break;
+        if ( res.answer.size() == 0 ||
+             res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+            break;
     }
 
     return 0;

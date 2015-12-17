@@ -10,7 +10,7 @@ namespace dns
     private:
         uint16_t fixed_port;
         boost::random::mt19937                    generator;
-	boost::random::uniform_int_distribution<> distributor;
+        boost::random::uniform_int_distribution<> distributor;
 
     public:
         SourcePortGenerator( uint16_t sp = 0 )
