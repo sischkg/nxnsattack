@@ -66,9 +66,9 @@ namespace tcpv4
     }
 
 
-    ssize_t Connection::send( const WireFormat &data )
+    ssize_t Connection::send( const WireFormat &message )
     {
-	return data.send( tcp_socket, NULL, 0 );
+	return message.send( tcp_socket, nullptr, 0 );
     }
 
     Server::Server( const ServerParameters &parameters )

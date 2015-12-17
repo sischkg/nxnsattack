@@ -39,7 +39,6 @@ namespace dns
 		}
 		catch( std::runtime_error &e ) {
 		    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
-		    std::exit(1 );
 		}
 	    }
 	}
@@ -82,7 +81,6 @@ namespace dns
 		}
 		catch( std::runtime_error &e ) {
 		    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
-		    std::exit(1 );
 		}
 	    }
 	}

@@ -10,8 +10,8 @@ const char *RESPONSE_A   = "192.168.33.100";
 const char *MY_ADDRESS   = "192.168.33.1";
 const char *BIND_ADDRESS = "192.168.33.1";
 
-const std::string SUBDOMAIN = "1234567890" "2234567890" "3234567890" "4234567890" "5234567890" "6234567890";
-
+const std::string SUBDOMAIN1 = "1234567890" "2234567890" "3234567890" "4234567890" "5234567890" "6234567890";
+const std::string SUBDOMAIN2 = "1234567890" "2234567890" "3234567890";
 
 class AXFRServer : public dns::DNSServer
 {
@@ -36,12 +36,12 @@ private:
 	answer1.r_class         = dns::CLASS_IN;
 	answer1.r_ttl           = TTL;
 	answer1.r_resource_data = dns::ResourceDataPtr( new dns::RecordSOA( "mname.example.com",
-									   "ns.example.com",
-									   0,
-									   360000,
-									   10000,
-									   3600000,
-									   3600 ) );
+                                                                            "ns.example.com",
+                                                                            0,
+                                                                            360000,
+                                                                            10000,
+                                                                            3600000,
+                                                                            3600 ) );
 	response.answer_section.push_back( answer1 );
 
 	dns::ResponseSectionEntry answer2;
@@ -64,11 +64,12 @@ private:
 	response.checking_disabled    = 1;
 	response.response_code        = dns::NO_ERROR;
 
-	PacketData response_packet = dns::generate_dns_packet( response );
+        WireFormat response_message;
+        dns::generate_dns_packet( response, response_message );
                         
-	uint16_t send_size = htons( response_packet.size() );
+	uint16_t send_size = htons( response_message.size() );
 	conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-	conn->send( response_packet );
+	conn->send( response_message );
     }
 
     void sendResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
@@ -84,10 +85,10 @@ private:
 	question.q_class      = query_question.q_class;
 	response.question_section.push_back( question );
 
-	offset += ( question.q_domainname.size() + 1 + 2 + 2 );
+	offset += ( question.q_domainname.size() + 2 + 2 );
 
 	std::ostringstream os;
-	os << SUBDOMAIN << "." << SUBDOMAIN << "." << SUBDOMAIN << "."
+	os << SUBDOMAIN2 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "." << SUBDOMAIN1 << "."
 	   << query_question.q_domainname;
 
 	dns::ResponseSectionEntry answer;
@@ -95,7 +96,7 @@ private:
 	answer.r_type          = dns::TYPE_A;
 	answer.r_class         = dns::CLASS_IN;
 	answer.r_ttl           = TTL;
-	answer.r_offset        = 0xffff;
+	answer.r_offset        = dns::NO_COMPRESSION;
 	answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
 	response.answer_section.push_back( answer );
 
@@ -126,11 +127,12 @@ private:
 	response.checking_disabled    = 1;
 	response.response_code        = dns::NO_ERROR;
 
-	PacketData response_packet = dns::generate_dns_packet( response );
+        WireFormat response_message;
+        dns::generate_dns_packet( response, response_message );
                         
-	uint16_t send_size = htons( response_packet.size() );
+	uint16_t send_size = htons( response_message.size() );
 	conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof(send_size) );
-	conn->send( response_packet );
+	conn->send( response_message );
     }
 
 public:

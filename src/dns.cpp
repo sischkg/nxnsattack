@@ -580,7 +580,7 @@ namespace dns
     PacketData generate_question_section( const QuestionSectionEntry &question )
     {
 	PacketData message;
-        question.q_domainname.outputWireFormat( message );
+        question.q_domainname.outputWireFormat( message, question.q_offset );
         message.resize( message.size() + sizeof(uint16_t) + sizeof(uint16_t) );
         uint8_t *p = message.data() + message.size() - sizeof(uint16_t) - sizeof(uint16_t);
         p = dns::set_bytes<uint16_t>( htons( question.q_type ),  p );
@@ -637,7 +637,7 @@ namespace dns
 
     void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
     {
-        response.r_domainname.outputWireFormat( message );
+        response.r_domainname.outputWireFormat( message, response.r_offset );
         message.pushUInt16HtoN( response.r_type );
         message.pushUInt16HtoN( response.r_class );
         message.pushUInt32HtoN( response.r_ttl );
@@ -1142,7 +1142,7 @@ namespace dns
 	    flags.size() +
 	    1 +
 	    regexp.size() +
-	    replacement.size();
+	    replacement.size( offset );
     }
 
 
@@ -1235,9 +1235,10 @@ namespace dns
     uint16_t RecordSOA::size() const
     {
 	return 
-	    mname.size() +
-	    rname.size() +
+	    mname.size( mname_offset ) +
+	    rname.size( rname_offset ) +
 	    sizeof( serial ) +
+	    sizeof( refresh ) +
 	    sizeof( retry ) +
 	    sizeof( expire ) +
 	    sizeof( minimum );
@@ -1295,10 +1296,8 @@ namespace dns
 	
 	std::insert_iterator<PacketData> pos( packet, packet.begin() );
 
-	for ( auto i = options.begin(); i != options.end() ;
-	      ++i ) {
-	    PacketData opt_data = (*i)->getPacket();
-	    pos = std::copy( opt_data.begin(), opt_data.end(), pos );
+	for ( auto i = options.begin(); i != options.end() ; i++ ) {
+	    (*i)->outputWireFormat( message );
 	}
 
         message.pushBuffer( packet );
@@ -1368,17 +1367,12 @@ namespace dns
     }
 
 
-    PacketData NSIDOption::getPacket() const
+    void NSIDOption::outputWireFormat( WireFormat &message ) const
     {
-	PacketData result;
-	result.resize( 2 + 2 + nsid.size() );
-	uint8_t *pos = &result[0];
-
-	pos = set_bytes<uint16_t>( htons( OPT_NSID ),    pos );
-	pos = set_bytes<uint16_t>( htons( nsid.size() ), pos );
-	pos = std::copy( nsid.begin(), nsid.end(), pos );
-
-	return result;
+	message.pushUInt16HtoN( OPT_NSID );
+	message.pushUInt16HtoN( nsid.size() );
+	message.pushBuffer( reinterpret_cast<const uint8_t *>( nsid.c_str() ),
+			    reinterpret_cast<const uint8_t *>( nsid.c_str() ) + nsid.size() );
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
@@ -1392,27 +1386,24 @@ namespace dns
 	return ( prefix - 1 )/8 + 1;
     }
 
-    PacketData ClientSubnetOption::getPacket() const
+    void ClientSubnetOption::outputWireFormat( WireFormat &message ) const
     {
-	PacketData result;
-	result.resize( size() );
-	uint8_t *pos = &result[0];
+	message.pushUInt16HtoN( OPT_CLIENT_SUBNET );
+	message.pushUInt16HtoN( size() );
+	message.pushUInt16HtoN( family );
+	message.pushUInt8( source_prefix );
+	message.pushUInt8( scope_prefix );
 
-	pos = set_bytes<uint16_t>( htons( OPT_CLIENT_SUBNET ), pos );
-	pos = set_bytes<uint16_t>( htons( size() ),            pos );
-	pos = set_bytes<uint16_t>( htons( family ),            pos );
-	pos = set_bytes<uint8_t>( source_prefix,               pos );
-	pos = set_bytes<uint8_t>( scope_prefix,                pos );
-	
-	uint8_t addr_buf[16];
 	if ( family == IPv4 ) {
-	    inet_pton( AF_INET, address.c_str(), addr_buf );	    
+	    uint8_t addr_buf[4];
+	    inet_pton( AF_INET, address.c_str(), addr_buf );
+	    message.pushBuffer( addr_buf, addr_buf + sizeof(addr_buf) );
 	}
 	else {
+	    uint8_t addr_buf[16];
 	    inet_pton( AF_INET6, address.c_str(), addr_buf );	    
+	    message.pushBuffer( addr_buf, addr_buf + sizeof(addr_buf) );
 	}
-	std::memcpy( pos, addr_buf, result.size() - ( 2 + 2 + 2 + 1 + 1 ) );
-	return result;
     }
 
     uint16_t ClientSubnetOption::size() const
@@ -1441,7 +1432,7 @@ namespace dns
 	uint8_t  source =        get_bytes<uint8_t>( &pos );
 	uint8_t  scope  =        get_bytes<uint8_t>( &pos );
 
-	if ( fam == 1 ) {
+	if ( fam == IPv4 ) {
 	    if ( source > 32 ) {
 		throw FormatError( "invalid source prefix length of EDNS-Client-Subet" );
 	    }
@@ -1463,7 +1454,7 @@ namespace dns
 
 	    return OptPseudoRROptPtr( new ClientSubnetOption( fam, source, scope, addr_str ) );
 	}
-	else if ( fam == 2 ) {
+	else if ( fam == IPv6 ) {
 	    if ( source > 32 ) {
 		throw FormatError( "invalid source prefix length of EDNS-Client-Subet" );
 	    }

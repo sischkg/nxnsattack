@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include "utils.hpp"
 
+
 class WireFormat
 {
 private:
@@ -134,6 +135,17 @@ public:
 
     uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const throw(std::runtime_error );
     std::vector<uint8_t> get() const;
+
+    struct MessageHeader
+    {
+        msghdr header;
+
+        MessageHeader();
+        ~MessageHeader();
+
+        void setBuffers( uint16_t size, const std::vector<uint8_t *>, uint16_t buffer_size );
+        void setDestination( const sockaddr *dest, uint16_t len );
+    };
 };
 
 #endif

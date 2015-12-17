@@ -204,7 +204,7 @@ namespace dns
         {
             return TYPE_NS;
         }
-	virtual uint16_t size() const { return domainname.size(); }
+	virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -225,7 +225,7 @@ namespace dns
         {
             return TYPE_MX;
         }
-	virtual uint16_t size() const { return sizeof(priority) + domainname.size(); }
+	virtual uint16_t size() const { return sizeof(priority) + domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -265,7 +265,7 @@ namespace dns
         {
             return TYPE_CNAME;
         }
-	virtual uint16_t size() const { return domainname.size(); }
+	virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -317,7 +317,7 @@ namespace dns
         {
             return TYPE_DNAME;
         }
-	virtual uint16_t size() const { return domainname.size(); }
+	virtual uint16_t size() const { return domainname.size( offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -421,7 +421,7 @@ namespace dns
     public:
 	virtual ~OptPseudoRROption() {}
 	virtual std::string toString() const = 0;
-	virtual std::vector<uint8_t> getPacket() const = 0;
+	virtual void outputWireFormat( WireFormat & ) const = 0;
 	virtual uint16_t code() const = 0;
 	virtual uint16_t size() const = 0;
     };
@@ -445,7 +445,7 @@ namespace dns
 	{}
 
 	virtual std::string toString() const;
-	virtual std::vector<uint8_t> getPacket() const;
+	virtual void outputWireFormat( WireFormat & ) const;
 	virtual uint16_t code() const { return option_code; }
 	virtual uint16_t size() const { return option_size; }
     };
@@ -459,7 +459,7 @@ namespace dns
 	NSIDOption( const std::string &id = "" ) : nsid(id) {}
 
 	virtual std::string toString() const { return "NSID: \"" + nsid + "\""; }
-	virtual std::vector<uint8_t> getPacket() const;
+	virtual void outputWireFormat( WireFormat & ) const;
 	virtual uint16_t code() const { return OPT_NSID; }
 	virtual uint16_t size() const { return 2 + 2 + nsid.size(); }
 
@@ -487,7 +487,7 @@ namespace dns
 	{}
 
 	virtual std::string toString() const;
-	virtual std::vector<uint8_t> getPacket() const;
+	virtual void outputWireFormat( WireFormat & ) const;
 	virtual uint16_t code() const { return OPT_CLIENT_SUBNET; }
 	virtual uint16_t size() const;
 
@@ -677,6 +677,10 @@ namespace dns
 	uint16_t   q_type;
 	uint16_t   q_class;
 	uint16_t   q_offset;
+
+        QuestionSectionEntry()
+            : q_type( 0 ), q_class( 0 ), q_offset( NO_COMPRESSION )
+        {}
     };
 
     struct ResponseSectionEntry
