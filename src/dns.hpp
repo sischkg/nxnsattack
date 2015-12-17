@@ -27,23 +27,24 @@ namespace dns
     const Class CLASS_ANY = 255;
 
     typedef uint16_t Type;
-    const Type TYPE_A     = 1;
-    const Type TYPE_NS    = 2;
-    const Type TYPE_CNAME = 5;
-    const Type TYPE_SOA   = 6;
-    const Type TYPE_MX    = 15;
-    const Type TYPE_TXT   = 16;
-    const Type TYPE_KEY   = 25;
-    const Type TYPE_AAAA  = 28;
-    const Type TYPE_NAPTR = 35;
-    const Type TYPE_DNAME = 39;
-    const Type TYPE_OPT   = 41;
-    const Type TYPE_TLSA  = 52;
-    const Type TYPE_TKEY  = 249;
-    const Type TYPE_TSIG  = 250;
-    const Type TYPE_IXFR  = 251;
-    const Type TYPE_AXFR  = 252;
-    const Type TYPE_ANY   = 255;
+    const Type TYPE_A      = 1;
+    const Type TYPE_NS     = 2;
+    const Type TYPE_CNAME  = 5;
+    const Type TYPE_SOA    = 6;
+    const Type TYPE_MX     = 15;
+    const Type TYPE_TXT    = 16;
+    const Type TYPE_KEY    = 25;
+    const Type TYPE_AAAA   = 28;
+    const Type TYPE_NAPTR  = 35;
+    const Type TYPE_DNAME  = 39;
+    const Type TYPE_OPT    = 41;
+    const Type TYPE_DNSKEY = 48;
+    const Type TYPE_TLSA   = 52;
+    const Type TYPE_TKEY   = 249;
+    const Type TYPE_TSIG   = 250;
+    const Type TYPE_IXFR   = 251;
+    const Type TYPE_AXFR   = 252;
+    const Type TYPE_ANY    = 255;
 
     typedef uint16_t OptType;
     const OptType OPT_NSID          = 3;
@@ -360,7 +361,37 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    
+    class RecordDNSKey : public ResourceData
+    {
+    private:
+	uint16_t flags;
+	uint8_t  algorithm;
+	std::vector<uint8_t> public_key;
+
+    public:
+	RecordDNSKey( uint16_t f,
+		      uint8_t algo,
+		      const std::vector<uint8_t> key )
+	    : flags( f ),
+	      algorithm( algo ),
+	      public_key( key )
+	{}
+
+        virtual std::string toString() const { return ""; }
+
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const
+	{
+	    return 2 + 1 + 1 + public_key.size();
+	}
+
+        virtual uint16_t type() const
+        {
+            return TYPE_DNSKEY;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
 
 
     const uint8_t PROTOCOL_TLS    = 0x01;
@@ -554,8 +585,8 @@ namespace dns
               algorithm( algo ),
               inception( incept ),
               expiration( expire ),
-            mode( m ),
-            error( err ),
+	    mode( m ),
+	    error( err ),
             key( k ),
             other_data( other )
         {}
@@ -563,8 +594,6 @@ namespace dns
         void outputWireFormat( WireFormat & ) const;
         uint16_t type() const { return TYPE_TKEY; }
         uint16_t size() const;
-
-        uint16_t getResourceDataSize() const;
     };
 
 
