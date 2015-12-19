@@ -28,8 +28,9 @@ namespace dns
 
     public:
         DNSServer( const std::string &address = "0.0.0.0",
-                   uint16_t           port = 53 )
-            : bind_address( address ), bind_port( port )
+                   uint16_t           port    = 53 )
+            : bind_address( address ),
+	      bind_port( port )
         {}
 
         ~DNSServer(){}

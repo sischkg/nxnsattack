@@ -6,6 +6,7 @@
 
 
 const int   TTL          = 600;
+const unsigned int PERIOD_MICRO_SECOND = 10;
 const char *RESPONSE_A   = "192.168.33.100";
 const char *MY_ADDRESS   = "192.168.33.1";
 const char *BIND_ADDRESS = "192.168.33.1";
@@ -17,7 +18,8 @@ class AXFRServer : public dns::DNSServer
 {
 private:
     unsigned long long index;
-
+    unsigned int period_micro_second;
+    unsigned long long rr_count;
 
     void sendFirstResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
@@ -136,8 +138,8 @@ private:
     }
 
 public:
-    AXFRServer( const std::string addr, uint16_t port )
-        : dns::DNSServer( addr, port ), index( 0 )
+    AXFRServer( const std::string addr, uint16_t port, unsigned int period, unsigned long long count )
+        : dns::DNSServer( addr, port ), index( 0 ), period_micro_second( period ), rr_count( count )
     {}
 
     void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
@@ -145,6 +147,9 @@ public:
         sendFirstResponse( query, conn );
         std::cerr << "sent first response" << std::endl;
         while ( true ) {
+	    usleep( period_micro_second * 1000 );
+	    if ( rr_count != 0 && index > rr_count )
+		break;
             std::cerr << "sent response: " << index << std::endl;
             sendResponse( query, conn );
         }
@@ -208,8 +213,10 @@ int main( int argc, char **argv )
     namespace po = boost::program_options;
 
     std::string bind_address;
+    unsigned int period;
+    unsigned long long rr_count;
 
-    po::options_description desc("TC=1 Server");
+    po::options_description desc("AXFR Server");
     desc.add_options()
         ("help,h",
          "print this message")
@@ -217,6 +224,14 @@ int main( int argc, char **argv )
         ("bind,b",
          po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ),
          "bind address")
+
+        ("period,p",
+         po::value<unsigned int>( &period )->default_value( PERIOD_MICRO_SECOND ),
+         "period[micro second]")
+
+        ("count,c",
+         po::value<unsigned long long>( &rr_count )->default_value( 0 ),
+         "rr ount")
         ;
 
     po::variables_map vm;
@@ -228,7 +243,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    AXFRServer server( bind_address, 53 );
+    AXFRServer server( bind_address, 53, period, rr_count );
     server.start();
 
     return 0;
