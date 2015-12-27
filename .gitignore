@@ -46,5 +46,5 @@ src/cve-2015-8000
 tests/test-base64
 tests/test-md5
 tests/test-wireformat
-
+tests/test-hmac-md5
 
