@@ -1,5 +1,5 @@
-#include "udpv4client.hpp"
 #include "dns.hpp"
+#include "udpv4client.hpp"
 #include <iostream>
 
 int main()
@@ -25,8 +25,7 @@ int main()
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
-                                                                  received_packet.end() );
+    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(), received_packet.end() );
     std::cout << res;
 
     return 0;

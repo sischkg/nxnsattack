@@ -1,18 +1,17 @@
 #ifndef UDPV4_HPP
 #define UDPV4_HPP
 
-#include <string>
-#include <vector>
 #include <boost/cstdint.hpp>
 #include <boost/shared_array.hpp>
+#include <string>
+#include <vector>
 
 namespace udpv4
 {
 
     const uint16_t UDPV4_HEADER_LENGTH = ( 2 + 2 + 2 + 2 );
 
-    struct PacketInfo
-    {
+    struct PacketInfo {
         std::string          source_address;
         std::string          destination_address;
         uint16_t             source_port;
@@ -58,12 +57,11 @@ namespace udpv4
         std::vector<uint8_t> data;
 
     public:
-        Packet( const std::vector<uint8_t> &d )
-            : data( d )
-        {}
+        Packet( const std::vector<uint8_t> &d ) : data( d )
+        {
+        }
 
-        Packet( const uint8_t *header,  uint16_t header_size,
-                const uint8_t *payload, uint16_t payload_size );
+        Packet( const uint8_t *header, uint16_t header_size, const uint8_t *payload, uint16_t payload_size );
 
         const uint8_t *getData() const
         {
@@ -96,19 +94,18 @@ namespace udpv4
         }
     };
 
-    struct ChecksumCalculatable
-    {
-        virtual ~ChecksumCalculatable() {}
+    struct ChecksumCalculatable {
+        virtual ~ChecksumCalculatable()
+        {
+        }
         virtual uint16_t operator()( const PacketInfo & ) const = 0;
     };
 
-    struct StandardChecksumCalculator : public ChecksumCalculatable
-    {
+    struct StandardChecksumCalculator : public ChecksumCalculatable {
         virtual uint16_t operator()( const PacketInfo & ) const;
     };
 
-    struct BadChecksumCalculator : public ChecksumCalculatable
-    {
+    struct BadChecksumCalculator : public ChecksumCalculatable {
         virtual uint16_t operator()( const PacketInfo & ) const;
     };
 

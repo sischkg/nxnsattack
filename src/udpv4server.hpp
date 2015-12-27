@@ -1,18 +1,17 @@
 #ifndef UDPV4SERVER_HPP
 #define UDPV4SERVER_HPP
 
-#include <string>
-#include <boost/cstdint.hpp>
-#include <vector>
 #include "udpv4.hpp"
 #include "udpv4client.hpp"
 #include "wireformat.hpp"
+#include <boost/cstdint.hpp>
+#include <string>
+#include <vector>
 
 namespace udpv4
 {
 
-    struct ServerParameters
-    {
+    struct ServerParameters {
         std::string bind_address;
         uint16_t    bind_port;
     };
@@ -21,14 +20,15 @@ namespace udpv4
     {
     private:
         ServerParameters parameters;
-        int udp_socket;
+        int              udp_socket;
 
         void openSocket();
         void closeSocket();
+
     public:
-        Server( const ServerParameters &param )
-            : parameters( param ), udp_socket( -1 )
-        {}
+        Server( const ServerParameters &param ) : parameters( param ), udp_socket( -1 )
+        {
+        }
 
         ~Server();
 
@@ -37,11 +37,11 @@ namespace udpv4
         {
             return sendPacket( dest, begin, end - begin );
         }
-        uint16_t sendPacket( const ClientParameters &dest , const std::vector<uint8_t> &packet )
+        uint16_t sendPacket( const ClientParameters &dest, const std::vector<uint8_t> &packet )
         {
             return sendPacket( dest, packet.data(), packet.size() );
         }
-        uint16_t sendPacket( const ClientParameters &dest , const WireFormat & );
+        uint16_t sendPacket( const ClientParameters &dest, const WireFormat & );
 
         PacketInfo receivePacket( bool is_nonblocking = false );
         bool isReadable();

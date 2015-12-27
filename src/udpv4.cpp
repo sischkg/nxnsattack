@@ -1,15 +1,14 @@
 #include "udpv4.hpp"
-#include <cstring>
-#include <cstdio>
-#include <algorithm>
 #include "utils.hpp"
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
 #include <iostream>
 
 namespace udpv4
 {
 
-    struct PseudoUDPv4HeaderField
-    {
+    struct PseudoUDPv4HeaderField {
         in_addr  source_address;
         in_addr  destination_address;
         uint8_t  padding;
@@ -26,15 +25,15 @@ namespace udpv4
 
     union UDPv4Header {
         UDPv4HeaderField field;
-        uint8_t data[sizeof(UDPv4HeaderField)];
+        uint8_t          data[ sizeof( UDPv4HeaderField ) ];
     };
 
     void print_pseudo_udpv4_header( PseudoUDPv4HeaderField header )
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "pseudoheader:" );
-        for ( uint16_t i = 0 ; i < sizeof( header ) ; i++ ) {
-            printf( " %x", data[i] );
+        for ( uint16_t i = 0; i < sizeof( header ); i++ ) {
+            printf( " %x", data[ i ] );
         }
         printf( "\n" );
     }
@@ -43,8 +42,8 @@ namespace udpv4
     {
         uint8_t *data = reinterpret_cast<uint8_t *>( &header );
         printf( "udpv4header:" );
-        for ( uint16_t i = 0 ; i < sizeof( header ) ; i++ ) {
-            printf( " %x", data[i] );
+        for ( uint16_t i = 0; i < sizeof( header ); i++ ) {
+            printf( " %x", data[ i ] );
         }
         printf( "\n" );
     }
@@ -53,25 +52,22 @@ namespace udpv4
     {
         printf( "length: %hd\n", length );
         printf( "payload:" );
-        for ( uint16_t i = 0 ; i < length ; i++ ) {
-            printf( " \"%c\"", data[i] );
+        for ( uint16_t i = 0; i < length; i++ ) {
+            printf( " \"%c\"", data[ i ] );
         }
         printf( "\n" );
     }
 
     uint16_t compute_udpv4_checksum( const PacketInfo & );
 
-    Packet::Packet( const uint8_t *header,  uint16_t header_size,
-            const uint8_t *payload, uint16_t payload_size )
+    Packet::Packet( const uint8_t *header, uint16_t header_size, const uint8_t *payload, uint16_t payload_size )
     {
-    data.resize( header_size + payload_size );
-    std::copy( header, header + header_size, data.data() );
-    std::copy( payload, payload + payload_size, data.data() + header_size );
+        data.resize( header_size + payload_size );
+        std::copy( header, header + header_size, data.data() );
+        std::copy( payload, payload + payload_size, data.data() + header_size );
     }
 
-
-    Packet generate_udpv4_packet( const PacketInfo &info,
-                  const ChecksumCalculatable &checksum_calcurator )
+    Packet generate_udpv4_packet( const PacketInfo &info, const ChecksumCalculatable &checksum_calcurator )
     {
         UDPv4Header udpv4_header;
         udpv4_header.field.source_port      = htons( info.source_port );
@@ -79,10 +75,9 @@ namespace udpv4
         udpv4_header.field.length           = htons( info.getLength() );
         udpv4_header.field.checksum         = checksum_calcurator( info );
 
-        return Packet( reinterpret_cast<const uint8_t *>( &udpv4_header ),  sizeof(udpv4_header),
-               info.getData(), info.getPayloadLength() );
+        return Packet( reinterpret_cast<const uint8_t *>( &udpv4_header ), sizeof( udpv4_header ), info.getData(),
+                       info.getPayloadLength() );
     }
-
 
     uint16_t compute_udpv4_checksum( const PacketInfo &info )
     {
@@ -99,14 +94,11 @@ namespace udpv4
         udpv4_header.field.length           = htons( info.getLength() );
         udpv4_header.field.checksum         = 0;
 
-        size_t checksum_buffer_length = sizeof(pseudo_header) + info.getLength();
+        size_t               checksum_buffer_length = sizeof( pseudo_header ) + info.getLength();
         std::vector<uint8_t> checksum_buffer( checksum_buffer_length );
-        std::memcpy( checksum_buffer.data(), &pseudo_header, sizeof(pseudo_header) );
-        std::memcpy( checksum_buffer.data() + sizeof(pseudo_header),
-                     udpv4_header.data,
-                     sizeof(udpv4_header) );
-        std::memcpy( checksum_buffer.data() + sizeof(pseudo_header) + sizeof(udpv4_header),
-                     info.getData(),
+        std::memcpy( checksum_buffer.data(), &pseudo_header, sizeof( pseudo_header ) );
+        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ), udpv4_header.data, sizeof( udpv4_header ) );
+        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ) + sizeof( udpv4_header ), info.getData(),
                      info.getPayloadLength() );
 
         uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );
@@ -115,13 +107,11 @@ namespace udpv4
 
     uint16_t StandardChecksumCalculator::operator()( const PacketInfo &info ) const
     {
-    return compute_udpv4_checksum( info );
+        return compute_udpv4_checksum( info );
     }
 
     uint16_t BadChecksumCalculator::operator()( const PacketInfo &info ) const
     {
-    return compute_udpv4_checksum( info ) + 1;
+        return compute_udpv4_checksum( info ) + 1;
     }
-
 }
-

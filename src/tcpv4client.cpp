@@ -1,16 +1,16 @@
 #include "tcpv4client.hpp"
-#include <netinet/in.h>
-#include <netinet/ip.h> 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "utils.hpp"
 #include <arpa/inet.h>
-#include <string>
-#include <cstring>
+#include <boost/scoped_array.hpp>
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
-#include <boost/scoped_array.hpp>
-#include "utils.hpp"
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 namespace tcpv4
 {
@@ -20,7 +20,6 @@ namespace tcpv4
     {
         closeSocket();
     }
-
 
     void Client::openSocket()
     {
@@ -34,11 +33,12 @@ namespace tcpv4
             throw SocketError( msg );
         }
         sockaddr_in socket_address;
-        std::memset( &socket_address, 0, sizeof(socket_address) );
+        std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convert_address_string_to_binary( parameters.destination_address );
         socket_address.sin_port   = htons( parameters.destination_port );
-        if ( connect( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof(socket_address) ) < 0 ) {
+        if ( connect( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
+             0 ) {
             closeSocket();
             std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
@@ -74,7 +74,7 @@ namespace tcpv4
     {
         if ( tcp_socket < 0 )
             openSocket();
-    
+
         int sent_size = write( tcp_socket, data, size );
         if ( sent_size < 0 ) {
             std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
@@ -87,7 +87,7 @@ namespace tcpv4
     {
         if ( tcp_socket < 0 )
             openSocket();
-    
+
         return data.send( tcp_socket, NULL, 0, 0 );
     }
 
@@ -103,7 +103,7 @@ namespace tcpv4
             flags |= MSG_DONTWAIT;
 
         std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
-        int recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
+        int                  recv_size = read( tcp_socket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
 
         if ( recv_size < 0 ) {
             int error_num = errno;
@@ -126,7 +126,7 @@ namespace tcpv4
             openSocket();
 
         std::vector<uint8_t> receive_buffer( size );
-        int recv_size = read( tcp_socket, receive_buffer.data(), size );
+        int                  recv_size = read( tcp_socket, receive_buffer.data(), size );
 
         if ( recv_size < 0 ) {
             int error_num = errno;
@@ -147,5 +147,4 @@ namespace tcpv4
     {
         return true;
     }
-
 }

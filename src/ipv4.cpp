@@ -1,21 +1,20 @@
 #include "ipv4.hpp"
-#include <arpa/inet.h>
-#include <cstring>
-#include <cstdio>
 #include "utils.hpp"
+#include <arpa/inet.h>
+#include <cstdio>
+#include <cstring>
 
 namespace ipv4
 {
 
-    struct IPv4HeaderField
-    {
-        uint8_t   header_length: 4;
-        uint8_t   version:       4;
+    struct IPv4HeaderField {
+        uint8_t   header_length : 4;
+        uint8_t   version : 4;
         uint8_t   tos;
         uint16_t  length;
         uint16_t  id;
-        uint16_t  offset:       13;
-        uint8_t   flag:          3;
+        uint16_t  offset : 13;
+        uint8_t   flag : 3;
         uint8_t   ttl;
         IPROTOCOL protocol;
         uint16_t  checksum;
@@ -23,36 +22,32 @@ namespace ipv4
         in_addr   destination;
     };
 
-    union IPv4Header
-    {
+    union IPv4Header {
         struct IPv4HeaderField field;
-        uint8_t data[0];
+        uint8_t                data[ 0 ];
     };
 
     uint16_t compute_ipv4_checksum( IPv4Header header );
 
     void print_header( IPv4Header header )
     {
-        for ( int i = 0 ; i< 20 ; i++ ) {
-            std::printf( "%x ", header.data[i] );
+        for ( int i = 0; i < 20; i++ ) {
+            std::printf( "%x ", header.data[ i ] );
         }
         std::printf( "\n" );
     }
 
-
-    Packet::Packet( const uint8_t *header,  uint16_t header_length,
-                    const uint8_t *payload, uint16_t payload_length )
+    Packet::Packet( const uint8_t *header, uint16_t header_length, const uint8_t *payload, uint16_t payload_length )
     {
         data.resize( header_length + payload_length );
-        std::copy( header,  header + header_length,   data.data() );
+        std::copy( header, header + header_length, data.data() );
         std::copy( payload, payload + payload_length, data.data() + header_length );
     }
 
-    Packet::Packet( boost::shared_array<uint8_t> h, uint16_t hl,
-                    boost::shared_array<uint8_t> p, uint16_t pl )
-        : header(h), header_length(hl), payload(p), payload_length(pl)
-    {}
-
+    Packet::Packet( boost::shared_array<uint8_t> h, uint16_t hl, boost::shared_array<uint8_t> p, uint16_t pl )
+        : header( h ), header_length( hl ), payload( p ), payload_length( pl )
+    {
+    }
 
     Packet generate_ipv4_packet( const PacketInfo &info )
     {
@@ -79,10 +74,9 @@ namespace ipv4
 
         header.field.checksum = compute_ipv4_checksum( header );
 
-        return Packet( reinterpret_cast<const uint8_t *>( &header ), header_length,
-                       info.getData(), info.getPayloadLength() );
+        return Packet( reinterpret_cast<const uint8_t *>( &header ), header_length, info.getData(),
+                       info.getPayloadLength() );
     }
-
 
     uint16_t compute_ipv4_checksum( IPv4Header header )
     {
@@ -90,13 +84,12 @@ namespace ipv4
         return compute_checksum( header.data, header.field.header_length * 4 );
     }
 
-
     PacketInfo parse_ipv4_packet( const uint8_t *data, uint16_t length )
     {
-        const IPv4Header *header = reinterpret_cast<const IPv4Header *>( data );
-        int header_length  = header->field.header_length * 4;
-        int payload_length = ntohs( header->field.length ) - header_length;
-        const uint8_t *payload = data + header_length;
+        const IPv4Header *header         = reinterpret_cast<const IPv4Header *>( data );
+        int               header_length  = header->field.header_length * 4;
+        int               payload_length = ntohs( header->field.length ) - header_length;
+        const uint8_t *   payload        = data + header_length;
 
         if ( payload_length < 0 || payload_length > 0xffff ) {
             throw InvalidPayloadLengthError( "received packet is invalid payload length", payload_length );
@@ -111,20 +104,20 @@ namespace ipv4
         PacketInfo packet;
         packet.payload.insert( packet.payload.end(), payload, payload + payload_length );
 
-        packet.tos            = header->field.tos;
-        packet.id             = ntohs( header->field.id );
-        packet.flag           = header->field.flag;
-        packet.offset         = ntohs( header->field.offset );
-        packet.ttl            = header->field.ttl;
-        packet.protocol       = header->field.protocol;
+        packet.tos      = header->field.tos;
+        packet.id       = ntohs( header->field.id );
+        packet.flag     = header->field.flag;
+        packet.offset   = ntohs( header->field.offset );
+        packet.ttl      = header->field.ttl;
+        packet.protocol = header->field.protocol;
 
-        char source_addr[INET_ADDRSTRLEN];
-        char destination_addr[INET_ADDRSTRLEN];
+        char source_addr[ INET_ADDRSTRLEN ];
+        char destination_addr[ INET_ADDRSTRLEN ];
 
-        if ( NULL == inet_ntop( AF_INET, &header->field.source, source_addr, sizeof(source_addr) ) ) {
+        if ( NULL == inet_ntop( AF_INET, &header->field.source, source_addr, sizeof( source_addr ) ) ) {
             throw InvalidAddressFormatError( "cannot parse source address" );
         }
-        if ( NULL == inet_ntop( AF_INET, &header->field.destination, destination_addr, sizeof(destination_addr) ) ) {
+        if ( NULL == inet_ntop( AF_INET, &header->field.destination, destination_addr, sizeof( destination_addr ) ) ) {
             throw InvalidAddressFormatError( "cannot parse destination address" );
         }
 
@@ -133,5 +126,4 @@ namespace ipv4
 
         return packet;
     }
-
 }

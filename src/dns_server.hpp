@@ -1,16 +1,16 @@
 #ifndef DNS_SERVER_HPP
 #define DNS_SERVER_HPP
 
-#include "udpv4server.hpp"
-#include "tcpv4server.hpp"
 #include "dns.hpp"
+#include "tcpv4server.hpp"
+#include "udpv4server.hpp"
 #include "wireformat.hpp"
 #include <string>
 
 namespace dns
 {
     struct ResponseInfo {
-        PacketHeaderField                 header;    
+        PacketHeaderField                 header;
         std::vector<QuestionSectionEntry> question_section;
         std::vector<ResponseSectionEntry> answer_section;
         std::vector<ResponseSectionEntry> authority_section;
@@ -27,20 +27,22 @@ namespace dns
         void startTCPServer();
 
     public:
-        DNSServer( const std::string &address = "0.0.0.0",
-                   uint16_t           port    = 53 )
-            : bind_address( address ),
-	      bind_port( port )
-        {}
+        DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53 )
+            : bind_address( address ), bind_port( port )
+        {
+        }
 
-        ~DNSServer(){}
+        ~DNSServer()
+        {
+        }
 
         virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
-        virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
+        virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
+        {
+        }
 
         void start();
     };
-    
 }
 
 #endif

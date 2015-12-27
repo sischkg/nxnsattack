@@ -1,7 +1,6 @@
 #include "dns_server.hpp"
-#include <iostream>
 #include <boost/program_options.hpp>
-
+#include <iostream>
 
 const int   TTL          = 600;
 const char *RESPONSE_A   = "192.168.0.100";
@@ -14,14 +13,14 @@ private:
     int case_id;
 
 public:
-    EDNS0AuthServer( const std::string addr, uint16_t port, int id )
-        : dns::DNSServer( addr, port ), case_id( id )
-    {}
+    EDNS0AuthServer( const std::string addr, uint16_t port, int id ) : dns::DNSServer( addr, port ), case_id( id )
+    {
+    }
 
     dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
-        dns::PacketInfo response;
-        dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo           response;
+        dns::QuestionSectionEntry query_question = query.question_section[ 0 ];
 
         dns::QuestionSectionEntry question;
         question.q_domainname = query_question.q_domainname;
@@ -37,8 +36,8 @@ public:
             answer.r_ttl           = TTL;
             answer.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( RESPONSE_A ) );
             response.answer_section.push_back( answer );
-        }
-        else if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname.toString() == "ns1.example.com" ) {
+        } else if ( query_question.q_type == dns::TYPE_A &&
+                    query_question.q_domainname.toString() == "ns1.example.com" ) {
             dns::ResponseSectionEntry answer;
             answer.r_domainname    = query_question.q_domainname;
             answer.r_type          = dns::TYPE_A;
@@ -66,96 +65,93 @@ public:
 
         if ( query_question.q_type == dns::TYPE_A && query_question.q_domainname.toString() == "www.example.com" ) {
             switch ( case_id ) {
-            case 1:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 1" ) ) );
-                    edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 2" ) ) );
+            case 1: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 1" ) ) );
+                edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 2" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1, opt_rr_2;
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size        = 1280;
-                    opt_rr_1.rcode               = 0;
-                    response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                    opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
-                    opt_rr_2.payload_size        = 1280;
-                    opt_rr_2.rcode               = 0;
-                    response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
-                }
-                break;
-            case 11:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 1" ) ) );
-                    edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 2" ) ) );
+                dns::OptPseudoRecord opt_rr_1, opt_rr_2;
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+                opt_rr_2.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) );
+                opt_rr_2.payload_size = 1280;
+                opt_rr_2.rcode        = 0;
+                response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+            } break;
+            case 11: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1, edns_options_2;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 1" ) ) );
+                edns_options_2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test 2" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1, opt_rr_2;
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size        = 1280;
-                    opt_rr_1.rcode               = 0;
-                    response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                    opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) ); 
-                    opt_rr_2.payload_size        = 1500;
-                    opt_rr_2.rcode               = 0;
-                    response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
-                }
-                break;
-            case 2:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
+                dns::OptPseudoRecord opt_rr_1, opt_rr_2;
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+                opt_rr_2.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) );
+                opt_rr_2.payload_size = 1500;
+                opt_rr_2.rcode        = 0;
+                response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
+            } break;
+            case 2: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1;
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size        = 1280;
-                    opt_rr_1.rcode               = 0;
-                    response.answer_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                }
-                break;
-            case 3:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
+                dns::OptPseudoRecord opt_rr_1;
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.answer_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+            } break;
+            case 3: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1;
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size        = 1280;
-                    opt_rr_1.rcode               = 0;
-                    response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                }
-                break;
-            case 4:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
+                dns::OptPseudoRecord opt_rr_1;
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+            } break;
+            case 4: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1;
-                    opt_rr_1.domainname          = "www.example.com";
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size        = 1280;
-                    opt_rr_1.rcode               = 0;
-                    response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                }
-                break;
-            default:
-                {
-                    std::vector<dns::OptPseudoRROptPtr> edns_options_1;
-                    edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
+                dns::OptPseudoRecord opt_rr_1;
+                opt_rr_1.domainname = "www.example.com";
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
+            } break;
+            default: {
+                std::vector<dns::OptPseudoRROptPtr> edns_options_1;
+                edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
 
-                    dns::OptPseudoRecord opt_rr_1;
-                    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
-                    opt_rr_1.payload_size = 1280;
-                    opt_rr_1.rcode        = 0;
-                    response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
-                }
+                dns::OptPseudoRecord opt_rr_1;
+                opt_rr_1.record_options_data =
+                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                opt_rr_1.payload_size = 1280;
+                opt_rr_1.rcode        = 0;
+                response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
             }
-        }
-        else {
+            }
+        } else {
             std::vector<dns::OptPseudoRROptPtr> edns_options_1;
             edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "edns0 test" ) ) );
 
             dns::OptPseudoRecord opt_rr_1;
-            opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
+            opt_rr_1.record_options_data =
+                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
             opt_rr_1.payload_size = 1280;
             opt_rr_1.rcode        = 0;
             response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -177,7 +173,6 @@ public:
     }
 };
 
-
 int main( int argc, char **argv )
 {
     namespace po = boost::program_options;
@@ -185,25 +180,18 @@ int main( int argc, char **argv )
     std::string bind_address;
     int         case_id;
 
-    po::options_description desc("EDNS0 Cache Tester");
-    desc.add_options()
-        ("help,h",
-         "print this message")
+    po::options_description desc( "EDNS0 Cache Tester" );
+    desc.add_options()( "help,h", "print this message" )
 
-        ("bind,b",
-         po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ),
-         "bind address")
+        ( "bind,b", po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ), "bind address" )
 
-        ("test,t",
-         po::value<int>( &case_id )->default_value( 0 ),
-         "test case ID")
-        ;
+            ( "test,t", po::value<int>( &case_id )->default_value( 0 ), "test case ID" );
 
     po::variables_map vm;
-    po::store(po::parse_command_line( argc, argv, desc), vm);
-    po::notify(vm);
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
 
-    if ( vm.count("help") ) {
+    if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
     }

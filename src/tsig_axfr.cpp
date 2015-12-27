@@ -1,10 +1,10 @@
-#include "tcpv4client.hpp"
 #include "dns.hpp"
-#include <cstring>
-#include <iostream>
+#include "tcpv4client.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
+#include <cstring>
+#include <iostream>
 
 const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 const char *ZONE_NAME          = "example.com";
@@ -20,43 +20,33 @@ int main( int argc, char **argv )
         std::string base64_key;
         std::string tsig_name;
 
-        po::options_description desc("AXFR Client");
-        desc.add_options()
-            ("help,h",
-             "print this message")
+        po::options_description desc( "AXFR Client" );
+        desc.add_options()( "help,h", "print this message" )
 
-            ("target,t",
-             po::value<std::string>(&target_server)->default_value( DNS_SERVER_ADDRESS ),
-             "target server address")
+            ( "target,t", po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+              "target server address" )
 
-            ("zone,z",
-             po::value<std::string>(&zone_name)->default_value( ZONE_NAME ),
-             "zone name")
+                ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" )
 
-            ("key,k",
-             po::value<std::string>(&base64_key),
-             "TSIG Key")
+                    ( "key,k", po::value<std::string>( &base64_key ), "TSIG Key" )
 
-            ("name,n",
-             po::value<std::string>(&tsig_name),
-             "TSIG Label")
+                        ( "name,n", po::value<std::string>( &tsig_name ), "TSIG Label" )
 
             ;
 
         po::variables_map vm;
-        po::store(po::parse_command_line( argc, argv, desc), vm);
-        po::notify(vm);
+        po::store( po::parse_command_line( argc, argv, desc ), vm );
+        po::notify( vm );
 
-        if ( vm.count("help") ) {
+        if ( vm.count( "help" ) ) {
             std::cerr << desc << "\n";
             return 1;
         }
 
         std::string tsig_key;
         tsig_key.resize( decode_from_base64_size( base64_key.c_str(), base64_key.c_str() + base64_key.size() ) );
-        decode_from_base64( base64_key.c_str(),
-                            base64_key.c_str() + base64_key.size(),
-                            reinterpret_cast<uint8_t *>( &tsig_key[0] ) );
+        decode_from_base64( base64_key.c_str(), base64_key.c_str() + base64_key.size(),
+                            reinterpret_cast<uint8_t *>( &tsig_key[ 0 ] ) );
 
         dns::TSIGInfo tsig_info;
         tsig_info.name        = tsig_name;
@@ -66,7 +56,7 @@ int main( int argc, char **argv )
         tsig_info.fudge       = 600;
         tsig_info.original_id = 1234;
 
-        dns::PacketInfo packet_info;
+        dns::PacketInfo                        packet_info;
         std::vector<dns::QuestionSectionEntry> question_section;
         std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -95,7 +85,6 @@ int main( int argc, char **argv )
 
         dns::addTSIGResourceRecord( tsig_info, query_stream );
 
-
         std::cerr << "connecting" << std::endl;
         tcpv4::ClientParameters tcp_param;
         tcp_param.destination_address = target_server;
@@ -119,26 +108,21 @@ int main( int argc, char **argv )
             PacketData response_data;
             while ( response_data.size() < response_size ) {
                 tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
-    
+
                 std::cerr << "received size: " << received_data.getLength() << std::endl;
-                response_data.insert( response_data.end(),
-                                      received_data.begin(),
-                                      received_data.end() );
+                response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
             }
-            dns::ResponsePacketInfo res = dns::parse_dns_response_packet( &response_data[0],
-                                                                          &response_data[0] + response_data.size() );
-    
+            dns::ResponsePacketInfo res =
+                dns::parse_dns_response_packet( &response_data[ 0 ], &response_data[ 0 ] + response_data.size() );
+
             std::cout << res;
 
-            if ( res.answer.size() == 0 ||
-                 res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+            if ( res.answer.size() == 0 || res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
                 break;
         }
-    }
-    catch ( std::runtime_error e ) {
+    } catch ( std::runtime_error e ) {
         std::cerr << e.what() << std::endl;
-    }
-    catch ( ... ) {
+    } catch ( ... ) {
         std::cerr << "unknown error" << std::endl;
     }
 

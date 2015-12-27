@@ -3,7 +3,8 @@
 
 int main( int argc, char **argv )
 {
-    //udpv4::Sender sender( udpv4::Sender::ChecksumPtr( new udpv4::StandardChecksumCalculator ) );
+    // udpv4::Sender sender( udpv4::Sender::ChecksumPtr( new
+    // udpv4::StandardChecksumCalculator ) );
     udpv4::Sender sender( udpv4::Sender::ChecksumPtr( new udpv4::BadChecksumCalculator ) );
 
     udpv4::PacketInfo udp_param;
@@ -16,7 +17,7 @@ int main( int argc, char **argv )
     udp_param.payload.push_back( 'b' );
     udp_param.payload.push_back( 'd' );
 
-    while (true) {
+    while ( true ) {
         sender.sendPacket( udp_param );
         //       udpv4::PacketInfo received_packet = receiver.receivePacket();
         usleep( 10000 );

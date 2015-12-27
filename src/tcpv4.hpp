@@ -1,18 +1,17 @@
 #ifndef TCPV4_HPP
 #define TCPV4_HPP
 
-#include <string>
-#include <vector>
 #include <boost/cstdint.hpp>
 #include <boost/shared_array.hpp>
+#include <string>
+#include <vector>
 
 namespace tcpv4
 {
 
     const uint16_t TCPV4_HEADER_LENGTH = ( 2 + 2 + 4 + 4 + 2 + 2 + 2 + 2 );
 
-    struct PacketInfo
-    {
+    struct PacketInfo {
         std::string source_address;
         std::string destination_address;
         uint16_t    source_port;
@@ -70,12 +69,11 @@ namespace tcpv4
         std::vector<uint8_t> data;
 
     public:
-        Packet( const std::vector<uint8_t> &d )
-            : data( d )
-        {}
+        Packet( const std::vector<uint8_t> &d ) : data( d )
+        {
+        }
 
-        Packet( const uint8_t *header,  uint16_t header_size,
-                const uint8_t *payload, uint16_t payload_size );
+        Packet( const uint8_t *header, uint16_t header_size, const uint8_t *payload, uint16_t payload_size );
 
         const uint8_t *getData() const
         {
@@ -109,7 +107,6 @@ namespace tcpv4
     };
 
     Packet generate_tcpv4_packet( const PacketInfo & );
-
 }
 
 #endif

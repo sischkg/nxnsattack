@@ -1,10 +1,10 @@
-#include "tcpv4client.hpp"
 #include "dns.hpp"
-#include <cstring>
-#include <iostream>
+#include "tcpv4client.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
+#include <cstring>
+#include <iostream>
 
 const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 const char *ZONE_NAME          = "example.com";
@@ -16,30 +16,24 @@ int main( int argc, char **argv )
     std::string target_server;
     std::string zone_name;
 
-    po::options_description desc("AXFR Client");
-    desc.add_options()
-        ("help,h",
-         "print this message")
+    po::options_description desc( "AXFR Client" );
+    desc.add_options()( "help,h", "print this message" )
 
-        ("target,t",
-         po::value<std::string>(&target_server)->default_value( DNS_SERVER_ADDRESS ),
-         "target server address")
+        ( "target,t", po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+          "target server address" )
 
-        ("zone,z",
-         po::value<std::string>(&zone_name)->default_value( ZONE_NAME ),
-         "zone name")
-        ;
+            ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" );
 
     po::variables_map vm;
-    po::store(po::parse_command_line( argc, argv, desc), vm);
-    po::notify(vm);
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
 
-    if ( vm.count("help") ) {
+    if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
     }
 
-    dns::PacketInfo packet_info;
+    dns::PacketInfo                        packet_info;
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -81,19 +75,16 @@ int main( int argc, char **argv )
         PacketData response_data;
         while ( response_data.size() < response_size ) {
             tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
-    
+
             std::cerr << "received size: " << received_data.getLength() << std::endl;
-            response_data.insert( response_data.end(),
-                                  received_data.begin(),
-                                  received_data.end() );
+            response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
         }
-        dns::ResponsePacketInfo res = dns::parse_dns_response_packet( &response_data[0],
-                                                                      &response_data[0] + response_data.size() );
-    
+        dns::ResponsePacketInfo res =
+            dns::parse_dns_response_packet( &response_data[ 0 ], &response_data[ 0 ] + response_data.size() );
+
         std::cout << res;
 
-        if ( res.answer.size() == 0 ||
-             res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+        if ( res.answer.size() == 0 || res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
             break;
     }
 

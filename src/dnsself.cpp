@@ -1,5 +1,5 @@
-#include "udpv4client.hpp"
 #include "dns.hpp"
+#include "udpv4client.hpp"
 #include <iostream>
 
 int main()
@@ -16,10 +16,9 @@ int main()
 
     std::vector<uint8_t> dns_query_packet = dns::generate_dns_query_packet( query );
 
-    dns::QueryPacketInfo parsed_query = dns::parse_dns_query_packet( dns_query_packet.data(),
-                                                                     dns_query_packet.data() + dns_query_packet.size() );
+    dns::QueryPacketInfo parsed_query =
+        dns::parse_dns_query_packet( dns_query_packet.data(), dns_query_packet.data() + dns_query_packet.size() );
     std::cout << parsed_query;
-
 
     dns::ResponseSectionEntry authority;
     authority.r_domainname    = "test01.dtrj.co.jp";
@@ -49,9 +48,8 @@ int main()
 
     std::vector<uint8_t> dns_response_packet = dns::generate_dns_response_packet( response );
 
-
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( dns_response_packet.data(),
-                                                                  dns_response_packet.data() + dns_response_packet.size() );
+    dns::ResponsePacketInfo res = dns::parse_dns_response_packet(
+        dns_response_packet.data(), dns_response_packet.data() + dns_response_packet.size() );
     std::cout << res;
 
     return 0;

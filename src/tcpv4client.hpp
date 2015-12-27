@@ -1,15 +1,14 @@
 #ifndef TCPV4CLIENT_HPP
 #define TCPV4CLIENT_HPP
 
-#include <string>
-#include <boost/cstdint.hpp>
-#include <vector>
 #include "wireformat.hpp"
+#include <boost/cstdint.hpp>
+#include <string>
+#include <vector>
 
 namespace tcpv4
 {
-    struct ConnectionInfo
-    {
+    struct ConnectionInfo {
         std::string          source_address;
         std::string          destination_address;
         uint16_t             source_port;
@@ -40,22 +39,22 @@ namespace tcpv4
         }
     };
 
-    struct ClientParameters
-    {
-        std::string     destination_address;
-        uint16_t destination_port;
+    struct ClientParameters {
+        std::string destination_address;
+        uint16_t    destination_port;
     };
 
     class Client
     {
     private:
         ClientParameters parameters;
-        int tcp_socket;
-        void shutdown( int );
+        int              tcp_socket;
+        void             shutdown( int );
+
     public:
-        Client( const ClientParameters &param )
-            : parameters( param ), tcp_socket( -1 )
-        {}
+        Client( const ClientParameters &param ) : parameters( param ), tcp_socket( -1 )
+        {
+        }
 
         ~Client();
 

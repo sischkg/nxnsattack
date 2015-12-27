@@ -1,10 +1,10 @@
-#include "udpv4client.hpp"
 #include "dns.hpp"
-#include <cstring>
-#include <iostream>
+#include "udpv4client.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
+#include <cstring>
+#include <iostream>
 
 const char *DNS_SERVER_ADDRESS = "192.168.33.10";
 const char *ZONE_NAME          = "example.com";
@@ -16,30 +16,24 @@ int main( int argc, char **argv )
     std::string target_server;
     std::string zone_name;
 
-    po::options_description desc("AXFR Client");
-    desc.add_options()
-        ("help,h",
-         "print this message")
+    po::options_description desc( "AXFR Client" );
+    desc.add_options()( "help,h", "print this message" )
 
-        ("target,t",
-         po::value<std::string>(&target_server)->default_value( DNS_SERVER_ADDRESS ),
-         "target server address")
+        ( "target,t", po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+          "target server address" )
 
-        ("zone,z",
-         po::value<std::string>(&zone_name)->default_value( ZONE_NAME ),
-         "zone name")
-        ;
+            ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" );
 
     po::variables_map vm;
-    po::store(po::parse_command_line( argc, argv, desc), vm);
-    po::notify(vm);
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
 
-    if ( vm.count("help") ) {
+    if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
     }
 
-    dns::PacketInfo packet_info;
+    dns::PacketInfo                        packet_info;
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -75,8 +69,7 @@ int main( int argc, char **argv )
         dns::ResponsePacketInfo res = dns::parse_dns_response_packet( response.begin(), response.end() );
         std::cout << res;
 
-        if ( res.answer.size() == 0 ||
-             res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+        if ( res.answer.size() == 0 || res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
             break;
     }
 

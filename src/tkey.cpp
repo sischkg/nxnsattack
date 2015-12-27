@@ -1,12 +1,12 @@
-#include "udpv4client.hpp"
 #include "dns.hpp"
 #include "tcpv4client.hpp"
+#include "udpv4client.hpp"
 #include <iostream>
 #include <time.h>
 
 int main()
 {
-    dns::PacketInfo packet_info;
+    dns::PacketInfo                        packet_info;
     std::vector<dns::QuestionSectionEntry> question_section;
     std::vector<dns::ResponseSectionEntry> answer_section, authority_section, additional_infomation_section;
 
@@ -17,10 +17,10 @@ int main()
     packet_info.question_section.push_back( question );
 
     dns::ResponseSectionEntry additonal;
-    additonal.r_domainname = "www.example.com";
-    additonal.r_type       = dns::TYPE_A;
-    additonal.r_class      = dns::CLASS_IN;
-    additonal.r_ttl        = 30;
+    additonal.r_domainname    = "www.example.com";
+    additonal.r_type          = dns::TYPE_A;
+    additonal.r_class         = dns::CLASS_IN;
+    additonal.r_ttl           = 30;
     additonal.r_resource_data = dns::ResourceDataPtr( new dns::RecordA( "172.16.0.1" ) );
     packet_info.additional_infomation_section.push_back( additonal );
 
@@ -47,8 +47,7 @@ int main()
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(),
-                                                                  received_packet.end() );
+    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(), received_packet.end() );
     std::cout << res;
 
     return 0;

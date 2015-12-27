@@ -1,18 +1,18 @@
-#include "tcpv4.hpp"
 #include "ipv4.hpp"
+#include "tcpv4.hpp"
 
-#include <iostream>
 #include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/ip.h> 
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
-#include <string>
-#include <cstring>
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <string>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 int main( int argc, char **argv )
 {
@@ -22,41 +22,31 @@ int main( int argc, char **argv )
     uint16_t    source_port;
     uint16_t    destination_port;
 
-    po::options_description desc("TCP Syn packet Generator.");
-    desc.add_options()
-        ("help,h",
-         "print this message")
+    po::options_description desc( "TCP Syn packet Generator." );
+    desc.add_options()( "help,h", "print this message" )
 
-        ("source-address,s",
-         po::value<std::string>(&source_address),
-         "source address of echo packet")
+        ( "source-address,s", po::value<std::string>( &source_address ), "source address of echo packet" )
 
-        ("source-port,S",
-         po::value<uint16_t>(&source_port)->default_value( 10007 ),
-         "source port of echo packet")
+            ( "source-port,S", po::value<uint16_t>( &source_port )->default_value( 10007 ),
+              "source port of echo packet" )
 
-        ("destination-address,d",
-         po::value<std::string>(&destination_address),
-         "destination address of echo packet")
+                ( "destination-address,d", po::value<std::string>( &destination_address ),
+                  "destination address of echo packet" )
 
-        ("destination-port,D",
-         po::value<uint16_t>(&destination_port)->default_value( 7 ),
-         "destination port of echo packet")
-        ;
+                    ( "destination-port,D", po::value<uint16_t>( &destination_port )->default_value( 7 ),
+                      "destination port of echo packet" );
 
     po::variables_map vm;
-    po::store(po::parse_command_line( argc, argv, desc), vm);
-    po::notify(vm);
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
 
-    if ( vm.count("help") ) {
+    if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
     }
 
-    if ( vm.count( "source-address" )      != 1 ||
-         vm.count( "source-port" )         != 1 ||
-         vm.count( "destination-address" ) != 1 ||
-         vm.count( "destination-port" )    != 1 ) {
+    if ( vm.count( "source-address" ) != 1 || vm.count( "source-port" ) != 1 ||
+         vm.count( "destination-address" ) != 1 || vm.count( "destination-port" ) != 1 ) {
         std::cerr << desc << "\n";
         return 1;
     }
@@ -86,9 +76,9 @@ int main( int argc, char **argv )
         exit( 1 );
     }
 
-    int on = 1;
-    int res = setsockopt( raw_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof(int) );
-    if( res < 0 ) {
+    int on  = 1;
+    int res = setsockopt( raw_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof( int ) );
+    if ( res < 0 ) {
         perror( "cannot setsockopt" );
         close( raw_socket );
         exit( 1 );
@@ -103,13 +93,11 @@ int main( int argc, char **argv )
     ip_packet_info.protocol    = ipv4::IP_PROTOCOL_TCP;
     ip_packet_info.source      = raw_tcp_packet_info.source_address;
     ip_packet_info.destination = raw_tcp_packet_info.destination_address;
-    ip_packet_info.payload.insert( ip_packet_info.payload.end(),
-                                   tcp_packet.begin(),
-                                   tcp_packet.end() );
+    ip_packet_info.payload.insert( ip_packet_info.payload.end(), tcp_packet.begin(), tcp_packet.end() );
     ipv4::Packet ip_packet = ipv4::generate_ipv4_packet( ip_packet_info );
 
     sockaddr_in dst_socket_address;
-    std::memset( &dst_socket_address, 0, sizeof(dst_socket_address) );
+    std::memset( &dst_socket_address, 0, sizeof( dst_socket_address ) );
     if ( inet_pton( AF_INET, raw_tcp_packet_info.destination_address.c_str(), &dst_socket_address.sin_addr ) < 0 ) {
         std::cerr << "cannot convert destination address" << std::endl;
         close( raw_socket );
@@ -119,9 +107,9 @@ int main( int argc, char **argv )
     dst_socket_address.sin_family = AF_INET;
     dst_socket_address.sin_port   = htons( raw_tcp_packet_info.destination_port );
 
-    uint16_t sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-                                 reinterpret_cast<const sockaddr *>( &dst_socket_address ),
-                                 sizeof(dst_socket_address) );
+    uint16_t sent_size =
+        sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
+                reinterpret_cast<const sockaddr *>( &dst_socket_address ), sizeof( dst_socket_address ) );
     if ( sent_size < 0 )
         perror( "cannot send packet" );
 

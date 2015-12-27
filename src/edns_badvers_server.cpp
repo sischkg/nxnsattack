@@ -1,7 +1,6 @@
 #include "dns_server.hpp"
-#include <iostream>
 #include <boost/program_options.hpp>
-
+#include <iostream>
 
 const int   TTL          = 600;
 const char *RESPONSE_A   = "192.168.0.100";
@@ -11,14 +10,14 @@ const char *BIND_ADDRESS = "192.168.33.1";
 class BadVersServer : public dns::DNSServer
 {
 public:
-    BadVersServer( const std::string addr, uint16_t port )
-        : dns::DNSServer( addr, port )
-    {}
+    BadVersServer( const std::string addr, uint16_t port ) : dns::DNSServer( addr, port )
+    {
+    }
 
     dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
-        dns::PacketInfo response;
-        dns::QuestionSectionEntry query_question = query.question_section[0];
+        dns::PacketInfo           response;
+        dns::QuestionSectionEntry query_question = query.question_section[ 0 ];
 
         dns::QuestionSectionEntry question;
         question.q_domainname = query_question.q_domainname;
@@ -38,7 +37,8 @@ public:
         edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaaaaaaaaaaaa" ) ) );
 
         dns::OptPseudoRecord opt_rr_1;
-        opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) ); 
+        opt_rr_1.record_options_data =
+            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
         opt_rr_1.payload_size = 1024;
         opt_rr_1.rcode        = 1;
         response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -59,28 +59,22 @@ public:
     }
 };
 
-
 int main( int argc, char **argv )
 {
     namespace po = boost::program_options;
 
     std::string bind_address;
 
-    po::options_description desc("EDNS0 BADVERS Server");
-    desc.add_options()
-        ("help,h",
-         "print this message")
+    po::options_description desc( "EDNS0 BADVERS Server" );
+    desc.add_options()( "help,h", "print this message" )
 
-        ("bind,b",
-         po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ),
-         "bind address")
-        ;
+        ( "bind,b", po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ), "bind address" );
 
     po::variables_map vm;
-    po::store(po::parse_command_line( argc, argv, desc), vm);
-    po::notify(vm);
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
 
-    if ( vm.count("help") ) {
+    if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
     }
