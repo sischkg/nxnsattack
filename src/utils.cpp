@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 #include <openssl/md5.h>
 #include <sstream>
 
@@ -230,7 +231,6 @@ uint8_t *decode_from_base64( const char *begin, const char *end, uint8_t *output
         *output++ = ( convert_from_base64( *( pos + 0 ) ) << 2 ) + ( convert_from_base64( *( pos + 1 ) ) >> 4 );
         *output++ = ( convert_from_base64( *( pos + 1 ) ) << 4 ) + ( convert_from_base64( *( pos + 2 ) ) >> 2 );
     } else {
-        std::cerr << "end" << std::endl;
         *output++ = ( convert_from_base64( *( pos + 0 ) ) << 2 ) + ( convert_from_base64( *( pos + 1 ) ) >> 4 );
         *output++ = ( convert_from_base64( *( pos + 1 ) ) << 4 ) + ( convert_from_base64( *( pos + 2 ) ) >> 2 );
         *output++ = ( convert_from_base64( *( pos + 2 ) ) << 6 ) + ( convert_from_base64( *( pos + 3 ) ) & 0x3f );
@@ -259,10 +259,10 @@ uint32_t decode_from_base64_size( const char *begin, const char *end )
     if ( begin == end )
         return 0;
     if ( *( end - 2 ) == '=' ) {
-        return ( end - begin ) / 4 * 3 + 1;
+        return ( end - begin - 4 ) / 4 * 3 + 1;
     }
     if ( *( end - 1 ) == '=' ) {
-        return ( end - begin ) / 4 * 3 + 2;
+        return ( end - begin - 4 ) / 4 * 3 + 2;
     } else {
         return ( end - begin ) / 4 * 3;
     }
@@ -392,8 +392,12 @@ static void calc_md5( const uint8_t *data, unsigned int size, uint8_t hash[ 16 ]
     }
 }
 
-void hmac_md5( const uint8_t *data, unsigned int size, const uint8_t *k, unsigned int ks, uint8_t result[ 16 ],
-               unsigned int block_size = 64 )
+void hmac_md5( const uint8_t *data,
+               unsigned int   size,
+               const uint8_t *k,
+               unsigned int   ks,
+               uint8_t        result[ 16 ],
+               unsigned int   block_size = 64 )
 {
     uint8_t ipad[ 64 ], opad[ 64 ];
     generate_pad( ipad, 0x36 );
@@ -427,9 +431,9 @@ void hmac_md5( const uint8_t *data, unsigned int size, const uint8_t *k, unsigne
 std::string printPacketData( const PacketData &p )
 {
     std::ostringstream os;
-    os << std::hex;
+    os << std::hex << std::setw( 2 ) << std::setfill( '0' );
     for ( unsigned int i = 0; i < p.size(); i++ ) {
-        os << p[ i ] << " ";
+        os << (unsigned int)p[ i ] << ",";
     }
 
     return os.str();

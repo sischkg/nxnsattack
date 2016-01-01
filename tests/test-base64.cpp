@@ -93,6 +93,140 @@ TEST_F( Base64Test, decodable_1_bytes )
     EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
 }
 
+TEST_F( Base64Test, decodable_2_bytes )
+{
+    char     data[] = "YWI=";
+    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+
+    EXPECT_EQ( decoded + 2, end ) << "decoded data size of \"YWI=\" is a";
+    EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
+    EXPECT_EQ( 'b', decoded[ 1 ] ) << "decoded data is \"b\"";
+}
+
+TEST_F( Base64Test, decodable_3_bytes )
+{
+    char     data[] = "YWJj";
+    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+
+    EXPECT_EQ( decoded + 3, end ) << "decoded data size of \"YQJj\" is a";
+    EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
+    EXPECT_EQ( 'b', decoded[ 1 ] ) << "decoded data is \"b\"";
+    EXPECT_EQ( 'c', decoded[ 2 ] ) << "decoded data is \"c\"";
+}
+
+TEST_F( Base64Test, decodable_4_bytes )
+{
+    char     data[] = "YWJjZA==";
+    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+
+    EXPECT_EQ( decoded + 4, end ) << "decoded data size of \"YWJjZA==\" is abcde";
+    EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
+    EXPECT_EQ( 'b', decoded[ 1 ] ) << "decoded data is \"b\"";
+    EXPECT_EQ( 'c', decoded[ 2 ] ) << "decoded data is \"c\"";
+    EXPECT_EQ( 'd', decoded[ 3 ] ) << "decoded data is \"d\"";
+}
+
+
+TEST_F( Base64Test, size_encodable_0_bytes )
+{
+    uint8_t data[] = {};
+    unsigned int size = encode_to_base64_size( data, data + sizeof( data ));
+
+    EXPECT_EQ( 0, size ) << "size = 0";
+}
+
+TEST_F( Base64Test, size_encodable_1_bytes )
+{
+    uint8_t data[] = { 'a' };
+    unsigned int size = encode_to_base64_size( data, data + sizeof( data ));
+
+    EXPECT_EQ( 4, size ) << "size = 4";
+}
+
+TEST_F( Base64Test, size_encodable_2_bytes )
+{
+    uint8_t data[] = { 'a', 'b' };
+    unsigned int size = encode_to_base64_size( data, data + sizeof( data ));
+
+    EXPECT_EQ( 4, size ) << "size = 4";
+}
+
+TEST_F( Base64Test, size_encodable_3_bytes )
+{
+    uint8_t data[] = { 'a', 'b', 'c' };
+    unsigned int size = encode_to_base64_size( data, data + sizeof( data ));
+
+    EXPECT_EQ( 4, size ) << "size = 4";
+}
+
+TEST_F( Base64Test, size_encodable_4_bytes )
+{
+    uint8_t data[] = {'a', 'b', 'c', 'd'};
+    unsigned int size = encode_to_base64_size( data, data + sizeof( data ));
+
+    EXPECT_EQ( 8, size ) << "size = 8";
+}
+
+TEST_F( Base64Test, size_decodable_0_bytes )
+{
+    char     data[] = "";
+    unsigned int size = decode_from_base64_size( data, data + std::strlen( data ) );
+
+    EXPECT_EQ( 0, size ) << "size = 0";
+}
+
+TEST_F( Base64Test, size_decodable_1_bytes )
+{
+    char     data[] = "YQ==";
+    unsigned int size = decode_from_base64_size( data, data + std::strlen( data ) );
+
+    EXPECT_EQ( 1, size ) << "size = 1";
+}
+
+TEST_F( Base64Test, size_decodable_2_bytes )
+{
+    char     data[] = "YWI=";
+    unsigned int size = decode_from_base64_size( data, data + std::strlen( data ) );
+
+    EXPECT_EQ( 2, size ) << "size = 2";
+}
+
+TEST_F( Base64Test, size_decodable_3_bytes )
+{
+    char     data[] = "YWJj";
+    unsigned int size = decode_from_base64_size( data, data + std::strlen( data ) );
+
+    EXPECT_EQ( 3, size ) << "size = 3";
+}
+
+TEST_F( Base64Test, size_decodable_4_bytes )
+{
+    char     data[] = "YWJjZA==";
+    unsigned int size = decode_from_base64_size( data, data + std::strlen( data ) );
+
+    EXPECT_EQ( 4, size ) << "size = 4";
+}
+
+TEST_F( Base64Test, self_test )
+{
+    for ( unsigned int i = 0 ; i < 256 ; i++ ) {
+	for ( unsigned int j = 0 ; j < 256 ; j++ ) {
+	    std::vector<uint8_t> source, destination;
+	    std::string encoded;
+
+	    source.push_back( i );
+	    source.push_back( j );
+
+	    encode_to_base64( source, encoded );
+	    decode_from_base64( encoded, destination );
+
+	    EXPECT_EQ( source[0], destination[0] ) << "1st data";
+	    EXPECT_EQ( source[1], destination[1] ) << "2nd data";
+	}
+    }
+
+}
+
 int main( int argc, char **argv )
 {
     ::testing::InitGoogleTest( &argc, argv );
