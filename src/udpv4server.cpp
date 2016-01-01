@@ -74,7 +74,11 @@ namespace udpv4
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convert_address_string_to_binary( dest.destination_address );
         socket_address.sin_port   = htons( dest.destination_port );
-        int sent_size = sendto( udp_socket, data, size, 0, reinterpret_cast<const sockaddr *>( &socket_address ),
+        int sent_size             = sendto( udp_socket,
+                                data,
+                                size,
+                                0,
+                                reinterpret_cast<const sockaddr *>( &socket_address ),
                                 sizeof( socket_address ) );
         if ( sent_size < 0 ) {
             std::ostringstream s;

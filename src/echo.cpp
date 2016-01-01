@@ -25,18 +25,22 @@ int main( int argc, char **argv )
 
         ( "source-address,s", po::value<std::string>( &source_address ), "source address of echo packet" )
 
-            ( "source-port,S", po::value<uint16_t>( &source_port )->default_value( 10007 ),
+            ( "source-port,S",
+              po::value<uint16_t>( &source_port )->default_value( 10007 ),
               "source port of echo packet" )
 
-                ( "destination-address,d", po::value<std::string>( &destination_address ),
+                ( "destination-address,d",
+                  po::value<std::string>( &destination_address ),
                   "destination address of echo packet" )
 
-                    ( "destination-port,D", po::value<uint16_t>( &destination_port )->default_value( 7 ),
+                    ( "destination-port,D",
+                      po::value<uint16_t>( &destination_port )->default_value( 7 ),
                       "destination port of echo packet" )
 
                         ( "wait,w", "wait response" )
 
-                            ( "message,m", po::value<std::string>( &message )->default_value( "test" ),
+                            ( "message,m",
+                              po::value<std::string>( &message )->default_value( "test" ),
                               "message in echo packet" );
 
     po::variables_map vm;

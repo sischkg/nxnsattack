@@ -215,7 +215,8 @@ int main( int argc, char **argv )
 
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ), "bind address" )
 
-            ( "period,p", po::value<unsigned int>( &period )->default_value( PERIOD_MICRO_SECOND ),
+            ( "period,p",
+              po::value<unsigned int>( &period )->default_value( PERIOD_MICRO_SECOND ),
               "period[micro second]" )
 
                 ( "count,c", po::value<unsigned long long>( &rr_count )->default_value( 0 ), "rr ount" );

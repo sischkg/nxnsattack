@@ -18,9 +18,14 @@ private:
     uint16_t        offset;
 
 public:
-    RecordBadNAPTR( int s, uint16_t in_order, uint16_t in_preference, const std::string &in_flags,
-                    const std::string &in_services, const std::string &in_regexp, const dns::Domainname &in_replacement,
-                    uint16_t in_offset = dns::NO_COMPRESSION );
+    RecordBadNAPTR( int                    s,
+                    uint16_t               in_order,
+                    uint16_t               in_preference,
+                    const std::string &    in_flags,
+                    const std::string &    in_services,
+                    const std::string &    in_regexp,
+                    const dns::Domainname &in_replacement,
+                    uint16_t               in_offset = dns::NO_COMPRESSION );
 
     virtual std::string          toString() const;
     virtual std::vector<uint8_t> getPacket() const;
@@ -35,9 +40,14 @@ public:
     }
 };
 
-RecordBadNAPTR::RecordBadNAPTR( int s, uint16_t in_order, uint16_t in_preference, const std::string &in_flags,
-                                const std::string &in_services, const std::string &in_regexp,
-                                const dns::Domainname &in_replacement, uint16_t in_offset )
+RecordBadNAPTR::RecordBadNAPTR( int                    s,
+                                uint16_t               in_order,
+                                uint16_t               in_preference,
+                                const std::string &    in_flags,
+                                const std::string &    in_services,
+                                const std::string &    in_regexp,
+                                const dns::Domainname &in_replacement,
+                                uint16_t               in_offset )
     : rr_size( s ), order( in_order ), preference( in_preference ), flags( in_flags ), services( in_services ),
       regexp( in_regexp ), replacement( in_replacement ), offset( in_offset )
 {
@@ -58,10 +68,11 @@ PacketData RecordBadNAPTR::getPacket() const
 
     uint16_t n_order      = htons( order );
     uint16_t n_preference = htons( preference );
-    pos                   = std::copy( reinterpret_cast<uint8_t *>( &n_order ),
-                     reinterpret_cast<uint8_t *>( &n_order ) + sizeof( n_order ), pos );
+    pos                   = std::copy(
+        reinterpret_cast<uint8_t *>( &n_order ), reinterpret_cast<uint8_t *>( &n_order ) + sizeof( n_order ), pos );
     pos = std::copy( reinterpret_cast<uint8_t *>( &n_preference ),
-                     reinterpret_cast<uint8_t *>( &n_preference ) + sizeof( n_preference ), pos );
+                     reinterpret_cast<uint8_t *>( &n_preference ) + sizeof( n_preference ),
+                     pos );
 
     *pos++ = flags.size();
     pos    = std::copy( flags.c_str(), flags.c_str() + flags.size(), pos );

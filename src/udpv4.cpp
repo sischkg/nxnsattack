@@ -75,7 +75,9 @@ namespace udpv4
         udpv4_header.field.length           = htons( info.getLength() );
         udpv4_header.field.checksum         = checksum_calcurator( info );
 
-        return Packet( reinterpret_cast<const uint8_t *>( &udpv4_header ), sizeof( udpv4_header ), info.getData(),
+        return Packet( reinterpret_cast<const uint8_t *>( &udpv4_header ),
+                       sizeof( udpv4_header ),
+                       info.getData(),
                        info.getPayloadLength() );
     }
 
@@ -98,7 +100,8 @@ namespace udpv4
         std::vector<uint8_t> checksum_buffer( checksum_buffer_length );
         std::memcpy( checksum_buffer.data(), &pseudo_header, sizeof( pseudo_header ) );
         std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ), udpv4_header.data, sizeof( udpv4_header ) );
-        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ) + sizeof( udpv4_header ), info.getData(),
+        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ) + sizeof( udpv4_header ),
+                     info.getData(),
                      info.getPayloadLength() );
 
         uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );

@@ -50,8 +50,8 @@ namespace dns
         return c;
     }
 
-    static const uint8_t *parseCharacterString( const uint8_t *begin, const uint8_t *packet_end,
-                                                std::string &ref_output )
+    static const uint8_t *
+    parseCharacterString( const uint8_t *begin, const uint8_t *packet_end, std::string &ref_output )
     {
         if ( begin == NULL || packet_end == NULL )
             throw std::logic_error( "begin, packet end must not be NULL" );
@@ -188,8 +188,10 @@ namespace dns
         message.push_back( 0 );
     }
 
-    const uint8_t *Domainname::parsePacket( Domainname &ref_domainname, const uint8_t *packet, const uint8_t *begin,
-                                            int recur ) throw( FormatError )
+    const uint8_t *Domainname::parsePacket( Domainname &   ref_domainname,
+                                            const uint8_t *packet,
+                                            const uint8_t *begin,
+                                            int            recur ) throw( FormatError )
     {
         if ( recur > 100 ) {
             throw FormatError( "detected domainname decompress loop" );
@@ -303,7 +305,7 @@ namespace dns
         header.recursion_desired    = info.recursion_desired;
         header.recursion_available  = info.recursion_available;
         header.zero_field           = 0;
-        header.authentic_data       = 0;
+        header.authentic_data       = info.authentic_data;
         header.checking_disabled    = info.checking_disabled;
         header.response_code        = info.response_code;
 
@@ -859,7 +861,10 @@ namespace dns
     std::string RecordA::toString() const
     {
         char buf[ 256 ];
-        std::snprintf( buf, sizeof( buf ), "%d.%d.%d.%d", *( reinterpret_cast<const uint8_t *>( &sin_addr ) ),
+        std::snprintf( buf,
+                       sizeof( buf ),
+                       "%d.%d.%d.%d",
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) ),
                        *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 1 ),
                        *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 2 ),
                        *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 3 ) );
@@ -998,14 +1003,19 @@ namespace dns
 
     ResourceDataPtr RecordTXT::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
-        if ( end - begin < 4 )
+        if ( end - begin < 1 )
             throw FormatError( "too few length for TXT record" );
-        const uint8_t *pos    = begin;
-        uint16_t       length = ntohs( get_bytes<uint16_t>( &pos ) );
-        if ( end - begin != 2 + length )
-            throw FormatError( "txt length + 2 dose not equal to rdlength" );
+        const uint8_t *          pos = begin;
+        std::vector<std::string> txt_data;
 
-        return ResourceDataPtr( new RecordTXT( std::string( pos, end ) ) );
+        while ( pos < end ) {
+            uint8_t length = get_bytes<uint8_t>( &pos );
+            if ( pos + length > end )
+                throw FormatError( "bad charactor-code length" );
+            txt_data.push_back( std::string( pos, pos + length ) );
+            pos += length;
+        }
+        return ResourceDataPtr( new RecordTXT( txt_data ) );
     }
 
     RecordCNAME::RecordCNAME( const Domainname &name, uint16_t off ) : domainname( name ), offset( off )
@@ -1029,9 +1039,13 @@ namespace dns
         return ResourceDataPtr( new RecordCNAME( name ) );
     }
 
-    RecordNAPTR::RecordNAPTR( uint16_t in_order, uint16_t in_preference, const std::string &in_flags,
-                              const std::string &in_services, const std::string &in_regexp,
-                              const Domainname &in_replacement, uint16_t in_offset )
+    RecordNAPTR::RecordNAPTR( uint16_t           in_order,
+                              uint16_t           in_preference,
+                              const std::string &in_flags,
+                              const std::string &in_services,
+                              const std::string &in_regexp,
+                              const Domainname & in_replacement,
+                              uint16_t           in_offset )
         : order( in_order ), preference( in_preference ), flags( in_flags ), services( in_services ),
           regexp( in_regexp ), replacement( in_replacement ), offset( in_offset )
     {
@@ -1105,8 +1119,15 @@ namespace dns
         return ResourceDataPtr( new RecordDNAME( name ) );
     }
 
-    RecordSOA::RecordSOA( const Domainname &mn, const Domainname &rn, uint32_t sr, uint32_t rf, uint32_t rt,
-                          uint32_t ex, uint32_t min, Offset moff, Offset roff )
+    RecordSOA::RecordSOA( const Domainname &mn,
+                          const Domainname &rn,
+                          uint32_t          sr,
+                          uint32_t          rf,
+                          uint32_t          rt,
+                          uint32_t          ex,
+                          uint32_t          min,
+                          Offset            moff,
+                          Offset            roff )
         : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min ),
           mname_offset( moff ), rname_offset( roff )
     {
@@ -1453,7 +1474,7 @@ namespace dns
         if ( pos >= end )
             throw FormatError( "too short message for TSIG RR" );
         uint64_t signed_time = ( time_high << 16 ) + ( time_low >> 16 );
-        uint16_t fudge       = time_low >> 16;
+        uint16_t fudge       = time_low;
 
         uint16_t mac_size = ntohs( get_bytes<uint16_t>( &pos ) );
         if ( pos + mac_size >= end )
@@ -1471,11 +1492,11 @@ namespace dns
         if ( pos + other_length > end )
             throw FormatError( "too short message for TSIG RR" );
         PacketData other;
-        mac.insert( other.end(), pos, pos + other_length );
+        other.insert( other.end(), pos, pos + other_length );
         pos += other_length;
 
-        return ResourceDataPtr( new RecordTSIGData( algorithm.toString(), signed_time, fudge, mac_size, mac,
-                                                    original_id, error, other_length, other ) );
+        return ResourceDataPtr( new RecordTSIGData(
+            algorithm.toString(), signed_time, fudge, mac_size, mac, original_id, error, other_length, other ) );
     }
 
     struct TSIGHash {
@@ -1521,50 +1542,6 @@ namespace dns
         return packet;
     }
 
-    void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet )
-    {
-        PacketData   mac( EVP_MAX_MD_SIZE );
-        unsigned int mac_size = EVP_MAX_MD_SIZE;
-
-        PacketData         hash_data = packet;
-        PacketHeaderField *h         = reinterpret_cast<PacketHeaderField *>( &hash_data[ 0 ] );
-        h->id                        = htons( tsig_info.original_id );
-
-        TSIGHash tsig_hash;
-        tsig_hash.name            = tsig_info.name;
-        tsig_hash.algorithm       = tsig_info.algorithm;
-        tsig_hash.signed_time     = tsig_info.signed_time;
-        tsig_hash.fudge           = tsig_info.fudge;
-        tsig_hash.error           = tsig_info.error;
-        tsig_hash.other_length    = tsig_info.other.size();
-        tsig_hash.other           = tsig_info.other;
-        PacketData tsig_hash_data = tsig_hash.getPacket();
-        hash_data.insert( hash_data.end(), tsig_hash_data.begin(), tsig_hash_data.end() );
-
-        HMAC( EVP_md5(), tsig_info.key.c_str(), tsig_info.key.size(),
-              reinterpret_cast<const unsigned char *>( &hash_data[ 0 ] ), hash_data.size(),
-              reinterpret_cast<unsigned char *>( &mac[ 0 ] ), &mac_size );
-        mac.resize( mac_size );
-
-        ResponseSectionEntry entry;
-        entry.r_domainname    = tsig_info.name;
-        entry.r_type          = TYPE_TSIG;
-        entry.r_class         = CLASS_ANY;
-        entry.r_ttl           = 0;
-        entry.r_resource_data = ResourceDataPtr(
-            new RecordTSIGData( tsig_info.algorithm, tsig_info.signed_time, tsig_info.fudge, mac_size, mac,
-                                tsig_info.original_id, tsig_info.error, tsig_info.other.size(), tsig_info.other ) );
-        entry.r_offset = NO_COMPRESSION;
-
-        PacketData         tsig_data = generate_response_section( entry );
-        PacketHeaderField *header    = reinterpret_cast<PacketHeaderField *>( &packet[ 0 ] );
-        uint16_t           arcount   = ntohs( header->additional_infomation_count );
-        arcount++;
-        header->additional_infomation_count = htons( arcount );
-
-        packet.insert( packet.end(), tsig_data.begin(), tsig_data.end() );
-        std::cerr << "added tsig" << std::endl;
-    }
 
     void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message )
     {
@@ -1585,11 +1562,18 @@ namespace dns
         tsig_hash.other_length    = tsig_info.other.size();
         tsig_hash.other           = tsig_info.other;
         PacketData tsig_hash_data = tsig_hash.getPacket();
+
         hash_data.insert( hash_data.end(), tsig_hash_data.begin(), tsig_hash_data.end() );
 
-        HMAC( EVP_md5(), tsig_info.key.c_str(), tsig_info.key.size(),
-              reinterpret_cast<const unsigned char *>( &hash_data[ 0 ] ), hash_data.size(),
-              reinterpret_cast<unsigned char *>( &mac[ 0 ] ), &mac_size );
+        OpenSSL_add_all_digests();
+        HMAC( EVP_get_digestbyname( "md5" ),
+              tsig_info.key.c_str(),
+              tsig_info.key.size(),
+              reinterpret_cast<const unsigned char *>( &hash_data[ 0 ] ),
+              hash_data.size(),
+              reinterpret_cast<unsigned char *>( &mac[ 0 ] ),
+              &mac_size );
+        EVP_cleanup();
         mac.resize( mac_size );
 
         ResponseSectionEntry entry;
@@ -1597,9 +1581,15 @@ namespace dns
         entry.r_type          = TYPE_TSIG;
         entry.r_class         = CLASS_ANY;
         entry.r_ttl           = 0;
-        entry.r_resource_data = ResourceDataPtr(
-            new RecordTSIGData( tsig_info.algorithm, tsig_info.signed_time, tsig_info.fudge, mac_size, mac,
-                                tsig_info.original_id, tsig_info.error, tsig_info.other.size(), tsig_info.other ) );
+        entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.algorithm,
+                                                                     tsig_info.signed_time,
+                                                                     tsig_info.fudge,
+                                                                     mac_size,
+                                                                     mac,
+                                                                     tsig_info.original_id,
+                                                                     tsig_info.error,
+                                                                     tsig_info.other.size(),
+                                                                     tsig_info.other ) );
         entry.r_offset = NO_COMPRESSION;
 
         PacketHeaderField *header  = reinterpret_cast<PacketHeaderField *>( &packet[ 0 ] );

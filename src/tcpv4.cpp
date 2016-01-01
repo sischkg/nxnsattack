@@ -98,7 +98,9 @@ namespace tcpv4
         tcpv4_header.field.checksum              = compute_tcpv4_checksum( info );
         tcpv4_header.field.urgent_pointer        = htons( info.urgent_pointer );
 
-        return Packet( reinterpret_cast<const uint8_t *>( &tcpv4_header ), sizeof( tcpv4_header ), info.getData(),
+        return Packet( reinterpret_cast<const uint8_t *>( &tcpv4_header ),
+                       sizeof( tcpv4_header ),
+                       info.getData(),
                        info.getPayloadLength() );
     }
 
@@ -133,7 +135,8 @@ namespace tcpv4
         std::vector<uint8_t> checksum_buffer( checksum_buffer_length );
         std::memcpy( checksum_buffer.data(), &pseudo_header, sizeof( pseudo_header ) );
         std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ), tcpv4_header.data, sizeof( tcpv4_header ) );
-        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ) + sizeof( tcpv4_header ), info.getData(),
+        std::memcpy( checksum_buffer.data() + sizeof( pseudo_header ) + sizeof( tcpv4_header ),
+                     info.getData(),
                      info.getPayloadLength() );
 
         uint16_t checksum = compute_checksum( checksum_buffer.data(), checksum_buffer.size() );

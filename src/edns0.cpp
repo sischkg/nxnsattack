@@ -21,7 +21,8 @@ int main( int argc, char **argv )
     po::options_description desc( "EDNS0 Validation Tester" );
     desc.add_options()( "help,h", "print this message" )
 
-        ( "server,s", po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+        ( "server,s",
+          po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
           "target server address" )
 
             ( "test_version,t", po::value<int>( &test_version )->default_value( 0 ), "test version" );

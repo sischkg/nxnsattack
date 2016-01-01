@@ -3,6 +3,7 @@
 \#*
 .\#*
 *.a
+*.orig
 Testing
 src/echo
 src/dns

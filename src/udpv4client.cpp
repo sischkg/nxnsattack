@@ -89,8 +89,12 @@ namespace udpv4
         sockaddr_in          peer_address;
         socklen_t            peer_address_size = sizeof( peer_address );
         std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
-        int                  recv_size = recvfrom( udp_socket, receive_buffer.data(), UDP_RECEIVE_BUFFER_SIZE, flags,
-                                  reinterpret_cast<sockaddr *>( &peer_address ), &peer_address_size );
+        int                  recv_size = recvfrom( udp_socket,
+                                  receive_buffer.data(),
+                                  UDP_RECEIVE_BUFFER_SIZE,
+                                  flags,
+                                  reinterpret_cast<sockaddr *>( &peer_address ),
+                                  &peer_address_size );
         if ( recv_size < 0 ) {
             int error_num = errno;
             if ( error_num == EAGAIN ) {
@@ -166,8 +170,12 @@ namespace udpv4
         dst_socket_address.sin_port   = htons( udp_packet_info.destination_port );
 
         uint16_t sent_size;
-        sent_size = sendto( raw_socket, ip_packet.getData(), ip_packet.getLength(), 0,
-                            reinterpret_cast<const sockaddr *>( &dst_socket_address ), sizeof( dst_socket_address ) );
+        sent_size = sendto( raw_socket,
+                            ip_packet.getData(),
+                            ip_packet.getLength(),
+                            0,
+                            reinterpret_cast<const sockaddr *>( &dst_socket_address ),
+                            sizeof( dst_socket_address ) );
         if ( sent_size < 0 )
             throw SocketError( get_error_message( "cannot send packet", errno ) );
 
@@ -188,7 +196,8 @@ namespace udpv4
         recv_socket_address.sin_family = AF_INET;
         recv_socket_address.sin_addr   = convert_address_string_to_binary( bind_address );
         recv_socket_address.sin_port   = htons( bind_port );
-        if ( bind( udp_socket, reinterpret_cast<const sockaddr *>( &recv_socket_address ),
+        if ( bind( udp_socket,
+                   reinterpret_cast<const sockaddr *>( &recv_socket_address ),
                    sizeof( recv_socket_address ) ) < 0 ) {
             std::perror( "cannot bind" );
             throw SocketError( get_error_message( "cannot bind receive socket", errno ) );
@@ -211,8 +220,12 @@ namespace udpv4
         sockaddr_in          peer_address;
         socklen_t            peer_address_size = sizeof( peer_address );
         std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
-        int                  recv_size = recvfrom( udp_socket, receive_buffer.data(), UDP_RECEIVE_BUFFER_SIZE, 0,
-                                  reinterpret_cast<sockaddr *>( &peer_address ), &peer_address_size );
+        int                  recv_size = recvfrom( udp_socket,
+                                  receive_buffer.data(),
+                                  UDP_RECEIVE_BUFFER_SIZE,
+                                  0,
+                                  reinterpret_cast<sockaddr *>( &peer_address ),
+                                  &peer_address_size );
         if ( recv_size < 0 ) {
             throw SocketError( get_error_message( "cannot recv packet", errno ) );
         }

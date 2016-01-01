@@ -112,8 +112,10 @@ namespace dns
         void        addSubdomain( const std::string & );
         void        addSuffix( const std::string & );
 
-        static const uint8_t *parsePacket( Domainname &ref_domainname, const uint8_t *packet, const uint8_t *begin,
-                                           int recur = 0 ) throw( FormatError );
+        static const uint8_t *parsePacket( Domainname &   ref_domainname,
+                                           const uint8_t *packet,
+                                           const uint8_t *begin,
+                                           int            recur = 0 ) throw( FormatError );
     };
 
     std::ostream &operator<<( const Domainname &name, std::ostream &os );
@@ -304,9 +306,13 @@ namespace dns
         uint16_t    offset;
 
     public:
-        RecordNAPTR( uint16_t in_order, uint16_t in_preference, const std::string &in_flags,
-                     const std::string &in_services, const std::string &in_regexp, const Domainname &in_replacement,
-                     uint16_t in_offset = NO_COMPRESSION );
+        RecordNAPTR( uint16_t           in_order,
+                     uint16_t           in_preference,
+                     const std::string &in_flags,
+                     const std::string &in_services,
+                     const std::string &in_regexp,
+                     const Domainname & in_replacement,
+                     uint16_t           in_offset = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -356,8 +362,15 @@ namespace dns
         Offset     rname_offset;
 
     public:
-        RecordSOA( const Domainname &mname, const Domainname &rname, uint32_t serial, uint32_t refresh, uint32_t retry,
-                   uint32_t expire, uint32_t minimum, Offset moff = NO_COMPRESSION, Offset roff = NO_COMPRESSION );
+        RecordSOA( const Domainname &mname,
+                   const Domainname &rname,
+                   uint32_t          serial,
+                   uint32_t          refresh,
+                   uint32_t          retry,
+                   uint32_t          expire,
+                   uint32_t          minimum,
+                   Offset            moff = NO_COMPRESSION,
+                   Offset            roff = NO_COMPRESSION );
 
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -438,8 +451,12 @@ namespace dns
         PacketData public_key;
 
     public:
-        RecordKey( uint8_t in_ac = 0, uint8_t in_xt = 0, uint8_t in_namtyp = 0, uint8_t in_sig = 0,
-                   uint8_t in_protocol = PROTOCOL_DNSSEC, uint8_t in_algorithm = ALGORITHM_DH )
+        RecordKey( uint8_t in_ac        = 0,
+                   uint8_t in_xt        = 0,
+                   uint8_t in_namtyp    = 0,
+                   uint8_t in_sig       = 0,
+                   uint8_t in_protocol  = PROTOCOL_DNSSEC,
+                   uint8_t in_algorithm = ALGORITHM_DH )
             : ac( 0 ), xt( 0 ), namtyp( 0 ), sig( 0 ), protocol( in_protocol ), algorithm( in_algorithm )
         {
         }
@@ -614,9 +631,14 @@ namespace dns
         PacketData other_data;
 
     public:
-        RecordTKey( const std::string &dom = "", const std::string &algo = "HMAC-MD5.SIG-ALG.REG.INT",
-                    uint32_t incept = 0, uint32_t expire = 0, uint16_t m = 0, uint16_t err = 0,
-                    PacketData k = PacketData(), PacketData other = PacketData() )
+        RecordTKey( const std::string &dom    = "",
+                    const std::string &algo   = "HMAC-MD5.SIG-ALG.REG.INT",
+                    uint32_t           incept = 0,
+                    uint32_t           expire = 0,
+                    uint16_t           m      = 0,
+                    uint16_t           err    = 0,
+                    PacketData         k      = PacketData(),
+                    PacketData         other  = PacketData() )
             : domain( dom ), algorithm( algo ), inception( incept ), expiration( expire ), mode( m ), error( err ),
               key( k ), other_data( other )
         {
@@ -665,10 +687,15 @@ namespace dns
         PacketData other;
 
     public:
-        RecordTSIGData( const std::string &in_algo = "HMAC-MD5.SIG-ALG.REG.INT", uint64_t in_signed_time = 0,
-                        uint16_t in_fudge = 0, uint16_t in_mac_size = 0, const PacketData &in_mac = PacketData(),
-                        uint16_t in_original_id = 0, uint16_t in_error = 0, uint16_t in_other_length = 0,
-                        const PacketData &in_other = PacketData() )
+        RecordTSIGData( const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+                        uint64_t           in_signed_time  = 0,
+                        uint16_t           in_fudge        = 0,
+                        uint16_t           in_mac_size     = 0,
+                        const PacketData & in_mac          = PacketData(),
+                        uint16_t           in_original_id  = 0,
+                        uint16_t           in_error        = 0,
+                        uint16_t           in_other_length = 0,
+                        const PacketData & in_other        = PacketData() )
             : algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ), mac_size( in_mac_size ),
               mac( in_mac ), original_id( in_original_id ), error( in_error ), other_length( in_other_length ),
               other( in_other )
@@ -701,10 +728,16 @@ namespace dns
         PacketData other;
 
     public:
-        RecordTSIG( const std::string &in_name = "", const std::string &in_algo = "HMAC-MD5.SIG-ALG.REG.INT",
-                    uint64_t in_signed_time = 0, uint16_t in_fudge = 0, uint16_t in_mac_size = 0,
-                    PacketData in_mac = PacketData(), uint16_t in_original_id = 0, uint16_t in_error = 0,
-                    uint16_t in_other_length = 0, PacketData in_other = PacketData() )
+        RecordTSIG( const std::string &in_name         = "",
+                    const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+                    uint64_t           in_signed_time  = 0,
+                    uint16_t           in_fudge        = 0,
+                    uint16_t           in_mac_size     = 0,
+                    PacketData         in_mac          = PacketData(),
+                    uint16_t           in_original_id  = 0,
+                    uint16_t           in_error        = 0,
+                    uint16_t           in_other_length = 0,
+                    PacketData         in_other        = PacketData() )
             : name( in_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
               mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
               other_length( in_other_length ), other( in_other )
@@ -744,9 +777,11 @@ namespace dns
         std::vector<QuestionSectionEntry> question;
         OptPseudoRecord                   opt_pseudo_rr;
 
-        QueryPacketInfo( uint16_t in_id = 0, Opcode in_opcode = OPCODE_QUERY, bool in_recursion = false,
-                         bool                                     in_edns0    = false,
-                         const std::vector<QuestionSectionEntry> &in_question = std::vector<QuestionSectionEntry>(),
+        QueryPacketInfo( uint16_t                                 in_id        = 0,
+                         Opcode                                   in_opcode    = OPCODE_QUERY,
+                         bool                                     in_recursion = false,
+                         bool                                     in_edns0     = false,
+                         const std::vector<QuestionSectionEntry> &in_question  = std::vector<QuestionSectionEntry>(),
                          const OptPseudoRecord &                  in_opt_pseudo_rr = OptPseudoRecord() )
             : id( in_id ), opcode( in_opcode ), recursion( in_recursion ), edns0( in_edns0 ), question( in_question ),
               opt_pseudo_rr( in_opt_pseudo_rr )
@@ -873,7 +908,6 @@ namespace dns
     ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
     OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
 
-    void addTSIGResourceRecord( const TSIGInfo &tsig_info, PacketData &packet );
     void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message );
 
     template <typename Type>

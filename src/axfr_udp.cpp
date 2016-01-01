@@ -19,7 +19,8 @@ int main( int argc, char **argv )
     po::options_description desc( "AXFR Client" );
     desc.add_options()( "help,h", "print this message" )
 
-        ( "target,t", po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+        ( "target,t",
+          po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
           "target server address" )
 
             ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" );

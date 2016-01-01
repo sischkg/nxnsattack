@@ -23,20 +23,24 @@ int main( int argc, char **argv )
 
         ( "target,t", po::value<std::string>( &target_dns_server ), "Target(poisoned) DNS Server IP Address" )
 
-            ( "source_port,s", po::value<uint16_t>( &target_source_port )->default_value( 0 ),
+            ( "source_port,s",
+              po::value<uint16_t>( &target_source_port )->default_value( 0 ),
               "Target(poisoned) DNS Server Query Source Port" )
 
                 ( "auth,a", po::value<std::string>( &authoritative_dns_server ), "Authoritative DNS Server IP Address" )
 
                     ( "domain,n", po::value<std::string>( &target_domainname ), "Target domainname" )
 
-                        ( "interval,i", po::value<uint32_t>( &interval_mili_second )->default_value( 10 ),
+                        ( "interval,i",
+                          po::value<uint32_t>( &interval_mili_second )->default_value( 10 ),
                           "spoofing DNS response packet interval(milisecond)" )
 
-                            ( "delegate_name,d", po::value<std::string>( &delegated_dns_server_name ),
+                            ( "delegate_name,d",
+                              po::value<std::string>( &delegated_dns_server_name ),
                               "Delegated DNS Server name" )
 
-                                ( "delegate_address,e", po::value<std::string>( &delegated_dns_server_address ),
+                                ( "delegate_address,e",
+                                  po::value<std::string>( &delegated_dns_server_address ),
                                   "Delegated DNS Server Address" );
 
     po::variables_map vm;

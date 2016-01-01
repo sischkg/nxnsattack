@@ -74,8 +74,8 @@ namespace ipv4
 
         header.field.checksum = compute_ipv4_checksum( header );
 
-        return Packet( reinterpret_cast<const uint8_t *>( &header ), header_length, info.getData(),
-                       info.getPayloadLength() );
+        return Packet(
+            reinterpret_cast<const uint8_t *>( &header ), header_length, info.getData(), info.getPayloadLength() );
     }
 
     uint16_t compute_ipv4_checksum( IPv4Header header )
