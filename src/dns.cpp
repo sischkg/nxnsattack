@@ -437,6 +437,13 @@ namespace dns
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
             ResponseSectionEntryPair pair = parse_response_section( begin, packet );
+            if ( pair.first.r_type == TYPE_OPT ) {
+                packet_info.edns0 = true;
+            }
+            if ( pair.first.r_type == TYPE_TSIG && pair.first.r_class == CLASS_IN ) {
+                packet_info.tsig    = true;
+                packet_info.tsig_rr = dynamic_cast<const RecordTSIGData &>( *( pair.first.r_resource_data ) );
+            }
             packet_info.additional_infomation_section.push_back( pair.first );
             packet = pair.second;
         }
@@ -584,25 +591,41 @@ namespace dns
 
     PacketData generate_response_section( const ResponseSectionEntry &response )
     {
-        WireFormat w;
-        response.r_resource_data->outputWireFormat( w );
+        if ( response.r_resource_data ) {
+            WireFormat w;
+            response.r_resource_data->outputWireFormat( w );
 
-        PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
-        PacketData packet_rd   = w.get();
-        PacketData packet( packet_name.size() + 2 + 2 + 4 + 2 + packet_rd.size() );
-        uint8_t *  p = packet.data();
+            PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
+            PacketData packet_rd   = w.get();
+            PacketData packet( packet_name.size() + 2 + 2 + 4 + 2 + packet_rd.size() );
+            uint8_t *  p = packet.data();
 
-        std::memcpy( p, packet_name.data(), packet_name.size() );
-        p += packet_name.size();
+            std::memcpy( p, packet_name.data(), packet_name.size() );
+            p += packet_name.size();
 
-        p = dns::set_bytes<uint16_t>( htons( response.r_type ), p );
-        p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
-        p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ), p );
-        p = dns::set_bytes<uint16_t>( htons( packet_rd.size() ), p );
+            p = dns::set_bytes<uint16_t>( htons( response.r_type ), p );
+            p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
+            p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ), p );
+            p = dns::set_bytes<uint16_t>( htons( packet_rd.size() ), p );
 
-        std::memcpy( p, packet_rd.data(), packet_rd.size() );
+            std::memcpy( p, packet_rd.data(), packet_rd.size() );
 
-        return packet;
+            return packet;
+        } else {
+            PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
+            PacketData packet( packet_name.size() + 2 + 2 + 4 + 2 );
+            uint8_t *  p = packet.data();
+
+            std::memcpy( p, packet_name.data(), packet_name.size() );
+            p += packet_name.size();
+
+            p = dns::set_bytes<uint16_t>( htons( response.r_type ), p );
+            p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
+            p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ), p );
+            p = dns::set_bytes<uint16_t>( htons( 0 ), p );
+
+            return packet;
+        }
     }
 
     void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
@@ -611,8 +634,12 @@ namespace dns
         message.pushUInt16HtoN( response.r_type );
         message.pushUInt16HtoN( response.r_class );
         message.pushUInt32HtoN( response.r_ttl );
-        message.pushUInt16HtoN( response.r_resource_data->size() );
-        response.r_resource_data->outputWireFormat( message );
+        if ( response.r_resource_data ) {
+            message.pushUInt16HtoN( response.r_resource_data->size() );
+            response.r_resource_data->outputWireFormat( message );
+        } else {
+            message.pushUInt16HtoN( 0 );
+        }
     }
 
     ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
@@ -658,7 +685,7 @@ namespace dns
             parsed_data = RecordDNSKey::parse( packet, pos, pos + data_length );
             break;
         case TYPE_TSIG:
-            parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length );
+            parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length, sec.r_domainname );
             break;
         case TYPE_OPT:
             parsed_data = RecordOptionsData::parse( packet, pos, pos + data_length );
@@ -809,7 +836,7 @@ namespace dns
            << "Query/Response: "
            << "Response" << std::endl
            << "OpCode:" << res.opcode << std::endl
-           << "Authoritative Anwwer: " << res.authoritative_answer << std::endl
+           << "Authoritative Answer: " << res.authoritative_answer << std::endl
            << "Truncation: " << res.truncation << std::endl
            << "Recursion Available: " << res.recursion_available << std::endl
            << "Checking Disabled: " << res.checking_disabled << std::endl
@@ -1451,16 +1478,19 @@ namespace dns
     std::string RecordTSIGData::toString() const
     {
         std::ostringstream os;
-        os << "algorigthm: " << algorithm << ", "
+        os << "key name: " << key_name << ", "
+           << "algorigthm: " << algorithm << ", "
            << "signed time: " << signed_time << ", "
            << "fudge: " << fudge << ", "
-           << "MAC: " << printPacketData( mac ) << "Original ID: " << original_id << ", "
+           << "MAC: " << printPacketData( mac ) << ", "
+           << "Original ID: " << original_id << ", "
            << "Error: " << error;
 
         return os.str();
     }
 
-    ResourceDataPtr RecordTSIGData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    ResourceDataPtr
+    RecordTSIGData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name )
     {
         const uint8_t *pos = begin;
 
@@ -1469,8 +1499,8 @@ namespace dns
         if ( pos >= end )
             throw FormatError( "too short message for TSIG RR" );
 
-        uint64_t time_high = ntohs( get_bytes<uint32_t>( &pos ) );
-        uint32_t time_low  = ntohs( get_bytes<uint32_t>( &pos ) );
+        uint64_t time_high = ntohl( get_bytes<uint32_t>( &pos ) );
+        uint32_t time_low  = ntohl( get_bytes<uint32_t>( &pos ) );
         if ( pos >= end )
             throw FormatError( "too short message for TSIG RR" );
         uint64_t signed_time = ( time_high << 16 ) + ( time_low >> 16 );
@@ -1495,8 +1525,16 @@ namespace dns
         other.insert( other.end(), pos, pos + other_length );
         pos += other_length;
 
-        return ResourceDataPtr( new RecordTSIGData(
-            algorithm.toString(), signed_time, fudge, mac_size, mac, original_id, error, other_length, other ) );
+        return ResourceDataPtr( new RecordTSIGData( key_name.toString(),
+                                                    algorithm.toString(),
+                                                    signed_time,
+                                                    fudge,
+                                                    mac_size,
+                                                    mac,
+                                                    original_id,
+                                                    error,
+                                                    other_length,
+                                                    other ) );
     }
 
     struct TSIGHash {
@@ -1543,15 +1581,17 @@ namespace dns
     }
 
 
-    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message )
+    PacketData getTSIGMAC( const TSIGInfo &tsig_info, const PacketData &message, const PacketData &query_mac )
     {
-        PacketData   packet = message.get();
         PacketData   mac( EVP_MAX_MD_SIZE );
         unsigned int mac_size = EVP_MAX_MD_SIZE;
 
-        PacketData         hash_data = message.get();
-        PacketHeaderField *h         = reinterpret_cast<PacketHeaderField *>( &hash_data[ 0 ] );
-        h->id                        = htons( tsig_info.original_id );
+        PacketData hash_data = query_mac;
+
+        PacketData         presigned_message = message;
+        PacketHeaderField *h                 = reinterpret_cast<PacketHeaderField *>( &presigned_message[ 0 ] );
+        h->id                                = htons( tsig_info.original_id );
+        hash_data.insert( hash_data.end(), presigned_message.begin(), presigned_message.end() );
 
         TSIGHash tsig_hash;
         tsig_hash.name            = tsig_info.name;
@@ -1567,7 +1607,7 @@ namespace dns
 
         OpenSSL_add_all_digests();
         HMAC( EVP_get_digestbyname( "md5" ),
-              tsig_info.key.c_str(),
+              &tsig_info.key[ 0 ],
               tsig_info.key.size(),
               reinterpret_cast<const unsigned char *>( &hash_data[ 0 ] ),
               hash_data.size(),
@@ -1576,15 +1616,23 @@ namespace dns
         EVP_cleanup();
         mac.resize( mac_size );
 
+        return mac;
+    }
+
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac )
+    {
+        PacketData mac = getTSIGMAC( tsig_info, message.get(), query_mac );
+
         ResponseSectionEntry entry;
         entry.r_domainname    = tsig_info.name;
         entry.r_type          = TYPE_TSIG;
         entry.r_class         = CLASS_ANY;
         entry.r_ttl           = 0;
-        entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.algorithm,
+        entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.name,
+                                                                     tsig_info.algorithm,
                                                                      tsig_info.signed_time,
                                                                      tsig_info.fudge,
-                                                                     mac_size,
+                                                                     mac.size(),
                                                                      mac,
                                                                      tsig_info.original_id,
                                                                      tsig_info.error,
@@ -1592,15 +1640,74 @@ namespace dns
                                                                      tsig_info.other ) );
         entry.r_offset = NO_COMPRESSION;
 
+        PacketData         packet  = message.get();
         PacketHeaderField *header  = reinterpret_cast<PacketHeaderField *>( &packet[ 0 ] );
-        uint16_t           arcount = ntohs( header->additional_infomation_count );
-        arcount++;
-        header->additional_infomation_count = htons( arcount );
+        uint16_t           adcount = ntohs( header->additional_infomation_count );
+        adcount++;
+        header->additional_infomation_count = htons( adcount );
 
         PacketData tsig_packet = generate_response_section( entry );
         packet.insert( packet.end(), tsig_packet.begin(), tsig_packet.end() );
 
         message.clear();
         message.pushBuffer( packet );
+    }
+
+    bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message )
+    {
+        PacketData hash_data = message.get();
+
+        PacketHeaderField *header = reinterpret_cast<PacketHeaderField *>( &hash_data[ 0 ] );
+        header->id                = htons( tsig_info.original_id );
+        uint16_t adcount          = ntohs( header->additional_infomation_count );
+        if ( adcount < 1 ) {
+            throw FormatError( "adcount of message with TSIG record must not be 0" );
+        }
+        header->additional_infomation_count = htons( adcount - 1 );
+
+        const uint8_t *pos = &hash_data[ 0 ];
+        pos += sizeof( PacketHeaderField );
+
+        // skip question section
+        for ( uint16_t i = 0; i < packet_info.question_section.size(); i++ )
+            pos = parse_question_section( &hash_data[ 0 ], pos ).second;
+
+        // skip answer section
+        for ( uint16_t i = 0; i < packet_info.answer_section.size(); i++ )
+            pos = parse_response_section( &hash_data[ 0 ], pos ).second;
+
+        // skip authority section
+        for ( uint16_t i = 0; i < packet_info.authority_section.size(); i++ )
+            pos = parse_response_section( &hash_data[ 0 ], pos ).second;
+
+        // skip non TSIG Record in additional section
+        bool is_found_tsig = false;
+        for ( uint16_t i = 0; i < packet_info.additional_infomation_section.size(); i++ ) {
+            ResponseSectionEntryPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], pos );
+            if ( parsed_rr_pair.first.r_type == TYPE_TSIG ) {
+                is_found_tsig = true;
+                break;
+            } else {
+                pos = parsed_rr_pair.second;
+            }
+        }
+
+        if ( !is_found_tsig ) {
+            throw FormatError( "not found tsig record" );
+        }
+        // remove TSIG RR( TSIG must be final RR in message )
+        hash_data.resize( pos - &hash_data[ 0 ] );
+
+        PacketData mac = getTSIGMAC( tsig_info, hash_data, PacketData() );
+
+        if ( mac.size() != tsig_info.mac_size )
+            return false;
+
+        for ( unsigned int i = 0; mac.size(); i++ ) {
+            if ( mac[ i ] != tsig_info.mac[ i ] )
+                return false;
+        }
+
+        return true;
     }
 }

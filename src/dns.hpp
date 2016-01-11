@@ -21,10 +21,15 @@ namespace dns
     typedef uint8_t Opcode;
     const Opcode    OPCODE_QUERY  = 0;
     const Opcode    OPCODE_NOTIFY = 4;
+    const Opcode    OPCODE_UPDATE = 5;
 
     typedef uint16_t Class;
-    const Class      CLASS_IN  = 1;
-    const Class      CLASS_ANY = 255;
+    const Class      CLASS_IN      = 1;
+    const Class      CLASS_ANY     = 255;
+    const Class      UPDATE_NONE   = 254;
+    const Class      UPDATE_EXIST  = 255;
+    const Class      UPDATE_ADD    = 1;
+    const Class      UPDATE_DELETE = 255;
 
     typedef uint16_t Type;
     const Type       TYPE_A      = 1;
@@ -658,17 +663,19 @@ namespace dns
 
     struct TSIGInfo {
         std::string name;
-        std::string key;
+        PacketData  key;
         std::string algorithm;
+        PacketData  mac;
         uint64_t    signed_time;
         uint16_t    fudge;
+        uint16_t    mac_size;
         uint16_t    original_id;
         uint16_t    error;
         PacketData  other;
 
         TSIGInfo()
-            : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ), signed_time( 0 ), fudge( 0 ), original_id( 0 ),
-              error( 0 ), other()
+            : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ), mac(), signed_time( 0 ), fudge( 0 ),
+              mac_size( 0 ), original_id( 0 ), error( 0 ), other()
         {
         }
     };
@@ -676,6 +683,7 @@ namespace dns
     class RecordTSIGData : public ResourceData
     {
     public:
+        Domainname key_name;
         Domainname algorithm;
         uint64_t   signed_time;
         uint16_t   fudge;
@@ -687,7 +695,8 @@ namespace dns
         PacketData other;
 
     public:
-        RecordTSIGData( const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
+        RecordTSIGData( const std::string &in_key_name     = "",
+                        const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
                         uint64_t           in_signed_time  = 0,
                         uint16_t           in_fudge        = 0,
                         uint16_t           in_mac_size     = 0,
@@ -696,9 +705,9 @@ namespace dns
                         uint16_t           in_error        = 0,
                         uint16_t           in_other_length = 0,
                         const PacketData & in_other        = PacketData() )
-            : algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ), mac_size( in_mac_size ),
-              mac( in_mac ), original_id( in_original_id ), error( in_error ), other_length( in_other_length ),
-              other( in_other )
+            : key_name( in_key_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
+              mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
+              other_length( in_other_length ), other( in_other )
         {
         }
 
@@ -710,7 +719,8 @@ namespace dns
         }
         virtual uint16_t size() const;
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static ResourceDataPtr
+        parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name );
     };
 
     class RecordTSIG
@@ -830,8 +840,10 @@ namespace dns
         uint8_t response_code;
 
         bool edns0;
+        bool tsig;
 
         OptPseudoRecord opt_pseudo_rr;
+        RecordTSIGData  tsig_rr;
 
         std::vector<QuestionSectionEntry> question_section;
         std::vector<ResponseSectionEntry> answer_section;
@@ -841,7 +853,7 @@ namespace dns
         PacketInfo()
             : id( 0 ), query_response( 0 ), opcode( 0 ), authoritative_answer( 0 ), truncation( false ),
               recursion_desired( false ), recursion_available( false ), checking_disabled( false ), zero_field( 0 ),
-              authentic_data( false ), response_code( 0 ), edns0( false )
+              authentic_data( false ), response_code( 0 ), edns0( false ), tsig( false )
         {
         }
     };
@@ -908,7 +920,10 @@ namespace dns
     ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
     OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
 
-    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message );
+    void
+    addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac = PacketData() );
+    bool
+    verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message );
 
     template <typename Type>
     uint8_t *set_bytes( Type v, uint8_t *pos )

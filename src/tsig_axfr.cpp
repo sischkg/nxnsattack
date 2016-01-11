@@ -44,18 +44,16 @@ int main( int argc, char **argv )
             return 1;
         }
 
-        std::string tsig_key;
-        PacketData  key;
+        PacketData tsig_key;
+        PacketData key;
         tsig_key.resize( decode_from_base64_size( base64_key.c_str(), base64_key.c_str() + base64_key.size() ) );
-        decode_from_base64(
-            base64_key.c_str(), base64_key.c_str() + base64_key.size(), reinterpret_cast<uint8_t *>( &tsig_key[ 0 ] ) );
+        decode_from_base64( base64_key.c_str(), base64_key.c_str() + base64_key.size(), &tsig_key[ 0 ] );
 
         dns::TSIGInfo tsig_info;
         tsig_info.name        = tsig_name;
         tsig_info.algorithm   = "HMAC-MD5.SIG-ALG.REG.INT";
         tsig_info.key         = tsig_key;
         tsig_info.signed_time = time( NULL );
-        //        tsig_info.signed_time = 0x568653fd;
         tsig_info.fudge       = 300;
         tsig_info.original_id = 0x0f01;
 

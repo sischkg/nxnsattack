@@ -78,9 +78,8 @@ namespace ipv4
         Packet( const uint8_t *header, uint16_t header_length, const uint8_t *payload, uint16_t payload_length );
         Packet( boost::shared_array<uint8_t> header,
                 uint16_t                     header_length,
-                boost::shared_array<uint8_t>
-                         payload,
-                uint16_t payload_length );
+                boost::shared_array<uint8_t> payload,
+                uint16_t                     payload_length );
 
         const uint8_t *getData() const
         {

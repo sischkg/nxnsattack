@@ -13,6 +13,14 @@ WireFormat::WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size )
     }
 }
 
+WireFormat::WireFormat( const uint8_t *begin, const uint8_t *end, uint16_t buffer_size )
+    : mBufferSize( buffer_size ), mEnd( 0 )
+{
+    for ( auto i = begin; i != end; i++ ) {
+        push_back( *i );
+    }
+}
+
 WireFormat::~WireFormat()
 {
     clear();

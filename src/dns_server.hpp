@@ -5,6 +5,7 @@
 #include "tcpv4server.hpp"
 #include "udpv4server.hpp"
 #include "wireformat.hpp"
+#include <map>
 #include <string>
 
 namespace dns
@@ -17,18 +18,31 @@ namespace dns
         std::vector<ResponseSectionEntry> additional_infomation_section;
     };
 
+    struct TSIGKey {
+        std::string algorithm;
+        PacketData  key;
+
+        TSIGKey( const std::string &a, const PacketData &k ) : algorithm( a ), key( k )
+        {
+        }
+    };
+
     class DNSServer
     {
     private:
-        std::string bind_address;
-        uint16_t    bind_port;
+        std::string mBindAddress;
+        uint16_t    mBindPort;
+        std::map<std::string, TSIGKey> mNameToKey;
 
         void startUDPServer();
         void startTCPServer();
 
+        ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end );
+        PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode );
+
     public:
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53 )
-            : bind_address( address ), bind_port( port )
+            : mBindAddress( address ), mBindPort( port )
         {
         }
 
@@ -37,11 +51,13 @@ namespace dns
         }
 
         virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
-        virtual void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
+        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn )
         {
         }
 
         void start();
+
+        void addTSIGKey( const std::string &name, const TSIGKey &key );
     };
 }
 

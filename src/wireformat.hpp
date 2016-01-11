@@ -30,6 +30,8 @@ private:
 public:
     WireFormat( uint16_t buffer_size = 512 );
     WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size = 512 );
+    WireFormat( const uint8_t *begin, const uint8_t *end, uint16_t buffer_size = 512 );
+
     ~WireFormat();
 
     void push_back( uint8_t v )

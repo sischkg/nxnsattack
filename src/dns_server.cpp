@@ -15,19 +15,70 @@ namespace dns
     {
     }
 
+    void DNSServer::addTSIGKey( const std::string &name, const TSIGKey &key )
+    {
+        mNameToKey.insert( std::pair<std::string, TSIGKey>( name, key ) );
+    }
+
+    ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end )
+    {
+        auto tsig_key = mNameToKey.find( query.tsig_rr.key_name.toString() );
+        if ( tsig_key == mNameToKey.end() )
+            return BADKEY;
+
+        TSIGInfo tsig_info;
+        tsig_info.name        = query.tsig_rr.key_name.toString();
+        tsig_info.key         = tsig_key->second.key;
+        tsig_info.algorithm   = tsig_key->second.algorithm;
+        tsig_info.signed_time = query.tsig_rr.signed_time;
+        tsig_info.fudge       = query.tsig_rr.fudge;
+        tsig_info.mac         = query.tsig_rr.mac;
+        tsig_info.mac_size    = query.tsig_rr.mac_size;
+        tsig_info.original_id = query.tsig_rr.original_id;
+        tsig_info.error       = query.tsig_rr.error;
+        tsig_info.other       = query.tsig_rr.other;
+
+        time_t now = time( NULL );
+        if ( query.tsig_rr.signed_time > now - query.tsig_rr.fudge &&
+             query.tsig_rr.signed_time < now + query.tsig_rr.fudge ) {
+            return BADTIME;
+        }
+
+        if ( verifyTSIGResourceRecord( tsig_info, query, WireFormat( begin, end ) ) ) {
+            return NO_ERROR;
+        }
+
+        return BADSIG;
+    }
+
+    PacketInfo DNSServer::generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode )
+    {
+        PacketInfo response;
+
+        return response;
+    }
+
+
     void DNSServer::startUDPServer()
     {
         try {
             udpv4::ServerParameters params;
-            params.bind_address = bind_address;
-            params.bind_port    = bind_port;
+            params.bind_address = mBindAddress;
+            params.bind_port    = mBindPort;
             udpv4::Server dns_receiver( params );
 
             while ( true ) {
                 try {
-                    udpv4::PacketInfo recv_data     = dns_receiver.receivePacket();
-                    PacketInfo        query         = parse_dns_packet( recv_data.begin(), recv_data.end() );
-                    PacketInfo        response_info = generateResponse( query, false );
+                    udpv4::PacketInfo recv_data = dns_receiver.receivePacket();
+                    PacketInfo        query     = parse_dns_packet( recv_data.begin(), recv_data.end() );
+
+                    if ( query.tsig ) {
+                        ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
+                        if ( rcode != NO_ERROR ) {
+                            PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
+                        }
+                    }
+                    PacketInfo response_info = generateResponse( query, false );
 
                     WireFormat response_packet( generate_dns_packet( response_info ) );
 
@@ -48,8 +99,8 @@ namespace dns
     {
         try {
             tcpv4::ServerParameters params;
-            params.bind_address = bind_address;
-            params.bind_port    = bind_port;
+            params.bind_address = mBindAddress;
+            params.bind_port    = mBindPort;
 
             tcpv4::Server dns_receiver( params );
 

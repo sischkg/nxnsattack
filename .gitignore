@@ -43,6 +43,7 @@ src/ednssubnet
 src/tkey_tc
 src/naptr
 src/tsig_axfr
+src/update
 src/cve-2015-8000
 tests/test-base64
 tests/test-md5
