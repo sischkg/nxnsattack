@@ -26,7 +26,7 @@ int main( int argc, char **argv )
 
             ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" )
 
-            ( "serial,s", po::value<uint32_t>( &new_serial )->default_value( 0 ), "new serial" );
+                ( "serial,s", po::value<uint32_t>( &new_serial )->default_value( 0 ), "new serial" );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -53,7 +53,7 @@ int main( int argc, char **argv )
     authority1.r_class         = dns::CLASS_IN;
     authority1.r_ttl           = 300;
     authority1.r_resource_data = dns::ResourceDataPtr(
-						   new dns::RecordSOA( "ns1." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
+        new dns::RecordSOA( "ns1." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
     packet_info.authority_section.push_back( authority1 );
 
     packet_info.id                   = 1234;

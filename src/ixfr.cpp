@@ -27,7 +27,7 @@ int main( int argc, char **argv )
 
             ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" )
 
-            ( "serial,s", po::value<uint32_t>( &new_serial )->default_value( 0 ), "new serial" );
+                ( "serial,s", po::value<uint32_t>( &new_serial )->default_value( 0 ), "new serial" );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -54,7 +54,7 @@ int main( int argc, char **argv )
     authority1.r_class         = dns::CLASS_IN;
     authority1.r_ttl           = 300;
     authority1.r_resource_data = dns::ResourceDataPtr(
-						   new dns::RecordSOA( "ns1." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
+        new dns::RecordSOA( "ns1." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
     packet_info.authority_section.push_back( authority1 );
 
     dns::ResponseSectionEntry authority2;
@@ -63,7 +63,7 @@ int main( int argc, char **argv )
     authority2.r_class         = dns::CLASS_IN;
     authority2.r_ttl           = 100;
     authority2.r_resource_data = dns::ResourceDataPtr(
-						   new dns::RecordSOA( "ns2." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
+        new dns::RecordSOA( "ns2." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
     packet_info.answer_section.push_back( authority2 );
     packet_info.additional_infomation_section.push_back( authority2 );
 
@@ -73,7 +73,7 @@ int main( int argc, char **argv )
     options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaa" ) ) );
     opt_pseudo_rr_1.payload_size = 0xff00;
     opt_pseudo_rr_1.record_options_data =
-	boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+        boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
     packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
 
     packet_info.id                   = 1234;
@@ -91,7 +91,7 @@ int main( int argc, char **argv )
     WireFormat query_stream;
     dns::generate_dns_packet( packet_info, query_stream );
 
-#ifdef  TCP
+#ifdef TCP
 
     tcpv4::ClientParameters tcp_param;
     tcp_param.destination_address = target_server;

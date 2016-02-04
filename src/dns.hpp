@@ -405,18 +405,18 @@ namespace dns
         bool       negation;
         PacketData afd;
     };
-    
+
     class RecordAPL : public ResourceData
     {
     private:
         std::vector<APLEntry> apl_entries;
+
     public:
-        static const uint16_t IPv4 = 1;
-        static const uint16_t IPv6 = 2;
+        static const uint16_t IPv4    = 1;
+        static const uint16_t IPv6    = 2;
         static const uint16_t Invalid = 0xffff;
 
-        RecordAPL( const std::vector<APLEntry> &in_apls )
-            : apl_entries( in_apls )
+        RecordAPL( const std::vector<APLEntry> &in_apls ) : apl_entries( in_apls )
         {
         }
 
