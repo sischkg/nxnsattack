@@ -3,7 +3,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 #include <iostream>
 #include <signal.h>
 #include <stdexcept>
@@ -95,6 +94,11 @@ namespace dns
         }
     }
 
+    void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr connection )
+    {
+	generateAXFRResponse( query, connection );
+    }
+
     void DNSServer::startTCPServer()
     {
         try {
@@ -114,7 +118,8 @@ namespace dns
                     PacketData recv_data = connection->receive( size );
                     PacketInfo query     = parse_dns_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
                     if ( query.question_section[ 0 ].q_type == dns::TYPE_AXFR ) {
-                        generateAXFRResponse( query, connection );
+			boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );
+			axfr_thread.detach();
                     } else {
                         PacketInfo response_info = generateResponse( query, true );
                         WireFormat response_stream;

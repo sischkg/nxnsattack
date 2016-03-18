@@ -75,6 +75,46 @@ private:
         conn->send( response_message );
     }
 
+    void sendLastResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
+    {
+        dns::PacketInfo           response;
+        dns::QuestionSectionEntry query_question = query.question_section[ 0 ];
+
+        dns::QuestionSectionEntry question;
+        question.q_domainname = query_question.q_domainname;
+        question.q_type       = query_question.q_type;
+        question.q_class      = query_question.q_class;
+        response.question_section.push_back( question );
+
+        dns::ResponseSectionEntry answer1;
+        answer1.r_domainname    = query_question.q_domainname;
+        answer1.r_type          = dns::TYPE_SOA;
+        answer1.r_class         = dns::CLASS_IN;
+        answer1.r_ttl           = TTL;
+        answer1.r_resource_data = dns::ResourceDataPtr(
+            new dns::RecordSOA( "mname.example.com", "ns.example.com", 0, 360000, 10000, 3600000, 3600 ) );
+        response.answer_section.push_back( answer1 );
+
+        response.id                   = query.id;
+        response.opcode               = 0;
+        response.query_response       = 1;
+        response.authoritative_answer = 1;
+        response.truncation           = 1;
+        response.recursion_desired    = 0;
+        response.recursion_available  = 0;
+        response.zero_field           = 0;
+        response.authentic_data       = 1;
+        response.checking_disabled    = 1;
+        response.response_code        = dns::NO_ERROR;
+
+        WireFormat response_message;
+        dns::generate_dns_packet( response, response_message );
+
+        uint16_t send_size = htons( response_message.size() );
+        conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
+        conn->send( response_message );
+    }
+
     void sendResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
         dns::PacketInfo           response;
@@ -155,6 +195,7 @@ public:
             std::cerr << "sent response: " << index << std::endl;
             sendResponse( query, conn );
         }
+        sendLastResponse( query, conn );
     }
 
     dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
