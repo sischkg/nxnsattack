@@ -6,8 +6,8 @@
 #include <cstring>
 #include <iostream>
 
-const char *DNS_SERVER_ADDRESS = "192.168.33.10";
-const char *ZONE_NAME          = "example.com";
+const char *DEFAULT_SERVER_ADDRESS = "127.0.0.1";
+const char *DEFAULT_ZONE_NAME  = "example.com";
 
 namespace po = boost::program_options;
 
@@ -15,18 +15,15 @@ int main( int argc, char **argv )
 {
     std::string target_server;
     std::string zone_name;
-    uint32_t    new_serial;
 
     po::options_description desc( "NOTIFY Client" );
     desc.add_options()( "help,h", "print this message" )
 
         ( "target,t",
-          po::value<std::string>( &target_server )->default_value( DNS_SERVER_ADDRESS ),
+          po::value<std::string>( &target_server )->default_value( DEFAULT_SERVER_ADDRESS ),
           "target server address" )
 
-            ( "zone,z", po::value<std::string>( &zone_name )->default_value( ZONE_NAME ), "zone name" )
-
-                ( "serial,s", po::value<uint32_t>( &new_serial )->default_value( 0 ), "new serial" );
+	( "zone,z", po::value<std::string>( &zone_name )->default_value( DEFAULT_ZONE_NAME ), "zone name" )
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -47,17 +44,8 @@ int main( int argc, char **argv )
     question.q_class      = dns::CLASS_IN;
     packet_info.question_section.push_back( question );
 
-    dns::ResponseSectionEntry authority1;
-    authority1.r_domainname    = zone_name;
-    authority1.r_type          = dns::TYPE_SOA;
-    authority1.r_class         = dns::CLASS_IN;
-    authority1.r_ttl           = 300;
-    authority1.r_resource_data = dns::ResourceDataPtr(
-        new dns::RecordSOA( "ns1." + zone_name, "hostmaster." + zone_name, new_serial, 3600, 800, 864000, 3600 ) );
-    packet_info.authority_section.push_back( authority1 );
-
     packet_info.id                   = 1234;
-    packet_info.opcode               = 0;
+    packet_info.opcode               = dns::OPCODE_NOTIFY;
     packet_info.query_response       = 0;
     packet_info.authoritative_answer = 0;
     packet_info.truncation           = 0;
@@ -68,38 +56,21 @@ int main( int argc, char **argv )
     packet_info.checking_disabled    = 1;
     packet_info.response_code        = 0;
 
-    WireFormat query_stream;
-    dns::generate_dns_packet( packet_info, query_stream );
+    WireFormat notify_data;
+    dns::generate_dns_packet( packet_info, notify_data );
 
-    tcpv4::ClientParameters tcp_param;
-    tcp_param.destination_address = target_server;
-    tcp_param.destination_port    = 53;
-    tcpv4::Client tcp( tcp_param );
+    udov4::ClientParameters udp_param;
+    udp_param.destination_address = target_server;
+    udp_param.destination_port    = 53;
+    udpv4::Client udp( udp_param );
 
-    while ( true ) {
+    udp.sendPacket( notify_data );
+    udpv4::PacketInfo recv_data = udp.receivePacket();
+	
+    dns::ResponsePacketInfo res =
+	dns::parse_dns_response_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
 
-        uint16_t query_size_data = htons( query_stream.size() );
-        tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data ), 2 );
-        tcp.send( query_stream );
-
-        tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
-        uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
-
-        PacketData response_data;
-        while ( response_data.size() < response_size ) {
-            tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
-
-            std::cerr << "received size: " << received_data.getLength() << std::endl;
-            response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
-        }
-        dns::ResponsePacketInfo res =
-            dns::parse_dns_response_packet( &response_data[ 0 ], &response_data[ 0 ] + response_data.size() );
-
-        std::cout << res;
-
-        if ( res.answer.size() == 0 || res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
-            break;
-    }
+    std::cout << res;
 
     return 0;
 }

@@ -96,7 +96,7 @@ namespace dns
 
     void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr connection )
     {
-	generateAXFRResponse( query, connection );
+        generateAXFRResponse( query, connection );
     }
 
     void DNSServer::startTCPServer()
@@ -118,8 +118,8 @@ namespace dns
                     PacketData recv_data = connection->receive( size );
                     PacketInfo query     = parse_dns_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
                     if ( query.question_section[ 0 ].q_type == dns::TYPE_AXFR ) {
-			boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );
-			axfr_thread.detach();
+                        boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );
+                        axfr_thread.detach();
                     } else {
                         PacketInfo response_info = generateResponse( query, true );
                         WireFormat response_stream;

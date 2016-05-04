@@ -5,9 +5,9 @@
 #include "tcpv4server.hpp"
 #include "udpv4server.hpp"
 #include "wireformat.hpp"
+#include <boost/thread.hpp>
 #include <map>
 #include <string>
-#include <boost/thread.hpp>
 
 namespace dns
 {
@@ -41,7 +41,8 @@ namespace dns
         ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end );
         PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode );
 
-	void sendZone( const PacketInfo &info, tcpv4::ConnectionPtr connection );
+        void sendZone( const PacketInfo &info, tcpv4::ConnectionPtr connection );
+
     public:
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53 )
             : mBindAddress( address ), mBindPort( port )
