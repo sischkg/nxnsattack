@@ -26,6 +26,17 @@ private:
     unsigned long long index;
     unsigned int       period_micro_second;
     unsigned long long rr_count;
+    uint32_t           soa_serial;
+
+    dns::ResourceDataPtr generateSOA( const dns::Domainname &zone_name )
+    {
+	dns::Domainname mname = zone_name;
+	mname.addSubdomain( "mname" );
+	dns::Domainname rname = zone_name;
+	rname.addSubdomain( "ns" );
+
+	return dns::ResourceDataPtr( new dns::RecordSOA( mname, rname, soa_serial, 360000, 10000, 3600000, 3600 ) );
+    }
 
     void sendFirstResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn )
     {
@@ -43,8 +54,7 @@ private:
         answer1.r_type          = dns::TYPE_SOA;
         answer1.r_class         = dns::CLASS_IN;
         answer1.r_ttl           = TTL;
-        answer1.r_resource_data = dns::ResourceDataPtr(
-            new dns::RecordSOA( "mname.example.com", "ns.example.com", 0, 360000, 10000, 3600000, 3600 ) );
+        answer1.r_resource_data = generateSOA( query_question.q_domainname );
         response.answer_section.push_back( answer1 );
 
         dns::ResponseSectionEntry answer2;
@@ -91,8 +101,7 @@ private:
         answer1.r_type          = dns::TYPE_SOA;
         answer1.r_class         = dns::CLASS_IN;
         answer1.r_ttl           = TTL;
-        answer1.r_resource_data = dns::ResourceDataPtr(
-            new dns::RecordSOA( "mname.example.com", "ns.example.com", 0, 360000, 10000, 3600000, 3600 ) );
+        answer1.r_resource_data = generateSOA( query_question.q_domainname );
         response.answer_section.push_back( answer1 );
 
         response.id                   = query.id;
@@ -179,8 +188,8 @@ private:
     }
 
 public:
-    AXFRServer( const std::string addr, uint16_t port, unsigned int period, unsigned long long count )
-        : dns::DNSServer( addr, port ), index( 0 ), period_micro_second( period ), rr_count( count )
+    AXFRServer( const std::string addr, uint16_t port, unsigned int period, unsigned long long count, uint32_t serial = 0 )
+        : dns::DNSServer( addr, port ), index( 0 ), period_micro_second( period ), rr_count( count ), soa_serial( serial )
     {
     }
 
@@ -215,8 +224,7 @@ public:
             answer.r_type          = dns::TYPE_SOA;
             answer.r_class         = dns::CLASS_IN;
             answer.r_ttl           = TTL;
-            answer.r_resource_data = dns::ResourceDataPtr(
-                new dns::RecordSOA( "mname.example.com", "ns.example.com", 0, 360000, 10000, 3600000, 3600 ) );
+	    answer.r_resource_data = generateSOA( query_question.q_domainname );
             response.answer_section.push_back( answer );
         } else {
             answer.r_domainname    = query_question.q_domainname;
@@ -250,17 +258,20 @@ int main( int argc, char **argv )
     std::string        bind_address;
     unsigned int       period;
     unsigned long long rr_count;
+    uint32_t           serial;
 
     po::options_description desc( "AXFR Server" );
     desc.add_options()( "help,h", "print this message" )
 
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( BIND_ADDRESS ), "bind address" )
 
-            ( "period,p",
-              po::value<unsigned int>( &period )->default_value( PERIOD_MICRO_SECOND ),
-              "period[micro second]" )
+        ( "period,p",
+	  po::value<unsigned int>( &period )->default_value( PERIOD_MICRO_SECOND ),
+	  "period[micro second]" )
 
-                ( "count,c", po::value<unsigned long long>( &rr_count )->default_value( 0 ), "rr ount" );
+        ( "count,c", po::value<unsigned long long>( &rr_count )->default_value( 0 ), "rr ount" )
+
+        ( "serial,s", po::value<uint32_t>( &serial )->default_value( 0 ), "zone soa serial" );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -271,7 +282,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    AXFRServer server( bind_address, 53, period, rr_count );
+    AXFRServer server( bind_address, 53, period, rr_count, serial );
     server.start();
 
     return 0;
