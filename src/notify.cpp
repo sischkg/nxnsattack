@@ -1,5 +1,5 @@
 #include "dns.hpp"
-#include "tcpv4client.hpp"
+#include "udpv4client.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
@@ -23,7 +23,7 @@ int main( int argc, char **argv )
           po::value<std::string>( &target_server )->default_value( DEFAULT_SERVER_ADDRESS ),
           "target server address" )
 
-	( "zone,z", po::value<std::string>( &zone_name )->default_value( DEFAULT_ZONE_NAME ), "zone name" )
+	( "zone,z", po::value<std::string>( &zone_name )->default_value( DEFAULT_ZONE_NAME ), "zone name" );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -59,7 +59,7 @@ int main( int argc, char **argv )
     WireFormat notify_data;
     dns::generate_dns_packet( packet_info, notify_data );
 
-    udov4::ClientParameters udp_param;
+    udpv4::ClientParameters udp_param;
     udp_param.destination_address = target_server;
     udp_param.destination_port    = 53;
     udpv4::Client udp( udp_param );
@@ -68,7 +68,7 @@ int main( int argc, char **argv )
     udpv4::PacketInfo recv_data = udp.receivePacket();
 	
     dns::ResponsePacketInfo res =
-	dns::parse_dns_response_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
+	dns::parse_dns_response_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.getPayloadLength() );
 
     std::cout << res;
 

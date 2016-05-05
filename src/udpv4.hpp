@@ -49,6 +49,16 @@ namespace udpv4
         {
             return begin() + payload.size();
         }
+
+	uint8_t operator[]( unsigned int index ) const
+	{
+	    return payload[index];
+	}
+
+    	uint8_t &operator[]( unsigned int index )
+	{
+	    return payload[index];
+	}
     };
 
     class Packet
