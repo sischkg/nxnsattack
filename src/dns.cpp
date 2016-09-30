@@ -226,7 +226,11 @@ namespace dns
 
     unsigned int Domainname::size( Offset offset ) const
     {
-        return getPacket( offset ).size();
+	unsigned int size = 0;
+	for ( auto &label : labels ) {
+	    size += ( 1 + label.size() );
+	}
+	return size;
     }
 
     Domainname Domainname::operator+( const Domainname &rhs ) const
@@ -1344,7 +1348,7 @@ namespace dns
         entry.r_domainname    = opt.domainname;
         entry.r_type          = TYPE_OPT;
         entry.r_class         = opt.payload_size;
-        entry.r_ttl           = ( (uint32_t)opt.rcode ) << 24;
+        entry.r_ttl           = ( ( (uint32_t)opt.rcode ) << 24 ) + ( opt.dobit ? ( (uint32_t)1 << 15 ) : 0 );
         entry.r_resource_data = opt.record_options_data;
         entry.r_offset        = opt.offset;
 

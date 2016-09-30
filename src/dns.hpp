@@ -649,10 +649,11 @@ namespace dns
         Domainname                      domainname;
         uint16_t                        payload_size;
         uint8_t                         rcode;
+	bool                            dobit;
         boost::shared_ptr<ResourceData> record_options_data;
         uint32_t                        offset;
 
-        OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), offset( NO_COMPRESSION )
+        OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
         {
         }
     };
