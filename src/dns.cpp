@@ -577,7 +577,7 @@ namespace dns
 
     void generate_question_section( const QuestionSectionEntry &question, WireFormat &message )
     {
-        question.q_domainname.outputWireFormat( message );
+        question.q_domainname.outputWireFormat( message, question.q_offset );
         message.pushUInt16HtoN( question.q_type );
         message.pushUInt16HtoN( question.q_class );
     }
