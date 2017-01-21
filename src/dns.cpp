@@ -230,7 +230,10 @@ namespace dns
 	for ( auto &label : labels ) {
 	    size += ( 1 + label.size() );
 	}
-	return size;
+	if ( offset == NO_COMPRESSION )
+	    return size + 1;
+	else
+	    return size + 2;
     }
 
     Domainname Domainname::operator+( const Domainname &rhs ) const
