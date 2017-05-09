@@ -1313,6 +1313,39 @@ namespace dns
         return ResourceDataPtr( new RecordDNSKey( f, algo, key ) );
     }
 
+    std::string RecordDS::toString() const
+    {
+        std::string digest_str;
+        encode_to_base64( digest, digest_str );
+
+        std::ostringstream os;
+        os << "keytag: " << key_tag << ", "
+           << "algorithm: " << algorithm << ", "
+           << "digest type: " << digest_type << ", "
+           << "digest: " << digest_str;
+        return os.str();
+    }
+
+    void RecordDS::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( key_tag );
+        message.pushUInt8( algorithm );
+        message.pushUInt8( digest_type );
+        message.pushBuffer( digest );
+    }
+
+    ResourceDataPtr RecordDS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+        const uint8_t *      pos   = begin;
+        uint16_t             tag   = ntohs( get_bytes<uint16_t>( &pos ) );
+        uint8_t              algo  = get_bytes<uint8_t>( &pos );
+        uint8_t              dtype = get_bytes<uint8_t>( &pos );
+        std::vector<uint8_t> d;
+        d.insert( d.end(), pos, end );
+
+        return ResourceDataPtr( new RecordDS( tag, algo, dtype, d ) );
+    }
+
     std::string RecordOptionsData::toString() const
     {
         std::ostringstream os;

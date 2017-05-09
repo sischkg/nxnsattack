@@ -540,6 +540,34 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+    class RecordDS : public ResourceData
+    {
+    private:
+        uint16_t             key_tag;
+        uint8_t              algorithm;
+        uint8_t              digest_type;
+        std::vector<uint8_t> digest;
+
+        RecordDS( uint16_t tag, uint8_t alg, uint8_t dtype, const std::vector<uint8_t> &d )
+            : key_tag( tag ), algorithm( alg ), digest_type( dtype ), digest( d )
+        {}
+
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const
+        {
+            return 2 + 1 + 1 + digest.size();
+        }
+
+        virtual uint16_t type() const
+        {
+            return TYPE_DS;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+
     const uint8_t PROTOCOL_TLS    = 0x01;
     const uint8_t PROTOCOL_MAIL   = 0x02;
     const uint8_t PROTOCOL_DNSSEC = 0x03;
