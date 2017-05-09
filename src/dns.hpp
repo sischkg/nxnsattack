@@ -44,6 +44,8 @@ namespace dns
     const Type       TYPE_DNAME  = 39;
     const Type       TYPE_OPT    = 41;
     const Type       TYPE_APL    = 42;
+    const Type       TYPE_DS     = 43;
+    const Type       TYPE_RRSIG  = 46;
     const Type       TYPE_DNSKEY = 48;
     const Type       TYPE_TLSA   = 52;
     const Type       TYPE_TKEY   = 249;
@@ -431,6 +433,75 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+    class RecordRRSIG : public ResourceData
+    {
+    private:
+        Type     type_covered;
+        uint8_t  algorithm;
+        uint8_t  label_count;
+        uint32_t original_ttl;
+        uint32_t expiration;
+        uint32_t inception;
+        uint16_t key_tag;
+        Domainname signer;
+        std::vector<uint8_t> signature;
+
+    public:
+        static const uint16_t SIGNED_KEY = 1 << 7;
+        static const uint8_t  RSAMD5     = 1;
+        static const uint8_t  RSASHA1    = 5;
+        static const uint8_t  RSASHA256  = 8;
+        static const uint8_t  RSASHA512  = 10;
+
+        RecordRRSIG( Type                       t,
+                     uint8_t                    algo,
+                     uint8_t                    label,
+                     uint32_t                   ttl,
+                     uint32_t                   expire,
+                     uint32_t                   incept,
+                     uint16_t                   tag,
+                     const Domainname           &sign,
+                     const std::vector<uint8_t> &sig )
+            : type_covered( t ),
+              algorithm( algo ),
+              label_count( label ),
+              original_ttl( ttl ),
+              expiration( expire ),
+              inception( incept ),
+              key_tag( tag ),
+              signer( sign ),
+              signature( sig ) 
+        {
+        }
+
+        virtual std::string toString() const
+        {
+            return "";
+        }
+
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const
+        {
+            return 2 +  // type_covered(uint16_t)
+                   1 +  // algorithm
+                   1 +  // label count
+                   4 +  // original ttl
+                   4 +  // expiration
+                   4 +  // inception
+                   2 +  // key tag
+                   signer.size() +
+                   signature.size();
+        }
+
+        virtual uint16_t type() const
+        {
+            return TYPE_RRSIG;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+
     class RecordDNSKey : public ResourceData
     {
     private:
@@ -799,6 +870,8 @@ namespace dns
         QuestionSectionEntry() : q_type( 0 ), q_class( 0 ), q_offset( NO_COMPRESSION )
         {
         }
+
+	uint16_t size() const;
     };
 
     struct ResponseSectionEntry {
@@ -812,6 +885,8 @@ namespace dns
         ResponseSectionEntry() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
         {
         }
+
+    	uint16_t size() const;
     };
 
     struct QueryPacketInfo {

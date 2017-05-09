@@ -294,6 +294,19 @@ namespace dns
         return !( lhs == rhs );
     }
 
+    uint16_t QuestionSectionEntry::size() const
+    {
+        return q_domainname.size() + sizeof(q_type) + sizeof(q_class);
+    }
+
+    uint16_t ResponseSectionEntry::size() const
+    {
+        return r_domainname.size() + sizeof(r_type) + sizeof(r_class) + sizeof(r_ttl) +
+	    sizeof(uint16_t) +       // size of resource data size
+	    r_resource_data->size();
+    }
+
+    
     PacketData generate_dns_packet( const PacketInfo &info )
     {
         WireFormat message;
@@ -760,6 +773,9 @@ namespace dns
             break;
         case TYPE_OPT:
             res = "OPT";
+            break;
+        case TYPE_RRSIG:
+            res = "RRSIG";
             break;
         case TYPE_DNSKEY:
             res = "DNSKEY";
@@ -1263,6 +1279,19 @@ namespace dns
         return ResourceDataPtr( new RecordAPL( entries ) );
     }
 
+
+    void RecordRRSIG::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( type_covered );
+        message.pushUInt8( algorithm );
+        message.pushUInt8( label_count );
+        message.pushUInt32HtoN( original_ttl );
+        message.pushUInt32HtoN( expiration );
+        message.pushUInt32HtoN( inception );
+        message.pushUInt16HtoN( key_tag );
+        signer.outputCanonicalWireFormat( message );
+        message.pushBuffer( signature );
+    }
 
     void RecordDNSKey::outputWireFormat( WireFormat &message ) const
     {

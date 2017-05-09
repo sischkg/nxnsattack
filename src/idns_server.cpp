@@ -39,14 +39,25 @@ dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSecti
     question.q_type       = question_section.q_type;
     response.question.push_back( question );
 
-    for ( int i = 0; i < NS_RECORD_COUNT; i++ ) {
-        dns::ResponseSectionEntry response_section;
-        response_section.r_domainname    = question_section.q_domainname;
-        response_section.r_class         = dns::CLASS_IN;
-        response_section.r_type          = dns::TYPE_NS;
-        response_section.r_ttl           = TTL;
-        response_section.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( generate_domainname() ) );
-        response.authority.push_back( response_section );
+    if ( question_section.q_domainname.toString()[3] > 'o' ) {
+	dns::ResponseSectionEntry response_section;
+	response_section.r_domainname    = question_section.q_domainname;
+	response_section.r_class         = dns::CLASS_IN;
+	response_section.r_type          = dns::TYPE_CNAME;
+	response_section.r_ttl           = TTL;
+	response_section.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( generate_domainname() ) );
+	response.authority.push_back( response_section );
+    }
+    else {
+	for ( int i = 0; i < NS_RECORD_COUNT; i++ ) {
+	    dns::ResponseSectionEntry response_section;
+	    response_section.r_domainname    = question_section.q_domainname;
+	    response_section.r_class         = dns::CLASS_IN;
+	    response_section.r_type          = dns::TYPE_NS;
+	    response_section.r_ttl           = TTL;
+	    response_section.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( generate_domainname() ) );
+	    response.authority.push_back( response_section );
+	}
     }
 
     return response;
