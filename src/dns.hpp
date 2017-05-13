@@ -54,6 +54,8 @@ namespace dns
     const Type       TYPE_AXFR   = 252;
     const Type       TYPE_ANY    = 255;
 
+    typedef uint32_t TTL;
+
     typedef uint16_t OptType;
     const OptType    OPT_NSID          = 3;
     const OptType    OPT_CLIENT_SUBNET = 8;
@@ -120,6 +122,10 @@ namespace dns
         void        addSubdomain( const std::string & );
         void        addSuffix( const std::string & );
 
+        Domainname getCanonicalDomainname() const;
+
+	bool isSubDomain( const Domainname &child ) const;
+	
         static const uint8_t *parsePacket( Domainname &   ref_domainname,
                                            const uint8_t *packet,
                                            const uint8_t *begin,
@@ -516,15 +522,15 @@ namespace dns
         static const uint8_t  RSASHA256  = 8;
         static const uint8_t  RSASHA512  = 10;
 
+        static const uint16_t KSK = 1 << 8;
+        static const uint16_t ZSK = 0;
+
         RecordDNSKey( uint16_t f, uint8_t algo, const std::vector<uint8_t> key )
             : flags( f ), algorithm( algo ), public_key( key )
         {
         }
 
-        virtual std::string toString() const
-        {
-            return "";
-        }
+        virtual std::string toString() const;
 
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const

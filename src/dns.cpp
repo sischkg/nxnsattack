@@ -50,6 +50,19 @@ namespace dns
         return c;
     }
 
+    static bool equalLabel( const std::string &lhs, const std::string &rhs )
+    {
+	if ( lhs.size() != rhs.size() )
+	    return false;
+
+	auto l = lhs.begin();
+	auto r = rhs.begin();
+	for ( ; l != lhs.end() ; ++l, ++r )
+	    if ( toLower( *l ) != toLower( *r ) )
+		return false;
+	return true;
+    }
+    
     static const uint8_t *
     parseCharacterString( const uint8_t *begin, const uint8_t *packet_end, std::string &ref_output )
     {
@@ -188,6 +201,7 @@ namespace dns
         message.push_back( 0 );
     }
 
+    
     const uint8_t *Domainname::parsePacket( Domainname &   ref_domainname,
                                             const uint8_t *packet,
                                             const uint8_t *begin,
@@ -249,6 +263,20 @@ namespace dns
         return *this;
     }
 
+    Domainname Domainname::getCanonicalDomainname() const
+    {
+        Domainname canonical( "." );
+        for ( unsigned int i = 0; i < labels.size(); i++ ) {
+            if ( labels[ i ].size() == 0 )
+                break;
+            std::string label;
+            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
+                label.push_back( toLower( labels[ i ][ j ] ) );
+            canonical.addSuffix( label );
+        }        
+        return canonical;
+    }
+
     void Domainname::addSubdomain( const std::string &label )
     {
         labels.push_front( label );
@@ -259,6 +287,22 @@ namespace dns
         labels.push_back( label );
     }
 
+    bool Domainname::isSubDomain( const Domainname &child ) const
+    {
+	auto parent_labels = getLabels();
+	auto child_labels  = child.getLabels();
+	if ( child_labels.size() < labels.size() )
+	    return false;
+
+	auto parent_label = parent_labels.rbegin();
+	auto child_label  = child_labels.rbegin();
+	for ( ; parent_label != parent_labels.rend() ; parent_label++, child_label++ ) {
+	    if ( ! equalLabel( *parent_label, *child_label ) )
+		return false;
+	}
+	return true;
+    }
+    
     std::ostream &operator<<( const Domainname &name, std::ostream &os )
     {
         return os << name.toString();
@@ -275,16 +319,8 @@ namespace dns
             return false;
 
         for ( unsigned int i = 0; i < lhs.getLabels().size(); i++ ) {
-            const std::string &lhs_label = lhs.getLabels().at( i );
-            const std::string &rhs_label = rhs.getLabels().at( i );
-
-            if ( lhs_label.size() != rhs_label.size() )
-                return false;
-
-            for ( unsigned int j = 0; j < lhs_label.size(); j++ ) {
-                if ( toLower( lhs_label[ j ] ) != toLower( rhs_label[ j ] ) )
-                    return false;
-            }
+	    if ( ! equalLabel( lhs.getLabels().at( i ), rhs.getLabels().at( i ) ) )
+		return false;
         }
         return true;
     }
@@ -1291,6 +1327,19 @@ namespace dns
         message.pushUInt16HtoN( key_tag );
         signer.outputCanonicalWireFormat( message );
         message.pushBuffer( signature );
+    }
+
+    std::string RecordDNSKey::toString() const
+    {
+        std::string public_key_str;
+        encode_to_base64( public_key, public_key_str );
+
+        std::ostringstream os;
+        os << "KSK/ZSK: "     << ( flags & KSK ? "KSK" : "ZSK" ) << ", "
+           << "Protocal: "    << 3 << ", "
+           << "Algorithm: "   << algorithm << ", "
+           << "Public Key:: " << public_key_str;
+        return os.str();
     }
 
     void RecordDNSKey::outputWireFormat( WireFormat &message ) const

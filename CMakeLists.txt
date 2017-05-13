@@ -9,7 +9,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
-add_definitions("-Wall -std=c++11 -g")
+add_definitions("-Wall -std=c++11 -g -fPIC")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
