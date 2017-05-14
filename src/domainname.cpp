@@ -266,6 +266,20 @@ namespace dns
 	}
 	return true;
     }
+
+    Domainname Domainname::getRelativeDomainname( const Domainname &child ) const
+    {
+        if ( ! isSubDomain( child ) )
+            throw DomainnameError( child.toString() + "is not sub-domaine of " + toString() + "." );
+
+        Domainname relative;
+        unsigned int label_count = child.getLabels().size() - getLabels().size();
+        for ( unsigned int i = 0 ; i < label_count ; i++ ) {
+            relative.addSuffix( child.getLabels().at( i ) );
+        }
+
+        return relative;
+    }
     
     std::ostream &operator<<( const Domainname &name, std::ostream &os )
     {

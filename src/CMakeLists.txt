@@ -4,7 +4,7 @@ add_library(
   wireformat.cpp
   ipv4.cpp udpv4.cpp udpv4client.cpp udpv4server.cpp
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
-add_library( libdns dns.cpp )
+add_library( libdns dns.cpp domainname.cpp )
 add_library( libdnsserver  dns_server.cpp )
 add_library(
   libutils

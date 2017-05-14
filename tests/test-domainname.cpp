@@ -57,6 +57,34 @@ TEST_F( DomainnameTest, same_domainname )
     EXPECT_TRUE( parent.isSubDomain( child ) ) << "example.com is subdomain of example.com";
 }
 
+TEST_F( DomainnameTest, relative_name )
+{
+    dns::Domainname parent( "example.com" );
+    dns::Domainname child( "child.example.com" );
+
+    EXPECT_EQ( dns::Domainname( "child" ), parent.getRelativeDomainname( child ) )
+        << "relative domainname of child.example.com to example.com is child.";
+}
+
+TEST_F( DomainnameTest, relative_name_2 )
+{
+    dns::Domainname parent( "example.com" );
+    dns::Domainname child( "child2.child.example.com" );
+
+    EXPECT_EQ( dns::Domainname( "child2.child" ), parent.getRelativeDomainname( child ) )
+        << "relative domainname of child2.child.example.com to example.com is child2.child.";
+}
+
+
+TEST_F( DomainnameTest, no_subodmain_error )
+{
+    dns::Domainname parent( "example.com" );
+    dns::Domainname child( "child.example.jp" );
+
+    EXPECT_THROW( { parent.getRelativeDomainname( child ); }, dns::DomainnameError )
+        << "if child is not subdomain, DomainnameError is thrown.";
+}
+
 int main( int argc, char **argv )
 {
     ::testing::InitGoogleTest( &argc, argv );

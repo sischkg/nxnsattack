@@ -22,6 +22,19 @@ namespace dns
         }
     };
 
+    /*!
+     * Domainnameの処理に違反した場合にthrowする例外
+     */
+    class DomainnameError : public std::logic_error
+    {
+    public:
+        DomainnameError( const std::string &msg )
+            : std::logic_error( msg )
+        {
+        }
+    };
+
+
     class Domainname
     {
     private:
@@ -62,6 +75,7 @@ namespace dns
         void addSubdomain( const std::string & );
         void addSuffix( const std::string & );
 	bool isSubDomain( const Domainname &child ) const;	
+        Domainname getRelativeDomainname( const Domainname &child ) const;
 
         Domainname getCanonicalDomainname() const;
 
