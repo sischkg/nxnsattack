@@ -308,4 +308,26 @@ namespace dns
         return !( lhs == rhs );
     }
 
+    bool operator<( const Domainname &lhs, const Domainname &rhs )
+    {
+	if ( lhs == rhs )
+	    return false;
+
+	auto lname = lhs.getCanonicalDomainname();
+	auto rname = rhs.getCanonicalDomainname();
+
+	auto llabel = lname.getLabels().rbegin();
+	auto rlabel = rname.getLabels().rbegin();
+
+	while ( true ) {
+	    if ( llabel == lname.getLabels().rend() )
+		return true;
+	    if ( rlabel == rname.getLabels().rend() )
+		return false;
+	    if ( *llabel == *rlabel )
+		continue;
+	    return *llabel < *rlabel;
+	}
+    }
+
 }

@@ -952,6 +952,7 @@ namespace dns
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
     std::string type_code_to_string( Type t );
     std::string response_code_to_string( uint8_t rcode );
+    Type string_to_type_code( const std::string & );
 
     struct PacketHeaderField {
         uint16_t id;

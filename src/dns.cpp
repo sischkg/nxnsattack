@@ -586,6 +586,31 @@ namespace dns
         return res;
     }
 
+    Type string_to_type_code( const std::string &t )
+    {
+        if ( t == "A" )      return TYPE_A;
+        if ( t == "AAAA" )   return TYPE_AAAA;
+        if ( t == "NS" )     return TYPE_NS;
+        if ( t == "CNAME" )  return TYPE_CNAME;
+        if ( t == "NAPTR" )  return TYPE_NAPTR;
+        if ( t == "DNAME" )  return TYPE_DNAME;
+        if ( t == "MX" )     return TYPE_MX;
+        if ( t == "TXT" )    return TYPE_TXT;
+        if ( t == "SOA" )    return TYPE_SOA;
+        if ( t == "KEY" )    return TYPE_KEY;
+        if ( t == "OPT" )    return TYPE_OPT;
+        if ( t == "RRSIG" )  return TYPE_RRSIG;
+        if ( t == "DNSKEY" ) return TYPE_DNSKEY;
+        if ( t == "TSIG" )   return TYPE_TSIG;
+        if ( t == "TKEY" )   return TYPE_TKEY;
+        if ( t == "IXFR" )   return TYPE_IXFR;
+        if ( t == "AXFR" )   return TYPE_AXFR;
+        if ( t == "ANY" )    return TYPE_ANY;
+  
+        throw std::runtime_error( "unknown type \"" + t + "\"" );
+    }
+
+
     std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query )
     {
         os << "ID: " << query.id << std::endl

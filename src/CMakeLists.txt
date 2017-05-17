@@ -6,6 +6,7 @@ add_library(
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
 add_library( libdns dns.cpp domainname.cpp )
 add_library( libdnsserver  dns_server.cpp )
+add_library( libzone zoneloader.cpp zone.cpp )
 add_library(
   libutils
   utils.cpp
