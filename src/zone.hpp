@@ -62,6 +62,32 @@ namespace dns
         void add( std::shared_ptr<RRSet> rrset ) { rrsets.insert( RRSetPair( rrset->getType(), rrset ) ); }
     };
 
+
+    class Response
+    {
+    public:
+        enum ResponseType {
+            SUCCESS,
+            REFERRAL,
+            NODATA,
+            NXDOMAIN,
+        };
+
+        ResponseType response_type;
+    private:
+        std::vector<std::shared_ptr<ResourceData>> answers;
+
+    public:
+        Response( ResponseType type,
+                  const std::vector<std::shared_ptr<ResourceData>> &a = std::vector<std::shared_ptr<ResourceData>>() )
+            : response_type( type ), answers( a )
+        {}
+
+        ResponseType getResponseType() const { return response_type; }
+        std::vector<std::shared_ptr<ResourceData>> getAnswers() const { return answers; }
+    };
+
+
     class Zone
     {
     private:
@@ -70,11 +96,17 @@ namespace dns
 
         OwnerToNodeContainer owner_to_node;
         Domainname canonical_apex;
-        
+
+        std::shared_ptr<ResourceData> soa;
+        std::vector<std::shared_ptr<ResourceData>> name_servers;
     public:
         Zone( const Domainname &apex );
 
         void add( std::shared_ptr<RRSet> rrest );
+        Response find( const Domainname &qname, Type qtype ) const;
+
+        std::shared_ptr<ResourceData> getSOA() const { return soa; }
+        std::vector<std::shared_ptr<ResourceData>> getNameServers() const { return name_servers; }        
     };
 
 }

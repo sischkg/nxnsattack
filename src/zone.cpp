@@ -27,5 +27,9 @@ namespace dns
 	node->second->add( rrset );
     }
 
+    Response Zone::find( const Domainname &qname, Type qtype ) const
+    {
+        return Response( Response::NXDOMAIN );
+    }
 }
 
