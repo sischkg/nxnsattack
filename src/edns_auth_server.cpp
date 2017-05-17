@@ -72,12 +72,12 @@ public:
 
                 dns::OptPseudoRecord opt_rr_1, opt_rr_2;
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
                 opt_rr_2.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_2 ) );
                 opt_rr_2.payload_size = 1280;
                 opt_rr_2.rcode        = 0;
                 response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
@@ -89,12 +89,12 @@ public:
 
                 dns::OptPseudoRecord opt_rr_1, opt_rr_2;
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
                 opt_rr_2.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_2 ) );
                 opt_rr_2.payload_size = 1500;
                 opt_rr_2.rcode        = 0;
                 response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_2 ) );
@@ -105,7 +105,7 @@ public:
 
                 dns::OptPseudoRecord opt_rr_1;
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.answer_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -116,7 +116,7 @@ public:
 
                 dns::OptPseudoRecord opt_rr_1;
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -128,7 +128,7 @@ public:
                 dns::OptPseudoRecord opt_rr_1;
                 opt_rr_1.domainname = "www.example.com";
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.authority_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -139,7 +139,7 @@ public:
 
                 dns::OptPseudoRecord opt_rr_1;
                 opt_rr_1.record_options_data =
-                    boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                    dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
                 opt_rr_1.payload_size = 1280;
                 opt_rr_1.rcode        = 0;
                 response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
@@ -151,7 +151,7 @@ public:
 
             dns::OptPseudoRecord opt_rr_1;
             opt_rr_1.record_options_data =
-                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+                dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
             opt_rr_1.payload_size = 1280;
             opt_rr_1.rcode        = 0;
             response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );

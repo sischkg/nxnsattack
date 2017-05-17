@@ -2,7 +2,7 @@
 
 namespace dns
 {
-    std::shared_ptr<ResourceData> parseRecordA( const YAML::Node &node )
+    ResourceDataPtr parseRecordA( const YAML::Node &node )
     {
         if ( node["address"] ) {
             return std::shared_ptr<ResourceData>( new RecordA( node["address"].as<std::string>() ) );
@@ -10,7 +10,7 @@ namespace dns
         throw ZoneConfigError( "A record must have \"address\" attribute" );
     }
 
-    std::shared_ptr<ResourceData> parseRecordNS( const YAML::Node &node )
+    ResourceDataPtr parseRecordNS( const YAML::Node &node )
     {
         if ( node["address"] ) {
             return std::shared_ptr<ResourceData>( new RecordAAAA( node["address"].as<std::string>() ) );
@@ -18,19 +18,19 @@ namespace dns
         throw ZoneConfigError( "AAAA record must have \"address\" attribute" );
     }
 
-    std::shared_ptr<ResourceData> parseRecordSOA( const YAML::Node &node )
+    ResourceDataPtr parseRecordSOA( const YAML::Node &node )
     {
         std::string mname,  rname;
 
         if ( node["mname"] && node["rname"] &&
              node["serial"] && node["refresh"] && node["retry"] && node["expire"] && node["minimum"] ) {
-            return std::shared_ptr<ResourceData>( new RecordSOA( node["mname"].as<std::string>(),
-                                                                 node["rname"].as<std::string>(),
-                                                                 node["serial"].as<uint32_t>(),
-                                                                 node["refresh"].as<uint32_t>(),
-                                                                 node["retry"].as<uint32_t>(),
-                                                                 node["expire"].as<uint32_t>(),
-                                                                 node["minimum"].as<uint32_t>() ) );
+            return ResourceDataPtr( new RecordSOA( node["mname"].as<std::string>(),
+                                                   node["rname"].as<std::string>(),
+                                                   node["serial"].as<uint32_t>(),
+                                                   node["refresh"].as<uint32_t>(),
+                                                   node["retry"].as<uint32_t>(),
+                                                   node["expire"].as<uint32_t>(),
+                                                   node["minimum"].as<uint32_t>() ) );
         }
 
         throw ZoneConfigError( "SOA record must have \"mname,rname,serial,refresh,retry,expire,minimum\" attributes" );

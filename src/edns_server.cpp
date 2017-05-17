@@ -105,10 +105,10 @@ PacketData generate_response( uint16_t id, const dns::QuestionSectionEntry query
     edns_options_1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bbbbbbbbb" ) ) );
 
     dns::OptPseudoRecord opt_rr_1, opt_rr_2;
-    opt_rr_1.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+    opt_rr_1.record_options_data = dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
     opt_rr_1.payload_size        = 1024;
     opt_rr_1.rcode               = 1;
-    opt_rr_2.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_2 ) );
+    opt_rr_2.record_options_data = dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_2 ) );
     opt_rr_2.payload_size        = 1024;
     opt_rr_2.rcode               = 0;
     packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );

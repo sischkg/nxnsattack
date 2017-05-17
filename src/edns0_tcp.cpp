@@ -28,7 +28,7 @@ int main()
     options.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( nsid ) ) );
     dns::OptPseudoRecord opt;
     opt.payload_size        = 1280;
-    opt.record_options_data = boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options ) );
+    opt.record_options_data = dns::ResourceDataPtr( new dns::RecordOptionsData( options ) );
 
     packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt ) );
 

@@ -71,7 +71,7 @@ namespace dns
     const ResponseCode BADTIME        = 18;
 
     class ResourceData;
-    typedef boost::shared_ptr<ResourceData> ResourceDataPtr;
+    typedef std::shared_ptr<ResourceData> ResourceDataPtr;
 
     class ResourceData
     {
@@ -687,12 +687,12 @@ namespace dns
     };
 
     struct OptPseudoRecord {
-        Domainname                      domainname;
-        uint16_t                        payload_size;
-        uint8_t                         rcode;
-	bool                            dobit;
-        boost::shared_ptr<ResourceData> record_options_data;
-        uint32_t                        offset;
+        Domainname      domainname;
+        uint16_t        payload_size;
+        uint8_t         rcode;
+	bool            dobit;
+        ResourceDataPtr record_options_data;
+        uint32_t        offset;
 
         OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
         {

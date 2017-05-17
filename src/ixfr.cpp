@@ -73,7 +73,7 @@ int main( int argc, char **argv )
     options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "aaa" ) ) );
     opt_pseudo_rr_1.payload_size = 0xff00;
     opt_pseudo_rr_1.record_options_data =
-        boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+        dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
     packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
 
     packet_info.id                   = 1234;

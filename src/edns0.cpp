@@ -56,13 +56,13 @@ int main( int argc, char **argv )
             options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
             opt_pseudo_rr_1.payload_size = 1280;
             opt_pseudo_rr_1.record_options_data =
-                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+                dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
             packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
 
             options2.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
             opt_pseudo_rr_2.payload_size = 1280;
             opt_pseudo_rr_2.record_options_data =
-                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options2 ) );
+                dns::ResourceDataPtr( new dns::RecordOptionsData( options2 ) );
             packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_2 ) );
         }
         break;
@@ -82,7 +82,7 @@ int main( int argc, char **argv )
             options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
             opt_pseudo_rr_1.payload_size = 1280;
             opt_pseudo_rr_1.record_options_data =
-                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+                dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
             packet_info.answer_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
         }
         break;
@@ -102,7 +102,7 @@ int main( int argc, char **argv )
             options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
             opt_pseudo_rr_1.payload_size = 1280;
             opt_pseudo_rr_1.record_options_data =
-                boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+                dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
             packet_info.authority_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
         }
         break;
@@ -121,7 +121,7 @@ int main( int argc, char **argv )
         opt_pseudo_rr_1.domainname   = "www.example.com";
         opt_pseudo_rr_1.payload_size = 1280;
         opt_pseudo_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
         packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
     } break;
 
@@ -139,7 +139,7 @@ int main( int argc, char **argv )
         opt_pseudo_rr_1.domainname   = "";
         opt_pseudo_rr_1.payload_size = 1280;
         opt_pseudo_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
         opt_pseudo_rr_1.offset = sizeof( dns::PacketHeaderField ) + 16; // www.example.com"." = 3www7example3com"0"
         packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
     } break;
@@ -157,7 +157,7 @@ int main( int argc, char **argv )
         options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "bad client" ) ) );
         opt_pseudo_rr_1.payload_size = 1280;
         opt_pseudo_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
         packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
     } break;
 
@@ -175,7 +175,7 @@ int main( int argc, char **argv )
         options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
         opt_pseudo_rr_1.payload_size = 1280;
         opt_pseudo_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
         packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
     } break;
 
@@ -192,7 +192,7 @@ int main( int argc, char **argv )
         options1.push_back( dns::OptPseudoRROptPtr( new dns::NSIDOption( "" ) ) );
         opt_pseudo_rr_1.payload_size = 1280;
         opt_pseudo_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( options1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( options1 ) );
         packet_info.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_pseudo_rr_1 ) );
     } break;
     }

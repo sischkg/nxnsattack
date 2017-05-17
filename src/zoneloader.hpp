@@ -53,9 +53,9 @@ namespace dns
         {}
     };
 
-    std::shared_ptr<ResourceData> parseRecordA( const YAML::Node & );
-    std::shared_ptr<ResourceData> parseRecordNS( const YAML::Node & );
-    std::shared_ptr<ResourceData> parseRecordSOA( const YAML::Node & );
+    ResourceDataPtr parseRecordA( const YAML::Node & );
+    ResourceDataPtr parseRecordNS( const YAML::Node & );
+    ResourceDataPtr parseRecordSOA( const YAML::Node & );
     
     std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node );
 

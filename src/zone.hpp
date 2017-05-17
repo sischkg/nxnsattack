@@ -10,7 +10,7 @@ namespace dns
     class RRSet
     {
     public:
-        typedef std::vector<std::shared_ptr<ResourceData>> ResourceDataContainer;
+        typedef std::vector<ResourceDataPtr> ResourceDataContainer;
   
     private:
         Domainname owner;
@@ -34,7 +34,7 @@ namespace dns
         ResourceDataContainer::const_iterator begin() const { return resource_data.begin(); }
         ResourceDataContainer::const_iterator end()   const { return resource_data.end(); }
 
-        void add( std::shared_ptr<ResourceData> data ) { resource_data.push_back( data ); }
+        void add( ResourceDataPtr data ) { resource_data.push_back( data ); }
     };
 
 
@@ -75,16 +75,16 @@ namespace dns
 
         ResponseType response_type;
     private:
-        std::vector<std::shared_ptr<ResourceData>> answers;
+        std::vector<ResourceDataPtr> answers;
 
     public:
         Response( ResponseType type,
-                  const std::vector<std::shared_ptr<ResourceData>> &a = std::vector<std::shared_ptr<ResourceData>>() )
+                  const std::vector<ResourceDataPtr> &a = std::vector<ResourceDataPtr>() )
             : response_type( type ), answers( a )
         {}
 
         ResponseType getResponseType() const { return response_type; }
-        std::vector<std::shared_ptr<ResourceData>> getAnswers() const { return answers; }
+        std::vector<ResourceDataPtr> getAnswers() const { return answers; }
     };
 
 
@@ -97,16 +97,16 @@ namespace dns
         OwnerToNodeContainer owner_to_node;
         Domainname canonical_apex;
 
-        std::shared_ptr<ResourceData> soa;
-        std::vector<std::shared_ptr<ResourceData>> name_servers;
+        ResourceDataPtr soa;
+        std::vector<ResourceDataPtr> name_servers;
     public:
         Zone( const Domainname &apex );
 
         void add( std::shared_ptr<RRSet> rrest );
         Response find( const Domainname &qname, Type qtype ) const;
 
-        std::shared_ptr<ResourceData> getSOA() const { return soa; }
-        std::vector<std::shared_ptr<ResourceData>> getNameServers() const { return name_servers; }        
+        ResourceDataPtr getSOA() const { return soa; }
+        std::vector<ResourceDataPtr> getNameServers() const { return name_servers; }        
     };
 
 }

@@ -38,7 +38,7 @@ public:
 
         dns::OptPseudoRecord opt_rr_1;
         opt_rr_1.record_options_data =
-            boost::shared_ptr<dns::ResourceData>( new dns::RecordOptionsData( edns_options_1 ) );
+            dns::ResourceDataPtr( new dns::RecordOptionsData( edns_options_1 ) );
         opt_rr_1.payload_size = 1024;
         opt_rr_1.rcode        = 1;
         response.additional_infomation_section.push_back( dns::generate_opt_pseudo_record( opt_rr_1 ) );
