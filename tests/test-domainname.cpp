@@ -17,6 +17,47 @@ public:
     }
 };
 
+
+TEST_F( DomainnameTest, ConstructFromString )
+{
+    dns::Domainname example_com( std::string( "example.com" ) );
+
+    EXPECT_STREQ( "example", example_com.getLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getLabels()[1].c_str() );
+    EXPECT_STREQ( "example", example_com.getCanonicalLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getCanonicalLabels()[1].c_str() );
+}
+
+TEST_F( DomainnameTest, ConstructFromStringHasUpperCase )
+{
+    dns::Domainname example_com( std::string( "EXAMPLE.Com" ) );
+
+    EXPECT_STREQ( "EXAMPLE", example_com.getLabels()[0].c_str() );
+    EXPECT_STREQ( "Com",     example_com.getLabels()[1].c_str() );
+    EXPECT_STREQ( "example", example_com.getCanonicalLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getCanonicalLabels()[1].c_str() );
+}
+
+TEST_F( DomainnameTest, ConstructFromLiteral )
+{
+    dns::Domainname example_com( "example.com" );
+
+    EXPECT_STREQ( "example", example_com.getLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getLabels()[1].c_str() );
+    EXPECT_STREQ( "example", example_com.getCanonicalLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getCanonicalLabels()[1].c_str() );
+}
+
+TEST_F( DomainnameTest, ConstructFromLiteralHasUpperCase )
+{
+    dns::Domainname example_com( "EXAMPLE.Com" );
+
+    EXPECT_STREQ( "EXAMPLE", example_com.getLabels()[0].c_str() );
+    EXPECT_STREQ( "Com",     example_com.getLabels()[1].c_str() );
+    EXPECT_STREQ( "example", example_com.getCanonicalLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getCanonicalLabels()[1].c_str() );
+}
+
 TEST_F( DomainnameTest, subdomain )
 {
     dns::Domainname parent( "example.com" );

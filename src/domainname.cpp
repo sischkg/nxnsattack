@@ -3,6 +3,21 @@
 
 namespace dns
 {
+    static uint8_t toLower( uint8_t c )
+    {
+        if ( 'A' <= c && c <= 'Z' ) {
+            return 'a' + c - 'A';
+        }
+        return c;
+    }
+
+    static std::string toLowerLabel( const std::string &label )
+    {
+        std::string lower_label;
+        for ( unsigned int i = 0; i < label.size(); i++ )
+            lower_label.push_back( toLower( label[i] ) );
+        return lower_label;
+    }
 
     static void stringToLabels( const char *name, std::deque<std::string> &labels )
     {
@@ -25,35 +40,68 @@ namespace dns
             labels.push_back( label );
     }
 
-    static uint8_t toLower( uint8_t c )
+    static void canonicalizeLabels( const std::deque<std::string> &from,
+                                    std::deque<std::string> &to )
     {
-        if ( 'A' <= c && c <= 'Z' ) {
-            return 'a' + c - 'A';
+        to.clear();
+        for ( unsigned int i = 0; i < from.size(); i++ ) {
+            if ( from[ i ].size() == 0 )
+                break;
+            to.push_back( toLowerLabel( from[i] ) );
         }
-        return c;
     }
 
-    static bool equalLabel( const std::string &lhs, const std::string &rhs )
+
+    static void outputWireFormat( const std::deque<std::string> labels,
+                                  PacketData &message, Offset offset )
     {
-	if ( lhs.size() != rhs.size() )
-	    return false;
+        for ( unsigned int i = 0; i < labels.size(); i++ ) {
+            if ( labels[ i ].size() == 0 )
+                break;
+            message.push_back( labels[ i ].size() );
+            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
+                message.push_back( labels[ i ][ j ] );
+        }
 
-	auto l = lhs.begin();
-	auto r = rhs.begin();
-	for ( ; l != lhs.end() ; ++l, ++r )
-	    if ( toLower( *l ) != toLower( *r ) )
-		return false;
-	return true;
+        if ( offset == NO_COMPRESSION ) {
+            message.push_back( 0 );
+        } else {
+            message.push_back( 0xC0 | ( uint8_t )( offset >> 8 ) );
+            message.push_back( 0xff & (uint8_t)offset );
+        }
     }
+
+
+    static void outputWireFormat( const std::deque<std::string> labels,
+                                  WireFormat &message, Offset offset )
+    {
+        for ( unsigned int i = 0; i < labels.size(); i++ ) {
+            if ( labels[ i ].size() == 0 )
+                break;
+            message.push_back( labels[ i ].size() );
+            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
+                message.push_back( labels[ i ][ j ] );
+        }
+
+        if ( offset == NO_COMPRESSION ) {
+            message.push_back( 0 );
+        } else {
+            message.push_back( 0xC0 | ( uint8_t )( offset >> 8 ) );
+            message.push_back( 0xff & (uint8_t)offset );
+        }
+    }
+
     
     Domainname::Domainname( const char *name )
     {
         stringToLabels( name, labels );
+        canonicalizeLabels( labels, canonical_labels );
     }
 
     Domainname::Domainname( const std::string &name )
     {
         stringToLabels( name.c_str(), labels );
+        canonicalizeLabels( labels, canonical_labels );
     }
 
     std::string Domainname::toString() const
@@ -69,100 +117,35 @@ namespace dns
     PacketData Domainname::getPacket( Offset offset ) const
     {
         PacketData bin;
-
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            bin.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                bin.push_back( labels[ i ][ j ] );
-        }
-
-        if ( offset == NO_COMPRESSION ) {
-            bin.push_back( 0 );
-            return bin;
-        } else {
-            bin.push_back( 0xC0 | ( uint8_t )( offset >> 8 ) );
-            bin.push_back( 0xff & (uint8_t)offset );
-        }
-
+        dns::outputWireFormat( labels, bin, offset );
         return bin;
     }
 
     void Domainname::outputWireFormat( PacketData &message, Offset offset ) const
     {
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            message.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                message.push_back( labels[ i ][ j ] );
-        }
-
-        if ( offset == NO_COMPRESSION ) {
-            message.push_back( 0 );
-        } else {
-            message.push_back( 0xC0 | ( uint8_t )( offset >> 8 ) );
-            message.push_back( 0xff & (uint8_t)offset );
-        }
+        dns::outputWireFormat( labels, message, offset );
     }
 
     void Domainname::outputWireFormat( WireFormat &message, Offset offset ) const
     {
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            message.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                message.push_back( labels[ i ][ j ] );
-        }
-
-        if ( offset == NO_COMPRESSION ) {
-            message.push_back( 0 );
-        } else {
-            message.push_back( 0xC0 | ( uint8_t )( offset >> 8 ) );
-            message.push_back( 0xff & (uint8_t)offset );
-        }
+        dns::outputWireFormat( labels, message, offset );
     }
 
     PacketData Domainname::getCanonicalWireFormat() const
     {
         PacketData bin;
-
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            bin.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                bin.push_back( toLower( labels[ i ][ j ] ) );
-        }
-        bin.push_back( 0 );
-
+        dns::outputWireFormat( canonical_labels, bin, NO_COMPRESSION );
         return bin;
     }
 
     void Domainname::outputCanonicalWireFormat( PacketData &message ) const
     {
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            message.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                message.push_back( toLower( labels[ i ][ j ] ) );
-        }
-        message.push_back( 0 );
+        dns::outputWireFormat( canonical_labels, message, NO_COMPRESSION );
     }
 
     void Domainname::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            message.push_back( labels[ i ].size() );
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                message.push_back( toLower( labels[ i ][ j ] ) );
-        }
-        message.push_back( 0 );
+        dns::outputWireFormat( canonical_labels, message, NO_COMPRESSION );
     }
 
     
@@ -224,44 +207,40 @@ namespace dns
     Domainname &Domainname::operator+=( const Domainname &rhs )
     {
         labels.insert( labels.end(), rhs.getLabels().begin(), rhs.getLabels().end() );
-        return *this;
+        canonical_labels.insert( canonical_labels.end(),
+                                 rhs.getCanonicalLabels().begin(),
+                                 rhs.getCanonicalLabels().end() ); 
+       return *this;
     }
 
     Domainname Domainname::getCanonicalDomainname() const
     {
-        Domainname canonical( "." );
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            if ( labels[ i ].size() == 0 )
-                break;
-            std::string label;
-            for ( unsigned int j = 0; j < labels[ i ].size(); j++ )
-                label.push_back( toLower( labels[ i ][ j ] ) );
-            canonical.addSuffix( label );
-        }        
-        return canonical;
+        return Domainname( getCanonicalLabels() );
     }
 
     void Domainname::addSubdomain( const std::string &label )
     {
         labels.push_front( label );
+        canonical_labels.push_front( toLowerLabel( label ) );
     }
 
     void Domainname::addSuffix( const std::string &label )
     {
         labels.push_back( label );
+        canonical_labels.push_back( toLowerLabel( label ) );
     }
 
     bool Domainname::isSubDomain( const Domainname &child ) const
     {
-	auto parent_labels = getLabels();
-	auto child_labels  = child.getLabels();
+	auto parent_labels = getCanonicalLabels();
+	auto child_labels  = child.getCanonicalLabels();
 	if ( child_labels.size() < labels.size() )
 	    return false;
 
 	auto parent_label = parent_labels.rbegin();
 	auto child_label  = child_labels.rbegin();
 	for ( ; parent_label != parent_labels.rend() ; parent_label++, child_label++ ) {
-	    if ( ! equalLabel( *parent_label, *child_label ) )
+	    if ( *parent_label != *child_label )
 		return false;
 	}
 	return true;
@@ -293,11 +272,11 @@ namespace dns
 
     bool operator==( const Domainname &lhs, const Domainname &rhs )
     {
-        if ( lhs.getLabels().size() != rhs.getLabels().size() )
+        if ( lhs.getCanonicalLabels().size() != rhs.getCanonicalLabels().size() )
             return false;
 
-        for ( unsigned int i = 0; i < lhs.getLabels().size(); i++ ) {
-	    if ( ! equalLabel( lhs.getLabels().at( i ), rhs.getLabels().at( i ) ) )
+        for ( unsigned int i = 0; i < lhs.getCanonicalLabels().size(); i++ ) {
+	    if ( lhs.getCanonicalLabels().at( i ) != rhs.getCanonicalLabels().at( i ) )
 		return false;
         }
         return true;
@@ -313,16 +292,13 @@ namespace dns
 	if ( lhs == rhs )
 	    return false;
 
-	auto lname = lhs.getCanonicalDomainname();
-	auto rname = rhs.getCanonicalDomainname();
+	auto llabel = lhs.getCanonicalLabels().rbegin();
+	auto rlabel = rhs.getCanonicalLabels().rbegin();
 
-	auto llabel = lname.getLabels().rbegin();
-	auto rlabel = rname.getLabels().rbegin();
-
-	while ( true ) {
-	    if ( llabel == lname.getLabels().rend() )
+	for ( ; true ; llabel++, rlabel++ ) {
+	    if ( llabel == lhs.getCanonicalLabels().rend() )
 		return true;
-	    if ( rlabel == rname.getLabels().rend() )
+	    if ( rlabel == rhs.getCanonicalLabels().rend() )
 		return false;
 	    if ( *llabel == *rlabel )
 		continue;

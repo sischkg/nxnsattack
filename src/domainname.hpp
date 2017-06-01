@@ -39,6 +39,7 @@ namespace dns
     {
     private:
         std::deque<std::string> labels;
+        std::deque<std::string> canonical_labels;
 
     public:
         Domainname( const std::deque<std::string> &l = std::deque<std::string>() ) : labels( l )
@@ -67,6 +68,10 @@ namespace dns
         const std::deque<std::string> &getLabels() const
         {
             return labels;
+        }
+        const std::deque<std::string> &getCanonicalLabels() const
+        {
+            return canonical_labels;
         }
 
         Domainname  operator+( const Domainname & ) const;
