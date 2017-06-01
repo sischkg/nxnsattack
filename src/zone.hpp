@@ -72,7 +72,7 @@ namespace dns
 	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
 
         OwnerToNodeContainer owner_to_node;
-        Domainname canonical_apex;
+        Domainname           apex;
 
         RRSetPtr soa;
         RRSetPtr name_servers;
@@ -80,7 +80,7 @@ namespace dns
         void addSOAToAuthoritySection( PacketInfo &res ) const;
         void addEmptyNode( const Domainname & );
     public:
-        Zone( const Domainname &apex );
+        Zone( const Domainname &zone_name );
 
         void add( std::shared_ptr<RRSet> rrest );
         PacketInfo getAnswer( const PacketInfo &query ) const;

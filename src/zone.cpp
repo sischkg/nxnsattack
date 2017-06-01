@@ -2,10 +2,11 @@
 
 namespace dns
 {
-    Zone::Zone( const Domainname &apex )
-        : canonical_apex( apex.getCanonicalDomainname() )
+    Zone::Zone( const Domainname &zone_name )
+        : apex( zone_name )
     {
-	owner_to_node.insert( OwnerToNodePair( canonical_apex, std::shared_ptr<Node>( new Node ) ) );
+	owner_to_node.insert( OwnerToNodePair( apex.getCanonicalDomainname(),
+                                               NodePtr( new Node ) ) );
     }
 
     void Zone::addEmptyNode( const Domainname &domainname )
@@ -17,19 +18,18 @@ namespace dns
     void Zone::add( RRSetPtr rrset )
     {
         Domainname owner = rrset->getOwner();
-	if ( ! canonical_apex.isSubDomain( owner ) ) {
-	    throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + canonical_apex.toString() );
+	if ( ! apex.isSubDomain( owner ) ) {
+	    throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + apex.toString() );
 	}
 
-	Domainname canonical_owner = owner.getCanonicalDomainname();
-	Domainname relative_name = canonical_apex.getRelativeDomainname( canonical_owner );
-	Domainname node_name = canonical_apex;
-	for ( auto r = relative_name.getLabels().rbegin() ; r != relative_name.getLabels().rend() ; ++r ) {
+	Domainname relative_name = apex.getRelativeDomainname( owner );
+	Domainname node_name     = apex;
+	for ( auto r = relative_name.getCanonicalLabels().rbegin() ; r != relative_name.getCanonicalLabels().rend() ; ++r ) {
 	    node_name.addSubdomain( *r );
 	    if ( ! findNode( node_name ) )
                 addEmptyNode( node_name );
 	}
-	auto node = findNode( canonical_owner );
+	auto node = findNode( owner );
 	node->add( rrset );
     }
 
@@ -62,7 +62,7 @@ namespace dns
         q.q_class      = qclass;
         response.question_section.push_back( q );
 
-        if ( ! canonical_apex.isSubDomain( qname ) ) {
+        if ( ! apex.isSubDomain( qname ) ) {
             response.response_code = REFUSED;
             return response;
         }
@@ -110,7 +110,7 @@ namespace dns
 
     Zone::NodePtr Zone::findNode( const Domainname &name ) const
     {
-        auto node = owner_to_node.find( name.getCanonicalDomainname() );
+        auto node = owner_to_node.find( name );
         if ( node != owner_to_node.end() ) {
             return node->second;
         }
