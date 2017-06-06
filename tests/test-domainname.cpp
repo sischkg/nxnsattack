@@ -126,6 +126,42 @@ TEST_F( DomainnameTest, no_subodmain_error )
         << "if child is not subdomain, DomainnameError is thrown.";
 }
 
+
+TEST_F( DomainnameTest, less_than )
+{
+    dns::Domainname lhs( "1.example.com" );
+    dns::Domainname rhs( "2.example.com" );
+
+    EXPECT_TRUE( lhs < rhs );
+}
+
+TEST_F( DomainnameTest, less_than_2 )
+{
+    dns::Domainname lhs( "1.example.com" );
+    dns::Domainname rhs( "1.example.jp" );
+
+    EXPECT_TRUE( lhs < rhs );
+}
+
+TEST_F( DomainnameTest, child_is_less_than_parent )
+{
+    dns::Domainname parent( "example.com" );
+    dns::Domainname child( "child.example.com" );
+
+    EXPECT_TRUE( parent < child );
+}
+
+TEST_F( DomainnameTest, equal )
+{
+    dns::Domainname lhs( "1.example.com" );
+    dns::Domainname rhs( "1.example.com" );
+
+    EXPECT_FALSE( lhs < rhs );
+}
+
+
+
+
 int main( int argc, char **argv )
 {
     ::testing::InitGoogleTest( &argc, argv );
