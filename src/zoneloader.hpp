@@ -27,18 +27,18 @@
   ttl: 86400
   type: A
   record:
-  - address: 192.168.11
+  - address: 192.168.0.11
 - owner: ns02.example.com:
   ttl: 86400
   type: A
   record:
-  - address: 192.168.12
+  - address: 192.168.0.12
 - owner: www.example.com:
   ttl: 3600
   type: A
   record:
-  - address: 192.168.101
-  - address: 192.168.102
+  - address: 192.168.0.101
+  - address: 192.168.0.102
 
 ************************************/
 

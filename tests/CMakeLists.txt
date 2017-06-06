@@ -14,10 +14,10 @@ add_test(
   COMMAND test-base64
 )
 
-add_test(
-  NAME md5
-  COMMAND test-md5
-)
+#add_test(
+#  NAME md5
+#  COMMAND test-md5
+#)
 
 add_test(
   NAME wire-format
