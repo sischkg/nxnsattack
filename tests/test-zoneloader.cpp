@@ -29,7 +29,7 @@ const char *ZONE_CONFIG_YAML_SOA =
     "    refresh: 3600\n"
     "    retry:   1800\n"
     "    expire:  8640000\n"
-    "    minimum: 3600\n";
+    "    minimum: 300\n";
 
 
 TEST_F( ZoneLoaderTest, Load_SOA )
@@ -49,9 +49,21 @@ TEST_F( ZoneLoaderTest, Load_SOA )
     auto node = zone->findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
-    auto soa = node->find( dns::TYPE_SOA );
-    EXPECT_FALSE( soa.get() == nullptr ) <<  "soa record is loaded";
+    auto rrset = node->find( dns::TYPE_SOA );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
+    EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
     
+    std::shared_ptr<const dns::RecordSOA> soa;
+    ASSERT_NO_THROW( {
+	    soa = std::dynamic_pointer_cast<const dns::RecordSOA>( (*rrset)[0] );
+	} );
+    EXPECT_STREQ( "ns01.example.com.", soa->getMName().c_str() );
+    EXPECT_STREQ( "hostmaster.example.com.", soa->getRName().c_str() );
+    EXPECT_EQ( 2017050101, soa->getSerial() );
+    EXPECT_EQ( 3600,       soa->getRefresh() );
+    EXPECT_EQ( 1800,       soa->getRetry() );
+    EXPECT_EQ( 8640000,    soa->getExpire() );
+    EXPECT_EQ( 300,        soa->getMinimum() );
 }
 
 
@@ -90,9 +102,14 @@ TEST_F( ZoneLoaderTest, Load_A )
     auto node = zone->findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded";
 
-    auto a = node->find( dns::TYPE_A );
-    EXPECT_FALSE( a.get() == nullptr ) <<  "a record is loaded";
-    
+    auto rrset = node->find( dns::TYPE_A );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "a record is loaded";
+
+    std::shared_ptr<const dns::RecordA> a;
+    ASSERT_NO_THROW( {
+	    a = std::dynamic_pointer_cast<const dns::RecordA>( (*rrset)[0] );
+	} );
+    EXPECT_EQ( "192.168.0.1", a->getAddress() );
 }
 
 
