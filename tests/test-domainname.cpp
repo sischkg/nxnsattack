@@ -17,6 +17,19 @@ public:
     }
 };
 
+TEST_F( DomainnameTest, ConstructFromDeque )
+{
+    std::deque<std::string> labels;
+    labels.push_back( "EXAMPLE" );
+    labels.push_back( "com" );
+
+    dns::Domainname example_com( labels );
+
+    EXPECT_STREQ( "EXAMPLE", example_com.getLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getLabels()[1].c_str() );
+    EXPECT_STREQ( "example", example_com.getCanonicalLabels()[0].c_str() );
+    EXPECT_STREQ( "com",     example_com.getCanonicalLabels()[1].c_str() );
+}
 
 TEST_F( DomainnameTest, ConstructFromString )
 {
@@ -116,6 +129,15 @@ TEST_F( DomainnameTest, relative_name_2 )
         << "relative domainname of child2.child.example.com to example.com is child2.child.";
 }
 
+TEST_F( DomainnameTest, relative_name_3 )
+{
+    dns::Domainname parent( "example.com" );
+    dns::Domainname same( "example.com" );
+
+    EXPECT_EQ( dns::Domainname( "" ), parent.getRelativeDomainname( same ) )
+        << "relative domainname of example.com to example.com is \"\"";
+}
+
 
 TEST_F( DomainnameTest, no_subodmain_error )
 {
@@ -133,6 +155,7 @@ TEST_F( DomainnameTest, less_than )
     dns::Domainname rhs( "2.example.com" );
 
     EXPECT_TRUE( lhs < rhs );
+    EXPECT_FALSE( rhs < lhs );
 }
 
 TEST_F( DomainnameTest, less_than_2 )
@@ -141,6 +164,7 @@ TEST_F( DomainnameTest, less_than_2 )
     dns::Domainname rhs( "1.example.jp" );
 
     EXPECT_TRUE( lhs < rhs );
+    EXPECT_FALSE( rhs < lhs );
 }
 
 TEST_F( DomainnameTest, child_is_less_than_parent )
@@ -149,17 +173,36 @@ TEST_F( DomainnameTest, child_is_less_than_parent )
     dns::Domainname child( "child.example.com" );
 
     EXPECT_TRUE( parent < child );
+    EXPECT_FALSE( child < parent );
 }
 
 TEST_F( DomainnameTest, equal )
 {
-    dns::Domainname lhs( "1.example.com" );
-    dns::Domainname rhs( "1.example.com" );
+    dns::Domainname lhs( "example.com" );
+    dns::Domainname rhs( "example.com" );
 
     EXPECT_FALSE( lhs < rhs );
+    EXPECT_FALSE( rhs < lhs );
 }
 
 
+TEST_F( DomainnameTest, equal_ignore_case )
+{
+    dns::Domainname lhs( "1.example.com" );
+    dns::Domainname rhs( "1.EXAMPLE.com" );
+
+    EXPECT_FALSE( lhs < rhs );
+    EXPECT_FALSE( rhs < lhs );
+}
+
+
+TEST_F( DomainnameTest, CanonicalDomainname )
+{
+    dns::Domainname example_com( "EXAMPLE.Com" );
+
+    EXPECT_STREQ( "EXAMPLE.Com.", example_com.toString().c_str() );
+    EXPECT_STREQ( "example.com.", example_com.getCanonicalDomainname().toString().c_str() );
+}
 
 
 int main( int argc, char **argv )
