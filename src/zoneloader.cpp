@@ -38,43 +38,63 @@ namespace dns
 
     std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node )
     {
-        if ( ! ( node["owner"] || node["ttl"] || node["typpe"] || node["record"] ) ) {
-            throw ZoneConfigError( "each record must have \"owner, ttl, type, record\" attributes" );
-        }
+	if ( ! ( node["owner"] || node["ttl"] || node["typpe"] || node["record"] ) ) {
+	    throw ZoneConfigError( "each record must have \"owner, ttl, type, record\" attributes" );
+	}
 
-        std::string owner = node["owner"].as<std::string>();
-        TTL  ttl          = node["ttl"].as<uint32_t>();
-        Type type         = string_to_type_code( node["type"].as<std::string>() );
+	std::string owner = node["owner"].as<std::string>();
+	TTL  ttl          = node["ttl"].as<uint32_t>();
+	Type type         = string_to_type_code( node["type"].as<std::string>() );
 
-        std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
+	std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
   
-        const YAML::Node records = node["record"];
-        for ( YAML::const_iterator record = records.begin() ; record != records.end() ; ++record ) { 
-            switch( type ) {
-            case TYPE_A:
-                rrset->add( parseRecordA( *record ) );
-                break;
-            case TYPE_SOA:
-                rrset->add( parseRecordSOA( *record ) );
-                break;
-            case TYPE_NS:
-                rrset->add( parseRecordNS( *record ) );
-                break;
-            default:
-                break;
-            }
-        }
-        return rrset;
+	try {
+	    const YAML::Node records = node["record"];
+	    for ( YAML::const_iterator record = records.begin() ; record != records.end() ; ++record ) {
+		switch( type ) {
+		case TYPE_A:
+		    rrset->add( parseRecordA( *record ) );
+		    break;
+		case TYPE_SOA:
+		    rrset->add( parseRecordSOA( *record ) );
+		    break;
+		case TYPE_NS:
+		    rrset->add( parseRecordNS( *record ) );
+		    break;
+		default:
+		    break;
+		}
+	    }
+	    return rrset;
+	}
+	catch ( std::runtime_error &e ) {
+	    std::cerr << "parse: " << e.what() << std::endl;
+	    throw;
+	}
     }
 
 
     std::shared_ptr<Zone> load( const Domainname &apex, const char *config )
     {
-        YAML::Node top = YAML::Load( config );
+        YAML::Node top;
+        try {
+            top = YAML::Load( config );
+        }
+        catch( YAML::ParserException &e ) {
+            std::cerr << "cannot load zone: " << e.what() << std::endl;
+            throw ZoneConfigError( "cannot load zone " + apex.toString() + ": " + e.what() );
+        }
 
         std::shared_ptr<Zone> zone( new Zone( apex ) );
         for ( YAML::const_iterator rrset_it = top.begin() ; rrset_it != top.end() ; ++rrset_it ) {
-            zone->add( parseRRSet( *rrset_it ) );
+            try {
+                auto rrset = parseRRSet( *rrset_it );
+		zone->add( rrset );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << "cannot parse rrset: " << e.what() << std::endl;
+                throw;
+            }
         }
 
         return zone;
