@@ -3,11 +3,15 @@ add_executable( test-md5          test-md5.cpp )
 add_executable( test-wireformat   test-wireformat.cpp )
 add_executable( test-hmac-md5     test-hmac-md5.cpp )
 add_executable( test-domainname   test-domainname.cpp )
+add_executable( test-zone         test-zone.cpp )
+add_executable( test-zoneloader   test-zoneloader.cpp )
 target_link_libraries(test-base64     libipv4 crypto gtest pthread)
 target_link_libraries(test-md5        libipv4 crypto gtest pthread)
 target_link_libraries(test-wireformat libipv4 crypto gtest pthread)
 target_link_libraries(test-hmac-md5   libipv4 crypto gtest pthread)
 target_link_libraries(test-domainname libdns libipv4 crypto gtest pthread)
+target_link_libraries(test-zone       libzone libdns libipv4 ${YAML_CPP_LIBRARIES} crypto gtest pthread )
+target_link_libraries(test-zoneloader libzone libdns libipv4 ${YAML_CPP_LIBRARIES} crypto gtest pthread )
 
 add_test(
   NAME base64
@@ -32,5 +36,15 @@ add_test(
 add_test(
   NAME domainname
   COMMAND test-domainname
+)
+
+add_test(
+  NAME zone
+  COMMAND test-zone
+)
+
+add_test(
+  NAME zoneloader
+  COMMAND test-zoneloader
 )
 
