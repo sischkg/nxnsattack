@@ -35,6 +35,9 @@ namespace dns
         ResourceDataContainer::const_iterator begin() const { return resource_data.begin(); }
         ResourceDataContainer::const_iterator end()   const { return resource_data.end(); }
 
+	ResourceDataPtr operator[]( int index ) { return resource_data[index]; }
+	ConstResourceDataPtr operator[]( int index ) const { return resource_data[index]; }
+
         void add( ResourceDataPtr data ) { resource_data.push_back( data ); }
     };
 

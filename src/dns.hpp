@@ -72,6 +72,7 @@ namespace dns
 
     class ResourceData;
     typedef std::shared_ptr<ResourceData> ResourceDataPtr;
+    typedef std::shared_ptr<const ResourceData> ConstResourceDataPtr;
 
     class ResourceData
     {
@@ -338,6 +339,12 @@ namespace dns
         {
             return rname.toString();
         }
+
+	uint32_t getSerial() const { return serial; }
+	uint32_t getRefresh() const { return refresh; }
+	uint32_t getRetry() const { return retry; }
+	uint32_t getExpire() const { return expire; }
+	uint32_t getMinimum() const { return minimum; }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
