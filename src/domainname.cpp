@@ -91,6 +91,11 @@ namespace dns
         }
     }
 
+    Domainname::Domainname( const std::deque<std::string> &l )
+        : labels( l )
+    {
+        canonicalizeLabels( labels, canonical_labels );
+    }
     
     Domainname::Domainname( const char *name )
     {

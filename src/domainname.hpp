@@ -42,9 +42,7 @@ namespace dns
         std::deque<std::string> canonical_labels;
 
     public:
-        Domainname( const std::deque<std::string> &l = std::deque<std::string>() ) : labels( l )
-        {}
-
+        Domainname( const std::deque<std::string> &l = std::deque<std::string>() );
         Domainname( const std::string &name );
         Domainname( const char *name );
 
