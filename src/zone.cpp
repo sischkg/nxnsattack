@@ -1,35 +1,45 @@
+
 #include "zone.hpp"
 
 namespace dns
 {
+    Node::RRSetPtr Node::find( Type t ) const
+    {
+        auto rrset_itr = rrsets.find( t );
+        if ( rrset_itr == rrsets.end() )
+            return RRSetPtr();
+        return rrset_itr->second;
+    }
+
+
     Zone::Zone( const Domainname &zone_name )
         : apex( zone_name )
     {
-	owner_to_node.insert( OwnerToNodePair( apex.getCanonicalDomainname(),
-                                               NodePtr( new Node ) ) );
+	owner_to_node.insert( OwnerToNodePair( apex, NodePtr( new Node ) ) );
     }
 
     void Zone::addEmptyNode( const Domainname &domainname )
     {
-        owner_to_node.insert( OwnerToNodePair( domainname.getCanonicalDomainname(),
-                                               NodePtr( new Node ) ) );
+        owner_to_node.insert( OwnerToNodePair( domainname, NodePtr( new Node ) ) );
     }
 
     void Zone::add( RRSetPtr rrset )
     {
         Domainname owner = rrset->getOwner();
-	if ( ! apex.isSubDomain( owner ) ) {
-	    throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + apex.toString() );
-	}
+        if ( ! apex.isSubDomain( owner ) ) {
+            throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + apex.toString() );
+        }
 
 	Domainname relative_name = apex.getRelativeDomainname( owner );
 	Domainname node_name     = apex;
 	for ( auto r = relative_name.getCanonicalLabels().rbegin() ; r != relative_name.getCanonicalLabels().rend() ; ++r ) {
 	    node_name.addSubdomain( *r );
 	    if ( ! findNode( node_name ) )
-                addEmptyNode( node_name );
+		addEmptyNode( node_name );
 	}
 	auto node = findNode( owner );
+	if ( node.get() == nullptr )
+	    throw std::logic_error( "node must be exist" );
 	node->add( rrset );
     }
 
