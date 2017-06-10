@@ -701,6 +701,11 @@ namespace dns
         message.push_back( ( sin_addr >> 24 ) & 0xff );
     }
 
+    std::string RecordA::getAddress() const
+    {
+	return toString();
+    }
+
     ResourceDataPtr RecordA::parse( const uint8_t *begin, const uint8_t *end )
     {
         return ResourceDataPtr( new RecordA( *( reinterpret_cast<const uint32_t *>( begin ) ) ) );
@@ -731,6 +736,11 @@ namespace dns
     {
         message.pushBuffer( reinterpret_cast<const uint8_t *>( &sin_addr ),
                             reinterpret_cast<const uint8_t *>( &sin_addr ) + sizeof( sin_addr ) );
+    }
+
+    std::string RecordAAAA::getAddress() const
+    {
+	return toString();
     }
 
     ResourceDataPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t *end )

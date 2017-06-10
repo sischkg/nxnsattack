@@ -129,6 +129,8 @@ namespace dns
         {
             return sizeof( sin_addr );
         }
+
+	std::string getAddress() const;
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
@@ -151,6 +153,8 @@ namespace dns
         {
             return sizeof( sin_addr );
         }
+
+	std::string getAddress() const;
 
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
     };
