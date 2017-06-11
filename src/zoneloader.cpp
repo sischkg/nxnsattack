@@ -10,12 +10,21 @@ namespace dns
         throw ZoneConfigError( "A record must have \"address\" attribute" );
     }
 
-    ResourceDataPtr parseRecordNS( const YAML::Node &node )
+    ResourceDataPtr parseRecordAAAA( const YAML::Node &node )
     {
         if ( node["address"] ) {
             return std::shared_ptr<ResourceData>( new RecordAAAA( node["address"].as<std::string>() ) );
         }
         throw ZoneConfigError( "AAAA record must have \"address\" attribute" );
+    }
+
+
+    ResourceDataPtr parseRecordNS( const YAML::Node &node )
+    {
+        if ( node["nameserver"] ) {
+            return std::shared_ptr<ResourceData>( new RecordNS( node["nameserver"].as<std::string>() ) );
+        }
+        throw ZoneConfigError( "NS record must have \"nameserver\" attribute" );
     }
 
     ResourceDataPtr parseRecordSOA( const YAML::Node &node )
