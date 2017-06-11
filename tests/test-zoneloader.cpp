@@ -18,7 +18,7 @@ public:
     }
 };
 
-const char *ZONE_CONFIG_YAML_SOA = 
+const char *ZONE_CONFIG_YAML_SOA =
     "- owner: example.com\n"
     "  type:  SOA\n"
     "  ttl:   3600\n"
@@ -67,7 +67,7 @@ TEST_F( ZoneLoaderTest, Load_SOA )
 }
 
 
-const char *ZONE_CONFIG_YAML_A = 
+const char *ZONE_CONFIG_YAML_A =
     "- owner: example.com\n"
     "  type:  SOA\n"
     "  ttl:   3600\n"
@@ -98,7 +98,7 @@ TEST_F( ZoneLoaderTest, Load_A )
             }
         } )
         << "can load zone:" + std::string( ZONE_CONFIG_YAML_A );
- 
+
     auto node = zone->findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded";
 
@@ -113,6 +113,57 @@ TEST_F( ZoneLoaderTest, Load_A )
 }
 
 
+const char *ZONE_CONFIG_YAML_NS =
+    "- owner: example.com\n"
+    "  type:  SOA\n"
+    "  ttl:   3600\n"
+    "  record:\n"
+    "  - mname:   ns01.example.com\n"
+    "    rname:   hostmaster.example.com\n"
+    "    serial:  2017050101\n"
+    "    refresh: 3600\n"
+    "    retry:   1800\n"
+    "    expire:  8640000\n"
+    "    minimum: 3600\n"
+    "- owner: example.com\n"
+    "  type:  NS\n"
+    "  ttl:   300\n"
+    "  record:\n"
+    "  - nameserver: ns01.example.com\n"
+    "  - nameserver: ns02.example.com\n";
+
+TEST_F( ZoneLoaderTest, Load_NS )
+{
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::load( "example.com", ZONE_CONFIG_YAML_NS );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone:" + std::string( ZONE_CONFIG_YAML_NS );
+
+    auto node = zone->findNode( "example.com" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "example.com is loaded";
+
+    auto rrset = node->find( dns::TYPE_NS );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "a record is loaded";
+
+    ASSERT_EQ( 2, rrset->count() ) << "2 NS records";
+    std::shared_ptr<const dns::RecordNS> ns01;
+    ASSERT_NO_THROW( {
+	    ns01 = std::dynamic_pointer_cast<const dns::RecordNS>( (*rrset)[0] );
+	} );
+    EXPECT_STREQ( "ns01.example.com.", ns01->getNameServer().toString().c_str() );
+    std::shared_ptr<const dns::RecordNS> ns02;
+    ASSERT_NO_THROW( {
+	    ns02 = std::dynamic_pointer_cast<const dns::RecordNS>( (*rrset)[1] );
+	} );
+    EXPECT_STREQ( "ns02.example.com.", ns02->getNameServer().toString().c_str() );
+}
 
 int main( int argc, char **argv )
 {
