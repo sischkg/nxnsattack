@@ -178,7 +178,8 @@ namespace dns
         {
             return domainname.size( offset );
         }
-
+	const Domainname &getNameServer() const { return domainname; }
+ 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
