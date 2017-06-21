@@ -1,0 +1,69 @@
+#include "dns_server.hpp"
+#include "zone.hpp"
+#include "zoneloader.hpp"
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <fstream>
+
+class ZoneServer : public dns::DNSServer
+{
+public:
+    ZoneServer( const std::string &addr, uint16_t port )
+        : dns::DNSServer( addr, port )
+    {}
+
+    void load( const std::string &apex, const std::string &filename )
+    {
+        std::ifstream fin( filename );
+        std::string config;
+        while ( ! fin.eof() ) {
+            std::string line;
+            std::getline( fin, line );
+            config += line;
+	    config += "\n";
+        }
+	std::cerr << config << std::endl;
+        zone = dns::load( apex, config.c_str() );
+    }
+
+
+    dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
+    {
+        dns::PacketInfo response = zone->getAnswer( query );
+        return response;
+    }
+
+private:
+    std::shared_ptr<dns::Zone> zone;
+};
+
+int main( int argc, char **argv )
+{
+    namespace po = boost::program_options;
+
+    std::string bind_address;
+    std::string zone_filename;
+    std::string apex;
+
+    po::options_description desc( "unbound" );
+    desc.add_options()( "help,h", "print this message" )
+
+        ( "bind,b", po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
+	( "file,f", po::value<std::string>( &zone_filename ), "bind address" )
+	( "zone,z", po::value<std::string>( &apex),           "zone apex" );
+    
+    po::variables_map vm;
+    po::store( po::parse_command_line( argc, argv, desc ), vm );
+    po::notify( vm );
+
+    if ( vm.count( "help" ) ) {
+        std::cerr << desc << "\n";
+        return 1;
+    }
+
+    ZoneServer server( bind_address, 53 );
+    server.load( apex, zone_filename );
+    server.start();
+
+    return 0;
+}
