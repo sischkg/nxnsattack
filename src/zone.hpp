@@ -90,6 +90,11 @@ namespace dns
 
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
         NodePtr  findNode( const Domainname &domainname ) const;
+
+	RRSetPtr getSOA() const { return soa; }
+	RRSetPtr getNameServer() const { return name_servers; }
+
+        void verify() const;
     };
 
 }

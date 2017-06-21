@@ -105,10 +105,19 @@ TEST_F( ZoneTest, AddSet )
 
     dns::Node::RRSetPtr rrset_www( new dns::RRSet( "www.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
 
+    EXPECT_NO_THROW( { zone.add( rrset_soa ); } );
     EXPECT_NO_THROW( { zone.add( rrset_a ); } );
     EXPECT_NO_THROW( { zone.add( rrset_ns ); } );
     EXPECT_NO_THROW( { zone.add( rrset_www ); } );
 
+    EXPECT_NO_THROW( { zone.verify(); } );
+
+    auto soa = zone.getSOA();
+    EXPECT_STREQ( "example.com.", soa->getOwner().toString().c_str() );
+    EXPECT_EQ( dns::TYPE_SOA, soa->getType() );
+    auto name_servers = zone.getNameServer();
+    EXPECT_STREQ( "example.com.", name_servers->getOwner().toString().c_str() );
+    EXPECT_EQ( dns::TYPE_NS, name_servers->getType() );
 }
 
 int main( int argc, char **argv )

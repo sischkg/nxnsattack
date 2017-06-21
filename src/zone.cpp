@@ -41,6 +41,14 @@ namespace dns
 	if ( node.get() == nullptr )
 	    throw std::logic_error( "node must be exist" );
 	node->add( rrset );
+
+	if ( rrset->getType() == TYPE_SOA && rrset->getOwner() == apex ) {
+	    soa = rrset;
+	}
+	if ( rrset->getType() == TYPE_NS && rrset->getOwner() == apex ) {
+	    name_servers = rrset;
+	}
+	
     }
 
     PacketInfo Zone::getAnswer( const PacketInfo &query ) const
@@ -141,6 +149,15 @@ namespace dns
             r.r_resource_data = *data_itr;
         }
         response.authority_section.push_back( r );
+    }
+
+    void Zone::verify() const
+    {
+        if ( soa.get() == nullptr )
+            throw std::runtime_error( "No SOA record" );
+
+        if ( name_servers.get() == nullptr )
+            throw std::runtime_error( "No NS records" );
     }
 }
 
