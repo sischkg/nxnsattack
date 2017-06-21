@@ -7,6 +7,14 @@
 
 namespace dns
 {
+    class ZoneError : std::runtime_error
+    {
+    public:
+        ZoneError( const std::string &msg )
+            : std::runtime_error( msg )
+        {}
+    };
+
     class RRSet
     {
     public:

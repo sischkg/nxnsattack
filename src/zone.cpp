@@ -154,10 +154,10 @@ namespace dns
     void Zone::verify() const
     {
         if ( soa.get() == nullptr )
-            throw std::runtime_error( "No SOA record" );
+            throw ZoneError( "No SOA record" );
 
         if ( name_servers.get() == nullptr )
-            throw std::runtime_error( "No NS records" );
+            throw ZoneError( "No NS records" );
     }
 }
 
