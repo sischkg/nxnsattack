@@ -164,7 +164,7 @@ namespace dns
 	    r.r_class       = rrset.getClass();
 	    r.r_ttl         = rrset.getTTL();
 	    r.r_resource_data = *data_itr;
-	    response.authority_section.push_back( r );
+	    response.answer_section.push_back( r );
 	}
     }
 
