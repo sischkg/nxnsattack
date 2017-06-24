@@ -88,19 +88,23 @@ namespace dns
         // find qname
         auto node = findNode( qname );
         if ( node ) {
+	    if ( qtype == TYPE_ANY ) {
+		if ( node->exist() ) {
+		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
+			addRRSetToAnswerSection( response, *(rrset_itr->second) );
+		    }
+		}
+		else {
+		    // NoData ( found empty non-terminal )
+		    response.response_code = NO_ERROR;
+		    addSOAToAuthoritySection( response );
+		}
+		return response;
+	    }
             auto rrset = node->find( qtype );
             if ( rrset ) {
                 // found 
-                for ( auto data_itr = rrset->begin() ; data_itr != rrset->end() ; data_itr++ ) {
-                    ResponseSectionEntry r;
-                    r.r_domainname  = rrset->getOwner();
-                    r.r_type        = rrset->getType();
-                    r.r_class       = rrset->getClass();
-                    r.r_ttl         = rrset->getTTL();
-                    r.r_resource_data = *data_itr;
-                    response.authority_section.push_back( r );                 
-                }
-
+		addRRSetToAnswerSection( response, *rrset );
                 return response;
             }
             else {
@@ -149,6 +153,19 @@ namespace dns
             r.r_resource_data = *data_itr;
         }
         response.authority_section.push_back( r );
+    }
+
+    void Zone::addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const
+    {
+	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
+	    ResponseSectionEntry r;
+	    r.r_domainname  = rrset.getOwner();
+	    r.r_type        = rrset.getType();
+	    r.r_class       = rrset.getClass();
+	    r.r_ttl         = rrset.getTTL();
+	    r.r_resource_data = *data_itr;
+	    response.authority_section.push_back( r );
+	}
     }
 
     void Zone::verify() const

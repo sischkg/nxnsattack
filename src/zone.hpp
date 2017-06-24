@@ -70,6 +70,8 @@ namespace dns
 
         bool empty( Type t ) const { return ! find( t ); }
         bool exist( Type t ) const { return ! empty( t ); } 
+        bool empty() const { return   rrsets.empty(); }
+        bool exist() const { return ! rrsets.empty(); }
 
         void add( std::shared_ptr<RRSet> rrset ) { rrsets.insert( RRSetPair( rrset->getType(), rrset ) ); }
     };
@@ -90,6 +92,11 @@ namespace dns
 
         void addSOAToAuthoritySection( PacketInfo &res ) const;
         void addEmptyNode( const Domainname & );
+	void addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const;
+
+	//    	void generateFoundAnswer( PacketInfo &response ) const;
+	//	void generateNoDataAnswer( PacketInfo &response ) const;
+
     public:
         Zone( const Domainname &zone_name );
 
