@@ -59,7 +59,7 @@ int main()
     received_packet                       = tcp.receive_data( response_size );
     tcp.closeSocket();
 
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(), received_packet.end() );
+    dns::PacketInfo res = dns::parse_dns_packet( received_packet.begin(), received_packet.end() );
 
     std::cout << res;
 

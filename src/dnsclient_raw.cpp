@@ -27,8 +27,8 @@ int main()
     while ( true ) {
         sender.sendPacket( udp_param );
 
-        udpv4::PacketInfo       received_packet = receiver.receivePacket();
-        dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin(), received_packet.end() );
+        udpv4::PacketInfo received_packet = receiver.receivePacket();
+        dns::PacketInfo   res             = dns::parse_dns_packet( received_packet.begin(), received_packet.end() );
         std::cout << res;
 
         usleep( 1000000 );

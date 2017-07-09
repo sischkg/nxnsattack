@@ -110,12 +110,12 @@ int main( int argc, char **argv )
             std::cerr << "received size: " << received_data.getLength() << std::endl;
             response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
         }
-        dns::ResponsePacketInfo res =
-            dns::parse_dns_response_packet( &response_data[ 0 ], &response_data[ 0 ] + response_data.size() );
+        dns::PacketInfo res =
+            dns::parse_dns_packet( &response_data[ 0 ], &response_data[ 0 ] + response_data.size() );
 
         std::cout << res;
 
-        if ( res.answer.size() == 0 || res.answer[ res.answer.size() - 1 ].r_type == dns::TYPE_SOA )
+        if ( res.answer_section.size() == 0 || res.answer_section[ res.answer_section.size() - 1 ].r_type == dns::TYPE_SOA )
             break;
     }
 

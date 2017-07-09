@@ -969,31 +969,6 @@ namespace dns
         }
     };
 
-    struct ResponsePacketInfo {
-        uint16_t id;
-        uint16_t opcode;
-        bool     recursion_available;
-        bool     authoritative_answer;
-        bool     truncation;
-        bool     authentic_data;
-        bool     checking_disabled;
-        uint8_t  response_code;
-        bool     edns0;
-
-        OptPseudoRecord opt_pseudo_rr;
-
-        std::vector<QuestionSectionEntry> question;
-        std::vector<ResponseSectionEntry> answer;
-        std::vector<ResponseSectionEntry> authority;
-        std::vector<ResponseSectionEntry> additional_infomation;
-
-        ResponsePacketInfo()
-            : id( 0 ), opcode( 0 ), recursion_available( false ), authoritative_answer( false ), truncation( false ),
-              authentic_data( false ), checking_disabled( false ), response_code( 0 ), edns0( false )
-        {
-        }
-    };
-
     struct PacketInfo {
         uint16_t id;
 
@@ -1035,15 +1010,12 @@ namespace dns
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
     std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
-    std::vector<uint8_t> generate_dns_response_packet( const ResponsePacketInfo &response );
     void generate_dns_packet( const PacketInfo &query, WireFormat & );
     void generate_dns_query_packet( const QueryPacketInfo &query, WireFormat & );
-    void generate_dns_response_packet( const ResponsePacketInfo &response, WireFormat & );
     PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end );
     QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end );
-    ResponsePacketInfo parse_dns_response_packet( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query );
-    std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &response );
+    std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
     std::string type_code_to_string( Type t );
     std::string response_code_to_string( uint8_t rcode );

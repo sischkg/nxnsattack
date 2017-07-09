@@ -58,7 +58,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    dns::ResponsePacketInfo  res;
+    dns::PacketInfo  res;
     dns::SourcePortGenerator source_port( target_source_port );
 
     unsigned long index = 0;
@@ -137,7 +137,7 @@ int main( int argc, char **argv )
         if ( received_packet.getPayloadLength() == 0 )
             continue;
 
-        res = dns::parse_dns_response_packet( received_packet.begin(), received_packet.end() );
+        res = dns::parse_dns_packet( received_packet.begin(), received_packet.end() );
 
         if ( res.response_code == dns::NO_ERROR ) {
             break;

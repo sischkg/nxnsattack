@@ -131,37 +131,6 @@ namespace dns
         return generate_dns_packet( info, message );
     }
 
-    PacketData generate_dns_response_packet( const ResponsePacketInfo &response )
-    {
-        WireFormat message;
-        generate_dns_response_packet( response, message );
-        return message.get();
-    }
-
-    void generate_dns_response_packet( const ResponsePacketInfo &response, WireFormat &message )
-    {
-        PacketInfo info;
-        info.id                   = response.id;
-        info.opcode               = 0;
-        info.query_response       = 1;
-        info.authoritative_answer = response.authoritative_answer;
-        info.truncation           = response.truncation;
-        info.recursion_desired    = 0;
-        info.recursion_available  = response.recursion_available;
-        info.checking_disabled    = 0;
-        info.response_code        = response.response_code;
-
-        info.edns0         = response.edns0;
-        info.opt_pseudo_rr = response.opt_pseudo_rr;
-
-        info.question_section              = response.question;
-        info.answer_section                = response.answer;
-        info.authority_section             = response.authority;
-        info.additional_infomation_section = response.additional_infomation;
-
-        return generate_dns_packet( info, message );
-    }
-
     PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *packet = begin;
@@ -233,27 +202,6 @@ namespace dns
         query_info.question  = packet_info.question_section;
 
         return query_info;
-    }
-
-    ResponsePacketInfo parse_dns_response_packet( const uint8_t *begin, const uint8_t *end )
-    {
-        PacketInfo packet_info = parse_dns_packet( begin, end );
-
-        ResponsePacketInfo response_info;
-        response_info.id                   = packet_info.id;
-        response_info.truncation           = packet_info.truncation;
-        response_info.authoritative_answer = packet_info.authoritative_answer;
-        response_info.response_code        = packet_info.response_code;
-        response_info.checking_disabled    = packet_info.checking_disabled;
-        response_info.authentic_data       = packet_info.authentic_data;
-        response_info.recursion_available  = packet_info.recursion_available;
-
-        response_info.question              = packet_info.question_section;
-        response_info.answer                = packet_info.answer_section;
-        response_info.authority             = packet_info.authority_section;
-        response_info.additional_infomation = packet_info.additional_infomation_section;
-
-        return response_info;
     }
 
     PacketData convert_domainname_string_to_binary( const std::string &domainname, uint32_t compress_offset )
@@ -630,32 +578,29 @@ namespace dns
         return os;
     }
 
-    std::ostream &operator<<( std::ostream &os, const ResponsePacketInfo &res )
+    std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
     {
         os << "ID: " << res.id << std::endl
-           << "Query/Response: "
-           << "Response" << std::endl
+           << "Query/Response: " << ( res.query_response ? "Response" : "Query" ) << std::endl
            << "OpCode:" << res.opcode << std::endl
            << "Authoritative Answer: " << res.authoritative_answer << std::endl
            << "Truncation: " << res.truncation << std::endl
+           << "Recursion Desired: " << res.recursion_desired << std::endl
            << "Recursion Available: " << res.recursion_available << std::endl
            << "Checking Disabled: " << res.checking_disabled << std::endl
            << "Response Code: " << response_code_to_string( res.response_code ) << std::endl;
 
-        for ( auto i = res.question.begin(); i != res.question.end(); ++i )
-            os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << "  ?" << std::endl;
-        for ( auto i = res.answer.begin(); i != res.answer.end(); ++i ) {
-            std::cout << "Answer: " << i->r_domainname << " " << i->r_ttl << " " << type_code_to_string( i->r_type )
-                      << " " << i->r_resource_data->toString() << std::endl;
-        }
-        for ( auto i = res.authority.begin(); i != res.authority.end(); ++i ) {
-            std::cout << "Authority: " << i->r_ttl << " " << type_code_to_string( i->r_type ) << " "
-                      << i->r_resource_data->toString() << std::endl;
-        }
-        for ( auto i = res.additional_infomation.begin(); i != res.additional_infomation.end(); ++i ) {
-            std::cout << "Additional: " << i->r_domainname << " " << i->r_ttl << " " << type_code_to_string( i->r_type )
-                      << " " << i->r_resource_data->toString() << std::endl;
-        }
+        for ( auto q : res.question_section )
+            os << "Query: " << q.q_domainname << " " << type_code_to_string( q.q_type ) << "  ?" << std::endl;
+        for ( auto a : res.answer_section )
+            std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
+                      << " " << a.r_resource_data->toString() << std::endl;
+        for ( auto a : res.authority_section )
+            std::cout << "Authority: " << a.r_ttl << " " << type_code_to_string( a.r_type ) << " "
+                      << a.r_resource_data->toString() << std::endl;
+        for ( auto a : res.additional_infomation_section )
+            std::cout << "Additional: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
+                      << " " << a.r_resource_data->toString() << std::endl;
 
         return os;
     }

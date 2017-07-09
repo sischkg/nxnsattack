@@ -67,8 +67,8 @@ int main( int argc, char **argv )
     udp.sendPacket( notify_data );
     udpv4::PacketInfo recv_data = udp.receivePacket();
 	
-    dns::ResponsePacketInfo res =
-	dns::parse_dns_response_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.getPayloadLength() );
+    dns::PacketInfo res =
+	dns::parse_dns_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.getPayloadLength() );
 
     std::cout << res;
 

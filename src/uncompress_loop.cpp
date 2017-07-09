@@ -136,7 +136,7 @@ int main()
 
     udpv4::PacketInfo received_packet = udp.receivePacket();
 
-    dns::ResponsePacketInfo res = dns::parse_dns_response_packet( received_packet.begin() + 2, received_packet.end() );
+    dns::PacketInfo res = dns::parse_dns_packet( received_packet.begin() + 2, received_packet.end() );
 
     std::cout << res;
 
