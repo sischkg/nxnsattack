@@ -1012,7 +1012,7 @@ namespace dns
         bool edns0;
         bool tsig;
 
-        OptPseudoRecord opt_pseudo_rr;
+	OptPseudoRecord opt_pseudo_rr;
         RecordTSIGData  tsig_rr;
 
         std::vector<QuestionSectionEntry> question_section;
@@ -1026,6 +1026,11 @@ namespace dns
               authentic_data( false ), response_code( 0 ), edns0( false ), tsig( false )
         {
         }
+
+	bool isDNSSECOK() const
+	{
+	    return opt_pseudo_rr.dobit;
+	}
     };
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );

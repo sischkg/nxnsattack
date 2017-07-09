@@ -205,6 +205,12 @@ namespace dns
             ResponseSectionEntryPair pair = parse_response_section( begin, packet );
             if ( pair.first.r_type == TYPE_OPT ) {
                 packet_info.edns0 = true;
+		packet_info.opt_pseudo_rr.domainname   = pair.first.r_domainname;
+		packet_info.opt_pseudo_rr.payload_size = pair.first.r_class;
+		packet_info.opt_pseudo_rr.rcode        = ( 0xff000000 & pair.first.r_ttl ) >> 24;
+		packet_info.opt_pseudo_rr.dobit        = ( 0x00800000 & pair.first.r_ttl ) ? true : false;
+		packet_info.opt_pseudo_rr.record_options_data = pair.first.r_resource_data;
+		
             }
             if ( pair.first.r_type == TYPE_TSIG && pair.first.r_class == CLASS_IN ) {
                 packet_info.tsig    = true;
