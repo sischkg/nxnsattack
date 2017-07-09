@@ -40,7 +40,6 @@ namespace dns
         return pos;
     }
 
-
     uint16_t QuestionSectionEntry::size() const
     {
         return q_domainname.size() + sizeof(q_type) + sizeof(q_class);
@@ -53,7 +52,7 @@ namespace dns
 	    r_resource_data->size();
     }
 
-    
+
     PacketData generate_dns_packet( const PacketInfo &info )
     {
         WireFormat message;
@@ -606,7 +605,7 @@ namespace dns
         if ( t == "IXFR" )   return TYPE_IXFR;
         if ( t == "AXFR" )   return TYPE_AXFR;
         if ( t == "ANY" )    return TYPE_ANY;
-  
+
         throw std::runtime_error( "unknown type \"" + t + "\"" );
     }
 
@@ -1147,6 +1146,170 @@ namespace dns
         return ResourceDataPtr( new RecordDS( tag, algo, dtype, d ) );
     }
 
+
+    void NSECBitmapField::Window::add( Type t )
+    {
+	types.push_back( t );
+    }
+
+    uint16_t NSECBitmapField::Window::size() const
+    {
+	uint8_t max_bytes = 0;
+	for ( Type t : types ) {
+	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t - 1 ) / 8 + 1 );
+	}
+	return max_bytes;
+    }
+
+    void NSECBitmapField::Window::outputWireFormat( WireFormat &message ) const
+    {
+	message.pushUInt8( index );
+	message.pushUInt8( size() );
+
+	std::vector<uint8_t> bitmaps;
+	bitmaps.resize( size() );
+	for ( uint8_t &v : bitmaps )
+	    v = 0;
+	for ( Type t : types ) {
+	    uint8_t index = 7 - ( typeToBitmapIndex( t - 1 ) % 8 );
+	    uint8_t flag  = 1 << index;
+	    bitmaps.at( typeToBitmapIndex( t - 1 ) / 8 ) |= flag;
+	}
+	message.pushBuffer( bitmaps );
+    }
+
+    std::string NSECBitmapField::Window::toString() const
+    {
+	std::ostringstream os;
+	for ( Type t : types ) {
+	    os << type_code_to_string( t ) << ",";
+	}
+
+	std::string result( os.str() );
+	result.pop_back();
+	return result;
+    }
+
+    uint8_t NSECBitmapField::Window::typeToBitmapIndex( Type t )
+    {
+	return (0xff & t);
+    }
+
+    const uint8_t *NSECBitmapField::Window::parse( NSECBitmapField::Window &ref_win, const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+	uint8_t window_index = *begin++;
+	uint8_t window_size  = *begin++;
+	if ( begin + window_size >= end )
+	    throw std::runtime_error( "Bad NSEC bitmap size" );
+
+	ref_win.setIndex( window_index );
+	for ( uint8_t bitmap_index = 0 ; bitmap_index / 8 < window_size ; bitmap_index++ ) {
+	    uint8_t flag = 1 << ( ( bitmap_index - 1 ) % 8 );
+	    if( *( begin + ( bitmap_index / 8 ) ) & flag ) {
+		Type t = 0x0100 * window_index + bitmap_index;
+		ref_win.add( t );
+	    }
+	}
+    };
+
+    void NSECBitmapField::add( Type t )
+    {
+	uint8_t window_index = typeToWindowIndex( t );
+	auto window = windows.find( window_index );
+	if ( window == windows.end() ) {
+	    windows.insert( std::make_pair( window_index, Window( window_index ) ) );
+	}
+	window = windows.find( window_index );
+	window->second.add( t );
+    }
+
+    void NSECBitmapField::addWindow( const Window &win )
+    {
+	uint8_t window_index = win.getIndex();
+	auto window = windows.find( window_index );
+	if ( window == windows.end() ) {
+	    windows.insert( std::make_pair( window_index, win ) );
+	}
+	else {
+	    std::ostringstream os;
+	    os << "Bad NSEC record( mutiple window index \"" << (int)window_index << "\" is found.";
+	    throw std::runtime_error( os.str() );
+	}
+    }
+
+    std::string NSECBitmapField::toString() const
+    {
+	std::ostringstream os;
+	for ( auto win : windows )
+	    os << win.second.toString() << ",";
+	std::string result( os.str() );
+	result.pop_back();
+	return result;
+    }
+
+    uint16_t NSECBitmapField::size() const
+    {
+	uint16_t s = 0;
+	for ( auto win : windows )
+	    s += win.second.size();
+	return s;
+    }
+
+    void NSECBitmapField::outputWireFormat( WireFormat &message ) const
+    {
+	for ( auto win : windows )
+	    win.second.outputWireFormat( message );
+    }
+
+    uint8_t NSECBitmapField::typeToWindowIndex( Type t )
+    {
+	return (0xff00 & t) >> 8;
+    }
+
+    const uint8_t *NSECBitmapField::parse( NSECBitmapField &ref_bitmaps, const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+	while ( begin < end ) {
+	    NSECBitmapField::Window win;
+	    begin = NSECBitmapField::Window::parse( win, packet, begin, end );
+	    ref_bitmaps.addWindow( win );
+	}
+	return begin;
+    }
+
+    RecordNSEC::RecordNSEC( const Domainname &next, const std::vector<Type> &types )
+	: next_domainname( next )
+    {
+	for ( Type t : types )
+	    bitmaps.add( t );
+    }
+
+
+    std::string RecordNSEC::toString() const
+    {
+	return next_domainname.toString() + "( " + bitmaps.toString() + " )";
+    }
+
+    void RecordNSEC::outputWireFormat( WireFormat &message ) const
+    {
+	next_domainname.outputWireFormat( message );
+	bitmaps.outputWireFormat( message );
+    }
+
+    uint16_t RecordNSEC::size() const
+    {
+	return next_domainname.size() + bitmaps.size();
+    }
+
+    ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+	Domainname next;
+	const uint8_t *pos = Domainname::parsePacket( next, packet, begin );
+	NSECBitmapField bitmaps;
+	NSECBitmapField::parse( bitmaps, packet, pos, end );
+	return ResourceDataPtr( new RecordNSEC( next, bitmaps ) );
+    }
+
+
     std::string RecordOptionsData::toString() const
     {
         std::ostringstream os;
@@ -1156,6 +1319,7 @@ namespace dns
 
         return os.str();
     }
+
 
     uint16_t RecordOptionsData::size() const
     {

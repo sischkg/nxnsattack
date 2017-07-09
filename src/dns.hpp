@@ -6,6 +6,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 #include <deque>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -43,7 +44,9 @@ namespace dns
     const Type       TYPE_APL    = 42;
     const Type       TYPE_DS     = 43;
     const Type       TYPE_RRSIG  = 46;
+    const Type       TYPE_NSEC   = 47;
     const Type       TYPE_DNSKEY = 48;
+    const Type       TYPE_NSEC3  = 50;
     const Type       TYPE_TLSA   = 52;
     const Type       TYPE_TKEY   = 249;
     const Type       TYPE_TSIG   = 250;
@@ -179,7 +182,7 @@ namespace dns
             return domainname.size( offset );
         }
 	const Domainname &getNameServer() const { return domainname; }
- 
+
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
@@ -424,7 +427,7 @@ namespace dns
               inception( incept ),
               key_tag( tag ),
               signer( sign ),
-              signature( sig ) 
+              signature( sig )
         {
         }
 
@@ -494,6 +497,7 @@ namespace dns
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+
     class RecordDS : public ResourceData
     {
     private:
@@ -516,6 +520,80 @@ namespace dns
         virtual uint16_t type() const
         {
             return TYPE_DS;
+        }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+
+    class NSECBitmapField
+    {
+    public:
+	class Window
+	{
+	public:
+	    explicit Window( uint8_t i = 0 )
+		: index( i )
+	    {}
+
+	    void        setIndex( uint8_t i ) { index = i; }
+	    void        add( Type );
+	    uint16_t    size() const;
+	    void        outputWireFormat( WireFormat &message ) const;
+	    std::string toString() const;
+	    uint16_t    getIndex() const { return index; }
+
+	    static const uint8_t *parse( Window &ref_windown, const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+
+	private:
+	    uint16_t          index;
+	    std::vector<Type> types;
+
+	    static uint8_t typeToBitmapIndex( Type );
+	};
+
+	void        add( Type );
+	void        addWindow( const Window &win );
+	std::string toString() const;
+	uint16_t    size() const;
+	void        outputWireFormat( WireFormat &message ) const;
+
+	static const uint8_t *parse( NSECBitmapField &ref_bitmaps, const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    private:
+	std::map<uint8_t, Window> windows;
+
+	static uint8_t typeToWindowIndex( Type );
+        static NSECBitmapField parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordNSEC : public ResourceData
+    {
+    private:
+        Domainname      next_domainname;
+        NSECBitmapField bitmaps;
+
+    public:
+        static const uint16_t SIGNED_KEY = 1 << 7;
+        static const uint8_t  RSAMD5     = 1;
+        static const uint8_t  RSASHA1    = 5;
+        static const uint8_t  RSASHA256  = 8;
+        static const uint8_t  RSASHA512  = 10;
+
+        static const uint16_t KSK = 1 << 8;
+        static const uint16_t ZSK = 0;
+
+	RecordNSEC( const Domainname &next, const NSECBitmapField &b )
+	    : next_domainname( next ), bitmaps( b )
+	{}
+	RecordNSEC( const Domainname &next, const std::vector<Type> &types );
+
+        virtual std::string toString() const;
+
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_NSEC;
         }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
