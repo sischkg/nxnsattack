@@ -949,26 +949,6 @@ namespace dns
     	uint16_t size() const;
     };
 
-    struct QueryPacketInfo {
-        uint16_t                          id;
-        Opcode                            opcode;
-        bool                              recursion;
-        bool                              edns0;
-        std::vector<QuestionSectionEntry> question;
-        OptPseudoRecord                   opt_pseudo_rr;
-
-        QueryPacketInfo( uint16_t                                 in_id        = 0,
-                         Opcode                                   in_opcode    = OPCODE_QUERY,
-                         bool                                     in_recursion = false,
-                         bool                                     in_edns0     = false,
-                         const std::vector<QuestionSectionEntry> &in_question  = std::vector<QuestionSectionEntry>(),
-                         const OptPseudoRecord &                  in_opt_pseudo_rr = OptPseudoRecord() )
-            : id( in_id ), opcode( in_opcode ), recursion( in_recursion ), edns0( in_edns0 ), question( in_question ),
-              opt_pseudo_rr( in_opt_pseudo_rr )
-        {
-        }
-    };
-
     struct PacketInfo {
         uint16_t id;
 
@@ -1009,12 +989,8 @@ namespace dns
     };
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
-    std::vector<uint8_t> generate_dns_query_packet( const QueryPacketInfo &query );
     void generate_dns_packet( const PacketInfo &query, WireFormat & );
-    void generate_dns_query_packet( const QueryPacketInfo &query, WireFormat & );
     PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end );
-    QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end );
-    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query );
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
     std::string type_code_to_string( Type t );

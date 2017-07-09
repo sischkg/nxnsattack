@@ -103,34 +103,6 @@ namespace dns
         }
     }
 
-    PacketData generate_dns_query_packet( const QueryPacketInfo &query )
-    {
-        WireFormat message;
-        generate_dns_query_packet( query, message );
-        return message.get();
-    }
-
-    void generate_dns_query_packet( const QueryPacketInfo &query, WireFormat &message )
-    {
-        PacketInfo info;
-        info.id                   = query.id;
-        info.opcode               = 0;
-        info.query_response       = 0;
-        info.authoritative_answer = 0;
-        info.truncation           = 0;
-        info.recursion_desired    = query.recursion;
-        info.recursion_available  = 0;
-        info.checking_disabled    = 0;
-        info.response_code        = 0;
-
-        info.edns0         = query.edns0;
-        info.opt_pseudo_rr = query.opt_pseudo_rr;
-
-        info.question_section = query.question;
-
-        return generate_dns_packet( info, message );
-    }
-
     PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *packet = begin;
@@ -190,18 +162,6 @@ namespace dns
         }
 
         return packet_info;
-    }
-
-    QueryPacketInfo parse_dns_query_packet( const uint8_t *begin, const uint8_t *end )
-    {
-        PacketInfo packet_info = parse_dns_packet( begin, end );
-
-        QueryPacketInfo query_info;
-        query_info.id        = packet_info.id;
-        query_info.recursion = packet_info.recursion_desired;
-        query_info.question  = packet_info.question_section;
-
-        return query_info;
     }
 
     PacketData convert_domainname_string_to_binary( const std::string &domainname, uint32_t compress_offset )
@@ -563,20 +523,6 @@ namespace dns
         throw std::runtime_error( "unknown type \"" + t + "\"" );
     }
 
-
-    std::ostream &operator<<( std::ostream &os, const QueryPacketInfo &query )
-    {
-        os << "ID: " << query.id << std::endl
-           << "OpCode:" << query.opcode << std::endl
-           << "Query/Response: "
-           << "Query" << std::endl
-           << "Recursion Desired: " << query.recursion << std::endl;
-
-        for ( auto i = query.question.begin(); i != query.question.end(); ++i )
-            os << "Query: " << i->q_domainname << " " << type_code_to_string( i->q_type ) << std::endl;
-
-        return os;
-    }
 
     std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
     {

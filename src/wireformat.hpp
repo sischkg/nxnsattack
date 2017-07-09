@@ -150,7 +150,7 @@ public:
 
         MessageHeader();
         ~MessageHeader();
-
+	
         void setBuffers( uint16_t size, const std::vector<uint8_t *>, uint16_t buffer_size );
         void setDestination( const sockaddr *dest, uint16_t len );
     };
