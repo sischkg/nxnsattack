@@ -23,21 +23,26 @@ std::string generate_domainname()
     return "ns." + subdomain + MY_DOMAIN;
 }
 
-dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSectionEntry question_section )
+dns::PacketInfo generate_response( uint16_t id, const dns::QuestionSectionEntry question_section )
 {
-    dns::ResponsePacketInfo response;
+    dns::PacketInfo response;
     response.id                  = id;
-    response.recursion_available = false;
-    response.truncation          = false;
-    response.authentic_data      = false;
-    response.checking_disabled   = false;
-    response.response_code       = dns::NO_ERROR;
+    response.opcode               = 0;
+    response.query_response       = 1;
+    response.authoritative_answer = 1;
+    response.truncation           = 0;
+    response.recursion_desired    = 0;
+    response.recursion_available  = 0;
+    response.zero_field           = 0;
+    response.authentic_data       = 1;
+    response.checking_disabled    = 1;
+    response.response_code        = dns::NO_ERROR;
 
     dns::QuestionSectionEntry question;
     question.q_domainname = question_section.q_domainname;
     question.q_class      = question_section.q_class;
     question.q_type       = question_section.q_type;
-    response.question.push_back( question );
+    response.question_section.push_back( question );
 
     if ( question_section.q_domainname.toString()[3] > 'o' ) {
 	dns::ResponseSectionEntry response_section;
@@ -46,7 +51,7 @@ dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSecti
 	response_section.r_type          = dns::TYPE_CNAME;
 	response_section.r_ttl           = TTL;
 	response_section.r_resource_data = dns::ResourceDataPtr( new dns::RecordCNAME( generate_domainname() ) );
-	response.authority.push_back( response_section );
+	response.authority_section.push_back( response_section );
     }
     else {
 	for ( int i = 0; i < NS_RECORD_COUNT; i++ ) {
@@ -56,7 +61,7 @@ dns::ResponsePacketInfo generate_response( uint16_t id, const dns::QuestionSecti
 	    response_section.r_type          = dns::TYPE_NS;
 	    response_section.r_ttl           = TTL;
 	    response_section.r_resource_data = dns::ResourceDataPtr( new dns::RecordNS( generate_domainname() ) );
-	    response.authority.push_back( response_section );
+	    response.authority_section.push_back( response_section );
 	}
     }
 
@@ -74,22 +79,22 @@ int main( int arc, char **argv )
 
         while ( true ) {
             udpv4::PacketInfo       recv_data;
-            dns::QueryPacketInfo    query;
-            dns::ResponsePacketInfo response;
+            dns::PacketInfo         query;
+            dns::PacketInfo         response;
             std::vector<uint8_t>    response_packet;
             udpv4::ClientParameters client_info;
 
             try {
                 recv_data = dns_server.receivePacket();
-                query     = dns::parse_dns_query_packet( recv_data.begin(), recv_data.end() );
+                query     = dns::parse_dns_packet( recv_data.begin(), recv_data.end() );
             } catch ( std::bad_cast &e ) {
                 std::cerr << "parse query failed," << std::endl;
                 std::exit( 1 );
             }
 
             try {
-                response        = generate_response( query.id, query.question[ 0 ] );
-                response_packet = dns::generate_dns_response_packet( response );
+                response        = generate_response( query.id, query.question_section[ 0 ] );
+                response_packet = dns::generate_dns_packet( response );
             } catch ( std::bad_cast &e ) {
                 std::cerr << "make response failed," << std::endl;
                 std::exit( 1 );

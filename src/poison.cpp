@@ -103,18 +103,19 @@ int main( int argc, char **argv )
             additional_infomation.r_resource_data =
                 dns::ResourceDataPtr( new dns::RecordA( delegated_dns_server_address ) );
 
-            dns::ResponsePacketInfo response;
+            dns::PacketInfo response;
             response.id                   = id;
             response.authoritative_answer = true;
+	    response.recursion_desired    = false;
             response.recursion_available  = false;
             response.truncation           = false;
             response.authentic_data       = false;
             response.checking_disabled    = false;
             response.response_code        = dns::NO_ERROR;
 
-            response.question.push_back( question );
-            response.authority.push_back( authority );
-            response.additional_infomation.push_back( additional_infomation );
+            response.question_section.push_back( question );
+            response.authority_section.push_back( authority );
+            response.additional_infomation_section.push_back( additional_infomation );
 
             udpv4::Sender     sender;
             udpv4::PacketInfo response_packet;
@@ -122,7 +123,7 @@ int main( int argc, char **argv )
             response_packet.destination_address = target_dns_server;
             response_packet.source_port         = 53;
             response_packet.destination_port    = 10053; // source_port.get();
-            response_packet.payload             = dns::generate_dns_response_packet( response );
+            response_packet.payload             = dns::generate_dns_packet( response );
 
             sender.sendPacket( response_packet );
 
