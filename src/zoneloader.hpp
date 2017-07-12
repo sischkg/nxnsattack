@@ -53,14 +53,43 @@ namespace dns
         {}
     };
 
-    ResourceDataPtr parseRecordA( const YAML::Node & );
-    ResourceDataPtr parseRecordNS( const YAML::Node & );
-    ResourceDataPtr parseRecordSOA( const YAML::Node & );
+    namespace yamlloader
+    {
+        ResourceDataPtr parseRecordA( const YAML::Node & );
+        ResourceDataPtr parseRecordAAAA( const YAML::Node & );
+        ResourceDataPtr parseRecordNS( const YAML::Node & );
+        ResourceDataPtr parseRecordMX( const YAML::Node & );
+        ResourceDataPtr parseRecordSOA( const YAML::Node & );
+        ResourceDataPtr parseRecordCNAME( const YAML::Node & );
+        ResourceDataPtr parseRecordDNAME( const YAML::Node & );
+        ResourceDataPtr parseRecordRRSIG( const YAML::Node & );
+        ResourceDataPtr parseRecordDS( const YAML::Node & );
+        ResourceDataPtr parseRecordDNSKey( const YAML::Node & );
+        ResourceDataPtr parseRecordNSEC( const YAML::Node & );
     
-    std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node );
+        std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node );
 
-    std::shared_ptr<Zone> load( const Domainname &apex, const char *config );
+        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
+    }
 
+    namespace full
+    {
+        ResourceDataPtr parseRecordA( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordAAAA( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordNS( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordMX( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordSOA( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordCNAME( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordDNAME( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordDS( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordDNSKey( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordNSEC( const std::vector<std::string> & );
+    
+        std::shared_ptr<RRSet> parseRRSet( const std::vector<std::string> & );
+
+        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
+    }
 }
 
 #endif

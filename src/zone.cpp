@@ -1,5 +1,5 @@
-
 #include "zone.hpp"
+#include <algorithm>
 
 namespace dns
 {
@@ -56,7 +56,7 @@ namespace dns
         if ( query.question_section.size() != 1 ) {
             throw std::logic_error( "one qname must be exist" );
         }
-
+	
         Domainname qname  = query.question_section[0].q_domainname;
         Type       qtype  = query.question_section[0].q_type;
         Class      qclass = query.question_section[0].q_class;
@@ -74,6 +74,14 @@ namespace dns
         response.authentic_data       = 1;
         response.checking_disabled    = query.checking_disabled;
 
+	if ( query.edns0 ) {
+	    OptPseudoRecord opt;
+	    opt.payload_size = std::min<uint16_t>( 1280, query.opt_pseudo_rr.payload_size );
+	    opt.dobit = query.opt_pseudo_rr.dobit;
+	    response.edns0 = true;
+	    response.opt_pseudo_rr = opt;
+	}
+	
         QuestionSectionEntry q;
         q.q_domainname = qname;
         q.q_type       = qtype;

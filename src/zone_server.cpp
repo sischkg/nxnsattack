@@ -23,7 +23,7 @@ public:
 	    config += "\n";
         }
 	std::cerr << config << std::endl;
-        zone = dns::load( apex, config.c_str() );
+        zone = dns::full::load( apex, config );
     }
 
 
@@ -61,9 +61,16 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    ZoneServer server( bind_address, 53 );
-    server.load( apex, zone_filename );
-    server.start();
-
+    try {
+	ZoneServer server( bind_address, 53 );
+	server.load( apex, zone_filename );
+	server.start();
+    }
+    catch ( std::runtime_error &e ) {
+	std::cerr << e.what() << std::endl;
+    }
+    catch ( std::logic_error &e ) {
+	std::cerr << e.what() << std::endl;
+    }
     return 0;
 }
