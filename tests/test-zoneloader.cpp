@@ -37,7 +37,7 @@ TEST_F( ZoneLoaderTest, Load_SOA )
     std::shared_ptr<dns::Zone> zone;
     ASSERT_NO_THROW( {
             try {
-                zone = dns::load( "example.com", ZONE_CONFIG_YAML_SOA );
+                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_SOA );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -90,7 +90,7 @@ TEST_F( ZoneLoaderTest, Load_A )
     std::shared_ptr<dns::Zone> zone;
     ASSERT_NO_THROW( {
             try {
-                zone = dns::load( "example.com", ZONE_CONFIG_YAML_A );
+                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_A );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -137,7 +137,7 @@ TEST_F( ZoneLoaderTest, Load_NS )
     std::shared_ptr<dns::Zone> zone;
     ASSERT_NO_THROW( {
             try {
-                zone = dns::load( "example.com", ZONE_CONFIG_YAML_NS );
+                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_NS );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
