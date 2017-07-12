@@ -512,8 +512,10 @@ namespace dns
         if ( t == "SOA" )    return TYPE_SOA;
         if ( t == "KEY" )    return TYPE_KEY;
         if ( t == "OPT" )    return TYPE_OPT;
+        if ( t == "DS" )     return TYPE_DS;
         if ( t == "RRSIG" )  return TYPE_RRSIG;
         if ( t == "DNSKEY" ) return TYPE_DNSKEY;
+        if ( t == "NSEC" )   return TYPE_NSEC;
         if ( t == "TSIG" )   return TYPE_TSIG;
         if ( t == "TKEY" )   return TYPE_TKEY;
         if ( t == "IXFR" )   return TYPE_IXFR;
@@ -778,7 +780,7 @@ namespace dns
                               const std::string &in_flags,
                               const std::string &in_services,
                               const std::string &in_regexp,
-                              const Domainname & in_replacement,
+                              const Domainname  &in_replacement,
                               uint16_t           in_offset )
         : order( in_order ), preference( in_preference ), flags( in_flags ), services( in_services ),
           regexp( in_regexp ), replacement( in_replacement ), offset( in_offset )
@@ -983,7 +985,7 @@ namespace dns
         encode_to_base64( public_key, public_key_str );
 
         std::ostringstream os;
-        os << "KSK/ZSK: "     << ( flags & KSK ? "KSK" : "ZSK" ) << ", "
+        os << "KSK/ZSK: "     << ( flag & KSK ? "KSK" : "ZSK" ) << ", "
            << "Protocal: "    << 3 << ", "
            << "Algorithm: "   << algorithm << ", "
            << "Public Key:: " << public_key_str;
@@ -992,7 +994,7 @@ namespace dns
 
     void RecordDNSKey::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( flags );
+        message.pushUInt16HtoN( flag );
         message.pushUInt8( 3 );
         message.pushUInt8( algorithm );
         message.pushBuffer( public_key );
@@ -1132,6 +1134,15 @@ namespace dns
 	    os << "Bad NSEC record( mutiple window index \"" << (int)window_index << "\" is found.";
 	    throw std::runtime_error( os.str() );
 	}
+    }
+
+    std::vector<Type> NSECBitmapField::getTypes() const
+    {
+        std::vector<Type> types;
+        for ( auto bitmap : windows ) {
+            types.insert( types.end(), bitmap.second.getTypes().begin(), bitmap.second.getTypes().end() );
+        }
+        return types;
     }
 
     std::string NSECBitmapField::toString() const

@@ -15,6 +15,12 @@
   record:
   - nameserver: ns01.example.com
   - nameserver: ns02.example.com
+- owner: example.com
+  ttl: 86400
+  type: MX
+  record:
+  - priority: 10
+    mailserver: mail.example.com
 - owner: ns01.example.com
   ttl: 86400
   type: A
@@ -31,4 +37,9 @@
   record:
   - address: 192.168.0.101
   - address: 192.168.0.102
+- owner: mail.example.com
+  ttl: 3600
+  type: A
+  record:
+  - address: 192.168.0.111
 

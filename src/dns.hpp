@@ -431,6 +431,16 @@ namespace dns
         {
         }
 
+
+        uint8_t  getAlgorithm() const { return algorithm; }
+        uint8_t  getLablCount() const { return label_count; }
+        uint32_t getOriginalTTL() const { return original_ttl; }
+        uint32_t getExpiration() const { return expiration; }
+        uint32_t getInception() const { return inception; }
+        uint8_t  getKeyTag() const { return key_tag; }
+        const Domainname           &getSigner() const { return signer; }
+        const std::vector<uint8_t> &getSignature() const { return signature; }
+ 
         virtual std::string toString() const
         {
             return "";
@@ -462,7 +472,7 @@ namespace dns
     class RecordDNSKey : public ResourceData
     {
     private:
-        uint16_t             flags;
+        uint16_t             flag;
         uint8_t              algorithm;
         std::vector<uint8_t> public_key;
 
@@ -476,10 +486,13 @@ namespace dns
         static const uint16_t KSK = 1 << 8;
         static const uint16_t ZSK = 0;
 
-        RecordDNSKey( uint16_t f, uint8_t algo, const std::vector<uint8_t> key )
-            : flags( f ), algorithm( algo ), public_key( key )
-        {
-        }
+        RecordDNSKey( uint16_t f, uint8_t algo, const std::vector<uint8_t> &key )
+            : flag( f ), algorithm( algo ), public_key( key )
+        {}
+        
+        uint16_t getFlag() const { return flag; }
+        uint8_t  getAlgorithm() const { return algorithm; }
+        const std::vector<uint8_t> getPublicKey() const { return public_key; }
 
         virtual std::string toString() const;
 
@@ -506,9 +519,15 @@ namespace dns
         uint8_t              digest_type;
         std::vector<uint8_t> digest;
 
+    public:
         RecordDS( uint16_t tag, uint8_t alg, uint8_t dtype, const std::vector<uint8_t> &d )
             : key_tag( tag ), algorithm( alg ), digest_type( dtype ), digest( d )
         {}
+
+        uint16_t getKeyTag()    const { return key_tag; }
+        uint8_t  getAlgorighm() const { return algorithm; }
+        uint8_t  getDigesType() const { return digest_type; }
+        std::vector<uint8_t> getDigest() const { return digest; }
 
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -542,6 +561,7 @@ namespace dns
 	    void        outputWireFormat( WireFormat &message ) const;
 	    std::string toString() const;
 	    uint16_t    getIndex() const { return index; }
+            const std::vector<Type> &getTypes() const {  return types; }
 
 	    static const uint8_t *parse( Window &ref_windown, const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
 
@@ -554,6 +574,8 @@ namespace dns
 
 	void        add( Type );
 	void        addWindow( const Window &win );
+        std::vector<Type> getTypes() const;
+
 	std::string toString() const;
 	uint16_t    size() const;
 	void        outputWireFormat( WireFormat &message ) const;
@@ -573,15 +595,6 @@ namespace dns
         NSECBitmapField bitmaps;
 
     public:
-        static const uint16_t SIGNED_KEY = 1 << 7;
-        static const uint8_t  RSAMD5     = 1;
-        static const uint8_t  RSASHA1    = 5;
-        static const uint8_t  RSASHA256  = 8;
-        static const uint8_t  RSASHA512  = 10;
-
-        static const uint16_t KSK = 1 << 8;
-        static const uint16_t ZSK = 0;
-
 	RecordNSEC( const Domainname &next, const NSECBitmapField &b )
 	    : next_domainname( next ), bitmaps( b )
 	{}
@@ -982,6 +995,11 @@ namespace dns
         {
         }
 
+	bool isEDNS0() const
+	{
+	    return edns0;
+	}
+
 	bool isDNSSECOK() const
 	{
 	    return opt_pseudo_rr.dobit;
@@ -1026,6 +1044,8 @@ namespace dns
         uint32_t minimum;
     };
 
+    std::string type_code_to_string( Type t );
+    Type string_to_type_code( const std::string &t );
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
                                                               uint32_t           compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
