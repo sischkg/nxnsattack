@@ -90,8 +90,8 @@ namespace dns
                 decode_from_base64( node["signature"].as<std::string>(), signature );
 
                 return std::shared_ptr<ResourceData>( new RecordRRSIG( node["type_covered"].as<uint16_t>(),
-                                                                       node["algorithm"].as<uint8_t>(),
-                                                                       node["label_count"].as<uint8_t>(),
+                                                                       node["algorithm"].as<uint16_t>(),
+                                                                       node["label_count"].as<uint16_t>(),
                                                                        node["original_ttl"].as<uint32_t>(),
                                                                        node["expiration"].as<uint32_t>(),
                                                                        node["inception"].as<uint32_t>(),
@@ -115,7 +115,7 @@ namespace dns
                 std::vector<uint8_t> public_key;
                 decode_from_base64( node["public_key"].as<std::string>(), public_key );
                 return std::shared_ptr<ResourceData>( new RecordDNSKey( node["flag"].as<uint16_t>(),
-                                                                        node["algorithm"].as<uint8_t>(),
+                                                                        node["algorithm"].as<uint16_t>(),
                                                                         public_key ) );
             }
             throw ZoneConfigError( "DNSKey record must have \"flag\", \"algorithm\" and \"public_key\" attribute" );
@@ -130,8 +130,8 @@ namespace dns
                 std::vector<uint8_t> digest;
                 decode_from_base64( node["digest"].as<std::string>(), digest );
                 return std::shared_ptr<ResourceData>( new RecordDS( node["key_tag"].as<uint16_t>(),
-                                                                    node["algorithm"].as<uint8_t>(),
-                                                                    node["digest_type"].as<uint8_t>(),
+                                                                    node["algorithm"].as<uint16_t>(),
+                                                                    node["digest_type"].as<uint16_t>(),
                                                                     digest ) );
             }
             throw ZoneConfigError( "DS record must have \"key_tag\", \"algorithm\", \"digest_type\" and \"digest\" attribute" );
@@ -344,7 +344,6 @@ namespace dns
             }
 
             std::vector<uint8_t> decoded_data;
-	    std::cerr << "base64: \"" << base64_string << "\"" << std::endl; 
             decode_from_base64( base64_string, decoded_data );
             return decoded_data;
         }
@@ -425,12 +424,10 @@ namespace dns
             auto signature_data = data.begin();
             for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
             auto signature = decode_from_base64_strings( signature_data, data.end() );
-            for ( auto d : data )
-                std::cerr << "\"" << d << "\"" << std::endl;
             
             return ResourceDataPtr( new RecordRRSIG( string_to_type_code( data[0] ),           // type covered
-                                                     boost::lexical_cast<uint8_t>( data[1] ),  // algorithm
-                                                     boost::lexical_cast<uint8_t>( data[2] ),  // label count
+                                                     boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
+                                                     boost::lexical_cast<uint16_t>( data[2] ),  // label count
                                                      boost::lexical_cast<uint32_t>( data[3] ),  // original ttl
                                                      timestamp_to_epoch( data[4] ),            // expiration
 						     timestamp_to_epoch( data[5] ),            // inception
@@ -446,8 +443,8 @@ namespace dns
             auto digest = decode_from_base64_strings( digest_data, data.end() );
 
             return ResourceDataPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
-                                                  boost::lexical_cast<uint8_t>( data[1] ),  // algorithm
-                                                  boost::lexical_cast<uint8_t>( data[2] ),  // digest type
+                                                  boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
+                                                  boost::lexical_cast<uint16_t>( data[2] ),  // digest type
                                                   digest ) );
         }
 
@@ -458,7 +455,7 @@ namespace dns
             auto public_key = decode_from_base64_strings( public_key_data, data.end() );
 
             return ResourceDataPtr( new RecordDNSKey( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
-                                                      boost::lexical_cast<uint8_t>( data[1] ),  // algorithm
+                                                      boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
                                                       public_key ) );                           // Public Key
         }
 
@@ -480,7 +477,6 @@ namespace dns
 
             for ( auto line_pos = tokens.begin(); line_pos != tokens.end() ; line_pos++ ) {
                 std::string line = eraseComment( *line_pos );
-                std::cerr << line << std::endl;
                 if ( line == "" )
                     continue;
 
