@@ -83,7 +83,8 @@ const char *ZONE_CONFIG_YAML_A =
     "  type:  A\n"
     "  ttl:   300\n"
     "  record:\n"
-    "  - address: 192.168.0.1\n";
+    "  - address: 192.168.0.1\n"
+    "  - address: 192.168.0.2\n";
 
 TEST_F( ZoneLoaderTest, Load_A )
 {
@@ -100,16 +101,21 @@ TEST_F( ZoneLoaderTest, Load_A )
         << "can load zone:" + std::string( ZONE_CONFIG_YAML_A );
 
     auto node = zone->findNode( "www.example.com" );
-    EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded";
+    EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from YAML";
 
     auto rrset = node->find( dns::TYPE_A );
-    EXPECT_FALSE( rrset.get() == nullptr ) <<  "a record is loaded";
-
+    ASSERT_FALSE( rrset.get() == nullptr ) <<  "A records are loaded from YAML";
+    ASSERT_EQ( 2, rrset->count() ) <<  "2 A records are loaded from YAML";
+    
     std::shared_ptr<const dns::RecordA> a;
     ASSERT_NO_THROW( {
 	    a = std::dynamic_pointer_cast<const dns::RecordA>( (*rrset)[0] );
 	} );
     EXPECT_EQ( "192.168.0.1", a->getAddress() );
+    ASSERT_NO_THROW( {
+	    a = std::dynamic_pointer_cast<const dns::RecordA>( (*rrset)[1] );
+	} );
+    EXPECT_EQ( "192.168.0.2", a->getAddress() );
 }
 
 
@@ -163,6 +169,117 @@ TEST_F( ZoneLoaderTest, Load_NS )
 	    ns02 = std::dynamic_pointer_cast<const dns::RecordNS>( (*rrset)[1] );
 	} );
     EXPECT_STREQ( "ns02.example.com.", ns02->getNameServer().toString().c_str() );
+}
+
+
+const char *ZONE_CONFIG_FULL_SOA =  "example.com.  3600 IN SOA ns01.example.com. hostmaster.example.com. 2017050101 3600 1800 8640000 300";
+
+
+TEST_F( ZoneLoaderTest, Load_Full_SOA )
+{
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_SOA );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone" + std::string( ZONE_CONFIG_FULL_SOA );
+ 
+    auto node = zone->findNode( "example.com" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
+
+    auto rrset = node->find( dns::TYPE_SOA );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
+    EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
+    
+    std::shared_ptr<const dns::RecordSOA> soa;
+    ASSERT_NO_THROW( {
+	    soa = std::dynamic_pointer_cast<const dns::RecordSOA>( (*rrset)[0] );
+	} );
+    EXPECT_STREQ( "ns01.example.com.", soa->getMName().c_str() );
+    EXPECT_STREQ( "hostmaster.example.com.", soa->getRName().c_str() );
+    EXPECT_EQ( 2017050101, soa->getSerial() );
+    EXPECT_EQ( 3600,       soa->getRefresh() );
+    EXPECT_EQ( 1800,       soa->getRetry() );
+    EXPECT_EQ( 8640000,    soa->getExpire() );
+    EXPECT_EQ( 300,        soa->getMinimum() );
+}
+
+
+const char *ZONE_CONFIG_FULL_A = \
+    "www.example.com.  3600 IN A  192.168.0.101\n"
+    "www.example.com.  3600 IN A  192.168.0.102\n";
+
+TEST_F( ZoneLoaderTest, Load_Full_A )
+{
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_A );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone:" + std::string( ZONE_CONFIG_FULL_A );
+
+    auto node = zone->findNode( "www.example.com" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from FULL";
+
+    auto rrset = node->find( dns::TYPE_A );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "a records are loaded from FULL";
+    EXPECT_EQ( 2, rrset->count() ) << "2 A records are loaded from FULL";
+ 
+    std::shared_ptr<const dns::RecordA> a;
+    ASSERT_NO_THROW( {
+	    a = std::dynamic_pointer_cast<const dns::RecordA>( (*rrset)[0] );
+	} );
+    EXPECT_EQ( "192.168.0.101", a->getAddress() );
+
+    ASSERT_NO_THROW( {
+	    a = std::dynamic_pointer_cast<const dns::RecordA>( (*rrset)[1] );
+	} );
+    EXPECT_EQ( "192.168.0.102", a->getAddress() );
+}
+
+
+const char *ZONE_CONFIG_FULL_NSEC = "ns01.example.com. 3600 IN NSEC  ns02.example.com. A RRSIG NSEC";
+
+TEST_F( ZoneLoaderTest, Load_Full_NSEC )
+{
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_NSEC );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone:" + std::string( ZONE_CONFIG_FULL_NSEC );
+
+    auto node = zone->findNode( "ns01.example.com" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "ns01.example.com is loaded from FULL";
+
+    auto rrset = node->find( dns::TYPE_NSEC );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "NSEC records are loaded from FULL";
+    EXPECT_EQ( 1, rrset->count() ) << "NSEC records is loaded from FULL";
+ 
+    std::shared_ptr<const dns::RecordNSEC> nsec;
+    ASSERT_NO_THROW( {
+	    nsec = std::dynamic_pointer_cast<const dns::RecordNSEC>( (*rrset)[0] );
+	} );
+    EXPECT_EQ( "ns02.example.com", nsec->getNextDomainname() );
+    ASSERT_EQ( 3,               nsec->getTypes().size() );
+    EXPECT_EQ( dns::TYPE_A,     nsec->getTypes()[0] );
+    EXPECT_EQ( dns::TYPE_RRSIG, nsec->getTypes()[1] );
+    EXPECT_EQ( dns::TYPE_NSEC,  nsec->getTypes()[2] );
 }
 
 int main( int argc, char **argv )
