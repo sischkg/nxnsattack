@@ -1052,28 +1052,33 @@ namespace dns
 	types.push_back( t );
     }
 
-    uint16_t NSECBitmapField::Window::size() const
+    uint8_t NSECBitmapField::Window::getWindowSize() const
     {
 	uint8_t max_bytes = 0;
 	for ( Type t : types ) {
-	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t - 1 ) / 8 + 1 );
+	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t ) / 8 + 1 );
 	}
 	return max_bytes;
+    }
+
+    uint16_t NSECBitmapField::Window::size() const
+    {
+        return getWindowSize() + 2;
     }
 
     void NSECBitmapField::Window::outputWireFormat( WireFormat &message ) const
     {
 	message.pushUInt8( index );
-	message.pushUInt8( size() );
+	message.pushUInt8( getWindowSize() );
 
 	std::vector<uint8_t> bitmaps;
-	bitmaps.resize( size() );
+	bitmaps.resize( getWindowSize());
 	for ( uint8_t &v : bitmaps )
 	    v = 0;
 	for ( Type t : types ) {
-	    uint8_t index = 7 - ( typeToBitmapIndex( t - 1 ) % 8 );
+	    uint8_t index = 7 - ( typeToBitmapIndex( t ) % 8 );
 	    uint8_t flag  = 1 << index;
-	    bitmaps.at( typeToBitmapIndex( t - 1 ) / 8 ) |= flag;
+	    bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
 	}
 	message.pushBuffer( bitmaps );
     }
@@ -1123,7 +1128,7 @@ namespace dns
 	window->second.add( t );
     }
 
-    void NSECBitmapField::addWindow( const Window &win )
+    void NSECBitmapField::addWindow( const NSECBitmapField::Window &win )
     {
 	uint8_t window_index = win.getIndex();
 	auto window = windows.find( window_index );

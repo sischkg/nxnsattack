@@ -1,6 +1,7 @@
 #include "zone.hpp"
 #include <algorithm>
 #include <sstream>
+#include <iterator>
 
 namespace dns
 {
@@ -161,6 +162,7 @@ namespace dns
         // NXDOMAIN
         response.response_code = NXDOMAIN;
         addSOAToAuthoritySection( response );
+        addNSECAndRRSIG( response, qname );
         return response;
     }
 
@@ -250,5 +252,42 @@ namespace dns
             }
         }
     }
+
+    void Zone::addNSECAndRRSIG( PacketInfo &response, const Domainname &name ) const
+    {
+        if ( ! response.isDNSSECOK() )
+            return;
+        if ( owner_to_node.empty() )
+            throw std::logic_error( "zone is emptry" );
+
+        for ( auto node = owner_to_node.begin() ; node != owner_to_node.end() ; node++ ) {
+            auto next_node = std::next( node );
+            if ( next_node != owner_to_node.end() ) {
+                if ( node->first < name && name < next_node->first ) {
+                    auto nsec  = node->second->find( TYPE_NSEC );
+                    auto rrsig = node->second->find( TYPE_RRSIG );
+                    if( nsec && rrsig ) {
+                        addRRSet( response.authority_section, *nsec );
+                        addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
+                        return;
+                    }
+
+                    throw std::runtime_error( "not found NSEC RR" );
+                }
+            }
+        }
+
+        auto last_node = owner_to_node.rbegin();
+        auto nsec  = last_node->second->find( TYPE_NSEC );
+        auto rrsig = last_node->second->find( TYPE_RRSIG );
+        if( nsec && rrsig ) {
+            addRRSet( response.authority_section, *nsec );
+            addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
+            return;
+        }
+
+        throw std::runtime_error( "not found NSEC RR" );
+    }
+
 }
 

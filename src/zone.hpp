@@ -99,7 +99,7 @@ namespace dns
         void addRRSIG( std::vector<ResponseSectionEntry> &, const RRSet &rrsig, Type covered_type ) const;
 	//    	void generateFoundAnswer( PacketInfo &response ) const;
 	//	void generateNoDataAnswer( PacketInfo &response ) const;
-        RRSetPtr findNSEC( const Domainname & ) const;
+        void addNSECAndRRSIG( PacketInfo &response, const Domainname & ) const;
 
     public:
         Zone( const Domainname &zone_name );

@@ -567,6 +567,7 @@ namespace dns
 	    void        outputWireFormat( WireFormat &message ) const;
 	    std::string toString() const;
 	    uint16_t    getIndex() const { return index; }
+            uint8_t     getWindowSize() const;
             const std::vector<Type> &getTypes() const {  return types; }
 
 	    static const uint8_t *parse( Window &ref_windown, const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
