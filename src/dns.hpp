@@ -88,6 +88,12 @@ namespace dns
         virtual void outputWireFormat( WireFormat &message ) const = 0;
         virtual Type     type() const                              = 0;
         virtual uint16_t size() const                              = 0;
+
+        std::ostream &operator<<( std::ostream &os ) const
+        {
+            os << toString();
+            return os;
+        }
     };
 
     class RecordRaw : public ResourceData
@@ -431,7 +437,7 @@ namespace dns
         {
         }
 
-
+        Type     getTypeCovered() const { return type_covered; }
         uint8_t  getAlgorithm() const { return algorithm; }
         uint8_t  getLablCount() const { return label_count; }
         uint32_t getOriginalTTL() const { return original_ttl; }
@@ -599,6 +605,8 @@ namespace dns
 	    : next_domainname( next ), bitmaps( b )
 	{}
 	RecordNSEC( const Domainname &next, const std::vector<Type> &types );
+        const Domainname &getNextDomainname() const { return next_domainname; }
+        std::vector<Type> getTypes() const { return bitmaps.getTypes(); }
 
         virtual std::string toString() const;
 
@@ -793,6 +801,7 @@ namespace dns
         Domainname      domainname;
         uint16_t        payload_size;
         uint8_t         rcode;
+        uint8_t         version;
 	bool            dobit;
         ResourceDataPtr record_options_data;
         uint32_t        offset;

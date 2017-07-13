@@ -39,6 +39,7 @@ namespace dns
         Type  getType()  const { return type; }
         TTL   getTTL()   const { return ttl; } 
         uint16_t count() const { return resource_data.size(); }
+        std::string toString() const;
 
         ResourceDataContainer::const_iterator begin() const { return resource_data.begin(); }
         ResourceDataContainer::const_iterator end()   const { return resource_data.end(); }
@@ -49,6 +50,7 @@ namespace dns
         void add( ResourceDataPtr data ) { resource_data.push_back( data ); }
     };
 
+    std::ostream &operator<<( std::ostream &os, const RRSet &rrset );
 
     class Node
     {
@@ -93,9 +95,11 @@ namespace dns
         void addSOAToAuthoritySection( PacketInfo &res ) const;
         void addEmptyNode( const Domainname & );
 	void addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const;
-
+        void addRRSet( std::vector<ResponseSectionEntry> &, const RRSet &rrset ) const;
+        void addRRSIG( std::vector<ResponseSectionEntry> &, const RRSet &rrsig, Type covered_type ) const;
 	//    	void generateFoundAnswer( PacketInfo &response ) const;
 	//	void generateNoDataAnswer( PacketInfo &response ) const;
+        RRSetPtr findNSEC( const Domainname & ) const;
 
     public:
         Zone( const Domainname &zone_name );

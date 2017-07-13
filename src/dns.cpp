@@ -149,7 +149,8 @@ namespace dns
 		packet_info.opt_pseudo_rr.domainname   = pair.first.r_domainname;
 		packet_info.opt_pseudo_rr.payload_size = pair.first.r_class;
 		packet_info.opt_pseudo_rr.rcode        = ( 0xff000000 & pair.first.r_ttl ) >> 24;
-		packet_info.opt_pseudo_rr.dobit        = ( 0x00800000 & pair.first.r_ttl ) ? true : false;
+		packet_info.opt_pseudo_rr.version      = ( 0x00ff0000 & pair.first.r_ttl ) >> 16;
+		packet_info.opt_pseudo_rr.dobit        = ( 0x00008000 & pair.first.r_ttl ) ? true : false;
 		packet_info.opt_pseudo_rr.record_options_data = pair.first.r_resource_data;
 		
             }
@@ -1299,8 +1300,11 @@ namespace dns
         opt.domainname          = record.r_domainname;
         opt.payload_size        = record.r_class;
         opt.rcode               = record.r_ttl >> 24;
+        opt.version             = 0xff & ( record.r_ttl >> 16 );
+        opt.dobit               = ( ( 1 << 7 ) & ( record.r_ttl >> 8 ) ) ? true : false; 
         opt.record_options_data = record.r_resource_data;
 
+        std::cerr << "TTL: " << record.r_ttl << std::endl;
         return opt;
     }
 

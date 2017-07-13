@@ -1,8 +1,30 @@
 #include "zone.hpp"
 #include <algorithm>
+#include <sstream>
 
 namespace dns
 {
+    std::string RRSet::toString() const
+    {
+        std::ostringstream os;
+
+        os << getOwner().toString() << " "
+           << getTTL() << " "
+           << type_code_to_string( getType() ) << std::endl;
+
+        for ( auto rr : resource_data )
+            os << "  " << rr->toString() << std::endl;
+
+        return os.str();
+    }
+
+    std::ostream &operator<<( std::ostream &os, const RRSet &rrset )
+    {
+        os << rrset.toString();
+        return os;
+    }
+
+
     Node::RRSetPtr Node::find( Type t ) const
     {
         auto rrset_itr = rrsets.find( t );
@@ -81,7 +103,7 @@ namespace dns
 	    response.edns0 = true;
 	    response.opt_pseudo_rr = opt;
 	}
-	
+
         QuestionSectionEntry q;
         q.q_domainname = qname;
         q.q_type       = qtype;
@@ -113,11 +135,24 @@ namespace dns
             if ( rrset ) {
                 // found 
 		addRRSetToAnswerSection( response, *rrset );
+                if ( response.isDNSSECOK() ) {
+                    if ( auto rrsigs = node->find( TYPE_RRSIG ) ) {
+                        addRRSIG( response.answer_section, *rrsigs, qtype );
+                    }
+                }
                 return response;
             }
             else {
                 // NoData ( found empty non-terminal or other type )
                 response.response_code = NO_ERROR;
+                if ( response.isDNSSECOK() ) {
+                    auto nsec  = node->find( TYPE_NSEC );
+                    auto rrsig = node->find( TYPE_RRSIG );
+                    if ( nsec && rrsig ) {
+                        // addRRSet( response.authority_section, *nsec );
+                        addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
+                    }
+                }
                 addSOAToAuthoritySection( response );
                 return response;
             }
@@ -134,7 +169,7 @@ namespace dns
     {
         auto node = findNode( name );
         if ( node )
-            node->find( type );
+            return node->find( type );
         return RRSetPtr();
     }
 
@@ -161,9 +196,17 @@ namespace dns
             r.r_resource_data = *data_itr;
         }
         response.authority_section.push_back( r );
+
+        if ( response.isDNSSECOK() ) {
+            auto apex_node = findNode( apex );
+            if ( auto rrsigs = apex_node->find( TYPE_RRSIG ) ) {
+                addRRSIG( response.authority_section, *rrsigs, TYPE_SOA );
+            }
+        }
+
     }
 
-    void Zone::addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const
+    void Zone::addRRSet( std::vector<ResponseSectionEntry> &section, const RRSet &rrset ) const
     {
 	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
 	    ResponseSectionEntry r;
@@ -172,8 +215,13 @@ namespace dns
 	    r.r_class       = rrset.getClass();
 	    r.r_ttl         = rrset.getTTL();
 	    r.r_resource_data = *data_itr;
-	    response.answer_section.push_back( r );
+	    section.push_back( r );
 	}
+    }
+
+    void Zone::addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const
+    {
+        addRRSet( response.answer_section, rrset );
     }
 
     void Zone::verify() const
@@ -183,6 +231,24 @@ namespace dns
 
         if ( name_servers.get() == nullptr )
             throw ZoneError( "No NS records" );
+    }
+
+
+    void Zone::addRRSIG( std::vector<ResponseSectionEntry> &section,
+                         const RRSet &rrsigs,
+                         Type type_covered ) const
+    {
+        for( auto rrsig : rrsigs ) {
+            if ( std::dynamic_pointer_cast<RecordRRSIG>( rrsig )->getTypeCovered() == type_covered ) {
+                ResponseSectionEntry r;
+                r.r_domainname  = rrsigs.getOwner();
+                r.r_type        = rrsigs.getType();
+                r.r_class       = rrsigs.getClass();
+                r.r_ttl         = rrsigs.getTTL();
+                r.r_resource_data = rrsig;
+                section.push_back( r );
+            }
+        }
     }
 }
 
