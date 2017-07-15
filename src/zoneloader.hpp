@@ -90,6 +90,9 @@ namespace dns
 
         std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
     }
+
+    uint32_t timestamp_to_epoch( const std::string &timestamp );
+
 }
 
 #endif

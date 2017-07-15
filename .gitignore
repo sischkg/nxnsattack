@@ -17,5 +17,7 @@ tests/test-md5
 tests/test-wireformat
 tests/test-hmac-md5
 data/dsset-example.com.
-data/keys
+data/dsset-child.siskrn.co.
 data/example.com.zone.signed
+data/child.siskrn.co.zone.signed
+data/keys

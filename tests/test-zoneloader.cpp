@@ -4,6 +4,30 @@
 #include <cstring>
 #include <iostream>
 
+class TimestampTest : public ::testing::Test
+{
+
+public:
+    virtual void SetUp()
+    {
+    }
+
+    virtual void TearDown()
+    {
+    }
+};
+
+
+TEST_F( TimestampTest, timestamp_to_epoch )
+{
+    //
+    // $ date +%s --date="2017/07/01 02:30:40 UTC"
+    // 1498876240
+    // 
+    EXPECT_EQ( 1498876240, dns::timestamp_to_epoch( "20170701023040" ) );
+}
+
+
 // The fixture for testing class Foo.
 class ZoneLoaderTest : public ::testing::Test
 {

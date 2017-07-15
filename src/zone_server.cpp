@@ -8,8 +8,8 @@
 class ZoneServer : public dns::DNSServer
 {
 public:
-    ZoneServer( const std::string &addr, uint16_t port )
-        : dns::DNSServer( addr, port )
+    ZoneServer( const std::string &addr, uint16_t port, bool debug )
+        : dns::DNSServer( addr, port, debug )
     {}
 
     void load( const std::string &apex, const std::string &filename )
@@ -44,13 +44,15 @@ int main( int argc, char **argv )
     std::string bind_address;
     std::string zone_filename;
     std::string apex;
+    bool        debug;
 
     po::options_description desc( "unbound" );
     desc.add_options()( "help,h", "print this message" )
 
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
-	( "file,f", po::value<std::string>( &zone_filename ), "bind address" )
-	( "zone,z", po::value<std::string>( &apex),           "zone apex" );
+	( "file,f", po::value<std::string>( &zone_filename ),           "bind address" )
+	( "zone,z", po::value<std::string>( &apex),                     "zone apex" )
+        ( "debug,d", po::bool_switch( &debug )->default_value( false ), "debug mode" );
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -62,7 +64,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	ZoneServer server( bind_address, 53 );
+	ZoneServer server( bind_address, 53, debug );
 	server.load( apex, zone_filename );
 	server.start();
     }

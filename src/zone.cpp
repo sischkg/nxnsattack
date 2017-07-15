@@ -163,6 +163,11 @@ namespace dns
         response.response_code = NXDOMAIN;
         addSOAToAuthoritySection( response );
         addNSECAndRRSIG( response, qname );
+
+        Domainname wildcard = apex;
+        wildcard.addSubdomain( "*" );
+        addNSECAndRRSIG( response, wildcard );
+
         return response;
     }
 
@@ -269,10 +274,9 @@ namespace dns
                     if( nsec && rrsig ) {
                         addRRSet( response.authority_section, *nsec );
                         addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
-                        return;
                     }
-
-                    throw std::runtime_error( "not found NSEC RR" );
+                    else 
+                        throw std::runtime_error( "not found NSEC RR" );
                 }
             }
         }
@@ -285,8 +289,8 @@ namespace dns
             addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
             return;
         }
-
-        throw std::runtime_error( "not found NSEC RR" );
+        else 
+            throw std::runtime_error( "not found NSEC RR" );
     }
 
 }

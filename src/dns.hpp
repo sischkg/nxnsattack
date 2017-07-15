@@ -447,11 +447,7 @@ namespace dns
         const Domainname           &getSigner() const { return signer; }
         const std::vector<uint8_t> &getSignature() const { return signature; }
  
-        virtual std::string toString() const
-        {
-            return "";
-        }
-
+        virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {

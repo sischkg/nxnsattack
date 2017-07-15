@@ -1,10 +1,39 @@
 #include "zoneloader.hpp"
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
-#include <ctime>
+#include <time.h>
 
 namespace dns
 {
+    uint32_t timestamp_to_epoch( const std::string &timestamp )
+    {
+        if ( timestamp.size() != 14 ) {
+            throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
+        }
+        tm tm = { 0 };
+
+        tm.tm_year  = boost::lexical_cast<int>( timestamp.substr(  0, 4 ) ) - 1900;
+        tm.tm_mon   = boost::lexical_cast<int>( timestamp.substr(  4, 2 ) ) - 1;
+        tm.tm_mday  = boost::lexical_cast<int>( timestamp.substr(  6, 2 ) );
+        tm.tm_hour  = boost::lexical_cast<int>( timestamp.substr(  8, 2 ) );
+        tm.tm_min   = boost::lexical_cast<int>( timestamp.substr( 10, 2 ) );
+        tm.tm_sec   = boost::lexical_cast<int>( timestamp.substr( 12, 2 ) );
+        tm.tm_isdst = 0;
+
+        if ( tm.tm_year < 70 ||
+             tm.tm_mon  > 11 ||
+             tm.tm_mday < 1  ||
+             tm.tm_mday > 31 ||
+             tm.tm_hour > 23 ||
+             tm.tm_min  > 59 ||
+             tm.tm_sec  > 60 ) {
+            throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
+        }
+		
+        return timegm( &tm );
+    }
+
+
     namespace yamlloader
     {
         ResourceDataPtr parseRecordA( const YAML::Node &node )
@@ -349,32 +378,6 @@ namespace dns
         }
 
 
-	uint32_t timestamp_to_epoch( const std::string &timestamp )
-	{
-	    if ( timestamp.size() != 14 ) {
-		throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
-	    }
-	    std::tm tm;
-	    tm.tm_year  = boost::lexical_cast<int>( timestamp.substr( 0, 4 ) ) - 1900;
-	    tm.tm_mon   = boost::lexical_cast<int>( timestamp.substr( 4, 2 ) );
-	    tm.tm_mday  = boost::lexical_cast<int>( timestamp.substr( 4, 2 ) );
-	    tm.tm_hour  = boost::lexical_cast<int>( timestamp.substr( 4, 2 ) );
-	    tm.tm_min   = boost::lexical_cast<int>( timestamp.substr( 4, 2 ) );
-	    tm.tm_sec   = boost::lexical_cast<int>( timestamp.substr( 4, 2 ) );
-	    tm.tm_isdst = 0;
-
-	    if ( tm.tm_year < 70 ||
-		 tm.tm_mon > 11 ||
-		 tm.tm_mday < 1 ||
-		 tm.tm_mday > 31 ||
-		 tm.tm_hour > 23 ||
-		 tm.tm_min > 59 ||
-		 tm.tm_sec    > 60 ) {
-		throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
-	    }
-		
-	    return std::mktime( &tm );
-	}
 	
         ResourceDataPtr parseRecordA( const std::vector<std::string> &data )
         {
@@ -455,7 +458,7 @@ namespace dns
             auto public_key = decode_from_base64_strings( public_key_data, data.end() );
 
             return ResourceDataPtr( new RecordDNSKey( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
-                                                      boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
+                                                      boost::lexical_cast<uint16_t>( data[2] ),  // algorithm
                                                       public_key ) );                           // Public Key
         }
 

@@ -71,13 +71,20 @@ namespace dns
                     udpv4::PacketInfo recv_data = dns_receiver.receivePacket();
                     PacketInfo        query     = parse_dns_packet( recv_data.begin(), recv_data.end() );
 
+                    if ( isDebug() )
+                        std::cerr << "Query:" << query << std::endl; 
+
                     if ( query.tsig ) {
                         ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
                         if ( rcode != NO_ERROR ) {
                             PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
                         }
                     }
+
                     PacketInfo response_info = generateResponse( query, false );
+
+                    if ( isDebug() )
+                        std::cerr << "Response:" << response_info << std::endl; 
 
                     WireFormat response_packet( generate_dns_packet( response_info ) );
 

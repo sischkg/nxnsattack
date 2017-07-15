@@ -435,11 +435,17 @@ namespace dns
         case TYPE_OPT:
             res = "OPT";
             break;
+        case TYPE_DS:
+            res = "DS";
+            break;
         case TYPE_RRSIG:
             res = "RRSIG";
             break;
         case TYPE_DNSKEY:
             res = "DNSKEY";
+            break;
+        case TYPE_NSEC:
+            res = "NSEC";
             break;
         case TYPE_TSIG:
             res = "TSIG";
@@ -545,7 +551,7 @@ namespace dns
             std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
                       << " " << a.r_resource_data->toString() << std::endl;
         for ( auto a : res.authority_section )
-            std::cout << "Authority: " << a.r_ttl << " " << type_code_to_string( a.r_type ) << " "
+            std::cout << "Authority: " << a.r_domainname << a.r_ttl << " " << type_code_to_string( a.r_type ) << " "
                       << a.r_resource_data->toString() << std::endl;
         for ( auto a : res.additional_infomation_section )
             std::cout << "Additional: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
@@ -967,6 +973,24 @@ namespace dns
     }
 
 
+    std::string RecordRRSIG::toString() const
+    {
+        std::string signature_str;
+        encode_to_base64( signature, signature_str );
+
+        std::ostringstream os;
+        os << "Type Covered: " << type_code_to_string( type_covered ) << ", "
+           << "Algorithm: "    << (uint32_t)algorithm                 << ", "
+           << "Label Count: "  << (uint32_t)label_count               << ", "
+           << "Original TTL: " << original_ttl                        << ", "
+           << "Expiration: "   << expiration                          << ", "
+           << "Inception: "    << inception                           << ", "
+           << "Key Tag: "      << key_tag                             << ", "
+           << "signer: "       << signer                              << ", "
+           << "Signature: "    << signature_str;
+        return os.str();
+    }
+
     void RecordRRSIG::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( type_covered );
@@ -986,9 +1010,9 @@ namespace dns
         encode_to_base64( public_key, public_key_str );
 
         std::ostringstream os;
-        os << "KSK/ZSK: "     << ( flag & KSK ? "KSK" : "ZSK" ) << ", "
-           << "Protocal: "    << 3 << ", "
-           << "Algorithm: "   << algorithm << ", "
+        os << "KSK/ZSK: "     << ( flag == KSK ? "KSK" : "ZSK" ) << ", "
+           << "Protocal: "    << 3                               << ", "
+           << "Algorithm: "   << algorithm                       << ", "
            << "Public Key:: " << public_key_str;
         return os.str();
     }
@@ -1019,10 +1043,10 @@ namespace dns
         encode_to_base64( digest, digest_str );
 
         std::ostringstream os;
-        os << "keytag: " << key_tag << ", "
-           << "algorithm: " << algorithm << ", "
+        os << "keytag: "      << key_tag << ", "
+           << "algorithm: "   << algorithm << ", "
            << "digest type: " << digest_type << ", "
-           << "digest: " << digest_str;
+           << "digest: "      << digest_str;
         return os.str();
     }
 
@@ -1200,7 +1224,7 @@ namespace dns
 
     std::string RecordNSEC::toString() const
     {
-	return next_domainname.toString() + "( " + bitmaps.toString() + " )";
+	return next_domainname.toString() + " " + bitmaps.toString();
     }
 
     void RecordNSEC::outputWireFormat( WireFormat &message ) const
