@@ -31,7 +31,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	AuthServer server( bind_address, 53, debug );
+	dns::AuthServer server( bind_address, 53, debug );
 	server.load( apex, zone_filename );
 	server.start();
     }

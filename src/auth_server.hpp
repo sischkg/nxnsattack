@@ -5,18 +5,23 @@
 #include "zone.hpp"
 #include "zoneloader.hpp"
 
-class AuthServer : public dns::DNSServer
+namespace dns
 {
-public:
-    AuthServer( const std::string &addr, uint16_t port, bool debug )
-        : dns::DNSServer( addr, port, debug )
-    {}
+    class AuthServer : public dns::DNSServer
+    {
+    public:
+	AuthServer( const std::string &addr, uint16_t port, bool debug )
+	    : dns::DNSServer( addr, port, debug )
+	{}
 
-    void load( const std::string &apex, const std::string &filename );
-    dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp );
-private:
-    std::shared_ptr<dns::Zone> zone;
-};
-
+	void load( const std::string &apex, const std::string &filename );
+	PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp );
+	virtual PacketInfo modifyResponse( const dns::PacketInfo &query,
+					   const dns::PacketInfo original_response,
+					   bool vir_tcp ) const;
+    private:
+	std::shared_ptr<dns::Zone> zone;
+    };
+}
 
 #endif
