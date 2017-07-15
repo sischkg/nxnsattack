@@ -1,41 +1,8 @@
-#include "dns_server.hpp"
-#include "zone.hpp"
-#include "zoneloader.hpp"
+#include "auth_server.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
 
-class ZoneServer : public dns::DNSServer
-{
-public:
-    ZoneServer( const std::string &addr, uint16_t port, bool debug )
-        : dns::DNSServer( addr, port, debug )
-    {}
-
-    void load( const std::string &apex, const std::string &filename )
-    {
-        std::ifstream fin( filename );
-        std::string config;
-        while ( ! fin.eof() ) {
-            std::string line;
-            std::getline( fin, line );
-            config += line;
-	    config += "\n";
-        }
-	std::cerr << config << std::endl;
-        zone = dns::full::load( apex, config );
-    }
-
-
-    dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp )
-    {
-        dns::PacketInfo response = zone->getAnswer( query );
-        return response;
-    }
-
-private:
-    std::shared_ptr<dns::Zone> zone;
-};
 
 int main( int argc, char **argv )
 {
@@ -64,7 +31,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	ZoneServer server( bind_address, 53, debug );
+	AuthServer server( bind_address, 53, debug );
 	server.load( apex, zone_filename );
 	server.start();
     }

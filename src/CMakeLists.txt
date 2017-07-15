@@ -6,7 +6,7 @@ add_library(
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
 add_library( libdns dns.cpp domainname.cpp )
 add_library( libdnsserver  dns_server.cpp )
-add_library( libzone zoneloader.cpp zone.cpp )
+add_library( libzone auth_server zoneloader.cpp zone.cpp )
 
 add_executable( zone_server      zone_server.cpp )
 add_executable( cve-2015-5470    cve-2015-5470.cpp )
