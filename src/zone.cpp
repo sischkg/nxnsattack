@@ -150,7 +150,7 @@ namespace dns
                     auto nsec  = node->find( TYPE_NSEC );
                     auto rrsig = node->find( TYPE_RRSIG );
                     if ( nsec && rrsig ) {
-                        // addRRSet( response.authority_section, *nsec );
+			addRRSet( response.authority_section, *nsec );
                         addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
                     }
                 }
@@ -161,12 +161,12 @@ namespace dns
         
         // NXDOMAIN
         response.response_code = NXDOMAIN;
-        addSOAToAuthoritySection( response );
         addNSECAndRRSIG( response, qname );
 
         Domainname wildcard = apex;
         wildcard.addSubdomain( "*" );
         addNSECAndRRSIG( response, wildcard );
+        addSOAToAuthoritySection( response );
 
         return response;
     }
@@ -266,31 +266,23 @@ namespace dns
             throw std::logic_error( "zone is emptry" );
 
         for ( auto node = owner_to_node.begin() ; node != owner_to_node.end() ; node++ ) {
-            auto next_node = std::next( node );
-            if ( next_node != owner_to_node.end() ) {
-                if ( node->first < name && name < next_node->first ) {
-                    auto nsec  = node->second->find( TYPE_NSEC );
-                    auto rrsig = node->second->find( TYPE_RRSIG );
+	    auto nsec  = node->second->find( TYPE_NSEC );
+	    auto rrsig = node->second->find( TYPE_RRSIG );
+	    if ( nsec ) {
+		if ( ! rrsig ) {
+		    throw std::runtime_error( "not found RRSIG for NSEC RR" );
+		}
+		
+		if ( nsec->count() > 0 &&
+		     nsec->getOwner() < name &&
+		     name < std::dynamic_pointer_cast<const RecordNSEC>( (*nsec)[0] )->getNextDomainname() ) {
                     if( nsec && rrsig ) {
                         addRRSet( response.authority_section, *nsec );
                         addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
                     }
-                    else 
-                        throw std::runtime_error( "not found NSEC RR" );
                 }
             }
         }
-
-        auto last_node = owner_to_node.rbegin();
-        auto nsec  = last_node->second->find( TYPE_NSEC );
-        auto rrsig = last_node->second->find( TYPE_RRSIG );
-        if( nsec && rrsig ) {
-            addRRSet( response.authority_section, *nsec );
-            addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
-            return;
-        }
-        else 
-            throw std::runtime_error( "not found NSEC RR" );
     }
 
 }

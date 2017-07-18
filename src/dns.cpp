@@ -359,6 +359,9 @@ namespace dns
         case TYPE_TXT:
             parsed_data = RecordTXT::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_SPF:
+            parsed_data = RecordSPF::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_SOA:
             parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
             break;
@@ -422,6 +425,9 @@ namespace dns
             break;
         case TYPE_TXT:
             res = "TXT";
+            break;
+        case TYPE_SPF:
+            res = "SPF";
             break;
         case TYPE_SOA:
             res = "SOA";
@@ -516,6 +522,7 @@ namespace dns
         if ( t == "DNAME" )  return TYPE_DNAME;
         if ( t == "MX" )     return TYPE_MX;
         if ( t == "TXT" )    return TYPE_TXT;
+        if ( t == "SPF" )    return TYPE_SPF;
         if ( t == "SOA" )    return TYPE_SOA;
         if ( t == "KEY" )    return TYPE_KEY;
         if ( t == "OPT" )    return TYPE_OPT;
@@ -759,6 +766,61 @@ namespace dns
             pos += length;
         }
         return ResourceDataPtr( new RecordTXT( txt_data ) );
+    }
+
+    RecordSPF::RecordSPF( const std::string &d )
+    {
+        data.push_back( d );
+    }
+
+    RecordSPF::RecordSPF( const std::vector<std::string> &d ) : data( d )
+    {
+    }
+
+    std::string RecordSPF::toString() const
+    {
+        std::ostringstream os;
+        for ( unsigned int i = 0; i < data.size(); i++ ) {
+            os << "\"" << data[ i ] << "\" ";
+        }
+
+        return os.str();
+    }
+
+    void RecordSPF::outputWireFormat( WireFormat &message ) const
+    {
+        for ( unsigned int i = 0; i < data.size(); i++ ) {
+            message.push_back( data[ i ].size() & 0xff );
+            for ( unsigned int j = 0; j < data[ i ].size(); j++ )
+                message.push_back( data[ i ][ j ] );
+        }
+    }
+
+    uint16_t RecordSPF::size() const
+    {
+        uint16_t s = 0;
+        for ( auto i = data.begin(); i != data.end(); i++ ) {
+            s++;
+            s += i->size();
+        }
+        return s;
+    }
+
+    ResourceDataPtr RecordSPF::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+        if ( end - begin < 1 )
+            throw FormatError( "too few length for SPF record" );
+        const uint8_t *          pos = begin;
+        std::vector<std::string> txt_data;
+
+        while ( pos < end ) {
+            uint8_t length = get_bytes<uint8_t>( &pos );
+            if ( pos + length > end )
+                throw FormatError( "bad charactor-code length" );
+            txt_data.push_back( std::string( pos, pos + length ) );
+            pos += length;
+        }
+        return ResourceDataPtr( new RecordSPF( txt_data ) );
     }
 
     RecordCNAME::RecordCNAME( const Domainname &name, uint16_t off ) : domainname( name ), offset( off )

@@ -48,6 +48,7 @@ namespace dns
     const Type       TYPE_DNSKEY = 48;
     const Type       TYPE_NSEC3  = 50;
     const Type       TYPE_TLSA   = 52;
+    const Type       TYPE_SPF    = 99;
     const Type       TYPE_TKEY   = 249;
     const Type       TYPE_TSIG   = 250;
     const Type       TYPE_IXFR   = 251;
@@ -88,7 +89,8 @@ namespace dns
         virtual void outputWireFormat( WireFormat &message ) const = 0;
         virtual Type     type() const                              = 0;
         virtual uint16_t size() const                              = 0;
-
+	virtual ResourceData *clone() const                        = 0;
+	
         std::ostream &operator<<( std::ostream &os ) const
         {
             os << toString();
@@ -117,6 +119,7 @@ namespace dns
         {
             return data.size();
         }
+	virtual RecordRaw *clone() const { return new RecordRaw( rrtype, data ); }
     };
 
     class RecordA : public ResourceData
@@ -138,6 +141,7 @@ namespace dns
         {
             return sizeof( sin_addr );
         }
+	virtual RecordA *clone() const { return new RecordA( sin_addr ); }
 
 	std::string getAddress() const;
         static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
@@ -162,6 +166,7 @@ namespace dns
         {
             return sizeof( sin_addr );
         }
+	virtual RecordAAAA *clone() const { return new RecordAAAA( sin_addr ); }
 
 	std::string getAddress() const;
 
@@ -187,6 +192,7 @@ namespace dns
         {
             return domainname.size( offset );
         }
+	virtual RecordNS *clone() const { return new RecordNS( domainname, offset ); }
 	const Domainname &getNameServer() const { return domainname; }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
@@ -212,6 +218,7 @@ namespace dns
         {
             return sizeof( priority ) + domainname.size( offset );
         }
+	virtual RecordMX *clone() const { return new RecordMX( priority, domainname, offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -232,6 +239,28 @@ namespace dns
             return TYPE_TXT;
         }
         virtual uint16_t size() const;
+	virtual RecordTXT *clone() const { return new RecordTXT( data ); }
+	const std::vector<std::string> &getTexts() const { return data; }
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordSPF : public ResourceData
+    {
+    private:
+        std::vector<std::string> data;
+
+    public:
+        RecordSPF( const std::string &data );
+        RecordSPF( const std::vector<std::string> &data );
+
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual uint16_t type() const
+        {
+            return TYPE_SPF;
+        }
+        virtual uint16_t size() const;
+	virtual RecordSPF *clone() const { return new RecordSPF( data ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -255,6 +284,7 @@ namespace dns
         {
             return domainname.size( offset );
         }
+	virtual RecordCNAME *clone() const { return new RecordCNAME( domainname, offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -286,6 +316,7 @@ namespace dns
             return TYPE_NAPTR;
         }
         virtual uint16_t size() const;
+	virtual RecordNAPTR *clone() const { return new RecordNAPTR( order, preference, flags, services, regexp, replacement, offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -309,6 +340,7 @@ namespace dns
         {
             return domainname.size( offset );
         }
+	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname, offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -353,6 +385,16 @@ namespace dns
         {
             return rname.toString();
         }
+	virtual RecordSOA *clone() const
+	{
+	    return new RecordSOA( mname,
+				  rname,
+				  refresh,
+				  retry,
+				  expire,
+				  minimum,
+				  mname_offset,
+				  rname_offset ); }
 
 	uint32_t getSerial() const { return serial; }
 	uint32_t getRefresh() const { return refresh; }
@@ -392,6 +434,7 @@ namespace dns
             return TYPE_APL;
         }
         virtual uint16_t size() const;
+	virtual RecordAPL *clone() const { return new RecordAPL( apl_entries ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -466,6 +509,18 @@ namespace dns
         {
             return TYPE_RRSIG;
         }
+	virtual RecordRRSIG *clone() const
+	{
+	    return new RecordRRSIG( type_covered,
+				    algorithm,
+				    label_count,
+				    original_ttl,
+				    expiration,
+				    inception,
+				    key_tag,
+				    signer,
+				    signature );
+	}
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -509,6 +564,11 @@ namespace dns
             return TYPE_DNSKEY;
         }
 
+	virtual RecordDNSKey *clone() const
+	{
+	    return new RecordDNSKey( flag, algorithm, public_key );
+	}
+
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
@@ -542,6 +602,14 @@ namespace dns
         {
             return TYPE_DS;
         }
+
+	virtual RecordDS *clone() const
+	{
+	    return new RecordDS( key_tag,
+				 algorithm,
+				 digest_type,
+				 digest );
+	}
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
@@ -613,7 +681,11 @@ namespace dns
         {
             return TYPE_NSEC;
         }
-
+	virtual RecordNSEC *clone() const
+	{
+	    return new RecordNSEC( next_domainname, bitmaps );
+	}
+	
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
@@ -654,7 +726,7 @@ namespace dns
             return "";
         }
 
-        virtual void outputWireFormat( WireFormat &message )
+        virtual void outputWireFormat( WireFormat &message ) const
         {
             message.pushUInt8( 0 );
             message.pushUInt8( 0 );
@@ -670,6 +742,11 @@ namespace dns
         {
             return TYPE_KEY;
         }
+
+    	virtual RecordKey *clone() const
+	{
+	    return new RecordKey( ac, xt, namtyp, sig, protocol, algorithm );
+	}
     };
 
     class OptPseudoRROption
@@ -682,6 +759,7 @@ namespace dns
         virtual void        outputWireFormat( WireFormat & ) const = 0;
         virtual uint16_t    code() const                           = 0;
         virtual uint16_t    size() const                           = 0;
+	virtual OptPseudoRROption *clone() const                   = 0;
     };
 
     typedef boost::shared_ptr<OptPseudoRROption> OptPseudoRROptPtr;
@@ -709,6 +787,10 @@ namespace dns
         {
             return option_size;
         }
+	virtual RAWOption *clone() const
+	{
+	    return new RAWOption( option_code, option_size, option_data );
+	}
     };
 
     class NSIDOption : public OptPseudoRROption
@@ -734,6 +816,10 @@ namespace dns
         {
             return 2 + 2 + nsid.size();
         }
+	virtual NSIDOption *clone() const
+	{
+	    return new NSIDOption( nsid );
+	}
 
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
@@ -763,6 +849,10 @@ namespace dns
         {
             return OPT_CLIENT_SUBNET;
         }
+	virtual ClientSubnetOption *clone() const
+	{
+	    return new ClientSubnetOption( family, source_prefix, scope_prefix, address );
+	}
         virtual uint16_t size() const;
 
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
@@ -770,7 +860,7 @@ namespace dns
 
     class RecordOptionsData : public ResourceData
     {
-    public:
+    private:
         std::vector<OptPseudoRROptPtr> options;
 
     public:
@@ -779,6 +869,20 @@ namespace dns
         {
         }
 
+	RecordOptionsData( const RecordOptionsData &data )
+	{
+	    for ( auto op : data.getOptions() )
+		options.push_back( OptPseudoRROptPtr( op->clone() ) );
+	}
+
+	RecordOptionsData &operator=( const RecordOptionsData &data )
+	{
+	    options.clear();
+	    for ( auto op : data.getOptions() )
+		options.push_back( OptPseudoRROptPtr( op->clone() ) );
+	    return *this;
+	}
+
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -786,7 +890,11 @@ namespace dns
             return TYPE_OPT;
         }
         virtual uint16_t size() const;
-
+	virtual RecordOptionsData *clone() const
+	{
+	    return new RecordOptionsData( options );
+	}
+	
         const std::vector<OptPseudoRROptPtr> &getOptions() const
         {
             return options;
@@ -806,6 +914,33 @@ namespace dns
         OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
         {
         }
+
+	OptPseudoRecord( const OptPseudoRecord &opt ) :
+	    domainname( opt.domainname ),
+	    payload_size( opt.payload_size ),
+	    rcode( opt.rcode ),
+	    version( opt.version ),
+	    dobit( opt.dobit ),
+	    offset( opt.offset )
+        {
+	    if ( opt.record_options_data )
+		record_options_data = ResourceDataPtr( opt.record_options_data->clone() );
+        }
+
+	OptPseudoRecord &operator=( const OptPseudoRecord &rhs )
+	{
+	    domainname          = rhs.domainname;
+	    payload_size        = rhs.payload_size;
+	    rcode               = rhs.rcode;
+	    version             = rhs.version;
+	    dobit               = rhs.dobit;
+	    if ( rhs.record_options_data )
+		record_options_data = ResourceDataPtr( rhs.record_options_data->clone() );
+	    else
+		record_options_data = ResourceDataPtr();
+	    offset              = rhs.offset;
+	    return *this;
+	}
     };
 
     class RecordTKey : public ResourceData
@@ -844,6 +979,17 @@ namespace dns
             return TYPE_TKEY;
         }
         virtual uint16_t size() const;
+	virtual RecordTKey *clone() const
+	{
+	    return new RecordTKey( domain.toString(),
+				   domain.toString(),
+				   inception,
+				   expiration,
+				   mode,
+				   error,
+				   key,
+				   other_data );
+	}
     };
 
     struct TSIGInfo {
@@ -903,7 +1049,19 @@ namespace dns
             return TYPE_TSIG;
         }
         virtual uint16_t size() const;
-
+	virtual RecordTSIGData *clone() const
+	{
+	    return new RecordTSIGData( key_name.toString(),
+				       algorithm.toString(),
+				       signed_time,
+				       fudge,
+				       mac_size,
+				       mac,
+				       original_id,
+				       error,
+				       other_length,
+				       other );
+	}
         static ResourceDataPtr
         parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name );
     };
@@ -966,6 +1124,32 @@ namespace dns
         }
 
     	uint16_t size() const;
+
+	ResponseSectionEntry( const ResponseSectionEntry &entry )
+	    : r_domainname( entry.r_domainname ),
+	      r_type( entry.r_type ),
+	      r_class( entry.r_class ),
+	      r_ttl( entry.r_ttl ),
+	      r_offset( entry.r_offset )
+	{
+	    if ( entry.r_resource_data )
+		r_resource_data = ResourceDataPtr( entry.r_resource_data->clone() );
+	}
+	
+	ResponseSectionEntry &operator=( const ResponseSectionEntry &rhs )
+	{
+	    r_domainname = rhs.r_domainname;
+	    r_type       = rhs.r_type;
+	    r_class      = rhs.r_class;
+	    r_ttl        = rhs.r_ttl;
+	    if ( rhs.r_resource_data )
+		r_resource_data = ResourceDataPtr( rhs.r_resource_data->clone() );
+	    else
+		r_resource_data = ResourceDataPtr();
+	    
+	    r_offset     = rhs.r_offset;
+	    return *this;
+	}
     };
 
     struct PacketInfo {
