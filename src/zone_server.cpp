@@ -9,6 +9,7 @@ int main( int argc, char **argv )
     namespace po = boost::program_options;
 
     std::string bind_address;
+    uint16_t    bind_port;
     std::string zone_filename;
     std::string apex;
     bool        debug;
@@ -17,7 +18,8 @@ int main( int argc, char **argv )
     desc.add_options()( "help,h", "print this message" )
 
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
-	( "file,f", po::value<std::string>( &zone_filename ),           "bind address" )
+        ( "port,p", po::value<uint16_t>( &bind_port )->default_value( 53 ), "bind port" )
+	( "file,f", po::value<std::string>( &zone_filename ),           "zone filename" )
 	( "zone,z", po::value<std::string>( &apex),                     "zone apex" )
         ( "debug,d", po::bool_switch( &debug )->default_value( false ), "debug mode" );
     
@@ -31,7 +33,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	dns::AuthServer server( bind_address, 53, debug );
+	dns::AuthServer server( bind_address, bind_port, debug );
 	server.load( apex, zone_filename );
 	server.start();
     }

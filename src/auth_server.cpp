@@ -1,5 +1,6 @@
 #include "auth_server.hpp"
 #include <fstream>
+#include <iostream>
 
 namespace dns
 {
@@ -25,7 +26,7 @@ namespace dns
     }
 
     PacketInfo AuthServer::modifyResponse( const dns::PacketInfo &query,
-					   const dns::PacketInfo original_response,
+					   const dns::PacketInfo &original_response,
 					   bool via_tcp ) const
     {
 	return original_response;

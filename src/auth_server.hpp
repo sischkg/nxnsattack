@@ -17,7 +17,7 @@ namespace dns
 	void load( const std::string &apex, const std::string &filename );
 	PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp );
 	virtual PacketInfo modifyResponse( const dns::PacketInfo &query,
-					   const dns::PacketInfo original_response,
+					   const dns::PacketInfo &original_response,
 					   bool vir_tcp ) const;
     private:
 	std::shared_ptr<dns::Zone> zone;
