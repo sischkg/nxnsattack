@@ -81,6 +81,8 @@ namespace dns
         ResourceDataPtr parseRecordSOA( const std::vector<std::string> & );
         ResourceDataPtr parseRecordCNAME( const std::vector<std::string> & );
         ResourceDataPtr parseRecordDNAME( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordTXT( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordSPF( const std::vector<std::string> & );
         ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> & );
         ResourceDataPtr parseRecordDS( const std::vector<std::string> & );
         ResourceDataPtr parseRecordDNSKey( const std::vector<std::string> & );
@@ -92,7 +94,7 @@ namespace dns
     }
 
     uint32_t timestamp_to_epoch( const std::string &timestamp );
-
+    std::vector<std::string> parse_txt( const std::string &s );
 }
 
 #endif

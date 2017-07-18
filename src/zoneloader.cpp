@@ -1,10 +1,12 @@
 #include "zoneloader.hpp"
+#include "tokenizer.hpp"
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <time.h>
 
 namespace dns
 {
+      
     uint32_t timestamp_to_epoch( const std::string &timestamp )
     {
         if ( timestamp.size() != 14 ) {
@@ -33,7 +35,28 @@ namespace dns
         return timegm( &tm );
     }
 
-
+    std::vector<std::string> parse_txt( const std::string &s )
+    {
+	std::vector<std::string> txt;
+	std::string t  = "";
+	bool in_txt    = false;
+	for ( auto c : s ) {
+	    if ( c == '"' && ! in_txt ) {
+		in_txt = true;
+		continue;
+	    }
+	    if ( c == '"' && in_txt ) {
+		in_txt = false;
+		txt.push_back( t );
+		t      = "";
+		continue;
+	    }
+	    if ( in_txt )
+		t.push_back( c );
+	}
+	return txt;
+    }
+    
     namespace yamlloader
     {
         ResourceDataPtr parseRecordA( const YAML::Node &node )
@@ -291,76 +314,97 @@ namespace dns
             return std::string( line, 0, pos );
         }
 
+	std::string eraseLastSpace( const std::string &line )
+	{
+	    std::string l = line;
+	    while ( l.size() > 0 && l[l.size()-1] == ' ' )
+		l.pop_back();
+	    return l;
+	}
+	
         std::shared_ptr<RRSet> parseLine( const std::string &line )
         {
-            boost::char_separator<char> sep( " \t" );
-            boost::tokenizer<boost::char_separator<char>> tokens( line, sep );
-            auto pos = tokens.begin();
+	    try {
+		std::vector<std::string> tokens = tokenize( line );
+		//            boost::char_separator<char> sep( " \t" );
+		//            boost::tokenizer<boost::char_separator<char>> tokens( line, sep );
+		auto pos = tokens.begin();
  
-            if ( pos == tokens.end() )
-                throw std::runtime_error( "empty line or no owner field" );
-            std::string owner = *pos; pos++;
+		if ( pos == tokens.end() )
+		    throw std::runtime_error( "empty line or no owner field" );
+		std::string owner = *pos; pos++;
 
-            if ( pos == tokens.end() )
-                throw std::runtime_error( "no ttl field" );
-            uint32_t ttl      = boost::lexical_cast<uint32_t>( *pos ); pos++;
+		if ( pos == tokens.end() )
+		    throw std::runtime_error( "no ttl field" );
+		uint32_t ttl      = boost::lexical_cast<uint32_t>( *pos ); pos++;
 
-            if ( pos == tokens.end() )
-                throw std::runtime_error( "no class field" );
-            std::string klass = *pos; pos++;
+		if ( pos == tokens.end() )
+		    throw std::runtime_error( "no class field" );
+		std::string klass = *pos; pos++;
 
-            if ( pos == tokens.end() )
-                throw std::runtime_error( "no type field" );
-            Type type         = string_to_type_code( *pos ); pos++;
+		if ( pos == tokens.end() )
+		    throw std::runtime_error( "no type field" );
+		Type type         = string_to_type_code( *pos ); pos++;
  
-            if ( pos == tokens.end() )
-                throw std::runtime_error( "no data field" );
-            std::vector<std::string> data;
-            for ( ; pos != tokens.end() ; pos++ )
-                data.push_back( *pos );
+		if ( pos == tokens.end() )
+		    throw std::runtime_error( "no data field" );
+		std::vector<std::string> data;
+		for ( ; pos != tokens.end() ; pos++ )
+		    data.push_back( *pos );
 
-            ResourceDataPtr rr;
-            switch ( type ) {
-            case TYPE_A:
-                rr = parseRecordA( data );
-                break;
-            case TYPE_AAAA:
-                rr = parseRecordAAAA( data );
-                break;
-            case TYPE_NS:
-                rr = parseRecordNS( data );
-                break;
-            case TYPE_MX:
-                rr = parseRecordMX( data );
-                break;
-            case TYPE_SOA:
-                rr = parseRecordSOA( data );
-                break;
-            case TYPE_CNAME:
-                rr = parseRecordCNAME( data );
-                break;
-            case TYPE_DNAME:
-                rr = parseRecordDNAME( data );
-                break;
-            case TYPE_RRSIG:
-                rr = parseRecordRRSIG( data );
-                break;
-            case TYPE_DS:
-                rr = parseRecordDS( data );
-                break;
-            case TYPE_DNSKEY:
-                rr = parseRecordDNSKey( data );
-                break;
-            case TYPE_NSEC:
-                rr = parseRecordNSEC( data );
-                break;
-            default:
-                throw std::runtime_error( "unknown supported type" );
-            }
+		ResourceDataPtr rr;
+		switch ( type ) {
+		case TYPE_A:
+		    rr = parseRecordA( data );
+		    break;
+		case TYPE_AAAA:
+		    rr = parseRecordAAAA( data );
+		    break;
+		case TYPE_NS:
+		    rr = parseRecordNS( data );
+		    break;
+		case TYPE_MX:
+		    rr = parseRecordMX( data );
+		    break;
+		case TYPE_SOA:
+		    rr = parseRecordSOA( data );
+		    break;
+		case TYPE_CNAME:
+		    rr = parseRecordCNAME( data );
+		    break;
+		case TYPE_DNAME:
+		    rr = parseRecordDNAME( data );
+		    break;
+		case TYPE_TXT:
+		    rr = parseRecordTXT( data );
+		    break;
+		case TYPE_SPF:
+		    rr = parseRecordSPF( data );
+		    break;
+		case TYPE_RRSIG:
+		    rr = parseRecordRRSIG( data );
+		    break;
+		case TYPE_DS:
+		    rr = parseRecordDS( data );
+		    break;
+		case TYPE_DNSKEY:
+		    rr = parseRecordDNSKey( data );
+		    break;
+		case TYPE_NSEC:
+		    rr = parseRecordNSEC( data );
+		    break;
+		default:
+		    throw std::runtime_error( "unknown supported type" );
+		}
 
-            std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
-            rrset->add( rr );
-            return rrset;
+		std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
+		rrset->add( rr );
+		return rrset;
+	    }
+	    catch ( std::runtime_error &e ) {
+		std::cerr << "cannot load line \"" << line << "\" ( " << e.what() << ")." << std::endl;
+		throw;
+	    }		
         }
 
         std::vector<uint8_t> decode_from_base64_strings( std::vector<std::string>::const_iterator begin,
@@ -422,6 +466,17 @@ namespace dns
             return ResourceDataPtr( new RecordCNAME( data[0] ) );
         }
 
+	ResourceDataPtr parseRecordTXT( const std::vector<std::string> &data )
+        {
+            return ResourceDataPtr( new RecordTXT( data ) );
+        }
+
+	ResourceDataPtr parseRecordSPF( const std::vector<std::string> &data )
+        {
+            return ResourceDataPtr( new RecordSPF( data ) );
+        }
+
+
         ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> &data )
         {
             auto signature_data = data.begin();
@@ -475,14 +530,16 @@ namespace dns
         {
             std::shared_ptr<Zone> zone( new Zone( apex ) );
 
-            boost::char_separator<char> sep( "\r\n" );
+	    boost::char_separator<char> sep( "\r\n" );
             boost::tokenizer<boost::char_separator<char>> tokens( config, sep );
 
             for ( auto line_pos = tokens.begin(); line_pos != tokens.end() ; line_pos++ ) {
-                std::string line = eraseComment( *line_pos );
+ 		std::cerr << "original line: " << *line_pos << std::endl;
+                std::string line = eraseLastSpace( eraseComment( *line_pos ) );
                 if ( line == "" )
                     continue;
 
+ 		std::cerr << "parsing line: " << line << std::endl;
                 auto new_rrset = parseLine( line );
                 auto rrset = zone->findRRSet( new_rrset->getOwner(), new_rrset->getType() );
                 if ( rrset.get() == nullptr ) {
