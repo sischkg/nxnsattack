@@ -27,6 +27,34 @@ TEST_F( TimestampTest, timestamp_to_epoch )
     EXPECT_EQ( 1498876240, dns::timestamp_to_epoch( "20170701023040" ) );
 }
 
+class ParseTxtTest : public ::testing::Test
+{
+
+public:
+    virtual void SetUp()
+    {
+    }
+
+    virtual void TearDown()
+    {
+    }
+};
+
+
+TEST_F( ParseTxtTest, parse_character_string )
+{
+    std::vector<std::string> txt;
+    txt.push_back( "text" );
+    EXPECT_EQ( txt, dns::parse_txt( "\"text\"" ) );
+}
+
+TEST_F( ParseTxtTest, parse_character_strings )
+{
+    std::vector<std::string> txt;
+    txt.push_back( "text-1" );
+    txt.push_back( "text-2" );
+    EXPECT_EQ( txt, dns::parse_txt( "\"text-1\" \"text-2\"" ) );
+}
 
 // The fixture for testing class Foo.
 class ZoneLoaderTest : public ::testing::Test
@@ -196,11 +224,10 @@ TEST_F( ZoneLoaderTest, Load_NS )
 }
 
 
-const char *ZONE_CONFIG_FULL_SOA =  "example.com.  3600 IN SOA ns01.example.com. hostmaster.example.com. 2017050101 3600 1800 8640000 300";
-
-
 TEST_F( ZoneLoaderTest, Load_Full_SOA )
 {
+    const char *ZONE_CONFIG_FULL_SOA =  "example.com.  3600 IN SOA ns01.example.com. hostmaster.example.com. 2017050101 3600 1800 8640000 300";
+
     std::shared_ptr<dns::Zone> zone;
     ASSERT_NO_THROW( {
             try {
@@ -231,6 +258,42 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
     EXPECT_EQ( 1800,       soa->getRetry() );
     EXPECT_EQ( 8640000,    soa->getExpire() );
     EXPECT_EQ( 300,        soa->getMinimum() );
+}
+
+TEST_F( ZoneLoaderTest, Load_Full_SOA2 )
+{
+    const char *ZONE_CONFIG_FULL_SOA =  "siskrn.co.				      3600 IN SOA	siskrn.co. hostmaster.siskrn.co. 1500338838 86400 3600 604800 10800";
+
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::full::load( "siskrn.co", ZONE_CONFIG_FULL_SOA );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone" + std::string( ZONE_CONFIG_FULL_SOA );
+ 
+    auto node = zone->findNode( "siskrn.co" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
+
+    auto rrset = node->find( dns::TYPE_SOA );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
+    EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
+    
+    std::shared_ptr<const dns::RecordSOA> soa;
+    ASSERT_NO_THROW( {
+	    soa = std::dynamic_pointer_cast<const dns::RecordSOA>( (*rrset)[0] );
+	} );
+    EXPECT_STREQ( "siskrn.co.", soa->getMName().c_str() );
+    EXPECT_STREQ( "hostmaster.siskrn.co.", soa->getRName().c_str() );
+    EXPECT_EQ( 1500338838, soa->getSerial() );
+    EXPECT_EQ( 86400,      soa->getRefresh() );
+    EXPECT_EQ( 3600,       soa->getRetry() );
+    EXPECT_EQ( 604800,     soa->getExpire() );
+    EXPECT_EQ( 10800,      soa->getMinimum() );
 }
 
 
@@ -305,6 +368,41 @@ TEST_F( ZoneLoaderTest, Load_Full_NSEC )
     EXPECT_EQ( dns::TYPE_RRSIG, nsec->getTypes()[1] );
     EXPECT_EQ( dns::TYPE_NSEC,  nsec->getTypes()[2] );
 }
+
+const char *ZONE_CONFIG_FULL_TXT =  "example.com.  3600 IN TXT \"text-1\" \"text-2\"";
+
+
+TEST_F( ZoneLoaderTest, Load_Full_TXT )
+{
+    std::shared_ptr<dns::Zone> zone;
+    ASSERT_NO_THROW( {
+            try {
+                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_TXT );
+            }
+            catch ( std::runtime_error &e ) {
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        } )
+        << "can load zone" + std::string( ZONE_CONFIG_FULL_TXT );
+ 
+    auto node = zone->findNode( "example.com" );
+    EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
+
+    auto rrset = node->find( dns::TYPE_TXT );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "txt record is loaded";
+    EXPECT_EQ( rrset->count(), 1 ) << "one txt record is loaded";
+    
+    std::shared_ptr<const dns::RecordTXT> txt;
+    ASSERT_NO_THROW( {
+	    txt = std::dynamic_pointer_cast<const dns::RecordTXT>( (*rrset)[0] );
+	} );
+    ASSERT_EQ( 2, txt->getTexts().size() );
+    EXPECT_STREQ( "text-1", txt->getTexts()[0].c_str() );
+    EXPECT_STREQ( "text-2", txt->getTexts()[1].c_str() );
+}
+
+
 
 int main( int argc, char **argv )
 {

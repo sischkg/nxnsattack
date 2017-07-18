@@ -2,12 +2,14 @@ add_executable( test-base64       test-base64.cpp )
 add_executable( test-md5          test-md5.cpp )
 add_executable( test-wireformat   test-wireformat.cpp )
 add_executable( test-hmac-md5     test-hmac-md5.cpp )
+add_executable( test-tokenizer    test-tokenizer.cpp )
 add_executable( test-domainname   test-domainname.cpp )
 add_executable( test-nsec         test-nsec.cpp )
 add_executable( test-zone         test-zone.cpp )
 add_executable( test-zoneloader   test-zoneloader.cpp )
 target_link_libraries(test-base64     libipv4 crypto gtest pthread)
 target_link_libraries(test-md5        libipv4 crypto gtest pthread)
+target_link_libraries(test-tokenizer  libtokenizer gtest pthread)
 target_link_libraries(test-wireformat libipv4 crypto gtest pthread)
 target_link_libraries(test-hmac-md5   libipv4 crypto gtest pthread)
 target_link_libraries(test-domainname libdns libipv4 crypto gtest pthread)
@@ -18,6 +20,11 @@ target_link_libraries(test-zoneloader libzone libdns libipv4 ${YAML_CPP_LIBRARIE
 add_test(
   NAME base64
   COMMAND test-base64
+)
+
+add_test(
+  NAME tokenizer
+  COMMAND test-tokenizer
 )
 
 #add_test(
