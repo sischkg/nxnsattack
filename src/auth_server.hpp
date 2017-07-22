@@ -15,12 +15,40 @@ namespace dns
 	{}
 
 	void load( const std::string &apex, const std::string &filename );
-	PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp );
-	virtual PacketInfo modifyResponse( const dns::PacketInfo &query,
-					   const dns::PacketInfo &original_response,
+	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp );
+	virtual PacketInfo modifyResponse( const PacketInfo &query,
+					   const PacketInfo &original_response,
 					   bool vir_tcp ) const;
+    protected:
+	typedef uint32_t ConditionFlags;
+	const ConditionFlags MATCH_OWNER = 1;
+	const ConditionFlags MATCH_TYPE  = 1<<1;
+	const ConditionFlags MATCH_CLASS = 1<<2;
+	const ConditionFlags MATCH_TTL   = 1<<3;
+	const ConditionFlags MATCH_DATA  = 1<<4;
+
+	struct Condition {
+	    ConditionFlags flags = 0;
+	    Domainname     owner;
+	    Type           type  = 0;
+	    Class          klass = 0;
+	    TTL            ttl   = 0;
+	};
+        struct Replacement {
+            ConditionFlags  flags = 0;
+            Domainname      owner;
+            Type            type  = 0;
+            Class           klass = 0;
+            TTL             ttl   = 0;
+            ResourceDataPtr resource_data;
+        };
+	bool replace( std::vector<ResponseSectionEntry> &section,
+                      const Condition &condition,
+                      const Replacement &replace ) const;
+	bool erase( std::vector<ResponseSectionEntry> &section,
+                    const Condition &condition ) const;
     private:
-	std::shared_ptr<dns::Zone> zone;
+	std::shared_ptr<Zone> zone;
     };
 }
 
