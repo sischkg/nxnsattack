@@ -1236,29 +1236,14 @@ namespace dns
 
     std::string type_code_to_string( Type t );
     Type string_to_type_code( const std::string &t );
-    std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-                                                              uint32_t           compress_offset = NO_COMPRESSION );
-    std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
-                                                                                 const uint8_t *domainame,
-                                                                                 int recur = 0 ) throw( FormatError );
-    std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &q );
-    std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &r );
-    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
-    void generate_response_section( const ResponseSectionEntry &r, WireFormat &message );
-
-    typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
-    typedef std::pair<ResponseSectionEntry, const uint8_t *> ResponseSectionEntryPair;
-    QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *section );
-    ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *section );
-
     ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
-    OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
 
     void
     addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac = PacketData() );
     bool
     verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message );
 
+    
     template <typename Type>
     uint8_t *set_bytes( Type v, uint8_t *pos )
     {

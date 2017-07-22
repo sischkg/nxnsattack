@@ -21,6 +21,24 @@
 
 namespace dns
 {
+    std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
+                                                              uint32_t           compress_offset = NO_COMPRESSION );
+    std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
+                                                                                 const uint8_t *domainame,
+                                                                                 int recur = 0 ) throw( FormatError );
+
+    std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &q );
+    std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &r );
+    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
+    void generate_response_section( const ResponseSectionEntry &r, WireFormat &message );
+    
+    typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
+    typedef std::pair<ResponseSectionEntry, const uint8_t *> ResponseSectionEntryPair;
+    QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *section );
+    ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *section );
+
+    OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
+
     static const uint8_t *
     parseCharacterString( const uint8_t *begin, const uint8_t *packet_end, std::string &ref_output )
     {
@@ -1731,11 +1749,9 @@ namespace dns
         adcount++;
         header->additional_infomation_count = htons( adcount );
 
-        PacketData tsig_packet = generate_response_section( entry );
-        packet.insert( packet.end(), tsig_packet.begin(), tsig_packet.end() );
-
-        message.clear();
-        message.pushBuffer( packet );
+	message.clear();
+	message.pushBuffer( packet );
+        generate_response_section( entry, message );
     }
 
     bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message )
