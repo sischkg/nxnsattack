@@ -21,13 +21,6 @@
 
 namespace dns
 {
-    template <typename Type>
-    uint8_t *set_bytes( Type v, uint8_t *pos )
-    {
-        *reinterpret_cast<Type *>( pos ) = v;
-        return pos + sizeof( v );
-    }
-
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
                                                               uint32_t           compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
@@ -1603,7 +1596,7 @@ namespace dns
         uint16_t   other_length;
         PacketData other;
 
-        PacketData getPacket() const;
+	void outputWireFormat( WireFormat &message ) const;
         uint16_t   size() const;
     };
 
@@ -1612,29 +1605,23 @@ namespace dns
         return name.size() + 2 + 4 + algorithm.size() + 6 + 2 + 2 + 2 + other.size();
     }
 
-    PacketData TSIGHash::getPacket() const
-    {
-        PacketData packet;
-        packet.resize( size() );
 
-        PacketData name_data      = name.getCanonicalWireFormat();
-        PacketData algorithm_data = algorithm.getCanonicalWireFormat();
+    void TSIGHash::outputWireFormat( WireFormat &message ) const
+    {
+	name.outputCanonicalWireFormat( message );
+	algorithm.outputCanonicalWireFormat( message );
 
         uint32_t time_high = signed_time >> 16;
         uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
 
-        uint8_t *pos = &packet[ 0 ];
-        pos          = std::copy( name_data.begin(), name_data.end(), pos );
-        pos          = set_bytes<uint16_t>( htons( CLASS_ANY ), pos );
-        pos          = set_bytes<uint32_t>( htonl( 0 ), pos );
-        pos          = std::copy( algorithm_data.begin(), algorithm_data.end(), pos );
-        pos          = set_bytes<uint32_t>( htonl( time_high ), pos );
-        pos          = set_bytes<uint32_t>( htonl( time_low ), pos );
-        pos          = set_bytes<uint16_t>( htons( error ), pos );
-        pos          = set_bytes<uint16_t>( htons( other_length ), pos );
-        pos          = std::copy( other.begin(), other.end(), pos );
-
-        return packet;
+	message.pushUInt16HtoN( CLASS_ANY );
+	message.pushUInt32HtoN( 0 );
+	algorithm.outputCanonicalWireFormat( message );
+	message.pushUInt32HtoN( time_high );
+	message.pushUInt32HtoN( time_low );
+	message.pushUInt16HtoN( error );
+	message.pushUInt16HtoN( other_length );
+	message.pushBuffer( other );
     }
 
 
@@ -1643,12 +1630,14 @@ namespace dns
         PacketData   mac( EVP_MAX_MD_SIZE );
         unsigned int mac_size = EVP_MAX_MD_SIZE;
 
+	WireFormat hash_target;
+	hash_target.pushBuffer( query_mac );
         PacketData hash_data = query_mac;
 
         PacketData         presigned_message = message;
         PacketHeaderField *h                 = reinterpret_cast<PacketHeaderField *>( &presigned_message[ 0 ] );
         h->id                                = htons( tsig_info.original_id );
-        hash_data.insert( hash_data.end(), presigned_message.begin(), presigned_message.end() );
+	hash_target.pushBuffer( presigned_message );
 
         TSIGHash tsig_hash;
         tsig_hash.name            = tsig_info.name;
@@ -1658,15 +1647,14 @@ namespace dns
         tsig_hash.error           = tsig_info.error;
         tsig_hash.other_length    = tsig_info.other.size();
         tsig_hash.other           = tsig_info.other;
-        PacketData tsig_hash_data = tsig_hash.getPacket();
+	tsig_hash.outputWireFormat( hash_target );
 
-        hash_data.insert( hash_data.end(), tsig_hash_data.begin(), tsig_hash_data.end() );
-
+	PacketData ht = hash_target.get();
         OpenSSL_add_all_digests();
         HMAC( EVP_get_digestbyname( "md5" ),
               &tsig_info.key[ 0 ],
               tsig_info.key.size(),
-              reinterpret_cast<const unsigned char *>( &hash_data[ 0 ] ),
+              reinterpret_cast<const unsigned char *>( &ht[ 0 ] ),
               hash_data.size(),
               reinterpret_cast<unsigned char *>( &mac[ 0 ] ),
               &mac_size );
