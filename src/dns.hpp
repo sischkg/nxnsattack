@@ -1245,13 +1245,6 @@ namespace dns
 
     
     template <typename Type>
-    uint8_t *set_bytes( Type v, uint8_t *pos )
-    {
-        *reinterpret_cast<Type *>( pos ) = v;
-        return pos + sizeof( v );
-    }
-
-    template <typename Type>
     Type get_bytes( const uint8_t **pos )
     {
         Type v = *reinterpret_cast<const Type *>( *pos );

@@ -21,14 +21,19 @@
 
 namespace dns
 {
+    template <typename Type>
+    uint8_t *set_bytes( Type v, uint8_t *pos )
+    {
+        *reinterpret_cast<Type *>( pos ) = v;
+        return pos + sizeof( v );
+    }
+
     std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
                                                               uint32_t           compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
                                                                                  const uint8_t *domainame,
                                                                                  int recur = 0 ) throw( FormatError );
 
-    std::vector<uint8_t> generate_question_section( const QuestionSectionEntry &q );
-    std::vector<uint8_t> generate_response_section( const ResponseSectionEntry &r );
     void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
     void generate_response_section( const ResponseSectionEntry &r, WireFormat &message );
     
@@ -258,18 +263,6 @@ namespace dns
         return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
-    PacketData generate_question_section( const QuestionSectionEntry &question )
-    {
-        PacketData message;
-        question.q_domainname.outputWireFormat( message, question.q_offset );
-        message.resize( message.size() + sizeof( uint16_t ) + sizeof( uint16_t ) );
-        uint8_t *p = message.data() + message.size() - sizeof( uint16_t ) - sizeof( uint16_t );
-        p          = dns::set_bytes<uint16_t>( htons( question.q_type ), p );
-        p          = dns::set_bytes<uint16_t>( htons( question.q_class ), p );
-
-        return message;
-    }
-
     void generate_question_section( const QuestionSectionEntry &question, WireFormat &message )
     {
         question.q_domainname.outputWireFormat( message, question.q_offset );
@@ -286,45 +279,6 @@ namespace dns
         question.q_class = ntohs( get_bytes<uint16_t>( &pos ) );
 
         return QuestionSectionEntryPair( question, pos );
-    }
-
-    PacketData generate_response_section( const ResponseSectionEntry &response )
-    {
-        if ( response.r_resource_data ) {
-            WireFormat w;
-            response.r_resource_data->outputWireFormat( w );
-
-            PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
-            PacketData packet_rd   = w.get();
-            PacketData packet( packet_name.size() + 2 + 2 + 4 + 2 + packet_rd.size() );
-            uint8_t *  p = packet.data();
-
-            std::memcpy( p, packet_name.data(), packet_name.size() );
-            p += packet_name.size();
-
-            p = dns::set_bytes<uint16_t>( htons( response.r_type ), p );
-            p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
-            p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ), p );
-            p = dns::set_bytes<uint16_t>( htons( packet_rd.size() ), p );
-
-            std::memcpy( p, packet_rd.data(), packet_rd.size() );
-
-            return packet;
-        } else {
-            PacketData packet_name = response.r_domainname.getPacket( response.r_offset );
-            PacketData packet( packet_name.size() + 2 + 2 + 4 + 2 );
-            uint8_t *  p = packet.data();
-
-            std::memcpy( p, packet_name.data(), packet_name.size() );
-            p += packet_name.size();
-
-            p = dns::set_bytes<uint16_t>( htons( response.r_type ), p );
-            p = dns::set_bytes<uint16_t>( htons( response.r_class ), p );
-            p = dns::set_bytes<uint32_t>( htonl( response.r_ttl ), p );
-            p = dns::set_bytes<uint16_t>( htons( 0 ), p );
-
-            return packet;
-        }
     }
 
     void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
