@@ -56,7 +56,6 @@ TEST_F( ParseTxtTest, parse_character_strings )
     EXPECT_EQ( txt, dns::parse_txt( "\"text-1\" \"text-2\"" ) );
 }
 
-// The fixture for testing class Foo.
 class ZoneLoaderTest : public ::testing::Test
 {
 

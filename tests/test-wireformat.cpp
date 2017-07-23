@@ -3,7 +3,6 @@
 #include <cstring>
 #include <iostream>
 
-// The fixture for testing class Foo.
 class WireFormatTest : public ::testing::Test
 {
 

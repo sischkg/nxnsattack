@@ -3,7 +3,6 @@
 #include <cstring>
 #include <iostream>
 
-// The fixture for testing class Foo.
 class Base64Test : public ::testing::Test
 {
 protected:

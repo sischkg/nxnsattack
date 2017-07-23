@@ -4,7 +4,6 @@
 #include <iostream>
 #include <openssl/hmac.h>
 
-// The fixture for testing class Foo.
 class HmacMD5Test : public ::testing::Test
 {
 
