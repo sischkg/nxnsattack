@@ -534,12 +534,10 @@ namespace dns
             boost::tokenizer<boost::char_separator<char>> tokens( config, sep );
 
             for ( auto line_pos = tokens.begin(); line_pos != tokens.end() ; line_pos++ ) {
- 		std::cerr << "original line: " << *line_pos << std::endl;
                 std::string line = eraseLastSpace( eraseComment( *line_pos ) );
                 if ( line == "" )
                     continue;
 
- 		std::cerr << "parsing line: " << line << std::endl;
                 auto new_rrset = parseLine( line );
                 auto rrset = zone->findRRSet( new_rrset->getOwner(), new_rrset->getType() );
                 if ( rrset.get() == nullptr ) {
@@ -550,6 +548,33 @@ namespace dns
                 }
             }
             return zone;
+        }
+
+        std::string dump( const Zone &zone )
+        {
+            std::ostringstream zonefile;
+            for ( auto node_itr = zone.begin() ; node_itr != zone.end() ; node_itr++ ) {
+                for ( auto rrset_itr = node_itr->second->begin() ;
+                      rrset_itr != node_itr->second->end() ;
+                      rrset_itr++ ) {
+                    Domainname owner = rrset_itr->second->getOwner();
+                    Type       type  = rrset_itr->second->getType();
+                    TTL        ttl   = rrset_itr->second->getTTL();
+
+                    for ( auto data_ptr = rrset_itr->second->begin() ;
+                          data_ptr != rrset_itr->second->end() ;
+                          data_ptr++ ) {
+
+                        zonefile << owner.toString()            << "\t"
+                                 << ttl                         << "\t"
+                                 << "IN"                        << "\t"
+                                 << type_code_to_string( type ) << "\t"
+                                 << (*data_ptr)->toZone()       << std::endl;
+                        
+                        }
+                }
+            }
+            return zonefile.str();
         }
     }
 }

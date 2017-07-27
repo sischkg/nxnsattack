@@ -557,6 +557,11 @@ namespace dns
         std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
     }
 
+    std::string RecordA::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordA::toString() const
     {
         char buf[ 256 ];
@@ -599,6 +604,11 @@ namespace dns
         std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
     }
 
+    std::string RecordAAAA::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordAAAA::toString() const
     {
         std::stringstream buff;
@@ -631,6 +641,11 @@ namespace dns
     {
     }
 
+    std::string RecordNS::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordNS::toString() const
     {
         return domainname.toString();
@@ -651,6 +666,11 @@ namespace dns
     RecordMX::RecordMX( uint16_t pri, const Domainname &name, Offset off )
         : priority( pri ), domainname( name ), offset( off )
     {
+    }
+
+    std::string RecordMX::toZone() const
+    {
+        return toString();
     }
 
     std::string RecordMX::toString() const
@@ -686,6 +706,12 @@ namespace dns
     RecordTXT::RecordTXT( const std::vector<std::string> &d ) : data( d )
     {
     }
+
+    std::string RecordTXT::toZone() const
+    {
+        return toString();
+    }
+
 
     std::string RecordTXT::toString() const
     {
@@ -742,6 +768,11 @@ namespace dns
     {
     }
 
+    std::string RecordSPF::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordSPF::toString() const
     {
         std::ostringstream os;
@@ -792,6 +823,11 @@ namespace dns
     {
     }
 
+    std::string RecordCNAME::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordCNAME::toString() const
     {
         return domainname.toString();
@@ -819,6 +855,17 @@ namespace dns
         : order( in_order ), preference( in_preference ), flags( in_flags ), services( in_services ),
           regexp( in_regexp ), replacement( in_replacement ), offset( in_offset )
     {
+    }
+
+    std::string RecordNAPTR::toZone() const
+    {
+        std::stringstream os;
+        os << order << " " << preference << " "
+           << "\"" << flags       << "\" "
+           << "\"" << services    << "\" "
+           << "\"" << regexp      << "\" "
+           << "\"" << replacement << "\"";
+        return os.str();
     }
 
     std::string RecordNAPTR::toString() const
@@ -872,6 +919,11 @@ namespace dns
     {
     }
 
+    std::string RecordDNAME::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordDNAME::toString() const
     {
         return domainname.toString();
@@ -901,6 +953,11 @@ namespace dns
         : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min ),
           mname_offset( moff ), rname_offset( roff )
     {
+    }
+
+    std::string RecordSOA::toZone() const
+    {
+        return toString();
     }
 
     std::string RecordSOA::toString() const
@@ -943,13 +1000,21 @@ namespace dns
         return ResourceDataPtr( new RecordSOA( mname_result, rname_result, serial, refresh, retry, expire, minimum ) );
     }
 
+    std::string RecordAPL::toZone() const
+    {
+        return toString();
+    }
+
     std::string RecordAPL::toString() const
     {
         std::ostringstream os;
         for ( auto i = apl_entries.begin(); i != apl_entries.end(); i++ ) {
             os << ( i->negation ? "!" : "" ) << i->address_family << ":" << printPacketData( i->afd ) << " ";
         }
-        return os.str();
+        std::string result( os.str() );
+        if ( result.size() > 0 )
+            result.pop_back();
+        return result;
     }
 
     void RecordAPL::outputWireFormat( WireFormat &message ) const
@@ -999,6 +1064,33 @@ namespace dns
         return ResourceDataPtr( new RecordAPL( entries ) );
     }
 
+    std::string RecordRRSIG::toZone() const
+    {
+        std::string signature_str;
+        encode_to_base64( signature, signature_str );
+
+        time_t expiration_time = expiration;
+        time_t inception_time  = inception;
+        tm expiration_tm, inception_tm;
+        gmtime_r( &expiration_time, &expiration_tm );
+        gmtime_r( &inception_time,  &inception_tm );
+        char expiration_str[256], inception_str[256];
+
+        strftime( expiration_str, sizeof(expiration_str), "%Y%m%d%H%M%S", &expiration_tm );
+        strftime( inception_str,  sizeof(inception_str),  "%Y%m%d%H%M%S", &inception_tm );
+        
+        std::ostringstream os;
+        os << type_code_to_string( type_covered ) << " "
+           << (uint32_t)algorithm                 << " "
+           << (uint32_t)label_count               << " "
+           << original_ttl                        << " "
+           << expiration_str                      << " "
+           << inception_str                       << " "
+           << key_tag                             << " "
+           << signer.toString()                   << " "
+           << signature_str;
+        return os.str();
+    }
 
     std::string RecordRRSIG::toString() const
     {
@@ -1030,6 +1122,20 @@ namespace dns
         signer.outputCanonicalWireFormat( message );
         message.pushBuffer( signature );
     }
+
+    std::string RecordDNSKey::toZone() const
+    {
+        std::string public_key_str;
+        encode_to_base64( public_key, public_key_str );
+
+        std::ostringstream os;
+        os << ( flag == KSK ? "257" : "254" ) << " "
+           << 3                               << " "
+           << (unsigned int)algorithm         << " "
+           << public_key_str;
+        return os.str();
+    }
+
 
     std::string RecordDNSKey::toString() const
     {
@@ -1064,14 +1170,27 @@ namespace dns
         return ResourceDataPtr( new RecordDNSKey( f, algo, key ) );
     }
 
+    std::string RecordDS::toZone() const
+    {
+        std::string digest_str;
+        encode_to_base64( digest, digest_str );
+
+        std::ostringstream os;
+        os << key_tag                   << " "
+           << (unsigned int)algorithm   << " "
+           << (unsigned int)digest_type << " "
+           << digest_str;
+        return os.str();
+    }
+
     std::string RecordDS::toString() const
     {
         std::string digest_str;
         encode_to_base64( digest, digest_str );
 
         std::ostringstream os;
-        os << "keytag: "      << key_tag << ", "
-           << "algorithm: "   << algorithm << ", "
+        os << "keytag: "      << key_tag     << ", "
+           << "algorithm: "   << algorithm   << ", "
            << "digest type: " << digest_type << ", "
            << "digest: "      << digest_str;
         return os.str();
@@ -1166,7 +1285,8 @@ namespace dns
 		ref_win.add( t );
 	    }
 	}
-    };
+        return begin + window_size;
+    }
 
     void NSECBitmapField::add( Type t )
     {
@@ -1206,7 +1326,7 @@ namespace dns
     {
 	std::ostringstream os;
 	for ( auto win : windows )
-	    os << win.second.toString() << ",";
+	    os << win.second.toString() << " ";
 	std::string result( os.str() );
 	result.pop_back();
 	return result;
@@ -1248,6 +1368,10 @@ namespace dns
 	    bitmaps.add( t );
     }
 
+    std::string RecordNSEC::toZone() const
+    {
+	return toZone();
+    }
 
     std::string RecordNSEC::toString() const
     {
@@ -1470,6 +1594,16 @@ namespace dns
         }
     }
 
+    std::string RecordTKey::toZone() const
+    {
+        return "";
+    }
+
+    std::string RecordTKey::toString() const
+    {
+        return "";
+    }
+
     uint16_t RecordTKey::size() const
     {
         return algorithm.size() + //
@@ -1523,6 +1657,32 @@ namespace dns
         message.pushUInt16HtoN( error );
         message.pushUInt16HtoN( other_length );
         message.pushBuffer( other );
+    }
+
+    std::string RecordTSIGData::toZone() const
+    {
+        std::string mac_str, other_str;
+        encode_to_base64( mac,   mac_str );
+        encode_to_base64( other, other_str );
+
+        time_t signed_time_t = signed_time;
+        tm signed_time_tm;
+        gmtime_r( &signed_time_t, &signed_time_tm );
+        char signed_time_str[256];
+
+        strftime( signed_time_str, sizeof(signed_time_str), "%Y%m%d%H%M%S", &signed_time_tm );
+
+        std::ostringstream os;
+        os << key_name.toString()  << " "
+           << algorithm.toString() << " "
+           << signed_time_str      << " "
+           << fudge                << " "
+           << mac_str              << " "
+           << original_id          << " "
+           << error                << " "
+           << other_str;
+
+        return os.str();
     }
 
     std::string RecordTSIGData::toString() const

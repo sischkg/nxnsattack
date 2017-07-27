@@ -91,6 +91,7 @@ namespace dns
         std::shared_ptr<RRSet> parseRRSet( const std::vector<std::string> & );
 
         std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
+        std::string dump( const Zone &zone );
     }
 
     uint32_t timestamp_to_epoch( const std::string &timestamp );

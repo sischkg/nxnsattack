@@ -85,6 +85,7 @@ namespace dns
         {
         }
 
+        virtual std::string toZone() const                         = 0;
         virtual std::string toString() const                       = 0;
         virtual void outputWireFormat( WireFormat &message ) const = 0;
         virtual Type     type() const                              = 0;
@@ -109,6 +110,7 @@ namespace dns
         {
         }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
@@ -131,6 +133,7 @@ namespace dns
         RecordA( uint32_t in_sin_addr );
         RecordA( const std::string &in_address );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
@@ -156,6 +159,7 @@ namespace dns
         RecordAAAA( const uint8_t *sin_addr );
         RecordAAAA( const std::string &address );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual Type type() const
@@ -182,6 +186,7 @@ namespace dns
     public:
         RecordNS( const Domainname &name, Offset off = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -208,6 +213,7 @@ namespace dns
     public:
         RecordMX( uint16_t pri, const Domainname &name, Offset off = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -232,6 +238,7 @@ namespace dns
         RecordTXT( const std::string &data );
         RecordTXT( const std::vector<std::string> &data );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -253,6 +260,7 @@ namespace dns
         RecordSPF( const std::string &data );
         RecordSPF( const std::vector<std::string> &data );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -274,6 +282,7 @@ namespace dns
     public:
         RecordCNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -309,6 +318,7 @@ namespace dns
                      const Domainname & in_replacement,
                      uint16_t           in_offset = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -330,6 +340,7 @@ namespace dns
     public:
         RecordDNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -369,6 +380,7 @@ namespace dns
                    Offset            moff = NO_COMPRESSION,
                    Offset            roff = NO_COMPRESSION );
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -427,6 +439,7 @@ namespace dns
         {
         }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -490,6 +503,7 @@ namespace dns
         const Domainname           &getSigner() const { return signer; }
         const std::vector<uint8_t> &getSignature() const { return signature; }
  
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
@@ -551,6 +565,7 @@ namespace dns
         uint8_t  getAlgorithm() const { return algorithm; }
         const std::vector<uint8_t> getPublicKey() const { return public_key; }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
 
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -591,6 +606,7 @@ namespace dns
         uint8_t  getDigesType() const { return digest_type; }
         std::vector<uint8_t> getDigest() const { return digest; }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
@@ -673,6 +689,7 @@ namespace dns
         const Domainname &getNextDomainname() const { return next_domainname; }
         std::vector<Type> getTypes() const { return bitmaps.getTypes(); }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
 
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -721,6 +738,7 @@ namespace dns
         {
         }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const
         {
             return "";
@@ -883,6 +901,7 @@ namespace dns
 	    return *this;
 	}
 
+        virtual std::string toZone() const { return ""; }
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
@@ -969,10 +988,8 @@ namespace dns
         {
         }
 
-        virtual std::string toString() const
-        {
-            return "";
-        }
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
         virtual void     outputWireFormat( WireFormat & ) const;
         virtual uint16_t type() const
         {
@@ -1042,6 +1059,7 @@ namespace dns
         {
         }
 
+        virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void        outputWireFormat( WireFormat & ) const;
         virtual uint16_t    type() const

@@ -404,6 +404,49 @@ TEST_F( ZoneLoaderTest, Load_Full_TXT )
 }
 
 
+TEST_F( ZoneLoaderTest, dump )
+{
+    dns::Zone zone( "example.com" );
+
+    dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
+    rrset_soa->add( dns::ResourceDataPtr( new dns::RecordSOA( "ns01.example.com",
+                                                              "hostmaster.example.com",
+                                                              1,
+                                                              86400,
+                                                              3600,
+                                                              16800,
+                                                              300 ) ) );
+
+    dns::Node::RRSetPtr rrset_a( new dns::RRSet( "www.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
+    rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.1" ) ) );
+    rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.2" ) ) );
+
+    dns::Node::RRSetPtr rrset_ns( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_NS, 86400 ) );
+    rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns01.example.com" ) ) );
+    rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns02.example.com" ) ) );
+
+    dns::Node::RRSetPtr rrset_ns01( new dns::RRSet( "ns01.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
+    rrset_ns01->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.101" ) ) );
+    dns::Node::RRSetPtr rrset_ns02( new dns::RRSet( "ns02.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
+    rrset_ns02->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.102" ) ) );
+
+    zone.add( rrset_soa );
+    zone.add( rrset_a );
+    zone.add( rrset_ns );
+    zone.add( rrset_ns01 );
+    zone.add( rrset_ns02 );
+
+    std::string zonefile = dns::full::dump( zone );
+
+    EXPECT_FALSE( zonefile.find( "example.com.\t3600\tIN\tSOA\tns01.example.com. hostmaster.example.com. 1 86400 3600 16800 300" ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "www.example.com.\t3600\tIN\tA\t192.168.0.1" ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "www.example.com.\t3600\tIN\tA\t192.168.0.2" ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "example.com.\t86400\tIN\tNS\tns01.example.com." ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "example.com.\t86400\tIN\tNS\tns02.example.com." ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "ns01.example.com.\t3600\tIN\tA\t192.168.0.101" ) == std::string::npos );
+    EXPECT_FALSE( zonefile.find( "ns02.example.com.\t3600\tIN\tA\t192.168.0.102" ) == std::string::npos );
+}
+
 
 int main( int argc, char **argv )
 {
