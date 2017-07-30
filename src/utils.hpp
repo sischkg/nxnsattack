@@ -68,6 +68,9 @@ void decode_from_base64( const std::string &, std::vector<uint8_t> & );
 uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end );
 uint32_t decode_from_base64_size( const char *begin, const char *end );
 
+void encodeToHex( const std::vector<uint8_t> &src, std::string &dst );
+void decodeFromHex( const std::string &src, std::vector<uint8_t> &dst );
+
 void md5( const uint8_t *d, uint32_t size, uint8_t result[ 16 ] );
 
 std::string printPacketData( const PacketData &p );

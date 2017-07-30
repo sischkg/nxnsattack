@@ -44,5 +44,5 @@ target_link_libraries( cve-2017-3139    ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( unbound-caps-dos ${SERVER_LIBRARY} )
 target_link_libraries( cve-2016-7068    ${CLIENT_LIBRARY} )
 target_link_libraries( cve-2015-8705    ${CLIENT_LIBRARY} )
-# target_link_libraries( zonesigner       ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( zonesigner       ${ZONE_SERVER_LIBRARY} )
 

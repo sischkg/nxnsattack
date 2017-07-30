@@ -428,6 +428,61 @@ void hmac_md5( const uint8_t *data,
     calc_md5( opad_key, key_size + sizeof( ipad_md5 ), result );
 }
 
+
+void encodeToHex( const std::vector<uint8_t> &src, std::string &dst )
+{
+    dst.clear();
+
+    if ( src.empty() ) {
+	dst = "00";
+	return;
+    }
+
+    std::ostringstream os;
+    os << std::setw( 2 ) << std::setfill( '0' ) << std::hex << std::noshowbase << std::uppercase;
+    for ( uint8_t v : src )
+	os << (unsigned int)v;
+    dst = os.str();
+}
+
+void decodeFromHex( const std::string &src, std::vector<uint8_t> &dst )
+{
+    dst.clear();
+    if ( src.empty() ) {
+	dst.push_back( 0 );
+	return;
+    }
+    if ( src.size() % 2 == 1 ) {
+	std::ostringstream os;
+	os << "string length of \"" << src << "\" must be event.";
+	throw std::runtime_error( os.str() );
+    }
+    
+    std::string octet_str;
+
+    for ( char digit : src ) {
+	if ( '0' <= digit && digit <= '9' ||
+	     'a' <= digit && digit <= 'f' ||
+	     'A' <= digit && digit <= 'F' ) {
+
+	    octet_str.push_back( digit );
+	    if ( octet_str.size() == 2 ) {
+		std::istringstream is( octet_str );
+		uint16_t octet;
+
+		is >> std::hex >> octet;
+		dst.push_back( octet );
+		octet_str.clear();
+	    }
+	}
+	else {
+	    std::ostringstream os;
+	    os << "bad character \"" << digit << "\" in \"" << src << "\".";
+	    throw std::runtime_error( os.str() );
+	}
+    }
+}
+
 std::string printPacketData( const PacketData &p )
 {
     std::ostringstream os;
