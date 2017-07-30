@@ -180,7 +180,7 @@ namespace dns
                  node["digest_type"] &&
                  node["digest"] ) {
                 std::vector<uint8_t> digest;
-                decode_from_base64( node["digest"].as<std::string>(), digest );
+                decodeFromHex( node["digest"].as<std::string>(), digest );
                 return std::shared_ptr<ResourceData>( new RecordDS( node["key_tag"].as<uint16_t>(),
                                                                     node["algorithm"].as<uint16_t>(),
                                                                     node["digest_type"].as<uint16_t>(),

@@ -1173,7 +1173,7 @@ namespace dns
     std::string RecordDS::toZone() const
     {
         std::string digest_str;
-        encode_to_base64( digest, digest_str );
+        encodeToHex( digest, digest_str );
 
         std::ostringstream os;
         os << key_tag                   << " "
@@ -1186,7 +1186,7 @@ namespace dns
     std::string RecordDS::toString() const
     {
         std::string digest_str;
-        encode_to_base64( digest, digest_str );
+        encodeToHex( digest, digest_str );
 
         std::ostringstream os;
         os << "keytag: "      << key_tag     << ", "
