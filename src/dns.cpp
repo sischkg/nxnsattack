@@ -1810,7 +1810,7 @@ namespace dns
 	tsig_hash.outputWireFormat( hash_target );
 
 	PacketData ht = hash_target.get();
-        OpenSSL_add_all_digests();
+	//        OpenSSL_add_all_digests();
         HMAC( EVP_get_digestbyname( "md5" ),
               &tsig_info.key[ 0 ],
               tsig_info.key.size(),
