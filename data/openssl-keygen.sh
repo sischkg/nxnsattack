@@ -1,12 +1,15 @@
 #!/bin/sh
 
 ZONE=child.siskrn.co
-KEY_LENGTH=2048
+KSK_LENGTH=2048
+ZSK_LENGTH=2048
 
 base=`dirname $0`
-key=$base/$ZONE.key
+ksk=$base/$ZONE.ksk.key
+zsk=$base/$ZONE.zsk.key
 
-rm -f $key
-echo "" | openssl genrsa -out $key $KEY_LENGTH
+rm -f $ksk $zsf
+echo "" | openssl genrsa -out $ksk $KSK_LENGTH
+echo "" | openssl genrsa -out $zsk $ZSK_LENGTH
 
 
