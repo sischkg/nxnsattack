@@ -327,6 +327,96 @@ TEST_F( WireFormatTest, setBuffers_size_9 )
     EXPECT_EQ( 0x21, reinterpret_cast<uint8_t *>( msg.header.msg_iov[ 2 ].iov_base )[ 0 ] );
 }
 
+TEST_F( WireFormatTest, compare_length_1 )
+{
+    uint8_t lhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02, 0x03, 0x04,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_TRUE( lhs < rhs ); 
+}
+
+TEST_F( WireFormatTest, compare_length_2 )
+{
+    uint8_t lhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_FALSE( lhs < rhs ); 
+}
+
+TEST_F( WireFormatTest, compare_length_3 )
+{
+    uint8_t lhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_FALSE( lhs < rhs ); 
+}
+
+TEST_F( WireFormatTest, compare_value_1 )
+{
+    uint8_t lhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02, 0x04,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_TRUE( lhs < rhs ); 
+}
+
+TEST_F( WireFormatTest, compare_value_2 )
+{
+    uint8_t lhs_data[] = {
+        0x01, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02, 0x02,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_FALSE( lhs < rhs ); 
+}
+
+TEST_F( WireFormatTest, compare_value_3 )
+{
+    uint8_t lhs_data[] = {
+        0x02, 0x02, 0x03,
+    };
+    uint8_t rhs_data[] = {
+        0x01, 0x02, 0x04,
+    };
+
+    WireFormat lhs( lhs_data, lhs_data + sizeof(lhs_data) );
+    WireFormat rhs( rhs_data, rhs_data + sizeof(rhs_data) );
+
+    EXPECT_FALSE( lhs < rhs ); 
+}
+
 int main( int argc, char **argv )
 {
     ::testing::InitGoogleTest( &argc, argv );

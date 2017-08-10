@@ -133,6 +133,8 @@ public:
         return mEnd;
     }
 
+    bool operator<( const WireFormat &rhs ) const;
+    
     template <class UnaryFunction>
     void foreach ( UnaryFunction func ) const
     {

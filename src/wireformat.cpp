@@ -70,6 +70,22 @@ std::vector<uint8_t> WireFormat::get() const
     return ret;
 }
 
+bool WireFormat::operator<( const WireFormat &rhs ) const
+{
+    if ( size() < rhs.size() )
+	return true;
+    else if ( size() > rhs.size() )
+	return false;
+
+    for ( unsigned int i = 0 ; i < size() ; i++ ) {
+	if ( at( i ) < rhs.at( i ) )
+	    return true;
+	else if ( at( i ) > rhs.at( i ) )
+	    return false;
+    }
+    return false;
+}
+
 WireFormat::MessageHeader::MessageHeader()
 {
     std::memset( &header, 0, sizeof( header ) );
