@@ -85,12 +85,13 @@ namespace dns
         {
         }
 
-        virtual std::string toZone() const                         = 0;
-        virtual std::string toString() const                       = 0;
-        virtual void outputWireFormat( WireFormat &message ) const = 0;
-        virtual Type     type() const                              = 0;
-        virtual uint16_t size() const                              = 0;
-	virtual ResourceData *clone() const                        = 0;
+        virtual std::string toZone() const                                  = 0;
+        virtual std::string toString() const                                = 0;
+        virtual void outputWireFormat( WireFormat &message ) const          = 0;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const = 0;
+        virtual Type     type() const                                       = 0;
+        virtual uint16_t size() const                                       = 0;
+	virtual ResourceData *clone() const                                 = 0;
 	
         std::ostream &operator<<( std::ostream &os ) const
         {
@@ -113,6 +114,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return rrtype;
@@ -136,6 +138,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_A;
@@ -162,6 +165,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
             return TYPE_AAAA;
@@ -189,6 +193,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NS;
@@ -216,6 +221,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_MX;
@@ -241,6 +247,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_TXT;
@@ -263,6 +270,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_SPF;
@@ -285,6 +293,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_CNAME;
@@ -321,6 +330,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_NAPTR;
@@ -343,6 +353,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_DNAME;
@@ -383,6 +394,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_SOA;
@@ -442,6 +454,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_APL;
@@ -506,6 +519,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
             return 2 +  // type_covered(uint16_t)
@@ -569,6 +583,7 @@ namespace dns
         virtual std::string toString() const;
 
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
             return 2 + 1 + 1 + public_key.size();
@@ -609,6 +624,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
             return 2 + 1 + 1 + digest.size();
@@ -693,6 +709,7 @@ namespace dns
         virtual std::string toString() const;
 
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const;
         virtual uint16_t type() const
         {
@@ -751,6 +768,10 @@ namespace dns
             message.pushUInt8( protocol );
             message.pushUInt8( algorithm );
         }
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const
+	{
+	    outputWireFormat( message );
+	}
         virtual uint16_t size() const
         {
             return 4;
@@ -904,6 +925,7 @@ namespace dns
         virtual std::string toZone() const { return ""; }
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
             return TYPE_OPT;
@@ -990,8 +1012,9 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void     outputWireFormat( WireFormat & ) const;
-        virtual uint16_t type() const
+        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual void        outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint16_t    type() const
         {
             return TYPE_TKEY;
         }
@@ -1062,6 +1085,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
         virtual void        outputWireFormat( WireFormat & ) const;
+        virtual void        outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t    type() const
         {
             return TYPE_TSIG;

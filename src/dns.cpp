@@ -547,6 +547,11 @@ namespace dns
         message.pushBuffer( data );
     }
 
+    void RecordRaw::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
     RecordA::RecordA( uint32_t addr ) : sin_addr( addr )
     {
     }
@@ -581,6 +586,11 @@ namespace dns
         message.push_back( ( sin_addr >> 8 ) & 0xff );
         message.push_back( ( sin_addr >> 16 ) & 0xff );
         message.push_back( ( sin_addr >> 24 ) & 0xff );
+    }
+
+    void RecordA::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     std::string RecordA::getAddress() const
@@ -625,6 +635,11 @@ namespace dns
                             reinterpret_cast<const uint8_t *>( &sin_addr ) + sizeof( sin_addr ) );
     }
 
+    void RecordAAAA::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
     std::string RecordAAAA::getAddress() const
     {
 	return toString();
@@ -656,6 +671,11 @@ namespace dns
         domainname.outputWireFormat( message, offset );
     }
 
+    void RecordNS::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        domainname.outputCanonicalWireFormat( message );
+    }
+
     ResourceDataPtr RecordNS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname name;
@@ -684,6 +704,12 @@ namespace dns
     {
         message.pushUInt16HtoN( priority );
         domainname.outputWireFormat( message, offset );
+    }
+    
+    void RecordMX::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( priority );
+        domainname.outputCanonicalWireFormat( message );
     }
 
     ResourceDataPtr RecordMX::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
@@ -731,6 +757,12 @@ namespace dns
                 message.push_back( data[ i ][ j ] );
         }
     }
+
+    void RecordTXT::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
 
     uint16_t RecordTXT::size() const
     {
@@ -792,6 +824,12 @@ namespace dns
         }
     }
 
+    void RecordSPF::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
+
     uint16_t RecordSPF::size() const
     {
         uint16_t s = 0;
@@ -837,6 +875,12 @@ namespace dns
     {
         domainname.outputWireFormat( message, offset );
     }
+
+    void RecordCNAME::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
 
     ResourceDataPtr RecordCNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
@@ -889,6 +933,11 @@ namespace dns
         replacement.outputWireFormat( message, offset );
     }
 
+    void RecordNAPTR::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
     uint16_t RecordNAPTR::size() const
     {
         return sizeof( order ) + sizeof( preference ) + 1 + flags.size() + 1 + regexp.size() +
@@ -934,6 +983,12 @@ namespace dns
         domainname.outputWireFormat( message, offset );
     }
 
+    void RecordDNAME::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        domainname.outputCanonicalWireFormat( message );
+    }
+
+
     ResourceDataPtr RecordDNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname name;
@@ -972,6 +1027,17 @@ namespace dns
     {
         mname.outputWireFormat( message, mname_offset );
         rname.outputWireFormat( message, rname_offset );
+        message.pushUInt32HtoN( serial );
+        message.pushUInt32HtoN( refresh );
+        message.pushUInt32HtoN( retry );
+        message.pushUInt32HtoN( expire );
+        message.pushUInt32HtoN( minimum );
+    }
+
+    void RecordSOA::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        mname.outputCanonicalWireFormat( message );
+        rname.outputCanonicalWireFormat( message );
         message.pushUInt32HtoN( serial );
         message.pushUInt32HtoN( refresh );
         message.pushUInt32HtoN( retry );
@@ -1025,6 +1091,11 @@ namespace dns
             message.pushUInt8( ( i->negation ? ( 1 << 7 ) : 0 ) | i->afd.size() );
             message.pushBuffer( i->afd );
         }
+    }
+
+    void RecordAPL::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     uint16_t RecordAPL::size() const
@@ -1123,6 +1194,11 @@ namespace dns
         message.pushBuffer( signature );
     }
 
+    void RecordRRSIG::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
     std::string RecordDNSKey::toZone() const
     {
         std::string public_key_str;
@@ -1156,6 +1232,11 @@ namespace dns
         message.pushUInt8( 3 );
         message.pushUInt8( algorithm );
         message.pushBuffer( public_key );
+    }
+
+    void RecordDNSKey::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     ResourceDataPtr RecordDNSKey::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
@@ -1202,6 +1283,11 @@ namespace dns
         message.pushUInt8( algorithm );
         message.pushUInt8( digest_type );
         message.pushBuffer( digest );
+    }
+
+    void RecordDS::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     ResourceDataPtr RecordDS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
@@ -1384,6 +1470,12 @@ namespace dns
 	bitmaps.outputWireFormat( message );
     }
 
+    void RecordNSEC::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+	next_domainname.outputCanonicalWireFormat( message );
+	bitmaps.outputWireFormat( message );
+    }
+
     uint16_t RecordNSEC::size() const
     {
 	return next_domainname.size() + bitmaps.size();
@@ -1424,6 +1516,11 @@ namespace dns
         for ( auto i = options.begin(); i != options.end(); i++ ) {
             ( *i )->outputWireFormat( message );
         }
+    }
+
+    void RecordOptionsData::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     ResourceDataPtr RecordOptionsData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
@@ -1630,6 +1727,11 @@ namespace dns
         message.pushBuffer( other_data );
     }
 
+    void RecordTKey::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
     uint16_t RecordTSIGData::size() const
     {
         return algorithm.size() + // ALGORITHM
@@ -1657,6 +1759,11 @@ namespace dns
         message.pushUInt16HtoN( error );
         message.pushUInt16HtoN( other_length );
         message.pushBuffer( other );
+    }
+
+    void RecordTSIGData::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
     }
 
     std::string RecordTSIGData::toZone() const
