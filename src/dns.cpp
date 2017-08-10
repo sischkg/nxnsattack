@@ -1143,10 +1143,10 @@ namespace dns
         encode_to_base64( public_key, public_key_str );
 
         std::ostringstream os;
-        os << "KSK/ZSK: "     << ( flag == KSK ? "KSK" : "ZSK" ) << ", "
-           << "Protocal: "    << 3                               << ", "
-           << "Algorithm: "   << algorithm                       << ", "
-           << "Public Key:: " << public_key_str;
+        os << "KSK/ZSK: "    << ( flag == KSK ? "KSK" : "ZSK" ) << ", "
+           << "Protocal: "   << 3                               << ", "
+           << "Algorithm: "  << (unsigned int)algorithm         << ", "
+           << "Public Key: " << public_key_str;
         return os.str();
     }
 
