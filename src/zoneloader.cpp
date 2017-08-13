@@ -159,18 +159,18 @@ namespace dns
             throw ZoneConfigError( error_message );
         }
 
-        ResourceDataPtr parseRecordDNSKey( const YAML::Node &node )
+        ResourceDataPtr parseRecordDNSKEY( const YAML::Node &node )
         {
             if ( node["flag"] &&
                  node["algorithm"] &&
                  node["public_key"] ) {
                 std::vector<uint8_t> public_key;
                 decode_from_base64( node["public_key"].as<std::string>(), public_key );
-                return std::shared_ptr<ResourceData>( new RecordDNSKey( node["flag"].as<uint16_t>(),
+                return std::shared_ptr<ResourceData>( new RecordDNSKEY( node["flag"].as<uint16_t>(),
                                                                         node["algorithm"].as<uint16_t>(),
                                                                         public_key ) );
             }
-            throw ZoneConfigError( "DNSKey record must have \"flag\", \"algorithm\" and \"public_key\" attribute" );
+            throw ZoneConfigError( "DNSKEY record must have \"flag\", \"algorithm\" and \"public_key\" attribute" );
         }
 
         ResourceDataPtr parseRecordDS( const YAML::Node &node )
@@ -246,7 +246,7 @@ namespace dns
                         rrset->add( parseRecordRRSIG( *record ) );
                         break;
                     case TYPE_DNSKEY:
-                        rrset->add( parseRecordDNSKey( *record ) );
+                        rrset->add( parseRecordDNSKEY( *record ) );
                         break;
                     case TYPE_DS:
                         rrset->add( parseRecordDS( *record ) );
@@ -388,7 +388,7 @@ namespace dns
 		    rr = parseRecordDS( data );
 		    break;
 		case TYPE_DNSKEY:
-		    rr = parseRecordDNSKey( data );
+		    rr = parseRecordDNSKEY( data );
 		    break;
 		case TYPE_NSEC:
 		    rr = parseRecordNSEC( data );
@@ -506,13 +506,13 @@ namespace dns
                                                   digest ) );
         }
 
-        ResourceDataPtr parseRecordDNSKey( const std::vector<std::string> &data )
+        ResourceDataPtr parseRecordDNSKEY( const std::vector<std::string> &data )
         {
             auto public_key_data = data.begin();
             for ( int i = 0 ; i < 3 ; i++ ) public_key_data++;
             auto public_key = decode_from_base64_strings( public_key_data, data.end() );
 
-            return ResourceDataPtr( new RecordDNSKey( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
+            return ResourceDataPtr( new RecordDNSKEY( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
                                                       boost::lexical_cast<uint16_t>( data[2] ),  // algorithm
                                                       public_key ) );                           // Public Key
         }

@@ -30,7 +30,7 @@ namespace dns
     public:
         virtual ~PublicKey() {}
         virtual std::string toString() const = 0;
-        virtual std::vector<uint8_t> getDNSKeyFormat() const = 0;
+        virtual std::vector<uint8_t> getDNSKEYFormat() const = 0;
     };
     
     class RSAPublicKey : public PublicKey
@@ -41,7 +41,7 @@ namespace dns
         virtual std::string toString() const;
         const std::vector<uint8_t> &getExponent() const;
         const std::vector<uint8_t> &getModulus() const;
-        std::vector<uint8_t> getDNSKeyFormat() const;
+        std::vector<uint8_t> getDNSKEYFormat() const;
     private:
 	std::shared_ptr<RSAPublicKeyImp> mImp;
     };
@@ -53,13 +53,13 @@ namespace dns
         ZoneSigner( const Domainname &d, const std::string &ksk, const std::string &zsk );
 
 	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
-	std::shared_ptr<RRSet> signDNSKey() const;
+	std::shared_ptr<RRSet> signDNSKEY() const;
 
 	std::shared_ptr<PublicKey> getKSKPublicKey() const;
 	std::shared_ptr<PublicKey> getZSKPublicKey() const;
 
         std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
-        std::vector<std::shared_ptr<RecordDNSKey>> getDNSKeyRecords() const;
+        std::vector<std::shared_ptr<RecordDNSKEY>> getDNSKEYRecords() const;
 
         static void initialize();
 

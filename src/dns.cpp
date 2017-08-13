@@ -331,7 +331,7 @@ namespace dns
             parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
             break;
         case TYPE_DNSKEY:
-            parsed_data = RecordDNSKey::parse( packet, pos, pos + data_length );
+            parsed_data = RecordDNSKEY::parse( packet, pos, pos + data_length );
             break;
         case TYPE_TSIG:
             parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length, sec.r_domainname );
@@ -1199,7 +1199,7 @@ namespace dns
         outputWireFormat( message );
     }
 
-    std::string RecordDNSKey::toZone() const
+    std::string RecordDNSKEY::toZone() const
     {
         std::string public_key_str;
         encode_to_base64( public_key, public_key_str );
@@ -1213,7 +1213,7 @@ namespace dns
     }
 
 
-    std::string RecordDNSKey::toString() const
+    std::string RecordDNSKEY::toString() const
     {
         std::string public_key_str;
         encode_to_base64( public_key, public_key_str );
@@ -1226,7 +1226,7 @@ namespace dns
         return os.str();
     }
 
-    void RecordDNSKey::outputWireFormat( WireFormat &message ) const
+    void RecordDNSKEY::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( flag );
         message.pushUInt8( 3 );
@@ -1234,12 +1234,12 @@ namespace dns
         message.pushBuffer( public_key );
     }
 
-    void RecordDNSKey::outputCanonicalWireFormat( WireFormat &message ) const
+    void RecordDNSKEY::outputCanonicalWireFormat( WireFormat &message ) const
     {
         outputWireFormat( message );
     }
 
-    ResourceDataPtr RecordDNSKey::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    ResourceDataPtr RecordDNSKEY::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *      pos   = begin;
         uint16_t             f     = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -1248,7 +1248,7 @@ namespace dns
         std::vector<uint8_t> key;
         key.insert( key.end(), pos, end );
 
-        return ResourceDataPtr( new RecordDNSKey( f, algo, key ) );
+        return ResourceDataPtr( new RecordDNSKEY( f, algo, key ) );
     }
 
     std::string RecordDS::toZone() const

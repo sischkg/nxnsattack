@@ -554,7 +554,7 @@ namespace dns
     };
 
 
-    class RecordDNSKey : public ResourceData
+    class RecordDNSKEY : public ResourceData
     {
     private:
         uint16_t             flag;
@@ -571,7 +571,7 @@ namespace dns
         static const uint16_t KSK = 1 << 8;
         static const uint16_t ZSK = 0;
 
-        RecordDNSKey( uint16_t f, uint8_t algo, const std::vector<uint8_t> &key )
+        RecordDNSKEY( uint16_t f, uint8_t algo, const std::vector<uint8_t> &key )
             : flag( f ), algorithm( algo ), public_key( key )
         {}
         
@@ -594,9 +594,9 @@ namespace dns
             return TYPE_DNSKEY;
         }
 
-	virtual RecordDNSKey *clone() const
+	virtual RecordDNSKEY *clone() const
 	{
-	    return new RecordDNSKey( flag, algorithm, public_key );
+	    return new RecordDNSKEY( flag, algorithm, public_key );
 	}
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );

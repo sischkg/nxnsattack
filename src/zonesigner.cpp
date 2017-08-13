@@ -172,13 +172,13 @@ namespace dns
 	std::shared_ptr<PublicKey> getZSKPublicKey() const;
 
         std::shared_ptr<RecordDS>     getDSRecord( HashAlgorithm algo ) const;
-        std::shared_ptr<RecordDNSKey> getDNSKeyRecord( const PrivateKeyImp &private_key ) const;
+        std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
         std::vector<std::shared_ptr<RecordDS> >     getDSRecords() const;
-        std::vector<std::shared_ptr<RecordDNSKey> > getDNSKeyRecords() const;
+        std::vector<std::shared_ptr<RecordDNSKEY> > getDNSKEYRecords() const;
 
 	void generateSignData( const RRSet &rrset, const PrivateKeyImp &key, WireFormat &sign_target ) const;
 	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
-	std::shared_ptr<RRSet> signDNSKey() const;
+	std::shared_ptr<RRSet> signDNSKEY() const;
 
         static void initialize();
     };
@@ -321,29 +321,29 @@ namespace dns
 	return signRRSetByKey( rrset, *mZSK );
     }
 
-    std::shared_ptr<RRSet> ZoneSignerImp::signDNSKey() const
+    std::shared_ptr<RRSet> ZoneSignerImp::signDNSKEY() const
     {
-	std::vector<std::shared_ptr<RecordDNSKey>> dnskeys = getDNSKeyRecords();
+	std::vector<std::shared_ptr<RecordDNSKEY>> dnskeys = getDNSKEYRecords();
 	RRSet rrset( mKSK->getDomainname(), CLASS_IN, TYPE_DNSKEY, 3600 );
 	for ( auto k : dnskeys )
 	    rrset.add( k );
 	return signRRSetByKey( rrset, *mKSK );
     }
 
-    std::shared_ptr<RecordDNSKey> ZoneSignerImp::getDNSKeyRecord( const PrivateKeyImp &key ) const
+    std::shared_ptr<RecordDNSKEY> ZoneSignerImp::getDNSKEYRecord( const PrivateKeyImp &key ) const
     {
         std::shared_ptr<PublicKey> public_key = getPublicKey( key.getPrivateKey() );
 
-        return std::shared_ptr<RecordDNSKey>( new RecordDNSKey( key.getKeyType(),
+        return std::shared_ptr<RecordDNSKEY>( new RecordDNSKEY( key.getKeyType(),
                                                                 key.getAlgorithm(),
-                                                                public_key->getDNSKeyFormat() ) );
+                                                                public_key->getDNSKEYFormat() ) );
     }
 
-    std::vector<std::shared_ptr<RecordDNSKey>> ZoneSignerImp::getDNSKeyRecords() const
+    std::vector<std::shared_ptr<RecordDNSKEY>> ZoneSignerImp::getDNSKEYRecords() const
     {
-        std::vector<std::shared_ptr<RecordDNSKey>> result;
-        result.push_back( getDNSKeyRecord( *mKSK ) );
-        result.push_back( getDNSKeyRecord( *mZSK ) );
+        std::vector<std::shared_ptr<RecordDNSKEY>> result;
+        result.push_back( getDNSKEYRecord( *mKSK ) );
+        result.push_back( getDNSKEYRecord( *mZSK ) );
         return result;
     }
 
@@ -351,7 +351,7 @@ namespace dns
     {
         WireFormat hash_target;
         mKSK->getDomainname().outputCanonicalWireFormat( hash_target );
-        std::shared_ptr<RecordDNSKey> dnskey = getDNSKeyRecord( *mKSK );
+        std::shared_ptr<RecordDNSKEY> dnskey = getDNSKEYRecord( *mKSK );
         dnskey->outputWireFormat( hash_target );
         std::vector<uint8_t> hash_target_data = hash_target.get();
 
@@ -444,9 +444,9 @@ namespace dns
 	return mImp->signRRSet( rrset );
     }
     
-    std::shared_ptr<RRSet> ZoneSigner::signDNSKey() const
+    std::shared_ptr<RRSet> ZoneSigner::signDNSKEY() const
     {
-	return mImp->signDNSKey();
+	return mImp->signDNSKEY();
     }
 
     std::shared_ptr<PublicKey> ZoneSigner::getKSKPublicKey() const
@@ -464,9 +464,9 @@ namespace dns
 	return mImp->getDSRecords();
     }
 
-    std::vector<std::shared_ptr<RecordDNSKey>> ZoneSigner::getDNSKeyRecords() const
+    std::vector<std::shared_ptr<RecordDNSKEY>> ZoneSigner::getDNSKEYRecords() const
     {
-	return mImp->getDNSKeyRecords();
+	return mImp->getDNSKEYRecords();
     }
 
     void ZoneSigner::initialize()
@@ -488,7 +488,7 @@ namespace dns
         std::string toString() const;
         const std::vector<uint8_t> &getExponent() const { return exponent; } 
         const std::vector<uint8_t> &getModulus() const  { return modulus; }  
-        std::vector<uint8_t> getDNSKeyFormat() const;
+        std::vector<uint8_t> getDNSKEYFormat() const;
     private:
 	std::vector<uint8_t> exponent;
 	std::vector<uint8_t> modulus;
@@ -521,7 +521,7 @@ namespace dns
 	    dst.push_back( *i );
     }
 
-    std::vector<uint8_t> RSAPublicKeyImp::getDNSKeyFormat() const
+    std::vector<uint8_t> RSAPublicKeyImp::getDNSKEYFormat() const
     {
 	std::vector<uint8_t> result;
 	std::vector<uint8_t> exponent_tmp, modulus_tmp;
@@ -567,9 +567,9 @@ namespace dns
 	return mImp->getModulus();
     }
 
-    std::vector<uint8_t> RSAPublicKey::getDNSKeyFormat() const
+    std::vector<uint8_t> RSAPublicKey::getDNSKEYFormat() const
     {
-	return mImp->getDNSKeyFormat();
+	return mImp->getDNSKEYFormat();
     }
 
 }
@@ -611,8 +611,8 @@ int main( int argc, char **argv )
     std::cout << zsk_public_key->toString() << std::endl;
 
     auto dss = signer.getDSRecords();
-    auto dnskeys = signer.getDNSKeyRecords();
-    auto rrsig  = signer.signDNSKey();
+    auto dnskeys = signer.getDNSKEYRecords();
+    auto rrsig  = signer.signDNSKEY();
     for ( auto ds : dss )
         std::cout << ds->toString() << std::endl;
     for ( auto dnskey : dnskeys )
