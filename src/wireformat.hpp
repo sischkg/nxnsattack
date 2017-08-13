@@ -143,6 +143,16 @@ public:
         }
     }
 
+    template <class BinaryFunction>
+    void foreachBuffers ( BinaryFunction func ) const
+    {
+	int last_buffer_index = mBuffers.size() - 1;
+	for ( int i = 0 ; i < last_buffer_index ; i++ ) {
+	    func( mBuffers[i], mBuffers[i] + mBufferSize );
+	}
+	func( mBuffers[last_buffer_index], mBuffers[last_buffer_index] + mEnd % mBufferSize );
+    }
+
     uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const
         throw( std::runtime_error );
     std::vector<uint8_t> get() const;

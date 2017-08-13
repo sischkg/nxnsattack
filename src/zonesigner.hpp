@@ -2,6 +2,7 @@
 #define ZONE_SIGNER_HPP
 
 #include "dns.hpp"
+#include "zone.hpp"
 
 namespace dns
 {
@@ -21,8 +22,8 @@ namespace dns
 	DNSSEC_SHA256 = 2,
     };
 
-    enum Algorithm {
-	DNSSEC_RSA = 8,
+    enum SignAlgorithm {
+	DNSSEC_RSASHA1 = 5,
     };
     
     class PublicKey {
@@ -51,12 +52,8 @@ namespace dns
     public:
         ZoneSigner( const Domainname &d, const std::string &ksk, const std::string &zsk );
 
-        void sign( const uint8_t *message, size_t size,
-                   std::vector<uint8_t> &signature, HashAlgorithm algo = DNSSEC_SHA256 ) const;
-        void sign( const std::vector<uint8_t> &message,
-                   std::vector<uint8_t> &signature, HashAlgorithm algo = DNSSEC_SHA256 ) const;
-        void sign( const std::string &message,
-                   std::vector<uint8_t> &signature, HashAlgorithm algo = DNSSEC_SHA256) const;
+	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
+	std::shared_ptr<RRSet> signDNSKey() const;
 
 	std::shared_ptr<PublicKey> getKSKPublicKey() const;
 	std::shared_ptr<PublicKey> getZSKPublicKey() const;

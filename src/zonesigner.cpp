@@ -35,7 +35,7 @@ namespace dns
         ~PrivateKeyImp();
 
         KeyType   getKeyType() const   { return mKeyType; }
-        Algorithm getAlgorithm() const { return DNSSEC_RSA; }
+        SignAlgorithm getAlgorithm() const { return DNSSEC_RSASHA1; }
         EVP_PKEY *getPrivateKey() const { return mPrivateKey; }
         uint16_t  getKeyTag() const    { return mKeyTag; }
         uint32_t  getNotBefore() const { return mNotBefore; }
@@ -153,15 +153,20 @@ namespace dns
         std::shared_ptr<PrivateKeyImp> mKSK;
         std::shared_ptr<PrivateKeyImp> mZSK;
 
+	std::shared_ptr<RRSet> signRRSetByKey( const RRSet &, const PrivateKeyImp &key ) const;
         static void      throwException( const char *message, const char *other = nullptr );
 	static std::shared_ptr<PublicKey> getPublicKey( EVP_PKEY *private_key );
-        static const EVP_MD *enumToMD( HashAlgorithm );
+        static const EVP_MD *enumToDigestMD( HashAlgorithm );
+        static const EVP_MD *enumToSignMD( SignAlgorithm );
+
     public:
         ZoneSignerImp( const Domainname &d, const std::string &ksk, const std::string &zsk );
         ~ZoneSignerImp();
 
-        void sign( const uint8_t *message, size_t size,
-                   std::vector<uint8_t> &signature, HashAlgorithm algo = DNSSEC_SHA256 ) const;
+	void sign( const WireFormat &message,
+		   std::vector<uint8_t> &signature,
+		   const PrivateKeyImp &key,
+		   SignAlgorithm algo ) const;
 
 	std::shared_ptr<PublicKey> getKSKPublicKey() const;
 	std::shared_ptr<PublicKey> getZSKPublicKey() const;
@@ -170,6 +175,10 @@ namespace dns
         std::shared_ptr<RecordDNSKey> getDNSKeyRecord( const PrivateKeyImp &private_key ) const;
         std::vector<std::shared_ptr<RecordDS> >     getDSRecords() const;
         std::vector<std::shared_ptr<RecordDNSKey> > getDNSKeyRecords() const;
+
+	void generateSignData( const RRSet &rrset, const PrivateKeyImp &key, WireFormat &sign_target ) const;
+	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
+	std::shared_ptr<RRSet> signDNSKey() const;
 
         static void initialize();
     };
@@ -214,18 +223,23 @@ namespace dns
         EVP_MD_CTX_destroy( mMDContext );
     }
 
-
-    void ZoneSignerImp::sign( const uint8_t *message, size_t size, std::vector<uint8_t> &signature, HashAlgorithm algo ) const
+    void ZoneSignerImp::sign( const WireFormat &message,
+			      std::vector<uint8_t> &signature,
+			      const PrivateKeyImp &key,
+			      SignAlgorithm algo ) const
     {
-        int result =  EVP_DigestSignInit( mMDContext, NULL, enumToMD( algo ), NULL, mZSK->getPrivateKey() );
+        int result =  EVP_DigestSignInit( mMDContext, NULL, enumToSignMD( algo ), NULL, key.getPrivateKey() );
         if ( result != 1 ) {
             throwException( "cannot initialize DigestSign" );
         }
- 
-        result = EVP_DigestSignUpdate( mMDContext, message, size );
-        if ( result != 1 ) {
-            throwException( "cannot update DigestSign" );
-        }
+
+	message.foreachBuffers(
+			       [this]( const uint8_t *begin, const uint8_t *end ) {
+				   int res = EVP_DigestSignUpdate( this->mMDContext, begin, end - begin );
+				   if ( res != 1 ) {
+				       throwException( "cannot update DigestSign" );
+				   }
+			       } );
 
         size_t sign_length;
         result = EVP_DigestSignFinal( mMDContext, NULL, &sign_length );
@@ -233,7 +247,6 @@ namespace dns
             throwException( "cannot fetch result buffer length" );
         }
 
-        std::vector<uint8_t> buffer;
         signature.resize( sign_length );
 
         result = EVP_DigestSignFinal( mMDContext, &signature[0], &sign_length );
@@ -241,6 +254,80 @@ namespace dns
             ERR_print_errors_fp(stderr);
             throw std::runtime_error( "cannot create signature" );
         }
+    }
+
+    void ZoneSignerImp::generateSignData( const RRSet &rrset, const PrivateKeyImp &key, WireFormat &sign_target ) const
+    {
+	sign_target.clear();
+ 
+	sign_target.pushUInt16HtoN( rrset.getType() );                 // type covered
+	sign_target.pushUInt8( key.getAlgorithm() );                 // algorithm
+	sign_target.pushUInt8( rrset.getOwner().getLabels().size() );  // label
+	sign_target.pushUInt32HtoN( rrset.getTTL() );                  // original ttl
+	sign_target.pushUInt32HtoN( key.getNotAfter() );
+	sign_target.pushUInt32HtoN( key.getNotBefore() );
+	sign_target.pushUInt16HtoN( key.getKeyTag() );                  // key tag
+	mZSK->getDomainname().outputCanonicalWireFormat( sign_target );
+	
+	std::vector<ResourceDataPtr> ordered_rrs = rrset.getRRSet();
+	std::sort( ordered_rrs.begin(),
+		   ordered_rrs.end(),
+		   []( const ResourceDataPtr &lhs, const ResourceDataPtr &rhs )
+		   {
+		       WireFormat lhs_data, rhs_data;
+		       lhs->outputCanonicalWireFormat( lhs_data );
+		       rhs->outputCanonicalWireFormat( rhs_data );
+		       return lhs < rhs;
+		   } );
+
+	for ( auto rr : ordered_rrs ) {
+	    rrset.getOwner().outputCanonicalWireFormat( sign_target );
+	    sign_target.pushUInt16HtoN( rrset.getType() );
+	    sign_target.pushUInt16HtoN( rrset.getClass() );
+	    sign_target.pushUInt32HtoN( rrset.getTTL() );
+	    sign_target.pushUInt16HtoN( rr->size() );
+	    WireFormat tmp;
+	    rr->outputCanonicalWireFormat( tmp );
+	    sign_target.pushUInt16HtoN( tmp.size() );
+	    sign_target.pushBuffer( tmp.get() );
+	}
+    }
+
+    std::shared_ptr<RRSet> ZoneSignerImp::signRRSetByKey( const RRSet &rrset, const PrivateKeyImp &key ) const
+    {
+	WireFormat sign_target;
+	generateSignData( rrset, key, sign_target );
+	std::vector<uint8_t> signature;
+	sign( sign_target, signature, key, key.getAlgorithm() );
+
+	std::shared_ptr<RRSet> rrsig = std::shared_ptr<RRSet>( new RRSet( rrset.getOwner(),
+									  rrset.getClass(),
+									  rrset.getType(),
+									  rrset.getTTL() ) );
+	rrsig->add( std::shared_ptr<RecordRRSIG>( new RecordRRSIG( rrset.getType(),
+								   key.getAlgorithm(),
+								   rrset.getOwner().getLabels().size(),
+								   rrset.getTTL(),
+								   key.getNotAfter(),
+								   key.getNotBefore(),
+								   key.getKeyTag(),
+								   key.getDomainname(),
+								   signature ) ) );
+	return rrsig;
+    }
+
+    std::shared_ptr<RRSet> ZoneSignerImp::signRRSet( const RRSet &rrset ) const
+    {
+	return signRRSetByKey( rrset, *mZSK );
+    }
+
+    std::shared_ptr<RRSet> ZoneSignerImp::signDNSKey() const
+    {
+	std::vector<std::shared_ptr<RecordDNSKey>> dnskeys = getDNSKeyRecords();
+	RRSet rrset( mKSK->getDomainname(), CLASS_IN, TYPE_DNSKEY, 3600 );
+	for ( auto k : dnskeys )
+	    rrset.add( k );
+	return signRRSetByKey( rrset, *mKSK );
     }
 
     std::shared_ptr<RecordDNSKey> ZoneSignerImp::getDNSKeyRecord( const PrivateKeyImp &key ) const
@@ -270,7 +357,7 @@ namespace dns
 
         unsigned int digest_length = EVP_MAX_MD_SIZE;
         EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex( mdctx, enumToMD( algo ), NULL);
+        EVP_DigestInit_ex( mdctx, enumToDigestMD( algo ), NULL);
         EVP_DigestUpdate( mdctx, &hash_target_data[0], hash_target_data.size() );
         std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
         EVP_DigestFinal_ex( mdctx, &digest[0], &digest_length );
@@ -296,7 +383,7 @@ namespace dns
         SSL_library_init();
     }
 
-    const EVP_MD *ZoneSignerImp::enumToMD( HashAlgorithm algo )
+    const EVP_MD *ZoneSignerImp::enumToDigestMD( HashAlgorithm algo )
     {
         switch ( algo ) {
         case DNSSEC_SHA1:
@@ -307,7 +394,17 @@ namespace dns
             throw std::runtime_error( "unknown hash algorighm for DS" );
         }
     }
-    
+
+    const EVP_MD *ZoneSignerImp::enumToSignMD( SignAlgorithm algo )
+    {
+        switch ( algo ) {
+        case DNSSEC_RSASHA1:
+            return EVP_sha1();
+        default:
+            throw std::runtime_error( "unknown hash algorighm for RRSIG" );
+        }
+    }
+
     std::shared_ptr<PublicKey> ZoneSignerImp::getPublicKey( EVP_PKEY *private_key )
     {
         RSA* r = EVP_PKEY_get0_RSA( private_key );
@@ -342,25 +439,15 @@ namespace dns
 	: mImp( new ZoneSignerImp( d, ksk, zsk ) )
     {}
 
-    void ZoneSigner::sign( const uint8_t *message, size_t size,
-			   std::vector<uint8_t> &signature, HashAlgorithm algo ) const
+    std::shared_ptr<RRSet> ZoneSigner::signRRSet( const RRSet &rrset ) const
     {
-	mImp->sign( message, size, signature, algo );
-    }
-
-    void ZoneSigner::sign( const std::vector<uint8_t> &message,
-			   std::vector<uint8_t> &signature, HashAlgorithm algo ) const
-    {
-	mImp->sign( &message[0], message.size(), signature, algo );
-	
+	return mImp->signRRSet( rrset );
     }
     
-    void ZoneSigner::sign( const std::string &message,
-			   std::vector<uint8_t> &signature, HashAlgorithm algo ) const
+    std::shared_ptr<RRSet> ZoneSigner::signDNSKey() const
     {
-	mImp->sign( reinterpret_cast<const uint8_t *>( message.c_str() ), message.size(), signature, algo );
+	return mImp->signDNSKey();
     }
-
 
     std::shared_ptr<PublicKey> ZoneSigner::getKSKPublicKey() const
     {
@@ -517,26 +604,20 @@ int main( int argc, char **argv )
     dns::ZoneSigner::initialize();
     dns::ZoneSigner signer( "example.com", ksk_filename, zsk_filename );
 
-    std::vector<uint8_t> signature;
-    std::string message = "test message";
-
-    signer.sign( message, signature );
     auto ksk_public_key = signer.getKSKPublicKey();
     auto zsk_public_key = signer.getZSKPublicKey();
 
-    std::string signature_base64;
-    encode_to_base64( signature, signature_base64 );
-
-    std::cout << signature_base64 << std::endl;
     std::cout << ksk_public_key->toString() << std::endl;
     std::cout << zsk_public_key->toString() << std::endl;
 
     auto dss = signer.getDSRecords();
     auto dnskeys = signer.getDNSKeyRecords();
+    auto rrsig  = signer.signDNSKey();
     for ( auto ds : dss )
         std::cout << ds->toString() << std::endl;
     for ( auto dnskey : dnskeys )
         std::cout << dnskey->toString() << std::endl;
-
+    std::cout << rrsig->toString() << std::endl;
+    
     return 0;
 }

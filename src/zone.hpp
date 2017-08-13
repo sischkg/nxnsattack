@@ -46,6 +46,7 @@ namespace dns
 
 	ResourceDataPtr operator[]( int index ) { return resource_data[index]; }
 	ConstResourceDataPtr operator[]( int index ) const { return resource_data[index]; }
+	const ResourceDataContainer &getRRSet() const { return resource_data; }
 
         void add( ResourceDataPtr data ) { resource_data.push_back( data ); }
     };
