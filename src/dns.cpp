@@ -1270,9 +1270,9 @@ namespace dns
         encodeToHex( digest, digest_str );
 
         std::ostringstream os;
-        os << "keytag: "      << key_tag     << ", "
-           << "algorithm: "   << algorithm   << ", "
-           << "digest type: " << digest_type << ", "
+        os << "keytag: "      << key_tag                   << ", "
+           << "algorithm: "   << (unsigned int)algorithm   << ", "
+           << "digest type: " << (unsigned int)digest_type << ", "
            << "digest: "      << digest_str;
         return os.str();
     }
