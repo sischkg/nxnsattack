@@ -54,8 +54,6 @@ namespace dns
         Type       qtype  = query.question_section[0].q_type;
         Class      qclass = query.question_section[0].q_class;
 
-        std::cerr << "quname: " << qname.toString() << ", " << "qtype: " << qtype << std::endl;
-
         PacketInfo response;
 
         response.id                   = query.id;
@@ -88,7 +86,6 @@ namespace dns
             return response;
         }
 
-
 	// QTYPE == DNSKEY, return RRSet from ZoneSigner
 	if ( qtype == TYPE_DNSKEY && qname == mSOA->getOwner() ) {
 	    std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
@@ -104,6 +101,53 @@ namespace dns
 	    return response;
 	}
 
+        if ( qtype == TYPE_RRSIG ) {
+            auto node = findNode( qname );
+            if ( node ) {
+                if ( node->exist() ) {
+                    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
+                        auto rrset = *(rrset_itr->second);
+                        std::shared_ptr<RRSet> rrsig = mSigner.signRRSet( rrset );
+                        addRRSet( response.answer_section, *rrsig );
+                    }
+                }
+                else {
+                    // NoData ( found empty non-terminal or other type )
+                    response.response_code = NO_ERROR;
+                    addSOAToAuthoritySection( response );
+                    if ( response.isDNSSECOK() ) {
+                        RRSetPtr nsec = generateNSECRRSet( qname );
+                        addRRSet( response.authority_section, *nsec );
+                        addRRSIG( response.authority_section, *nsec );
+
+                        Domainname wildcard = mApex;
+                        wildcard.addSubdomain( "*" );
+                        RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+                        addRRSet( response.authority_section, *wildcard_nsec );
+                        addRRSIG( response.authority_section, *wildcard_nsec );
+                    }
+		}
+		return response;
+            }
+            else {
+                // NXDOMAIN
+                response.response_code = NXDOMAIN;
+                addSOAToAuthoritySection( response );
+                if ( response.isDNSSECOK() ) {
+                    RRSetPtr nsec = generateNSECRRSet( qname );
+                    addRRSet( response.authority_section, *nsec );
+                    addRRSIG( response.authority_section, *nsec );
+
+                    Domainname wildcard = mApex;
+                    wildcard.addSubdomain( "*" );
+                    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+                    addRRSet( response.authority_section, *wildcard_nsec );
+                    addRRSIG( response.authority_section, *wildcard_nsec );
+                }
+                return response;
+            }
+        }
+
 	// find qname
         auto node = findNode( qname );
         if ( node ) {
@@ -112,10 +156,7 @@ namespace dns
 		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
                         auto rrset = *(rrset_itr->second);
                         addRRSet( response.answer_section, rrset );
-			if ( response.isDNSSECOK() ) {
-			    std::shared_ptr<RRSet> rrsig = mSigner.signRRSet( rrset );
-                            addRRSet( response.answer_section, *rrsig );
-			}
+                        addRRSIG( response.authority_section, rrset );
 		    }
 		}
 		else {
@@ -204,18 +245,8 @@ namespace dns
         if ( ! mSOA || mSOA->count() != 1 )
             throw std::logic_error( "SOA record must be exist in zone" );
 
-        ResponseSectionEntry r;
-        r.r_domainname  = mSOA->getOwner();
-        r.r_type        = mSOA->getType();
-        r.r_class       = mSOA->getClass();
-        r.r_ttl         = mSOA->getTTL();
-        for ( auto data_itr = mSOA->begin() ; data_itr != mSOA->end() ; data_itr++ ) {
-            r.r_resource_data = *data_itr;
-        }
-        response.authority_section.push_back( r );
-
+        addRRSet( response.authority_section, *mSOA );
         if ( response.isDNSSECOK() ) {
-            auto apex_node = findNode( mApex );
 	    addRRSIG( response.authority_section, *mSOA );
         }
 

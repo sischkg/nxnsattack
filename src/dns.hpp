@@ -413,6 +413,7 @@ namespace dns
 	{
 	    return new RecordSOA( mname,
 				  rname,
+                                  serial,
 				  refresh,
 				  retry,
 				  expire,
