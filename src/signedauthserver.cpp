@@ -1,10 +1,11 @@
-#include "auth_server.hpp"
+#include "signedauthserver.hpp"
 #include <fstream>
 #include <iostream>
 
 namespace dns
 {
-    void AuthServer::load( const std::string &apex, const std::string &filename )
+    void SignedAuthServer::load( const std::string &apex, const std::string &filename,
+                                 const std::string &ksk_config, const std::string &zsk_config )
     {
 	std::ifstream fin( filename );
 	std::string config;
@@ -15,24 +16,30 @@ namespace dns
 	    config += "\n";
 	}
 	std::cerr << config << std::endl;
+
+        zone.reset( new SignedZone( apex, ksk_config, zsk_config ) );
 	dns::full::load( *zone, apex, config );
     }
 
+    std::vector<std::shared_ptr<RecordDS>> SignedAuthServer::getDSRecords() const
+    {
+        return zone->getDSRecords();
+    }
 
-    PacketInfo AuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
+    PacketInfo SignedAuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
 	dns::PacketInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );
     }
 
-    PacketInfo AuthServer::modifyResponse( const dns::PacketInfo &query,
+    PacketInfo SignedAuthServer::modifyResponse( const dns::PacketInfo &query,
 					   const dns::PacketInfo &original_response,
 					   bool via_tcp ) const
     {
 	return original_response;
     }
 
-    bool AuthServer::replace( std::vector<ResponseSectionEntry> &section,
+    bool SignedAuthServer::replace( std::vector<ResponseSectionEntry> &section,
                               const Condition &condition,
                               const Replacement &replace ) const
     {
@@ -58,8 +65,8 @@ namespace dns
         return is_replace;
     }
 
-    bool AuthServer::erase( std::vector<ResponseSectionEntry> &section,
-                            const Condition &condition ) const
+    bool SignedAuthServer::erase( std::vector<ResponseSectionEntry> &section,
+                                  const Condition &condition ) const
     {
         bool is_erase = false;
         for ( auto entry = section.begin() ; entry != section.end() ; ) {

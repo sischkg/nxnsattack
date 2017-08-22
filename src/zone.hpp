@@ -79,10 +79,24 @@ namespace dns
         void add( std::shared_ptr<RRSet> rrset ) { rrsets.insert( RRSetPair( rrset->getType(), rrset ) ); }
     };
 
-    class Zone
+    class AbstractZone
+    {
+    public:
+        typedef std::shared_ptr<RRSet> RRSetPtr;
+
+        virtual ~AbstractZone() {}
+ 
+        virtual void add( std::shared_ptr<RRSet> rrset ) = 0;
+        virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;
+        virtual RRSetPtr findRRSet( const Domainname &domainname, Type type ) const = 0;
+	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
+        virtual void verify() const = 0;
+    };
+
+
+    class Zone : public AbstractZone
     {
     private:
-        typedef std::shared_ptr<RRSet> RRSetPtr;
         typedef std::shared_ptr<Node>  NodePtr;
 	typedef std::map<Domainname,   NodePtr> OwnerToNodeContainer;
 	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
@@ -107,6 +121,10 @@ namespace dns
 
         void add( std::shared_ptr<RRSet> rrest );
         PacketInfo getAnswer( const PacketInfo &query ) const;
+	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const
+        {
+            return std::vector<std::shared_ptr<RecordDS> >();
+        }
 
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
         NodePtr  findNode( const Domainname &domainname ) const;

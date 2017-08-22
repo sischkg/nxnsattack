@@ -16,6 +16,7 @@ add_executable( test-domainname   test-domainname.cpp )
 add_executable( test-nsec         test-nsec.cpp )
 add_executable( test-zone         test-zone.cpp )
 add_executable( test-zoneloader   test-zoneloader.cpp )
+add_executable( test-dnskey       test-dnskey.cpp )
 target_link_libraries(test-base64     ${UTIL_LIBRARY} )
 target_link_libraries(test-hex        ${UTIL_LIBRARY} )
 target_link_libraries(test-md5        ${UTIL_LIBRARY} )
@@ -27,6 +28,7 @@ target_link_libraries(test-domainname ${DNS_LIBRARY} )
 target_link_libraries(test-nsec       ${DNS_LIBRARY} )
 target_link_libraries(test-zone       ${ZONE_LIBRARY} )
 target_link_libraries(test-zoneloader ${ZONE_LIBRARY} )
+target_link_libraries(test-dnskey     ${ZONE_LIBRARY} )
 
 add_test(
   NAME base64
@@ -81,5 +83,10 @@ add_test(
 add_test(
   NAME zoneloader
   COMMAND test-zoneloader
+  )
+
+add_test(
+  NAME dnskey
+  COMMAND test-dnskey
 )
 

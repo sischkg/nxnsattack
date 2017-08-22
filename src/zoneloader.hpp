@@ -69,7 +69,7 @@ namespace dns
     
         std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node );
 
-        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
+        void load( AbstractZone &zone, const Domainname &apex, const std::string &config );
     }
 
     namespace full
@@ -90,7 +90,7 @@ namespace dns
     
         std::shared_ptr<RRSet> parseRRSet( const std::vector<std::string> & );
 
-        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config );
+        void load( AbstractZone &zone, const Domainname &apex, const std::string &config );
         std::string dump( const Zone &zone );
     }
 

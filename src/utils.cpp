@@ -439,9 +439,10 @@ void encodeToHex( const std::vector<uint8_t> &src, std::string &dst )
     }
 
     std::ostringstream os;
-    os << std::setw( 2 ) << std::setfill( '0' ) << std::hex << std::noshowbase << std::uppercase;
-    for ( uint8_t v : src )
+    for ( uint8_t v : src ) {
+        os << std::setw( 2 ) << std::setfill( '0' ) << std::hex << std::noshowbase << std::uppercase;
 	os << (unsigned int)v;
+    }
     dst = os.str();
 }
 

@@ -87,10 +87,10 @@ const char *ZONE_CONFIG_YAML_SOA =
 
 TEST_F( ZoneLoaderTest, Load_SOA )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_SOA );
+                dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_SOA );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -99,7 +99,7 @@ TEST_F( ZoneLoaderTest, Load_SOA )
         } )
         << "can load zone" + std::string( ZONE_CONFIG_YAML_SOA );
  
-    auto node = zone->findNode( "example.com" );
+    auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
     auto rrset = node->find( dns::TYPE_SOA );
@@ -141,10 +141,10 @@ const char *ZONE_CONFIG_YAML_A =
 
 TEST_F( ZoneLoaderTest, Load_A )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_A );
+                dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_A );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -153,7 +153,7 @@ TEST_F( ZoneLoaderTest, Load_A )
         } )
         << "can load zone:" + std::string( ZONE_CONFIG_YAML_A );
 
-    auto node = zone->findNode( "www.example.com" );
+    auto node = zone.findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from YAML";
 
     auto rrset = node->find( dns::TYPE_A );
@@ -193,10 +193,10 @@ const char *ZONE_CONFIG_YAML_NS =
 
 TEST_F( ZoneLoaderTest, Load_NS )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::yamlloader::load( "example.com", ZONE_CONFIG_YAML_NS );
+                dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_NS );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -205,7 +205,7 @@ TEST_F( ZoneLoaderTest, Load_NS )
         } )
         << "can load zone:" + std::string( ZONE_CONFIG_YAML_NS );
 
-    auto node = zone->findNode( "example.com" );
+    auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "example.com is loaded";
 
     auto rrset = node->find( dns::TYPE_NS );
@@ -229,10 +229,10 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
 {
     const char *ZONE_CONFIG_FULL_SOA =  "example.com.  3600 IN SOA ns01.example.com. hostmaster.example.com. 2017050101 3600 1800 8640000 300";
 
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_SOA );
+                dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_SOA );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -241,7 +241,7 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
         } )
         << "can load zone" + std::string( ZONE_CONFIG_FULL_SOA );
  
-    auto node = zone->findNode( "example.com" );
+    auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
     auto rrset = node->find( dns::TYPE_SOA );
@@ -265,10 +265,10 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA2 )
 {
     const char *ZONE_CONFIG_FULL_SOA =  "siskrn.co.				      3600 IN SOA	siskrn.co. hostmaster.siskrn.co. 1500338838 86400 3600 604800 10800";
 
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "siskrn.co" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::full::load( "siskrn.co", ZONE_CONFIG_FULL_SOA );
+                dns::full::load( zone, "siskrn.co", ZONE_CONFIG_FULL_SOA );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -277,7 +277,7 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA2 )
         } )
         << "can load zone" + std::string( ZONE_CONFIG_FULL_SOA );
  
-    auto node = zone->findNode( "siskrn.co" );
+    auto node = zone.findNode( "siskrn.co" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
     auto rrset = node->find( dns::TYPE_SOA );
@@ -304,10 +304,10 @@ const char *ZONE_CONFIG_FULL_A = \
 
 TEST_F( ZoneLoaderTest, Load_Full_A )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_A );
+                dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_A );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -316,7 +316,7 @@ TEST_F( ZoneLoaderTest, Load_Full_A )
         } )
         << "can load zone:" + std::string( ZONE_CONFIG_FULL_A );
 
-    auto node = zone->findNode( "www.example.com" );
+    auto node = zone.findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from FULL";
 
     auto rrset = node->find( dns::TYPE_A );
@@ -340,10 +340,10 @@ const char *ZONE_CONFIG_FULL_NSEC = "ns01.example.com. 3600 IN NSEC  ns02.exampl
 
 TEST_F( ZoneLoaderTest, Load_Full_NSEC )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_NSEC );
+                dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_NSEC );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -352,7 +352,7 @@ TEST_F( ZoneLoaderTest, Load_Full_NSEC )
         } )
         << "can load zone:" + std::string( ZONE_CONFIG_FULL_NSEC );
 
-    auto node = zone->findNode( "ns01.example.com" );
+    auto node = zone.findNode( "ns01.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "ns01.example.com is loaded from FULL";
 
     auto rrset = node->find( dns::TYPE_NSEC );
@@ -375,10 +375,10 @@ const char *ZONE_CONFIG_FULL_TXT =  "example.com.  3600 IN TXT \"text-1\" \"text
 
 TEST_F( ZoneLoaderTest, Load_Full_TXT )
 {
-    std::shared_ptr<dns::Zone> zone;
+    dns::Zone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
-                zone = dns::full::load( "example.com", ZONE_CONFIG_FULL_TXT );
+                dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_TXT );
             }
             catch ( std::runtime_error &e ) {
                 std::cerr << e.what() << std::endl;
@@ -387,7 +387,7 @@ TEST_F( ZoneLoaderTest, Load_Full_TXT )
         } )
         << "can load zone" + std::string( ZONE_CONFIG_FULL_TXT );
  
-    auto node = zone->findNode( "example.com" );
+    auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
     auto rrset = node->find( dns::TYPE_TXT );

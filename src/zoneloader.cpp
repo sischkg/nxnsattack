@@ -267,7 +267,7 @@ namespace dns
         }
 
 
-        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config )
+        void load( AbstractZone &zone, const Domainname &apex, const std::string &config )
         {
             YAML::Node top;
             try {
@@ -275,14 +275,13 @@ namespace dns
             }
             catch( YAML::ParserException &e ) {
                 std::cerr << "cannot load zone: " << e.what() << std::endl;
-                throw ZoneConfigError( "cannot load zone " + apex.toString() + ": " + e.what() );
+                throw ZoneConfigError( (std::string)"cannot load zone: " + e.what() );
             }
 
-            std::shared_ptr<Zone> zone( new Zone( apex ) );
             for ( YAML::const_iterator rrset_it = top.begin() ; rrset_it != top.end() ; ++rrset_it ) {
                 try {
                     auto rrset = parseRRSet( *rrset_it );
-                    zone->add( rrset );
+                    zone.add( rrset );
                 }
                 catch ( std::runtime_error &e ) {
                     std::cerr << "cannot parse rrset: " << e.what() << std::endl;
@@ -297,8 +296,6 @@ namespace dns
                     throw;
                 }
             }
-
-            return zone;
         }
 
     }
@@ -526,10 +523,8 @@ namespace dns
             return ResourceDataPtr( new RecordNSEC( data[0], types ) );
         }
 
-        std::shared_ptr<Zone> load( const Domainname &apex, const std::string &config )
+        void load( AbstractZone &zone, const Domainname &apex, const std::string &config )
         {
-            std::shared_ptr<Zone> zone( new Zone( apex ) );
-
 	    boost::char_separator<char> sep( "\r\n" );
             boost::tokenizer<boost::char_separator<char>> tokens( config, sep );
 
@@ -539,15 +534,14 @@ namespace dns
                     continue;
 
                 auto new_rrset = parseLine( line );
-                auto rrset = zone->findRRSet( new_rrset->getOwner(), new_rrset->getType() );
+                auto rrset = zone.findRRSet( new_rrset->getOwner(), new_rrset->getType() );
                 if ( rrset.get() == nullptr ) {
-                    zone->add( new_rrset );
+                    zone.add( new_rrset );
                 }
                 else {
                     rrset->add( (*new_rrset)[0] );
                 }
             }
-            return zone;
         }
 
         std::string dump( const Zone &zone )
