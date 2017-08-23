@@ -54,6 +54,7 @@ namespace dns
     const Type       TYPE_IXFR   = 251;
     const Type       TYPE_AXFR   = 252;
     const Type       TYPE_ANY    = 255;
+    const Type       TYPE_CAA    = 257;
 
     typedef uint32_t TTL;
 
@@ -462,6 +463,36 @@ namespace dns
         }
         virtual uint16_t size() const;
 	virtual RecordAPL *clone() const { return new RecordAPL( apl_entries ); }
+
+        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+    class RecordCAA : public ResourceData
+    {
+    private:
+        uint8_t     mFlag;
+        std::string mTag;
+        std::string mValue;
+
+    public:
+        static const uint8_t CRITICAL     = 1;
+        static const uint8_t NOT_CRITICAL = 0;
+
+        RecordCAA( const std::string &tag, const std::string &value, uint8_t flag = NOT_CRITICAL )
+            : mFlag( flag ), mTag( tag ), mValue( value )
+        {
+        }
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint16_t type() const
+        {
+            return TYPE_CAA;
+        }
+        virtual uint16_t size() const;
+	virtual RecordCAA *clone() const { return new RecordCAA( *this ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };

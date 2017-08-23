@@ -109,6 +109,12 @@ public:
         pushBuffer( &data[ 0 ], &data[ 0 ] + data.size() );
     }
 
+    void pushBuffer( const std::string &str )
+    {
+        pushBuffer( reinterpret_cast<const uint8_t *>( str.c_str() ),
+                    reinterpret_cast<const uint8_t *>( str.c_str() ) + str.size() );
+    }
+
     const uint8_t &operator[]( uint16_t i ) const throw( std::runtime_error )
     {
         checkIndex( i );

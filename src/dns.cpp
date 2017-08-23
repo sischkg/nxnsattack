@@ -330,6 +330,9 @@ namespace dns
         case TYPE_SOA:
             parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_CAA:
+            parsed_data = RecordCAA::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_DNSKEY:
             parsed_data = RecordDNSKEY::parse( packet, pos, pos + data_length );
             break;
@@ -433,6 +436,9 @@ namespace dns
         case TYPE_ANY:
             res = "ANY";
             break;
+        case TYPE_CAA:
+            res = "CAA";
+            break;
         default:
             res = boost::lexical_cast<std::string>( t );
         }
@@ -500,6 +506,7 @@ namespace dns
         if ( t == "IXFR" )   return TYPE_IXFR;
         if ( t == "AXFR" )   return TYPE_AXFR;
         if ( t == "ANY" )    return TYPE_ANY;
+        if ( t == "CAA" )    return TYPE_CAA;
 
         throw std::runtime_error( "unknown type \"" + t + "\"" );
     }
@@ -1134,6 +1141,59 @@ namespace dns
 
         return ResourceDataPtr( new RecordAPL( entries ) );
     }
+
+
+    std::string RecordCAA::toZone() const
+    {
+        return toString();
+    }
+
+    std::string RecordCAA::toString() const
+    {
+        std::stringstream os;
+        os << (uint32_t)mFlag << " \"" << mTag << "\" \"" << mValue << "\"";
+        return os.str();
+    }
+
+    void RecordCAA::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt8( mFlag );
+        message.pushUInt8( mTag.size() );
+        message.pushBuffer( mTag );
+        message.pushBuffer( mValue );
+    }
+
+    void RecordCAA::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
+    uint16_t RecordCAA::size() const
+    {
+        return 1 + 1 + mTag.size() + mValue.size();
+    }
+
+    ResourceDataPtr RecordCAA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+        if ( end - begin <= 1 + 1 )
+            throw FormatError( "too short for CAA RR" );
+
+        const uint8_t *pos = begin;
+        uint8_t flag     = get_bytes<uint8_t>( &pos );
+        uint8_t tag_size = get_bytes<uint8_t>( &pos );
+
+        std::string tag, value;
+        tag.insert( tag.end(),
+                    reinterpret_cast<const uint8_t *>( pos ),
+                    reinterpret_cast<const uint8_t *>( pos ) + tag_size ); pos += tag_size;
+        if ( pos > end )
+            throw FormatError( "invalid tag/value size for CAA" );
+        value.insert( value.end(),
+                      reinterpret_cast<const uint8_t *>( pos ), end );
+
+        return ResourceDataPtr( new RecordCAA( tag, value, flag ) );
+    }
+
 
     std::string RecordRRSIG::toZone() const
     {
