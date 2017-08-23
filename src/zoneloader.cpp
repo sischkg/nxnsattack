@@ -127,6 +127,30 @@ namespace dns
             throw ZoneConfigError( "DNAME record must have \"canonical\" attribute" );
         }
 
+        ResourceDataPtr parseRecordTXT( const YAML::Node &node )
+        {
+            if ( node["data"] ) {
+                std::vector<std::string> txt;
+                for ( YAML::const_iterator record = node["data"].begin() ; record != node["data"].end() ; ++record ) {
+                    txt.push_back( record->as<std::string>() );
+                }
+                return std::shared_ptr<ResourceData>( new RecordTXT( txt ) );
+            }
+            throw ZoneConfigError( "TXT record must have \"data\" array." );
+        }
+
+        ResourceDataPtr parseRecordSPF( const YAML::Node &node )
+        {
+            if ( node["data"] ) {
+                std::vector<std::string> txt;
+                for ( YAML::const_iterator record = node["data"].begin() ; record != node["data"].end() ; ++record ) {
+                    txt.push_back( record->as<std::string>() );
+                }
+                return std::shared_ptr<ResourceData>( new RecordSPF( txt ) );
+            }
+            throw ZoneConfigError( "SPF record must have \"data\" array." );
+        }
+
         ResourceDataPtr parseRecordRRSIG( const YAML::Node &node )
         {
             if ( node["type_covered"] &&
@@ -378,6 +402,9 @@ namespace dns
 		case TYPE_SPF:
 		    rr = parseRecordSPF( data );
 		    break;
+		case TYPE_CAA:
+		    rr = parseRecordCAA( data );
+		    break;
 		case TYPE_RRSIG:
 		    rr = parseRecordRRSIG( data );
 		    break;
@@ -473,6 +500,11 @@ namespace dns
             return ResourceDataPtr( new RecordSPF( data ) );
         }
 
+        ResourceDataPtr parseRecordCAA( const std::vector<std::string> &data )
+        {
+            std::cerr << "tag: " << data[1] << ", value: " << data[2] << ", flag: " << data[0] << std::endl;
+            return ResourceDataPtr( new RecordCAA( data[1], data[2], boost::lexical_cast<uint32_t>( data[0] ) ) );
+        }
 
         ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> &data )
         {

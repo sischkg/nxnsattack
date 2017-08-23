@@ -62,6 +62,9 @@ namespace dns
         ResourceDataPtr parseRecordSOA( const YAML::Node & );
         ResourceDataPtr parseRecordCNAME( const YAML::Node & );
         ResourceDataPtr parseRecordDNAME( const YAML::Node & );
+        ResourceDataPtr parseRecordTXT( const YAML::Node & );
+        ResourceDataPtr parseRecordSPF( const YAML::Node & );
+        ResourceDataPtr parseRecordCAA( const YAML::Node & );
         ResourceDataPtr parseRecordRRSIG( const YAML::Node & );
         ResourceDataPtr parseRecordDS( const YAML::Node & );
         ResourceDataPtr parseRecordDNSKEY( const YAML::Node & );
@@ -83,6 +86,7 @@ namespace dns
         ResourceDataPtr parseRecordDNAME( const std::vector<std::string> & );
         ResourceDataPtr parseRecordTXT( const std::vector<std::string> & );
         ResourceDataPtr parseRecordSPF( const std::vector<std::string> & );
+        ResourceDataPtr parseRecordCAA( const std::vector<std::string> & );
         ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> & );
         ResourceDataPtr parseRecordDS( const std::vector<std::string> & );
         ResourceDataPtr parseRecordDNSKEY( const std::vector<std::string> & );
