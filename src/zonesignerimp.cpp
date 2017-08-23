@@ -166,6 +166,7 @@ namespace dns
 	unsigned int signature_length = RSA_size( rsa );
  	signature.resize( signature_length );
 	int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
+        std::cerr << "sign:" << message.size() << std::endl;
         if ( result != 1 ) {
             throwException( "RSA_sign failed" );
         }
@@ -286,6 +287,7 @@ namespace dns
         std::vector<std::shared_ptr<PrivateKeyImp> > keys;
         keys.push_back( mKSK );
         keys.push_back( mZSK );
+        std::cerr << "signDNSKEY:" << rrset.getOwner().toString() << std::endl;
 	return signRRSetByKeys( rrset, keys );
     }
 

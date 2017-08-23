@@ -4,7 +4,8 @@
 #include "zone.hpp"
 #include "zonesigner.hpp"
 
-namespace dns{
+namespace dns
+{
     class SignedZoneImp
     {
     private:
@@ -39,6 +40,8 @@ namespace dns{
         OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
 
         void verify() const;
+
+        static void initialize();
     };
 }
 

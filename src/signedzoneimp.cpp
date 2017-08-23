@@ -344,5 +344,10 @@ namespace dns
 
         return nsec;
     }
+
+    void SignedZoneImp::initialize()
+    {
+        ZoneSigner::initialize();
+    }
 }
 

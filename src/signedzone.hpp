@@ -18,6 +18,7 @@ namespace dns
 	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const; 
         void verify() const;
 
+        static void initialize();
     private:
 	std::shared_ptr<SignedZoneImp> mImp;
     };

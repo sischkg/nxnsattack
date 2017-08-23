@@ -31,4 +31,9 @@ namespace dns
     {
 	mImp->verify();
     }
+
+    void SignedZone::initialize()
+    {
+        SignedZoneImp::initialize();
+    }
 }
