@@ -308,6 +308,8 @@ namespace dns
         }
 	virtual RecordCNAME *clone() const { return new RecordCNAME( domainname, offset ); }
 
+        const Domainname &getCanonicalName() const { return domainname; }
+
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 

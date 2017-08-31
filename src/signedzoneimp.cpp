@@ -171,6 +171,33 @@ namespace dns
 		}
 		return response;
 	    }
+            auto cname_rrset = node->find( TYPE_CNAME );
+            if ( cname_rrset ) {
+                if ( cname_rrset->count() != 1 ) {
+                    throw std::logic_error( "muliple cname records exist in " + qname.toString() );
+                }
+                
+                // found 
+                response.response_code = NO_ERROR;
+                addRRSet( response.answer_section, *cname_rrset );
+                if ( response.isDNSSECOK() ) {
+                    addRRSIG( response.answer_section, *cname_rrset );
+                }
+                std::shared_ptr<RecordCNAME> cname = std::dynamic_pointer_cast<RecordCNAME>( (*cname_rrset)[0] );
+                auto canonical_name = cname->getCanonicalName();
+                if (mApex.isSubDomain( canonical_name ) ) {
+                    auto canonical_node  = findNode( canonical_name );
+                    auto canonical_rrset = canonical_node->find( qtype );
+                    if ( canonical_rrset ) {
+                        addRRSet( response.answer_section, *canonical_rrset );
+                        if ( response.isDNSSECOK() ) {
+                            addRRSIG( response.answer_section, *canonical_rrset );
+                        }
+                    }
+                }
+                return response;
+            }
+
             auto rrset = node->find( qtype );
             if ( rrset ) {
                 // found 
