@@ -345,6 +345,11 @@ namespace dns
         return nsec;
     }
 
+    std::shared_ptr<RRSet> SignedZoneImp::signRRSet( const RRSet &rrset ) const
+    {
+        return mSigner.signRRSet( rrset );
+    }
+
     void SignedZoneImp::initialize()
     {
         ZoneSigner::initialize();

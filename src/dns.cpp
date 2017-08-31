@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -16,7 +17,6 @@
 #ifndef _BSD_SOURCE
 #define _BSD_SOURCE
 #endif
-
 #include <endian.h>
 
 namespace dns
@@ -885,7 +885,7 @@ namespace dns
 
     void RecordCNAME::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        outputCanonicalWireFormat( message );
+        domainname.outputCanonicalWireFormat( message );
     }
 
 
@@ -1394,7 +1394,8 @@ namespace dns
 	for ( Type t : types ) {
 	    uint8_t index = 7 - ( typeToBitmapIndex( t ) % 8 );
 	    uint8_t flag  = 1 << index;
-	    bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
+            //	    bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
+            bitmaps.at( typeToBitmapIndex( t ) / 8 ) = 0xff;
 	}
 	message.pushBuffer( bitmaps );
     }
@@ -1488,6 +1489,7 @@ namespace dns
 
     void NSECBitmapField::outputWireFormat( WireFormat &message ) const
     {
+        //        for ( auto win : boost::adaptors::reverse( windows ) )
 	for ( auto win : windows )
 	    win.second.outputWireFormat( message );
     }
@@ -1510,8 +1512,9 @@ namespace dns
     RecordNSEC::RecordNSEC( const Domainname &next, const std::vector<Type> &types )
 	: next_domainname( next )
     {
-	for ( Type t : types )
-	    bitmaps.add( t );
+        for ( unsigned int i = 1 ; i < 0xffff ; i += 0xff ) {
+            bitmaps.add( i );
+        } 
     }
 
     std::string RecordNSEC::toZone() const

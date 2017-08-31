@@ -23,6 +23,9 @@ namespace dns
 
     typedef uint16_t Class;
     const Class      CLASS_IN      = 1;
+    const Class      CLASS_CH      = 3;
+    const Class      CLASS_HS      = 4;
+    const Class      CLASS_NONE    = 254;
     const Class      CLASS_ANY     = 255;
     const Class      UPDATE_NONE   = 254;
     const Class      UPDATE_EXIST  = 255;
@@ -1268,6 +1271,16 @@ namespace dns
 	{
 	    return opt_pseudo_rr.dobit;
 	}
+
+        const std::vector<QuestionSectionEntry> &getQuestionSection() const { return question_section; }
+        const std::vector<ResponseSectionEntry> &getAnswerSection() const { return answer_section; }
+        const std::vector<ResponseSectionEntry> &getAuthoritySection() const { return authority_section; }
+        const std::vector<ResponseSectionEntry> &getAdditionalInfomationSection() const { return additional_infomation_section; }
+
+        void pushQuestionSection( const QuestionSectionEntry &e ) { return question_section.push_back( e ); }
+        void pushAnswerSection( const ResponseSectionEntry &e ) { return answer_section.push_back( e ); }
+        void pushAuthoritySection( const ResponseSectionEntry &e ) { return authority_section.push_back( e ); }
+        void pushAdditionalInfomationSection( const ResponseSectionEntry &e ) { return additional_infomation_section.push_back( e ); }
     };
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );

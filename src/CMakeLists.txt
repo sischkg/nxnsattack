@@ -7,7 +7,17 @@ add_library(
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
 add_library( libdns dns.cpp domainname.cpp )
 add_library( libdnsserver dns_server.cpp )
-add_library( libzone signedauthserver.cpp auth_server.cpp signedzone.cpp signedzoneimp.cpp zonesignerimp.cpp zonesigner.cpp zoneloader.cpp zone.cpp tokenizer )
+add_library( libzone
+             signedauthserver.cpp
+             auth_server.cpp
+             rrgenerator.cpp
+             signedzone.cpp
+             signedzoneimp.cpp
+             zonesignerimp.cpp
+             zonesigner.cpp
+             zoneloader.cpp
+             zone.cpp
+             tokenizer )
 add_library( libtokenizer tokenizer.cpp )
 
 set( CLIENT_LIBRARY boost_program_options boost_thread boost_system libdns libipv4 ${OPENSSL_CRYPTO_LIBRARY} )
@@ -28,6 +38,7 @@ add_executable( cve-2016-9131    cve-2016-9131.cpp )
 add_executable( cve-2017-3137    cve-2017-3137.cpp )
 add_executable( cve-2017-3139    cve-2017-3139.cpp )
 add_executable( dnssec_server    dnssec_server.cpp )
+add_executable( fuzz_server      fuzz_server.cpp )
 add_executable( unbound-caps-dos unbound-caps-dos.cpp )
 
 target_link_libraries( zone_server      ${ZONE_SERVER_LIBRARY} )
@@ -42,6 +53,7 @@ target_link_libraries( cve-2016-9131    ${SERVER_LIBRARY} )
 target_link_libraries( cve-2017-3137    ${SERVER_LIBRARY} )
 target_link_libraries( cve-2017-3139    ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( dnssec_server    ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( fuzz_server      ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( unbound-caps-dos ${SERVER_LIBRARY} )
 target_link_libraries( cve-2016-7068    ${CLIENT_LIBRARY} )
 target_link_libraries( cve-2015-8705    ${CLIENT_LIBRARY} )

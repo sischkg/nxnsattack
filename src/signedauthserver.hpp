@@ -50,6 +50,8 @@ namespace dns
                       const Replacement &replace ) const;
 	bool erase( std::vector<ResponseSectionEntry> &section,
                     const Condition &condition ) const;
+        
+        std::shared_ptr<RRSet> signRRSet( const RRSet &rrset ) const;
     private:
 	std::shared_ptr<SignedZone> zone;
     };

@@ -32,6 +32,11 @@ namespace dns
 	mImp->verify();
     }
 
+    std::shared_ptr<RRSet> SignedZone::signRRSet( const RRSet &rrset )
+    {
+        return mImp->signRRSet( rrset );
+    }
+
     void SignedZone::initialize()
     {
         SignedZoneImp::initialize();

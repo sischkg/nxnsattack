@@ -80,6 +80,9 @@ namespace dns
 	bool isSubDomain( const Domainname &child ) const;	
         Domainname getRelativeDomainname( const Domainname &child ) const;
 
+        void popSubdomain();
+        void popSuffix();
+
         Domainname getCanonicalDomainname() const;
 
         static const uint8_t *parsePacket( Domainname &   ref_domainname,

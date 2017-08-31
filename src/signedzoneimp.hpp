@@ -40,6 +40,7 @@ namespace dns
         OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
 
         void verify() const;
+	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
 
         static void initialize();
     };

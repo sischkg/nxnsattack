@@ -235,6 +235,19 @@ namespace dns
         canonical_labels.push_back( toLowerLabel( label ) );
     }
 
+
+    void Domainname::popSubdomain()
+    {
+        labels.pop_front();
+        canonical_labels.pop_front();
+    }
+
+    void Domainname::popSuffix()
+    {
+        labels.pop_back();
+        canonical_labels.pop_back();
+    }
+
     bool Domainname::isSubDomain( const Domainname &child ) const
     {
 	auto parent_labels = getCanonicalLabels();

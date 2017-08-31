@@ -41,8 +41,8 @@ namespace dns
     }
 
     bool SignedAuthServer::replace( std::vector<ResponseSectionEntry> &section,
-                              const Condition &condition,
-                              const Replacement &replace ) const
+                                    const Condition &condition,
+                                    const Replacement &replace ) const
     {
         bool is_replace = false;
         for ( auto &entry : section ) {
@@ -84,4 +84,12 @@ namespace dns
         }
         return is_erase;
     }
+
+
+    std::shared_ptr<RRSet> SignedAuthServer::signRRSet( const RRSet &rrset ) const
+    {
+	return zone->signRRSet( rrset );
+    }
+
+
 }
