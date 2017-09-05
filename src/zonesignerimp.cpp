@@ -215,10 +215,10 @@ namespace dns
 	sign_target.pushUInt16HtoN( getKeyTag( key ) );                // key tag
 	key.getDomainname().outputCanonicalWireFormat( sign_target );  // signer 
 	
-	std::vector<ResourceDataPtr> ordered_rrs = rrset.getRRSet();
+	std::vector<RDATAPtr> ordered_rrs = rrset.getRRSet();
 	std::sort( ordered_rrs.begin(),
 		   ordered_rrs.end(),
-		   []( const ResourceDataPtr &lhs, const ResourceDataPtr &rhs )
+		   []( const RDATAPtr &lhs, const RDATAPtr &rhs )
 		   {
 		       WireFormat lhs_data, rhs_data;
 		       lhs->outputCanonicalWireFormat( lhs_data );

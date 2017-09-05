@@ -43,7 +43,7 @@ namespace dns
             Type            type  = 0;
             Class           klass = 0;
             TTL             ttl   = 0;
-            ResourceDataPtr resource_data;
+            RDATAPtr        resource_data;
         };
 	bool replace( std::vector<ResponseSectionEntry> &section,
                       const Condition &condition,

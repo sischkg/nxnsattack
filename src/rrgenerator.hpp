@@ -43,12 +43,12 @@ namespace dns
         std::string generateLabel();
     };
 
-    class ResourceDataGeneratable
+    class RDATAGeneratable
     {
     public:
-        virtual ~ResourceDataGeneratable() {}
-        virtual std::shared_ptr<ResourceData> generate( const PacketInfo &hint ) = 0;
-        virtual std::shared_ptr<ResourceData> generate() = 0;
+        virtual ~RDATAGeneratable() {}
+        virtual std::shared_ptr<RDATA> generate( const PacketInfo &hint ) = 0;
+        virtual std::shared_ptr<RDATA> generate() = 0;
     };
 
     class ResourceRecordGenerator
@@ -59,103 +59,103 @@ namespace dns
         RRSet generate( const PacketInfo &hint );
 
     private:
-        std::vector<std::shared_ptr<ResourceDataGeneratable>> mGenerators;
+        std::vector<std::shared_ptr<RDATAGeneratable>> mGenerators;
     };
 
     template <class T> 
-    class XNameGenerator : public ResourceDataGeneratable
+    class XNameGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
     typedef XNameGenerator<RecordNS>    NSGenerator;
     typedef XNameGenerator<RecordCNAME> CNAMEGenerator;
     typedef XNameGenerator<RecordDNAME> DNAMEGenerator;
     
-    class AGenerator : public ResourceDataGeneratable
+    class AGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class AAAAGenerator : public ResourceDataGeneratable
+    class AAAAGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class SOAGenerator : public ResourceDataGeneratable
+    class SOAGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class RRSIGGenerator : public ResourceDataGeneratable
+    class RRSIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class DNSKEYGenerator : public ResourceDataGeneratable
+    class DNSKEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class DSGenerator : public ResourceDataGeneratable
+    class DSGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class NSECGenerator : public ResourceDataGeneratable
+    class NSECGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class TKEYGenerator : public ResourceDataGeneratable
+    class TKEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class TSIGGenerator : public ResourceDataGeneratable
+    class TSIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class SIGGenerator : public ResourceDataGeneratable
+    class SIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class KEYGenerator : public ResourceDataGeneratable
+    class KEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
-    class NXTGenerator : public ResourceDataGeneratable
+    class NXTGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
-        std::shared_ptr<ResourceData> generate();
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
     };
 
 }

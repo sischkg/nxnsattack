@@ -18,14 +18,14 @@ namespace dns
     class RRSet
     {
     public:
-        typedef std::vector<ResourceDataPtr> ResourceDataContainer;
+        typedef std::vector<RDATAPtr> RDATAContainer;
   
     private:
         Domainname owner;
         Class      klass;
         Type       type;
         TTL        ttl;
-        ResourceDataContainer resource_data;
+        RDATAContainer resource_data;
 
     public:
         RRSet( const Domainname &name, Class c, Type t, TTL tt )
@@ -41,14 +41,14 @@ namespace dns
         uint16_t count() const { return resource_data.size(); }
         std::string toString() const;
 
-        ResourceDataContainer::const_iterator begin() const { return resource_data.begin(); }
-        ResourceDataContainer::const_iterator end()   const { return resource_data.end(); }
+        RDATAContainer::const_iterator begin() const { return resource_data.begin(); }
+        RDATAContainer::const_iterator end()   const { return resource_data.end(); }
 
-	ResourceDataPtr operator[]( int index ) { return resource_data[index]; }
-	ConstResourceDataPtr operator[]( int index ) const { return resource_data[index]; }
-	const ResourceDataContainer &getRRSet() const { return resource_data; }
+	RDATAPtr operator[]( int index ) { return resource_data[index]; }
+	ConstRDATAPtr operator[]( int index ) const { return resource_data[index]; }
+	const RDATAContainer &getRRSet() const { return resource_data; }
 
-        void add( ResourceDataPtr data ) { resource_data.push_back( data ); }
+        void add( RDATAPtr data ) { resource_data.push_back( data ); }
     };
 
     std::ostream &operator<<( std::ostream &os, const RRSet &rrset );

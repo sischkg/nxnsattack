@@ -59,99 +59,99 @@ namespace dns
     
     namespace yamlloader
     {
-        ResourceDataPtr parseRecordA( const YAML::Node &node )
+        RDATAPtr parseRecordA( const YAML::Node &node )
         {
             if ( node["address"] ) {
-                return std::shared_ptr<ResourceData>( new RecordA( node["address"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordA( node["address"].as<std::string>() ) );
             }
             throw ZoneConfigError( "A record must have \"address\" attribute" );
         }
 
-        ResourceDataPtr parseRecordAAAA( const YAML::Node &node )
+        RDATAPtr parseRecordAAAA( const YAML::Node &node )
         {
             if ( node["address"] ) {
-                return std::shared_ptr<ResourceData>( new RecordAAAA( node["address"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordAAAA( node["address"].as<std::string>() ) );
             }
             throw ZoneConfigError( "AAAA record must have \"address\" attribute" );
         }
 
 
-        ResourceDataPtr parseRecordNS( const YAML::Node &node )
+        RDATAPtr parseRecordNS( const YAML::Node &node )
         {
             if ( node["nameserver"] ) {
-                return std::shared_ptr<ResourceData>( new RecordNS( node["nameserver"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordNS( node["nameserver"].as<std::string>() ) );
             }
             throw ZoneConfigError( "NS record must have \"nameserver\" attribute" );
         }
 
-        ResourceDataPtr parseRecordMX( const YAML::Node &node )
+        RDATAPtr parseRecordMX( const YAML::Node &node )
         {
             if ( node["priority"] && node["mailserver"] ) {
-                return std::shared_ptr<ResourceData>( new RecordMX( node["priority"].as<uint16_t>(),
-                                                                    node["mailserver"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordMX( node["priority"].as<uint16_t>(),
+                                                             node["mailserver"].as<std::string>() ) );
             }
             throw ZoneConfigError( "MX record must have \"priority and mailserver\" attribute" );
         }
 
-        ResourceDataPtr parseRecordSOA( const YAML::Node &node )
+        RDATAPtr parseRecordSOA( const YAML::Node &node )
         {
             std::string mname,  rname;
 
             if ( node["mname"] && node["rname"] &&
                  node["serial"] && node["refresh"] && node["retry"] && node["expire"] && node["minimum"] ) {
-                return ResourceDataPtr( new RecordSOA( node["mname"].as<std::string>(),
-                                                       node["rname"].as<std::string>(),
-                                                       node["serial"].as<uint32_t>(),
-                                                       node["refresh"].as<uint32_t>(),
-                                                       node["retry"].as<uint32_t>(),
-                                                       node["expire"].as<uint32_t>(),
-                                                       node["minimum"].as<uint32_t>() ) );
+                return RDATAPtr( new RecordSOA( node["mname"].as<std::string>(),
+                                                node["rname"].as<std::string>(),
+                                                node["serial"].as<uint32_t>(),
+                                                node["refresh"].as<uint32_t>(),
+                                                node["retry"].as<uint32_t>(),
+                                                node["expire"].as<uint32_t>(),
+                                                node["minimum"].as<uint32_t>() ) );
             }
 
             throw ZoneConfigError( "SOA record must have \"mname,rname,serial,refresh,retry,expire,minimum\" attributes" );
         }
 
-        ResourceDataPtr parseRecordCNAME( const YAML::Node &node )
+        RDATAPtr parseRecordCNAME( const YAML::Node &node )
         {
             if ( node["canonicalname"] ) {
-                return std::shared_ptr<ResourceData>( new RecordCNAME( node["canonicalname"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordCNAME( node["canonicalname"].as<std::string>() ) );
             }
             throw ZoneConfigError( "CNAME record must have \"canonical\" attribute" );
         }
 
-        ResourceDataPtr parseRecordDNAME( const YAML::Node &node )
+        RDATAPtr parseRecordDNAME( const YAML::Node &node )
         {
             if ( node["canonicalname"] ) {
-                return std::shared_ptr<ResourceData>( new RecordDNAME( node["canonicalname"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordDNAME( node["canonicalname"].as<std::string>() ) );
             }
             throw ZoneConfigError( "DNAME record must have \"canonical\" attribute" );
         }
 
-        ResourceDataPtr parseRecordTXT( const YAML::Node &node )
+        RDATAPtr parseRecordTXT( const YAML::Node &node )
         {
             if ( node["data"] ) {
                 std::vector<std::string> txt;
                 for ( YAML::const_iterator record = node["data"].begin() ; record != node["data"].end() ; ++record ) {
                     txt.push_back( record->as<std::string>() );
                 }
-                return std::shared_ptr<ResourceData>( new RecordTXT( txt ) );
+                return std::shared_ptr<RDATA>( new RecordTXT( txt ) );
             }
             throw ZoneConfigError( "TXT record must have \"data\" array." );
         }
 
-        ResourceDataPtr parseRecordSPF( const YAML::Node &node )
+        RDATAPtr parseRecordSPF( const YAML::Node &node )
         {
             if ( node["data"] ) {
                 std::vector<std::string> txt;
                 for ( YAML::const_iterator record = node["data"].begin() ; record != node["data"].end() ; ++record ) {
                     txt.push_back( record->as<std::string>() );
                 }
-                return std::shared_ptr<ResourceData>( new RecordSPF( txt ) );
+                return std::shared_ptr<RDATA>( new RecordSPF( txt ) );
             }
             throw ZoneConfigError( "SPF record must have \"data\" array." );
         }
 
-        ResourceDataPtr parseRecordRRSIG( const YAML::Node &node )
+        RDATAPtr parseRecordRRSIG( const YAML::Node &node )
         {
             if ( node["type_covered"] &&
                  node["algorithm"] &&
@@ -165,15 +165,15 @@ namespace dns
                 std::vector<uint8_t> signature;
                 decode_from_base64( node["signature"].as<std::string>(), signature );
 
-                return std::shared_ptr<ResourceData>( new RecordRRSIG( node["type_covered"].as<uint16_t>(),
-                                                                       node["algorithm"].as<uint16_t>(),
-                                                                       node["label_count"].as<uint16_t>(),
-                                                                       node["original_ttl"].as<uint32_t>(),
-                                                                       node["expiration"].as<uint32_t>(),
-                                                                       node["inception"].as<uint32_t>(),
-                                                                       node["key_tag"].as<uint16_t>(),
-                                                                       node["signer"].as<std::string>(),
-                                                                       signature ) );
+                return std::shared_ptr<RDATA>( new RecordRRSIG( node["type_covered"].as<uint16_t>(),
+                                                                node["algorithm"].as<uint16_t>(),
+                                                                node["label_count"].as<uint16_t>(),
+                                                                node["original_ttl"].as<uint32_t>(),
+                                                                node["expiration"].as<uint32_t>(),
+                                                                node["inception"].as<uint32_t>(),
+                                                                node["key_tag"].as<uint16_t>(),
+                                                                node["signer"].as<std::string>(),
+                                                                signature ) );
             }
             const char *error_message = "RRSIG record must have "
                 "\"type_covered\", \"algorithm\", \"label_count\", "
@@ -183,21 +183,21 @@ namespace dns
             throw ZoneConfigError( error_message );
         }
 
-        ResourceDataPtr parseRecordDNSKEY( const YAML::Node &node )
+        RDATAPtr parseRecordDNSKEY( const YAML::Node &node )
         {
             if ( node["flag"] &&
                  node["algorithm"] &&
                  node["public_key"] ) {
                 std::vector<uint8_t> public_key;
                 decode_from_base64( node["public_key"].as<std::string>(), public_key );
-                return std::shared_ptr<ResourceData>( new RecordDNSKEY( node["flag"].as<uint16_t>(),
-                                                                        node["algorithm"].as<uint16_t>(),
-                                                                        public_key ) );
+                return std::shared_ptr<RDATA>( new RecordDNSKEY( node["flag"].as<uint16_t>(),
+                                                                 node["algorithm"].as<uint16_t>(),
+                                                                 public_key ) );
             }
             throw ZoneConfigError( "DNSKEY record must have \"flag\", \"algorithm\" and \"public_key\" attribute" );
         }
 
-        ResourceDataPtr parseRecordDS( const YAML::Node &node )
+        RDATAPtr parseRecordDS( const YAML::Node &node )
         {
             if ( node["key_tag"] &&
                  node["algorithm"] &&
@@ -205,15 +205,15 @@ namespace dns
                  node["digest"] ) {
                 std::vector<uint8_t> digest;
                 decodeFromHex( node["digest"].as<std::string>(), digest );
-                return std::shared_ptr<ResourceData>( new RecordDS( node["key_tag"].as<uint16_t>(),
-                                                                    node["algorithm"].as<uint16_t>(),
-                                                                    node["digest_type"].as<uint16_t>(),
-                                                                    digest ) );
+                return std::shared_ptr<RDATA>( new RecordDS( node["key_tag"].as<uint16_t>(),
+                                                             node["algorithm"].as<uint16_t>(),
+                                                             node["digest_type"].as<uint16_t>(),
+                                                             digest ) );
             }
             throw ZoneConfigError( "DS record must have \"key_tag\", \"algorithm\", \"digest_type\" and \"digest\" attribute" );
         }
 
-        ResourceDataPtr parseRecordNSEC( const YAML::Node &node )
+        RDATAPtr parseRecordNSEC( const YAML::Node &node )
         {
             if ( node["next"] &&
                  node["types"] ) {
@@ -223,8 +223,8 @@ namespace dns
                     std::string type_string = node_types[i].as<std::string>();
                     types.push_back( string_to_type_code( type_string ) );
                 }
-                return std::shared_ptr<ResourceData>( new RecordNSEC( node["next"].as<std::string>(),
-                                                                      types ) );
+                return std::shared_ptr<RDATA>( new RecordNSEC( node["next"].as<std::string>(),
+                                                               types ) );
             }
             throw ZoneConfigError( "NSEC record must have \"next\", and \"types\" attribute" );
         }
@@ -373,7 +373,7 @@ namespace dns
 		for ( ; pos != tokens.end() ; pos++ )
 		    data.push_back( *pos );
 
-		ResourceDataPtr rr;
+		RDATAPtr rr;
 		switch ( type ) {
 		case TYPE_A:
 		    rr = parseRecordA( data );
@@ -447,112 +447,112 @@ namespace dns
 
 
 	
-        ResourceDataPtr parseRecordA( const std::vector<std::string> &data )
+        RDATAPtr parseRecordA( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordA( data[0] ) );
+            return RDATAPtr( new RecordA( data[0] ) );
         }
 
-        ResourceDataPtr parseRecordAAAA( const std::vector<std::string> &data )
+        RDATAPtr parseRecordAAAA( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordAAAA( data[0] ) );
+            return RDATAPtr( new RecordAAAA( data[0] ) );
         }
 
-        ResourceDataPtr parseRecordNS( const std::vector<std::string> &data )
+        RDATAPtr parseRecordNS( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordNS( data[0] ) );
+            return RDATAPtr( new RecordNS( data[0] ) );
         }
 
-        ResourceDataPtr parseRecordMX( const std::vector<std::string> &data )
+        RDATAPtr parseRecordMX( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordMX( boost::lexical_cast<uint16_t>( data[0] ),
-                                                  data[1] ) );
+            return RDATAPtr( new RecordMX( boost::lexical_cast<uint16_t>( data[0] ),
+                                           data[1] ) );
         }
 
-        ResourceDataPtr parseRecordSOA( const std::vector<std::string> &data )
+        RDATAPtr parseRecordSOA( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordSOA( data[0],                                  // mname
-                                                   data[1],                                  // rname
-                                                   boost::lexical_cast<uint32_t>( data[2] ), // serial
-                                                   boost::lexical_cast<uint32_t>( data[3] ), // refresh
-                                                   boost::lexical_cast<uint32_t>( data[4] ), // retry
-                                                   boost::lexical_cast<uint32_t>( data[5] ), // expire,
-                                                   boost::lexical_cast<uint32_t>( data[6] )  // minimum
-                                                   ) );
+            return RDATAPtr( new RecordSOA( data[0],                                  // mname
+                                            data[1],                                  // rname
+                                            boost::lexical_cast<uint32_t>( data[2] ), // serial
+                                            boost::lexical_cast<uint32_t>( data[3] ), // refresh
+                                            boost::lexical_cast<uint32_t>( data[4] ), // retry
+                                            boost::lexical_cast<uint32_t>( data[5] ), // expire,
+                                            boost::lexical_cast<uint32_t>( data[6] )  // minimum
+                                            ) );
         }
 
-        ResourceDataPtr parseRecordCNAME( const std::vector<std::string> &data )
+        RDATAPtr parseRecordCNAME( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordCNAME( data[0] ) );
+            return RDATAPtr( new RecordCNAME( data[0] ) );
         }
 
-        ResourceDataPtr parseRecordDNAME( const std::vector<std::string> &data )
+        RDATAPtr parseRecordDNAME( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordDNAME( data[0] ) );
+            return RDATAPtr( new RecordDNAME( data[0] ) );
         }
 
-	ResourceDataPtr parseRecordTXT( const std::vector<std::string> &data )
+	RDATAPtr parseRecordTXT( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordTXT( data ) );
+            return RDATAPtr( new RecordTXT( data ) );
         }
 
-	ResourceDataPtr parseRecordSPF( const std::vector<std::string> &data )
+	RDATAPtr parseRecordSPF( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordSPF( data ) );
+            return RDATAPtr( new RecordSPF( data ) );
         }
 
-        ResourceDataPtr parseRecordCAA( const std::vector<std::string> &data )
+        RDATAPtr parseRecordCAA( const std::vector<std::string> &data )
         {
             std::cerr << "tag: " << data[1] << ", value: " << data[2] << ", flag: " << data[0] << std::endl;
-            return ResourceDataPtr( new RecordCAA( data[1], data[2], boost::lexical_cast<uint32_t>( data[0] ) ) );
+            return RDATAPtr( new RecordCAA( data[1], data[2], boost::lexical_cast<uint32_t>( data[0] ) ) );
         }
 
-        ResourceDataPtr parseRecordRRSIG( const std::vector<std::string> &data )
+        RDATAPtr parseRecordRRSIG( const std::vector<std::string> &data )
         {
             auto signature_data = data.begin();
             for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
             auto signature = decode_from_base64_strings( signature_data, data.end() );
             
-            return ResourceDataPtr( new RecordRRSIG( string_to_type_code( data[0] ),           // type covered
-                                                     boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
-                                                     boost::lexical_cast<uint16_t>( data[2] ),  // label count
-                                                     boost::lexical_cast<uint32_t>( data[3] ),  // original ttl
-                                                     timestamp_to_epoch( data[4] ),            // expiration
-						     timestamp_to_epoch( data[5] ),            // inception
-                                                     boost::lexical_cast<uint16_t>( data[6] ), // key tag
-                                                     data[7],                                  // signer
-                                                     signature ) );
+            return RDATAPtr( new RecordRRSIG( string_to_type_code( data[0] ),           // type covered
+                                              boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
+                                              boost::lexical_cast<uint16_t>( data[2] ),  // label count
+                                              boost::lexical_cast<uint32_t>( data[3] ),  // original ttl
+                                              timestamp_to_epoch( data[4] ),            // expiration
+                                              timestamp_to_epoch( data[5] ),            // inception
+                                              boost::lexical_cast<uint16_t>( data[6] ), // key tag
+                                              data[7],                                  // signer
+                                              signature ) );
         }
 
-        ResourceDataPtr parseRecordDS( const std::vector<std::string> &data )
+        RDATAPtr parseRecordDS( const std::vector<std::string> &data )
         {
             auto digest_data = data.begin();
             for ( int i = 0 ; i < 3 ; i++ ) digest_data++;
             auto digest = decode_from_base64_strings( digest_data, data.end() );
 
-            return ResourceDataPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
-                                                  boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
-                                                  boost::lexical_cast<uint16_t>( data[2] ),  // digest type
-                                                  digest ) );
+            return RDATAPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
+                                           boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
+                                           boost::lexical_cast<uint16_t>( data[2] ),  // digest type
+                                           digest ) );
         }
 
-        ResourceDataPtr parseRecordDNSKEY( const std::vector<std::string> &data )
+        RDATAPtr parseRecordDNSKEY( const std::vector<std::string> &data )
         {
             auto public_key_data = data.begin();
             for ( int i = 0 ; i < 3 ; i++ ) public_key_data++;
             auto public_key = decode_from_base64_strings( public_key_data, data.end() );
 
-            return ResourceDataPtr( new RecordDNSKEY( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
-                                                      boost::lexical_cast<uint16_t>( data[2] ),  // algorithm
-                                                      public_key ) );                           // Public Key
+            return RDATAPtr( new RecordDNSKEY( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
+                                               boost::lexical_cast<uint16_t>( data[2] ),  // algorithm
+                                               public_key ) );                           // Public Key
         }
 
-        ResourceDataPtr parseRecordNSEC( const std::vector<std::string> &data )
+        RDATAPtr parseRecordNSEC( const std::vector<std::string> &data )
         {
             std::vector<Type> types;
             for ( unsigned int i = 1 ; i < data.size() ; i++ ) {
                 types.push_back( string_to_type_code( data[i] ) );
             }
-            return ResourceDataPtr( new RecordNSEC( data[0], types ) );
+            return RDATAPtr( new RecordNSEC( data[0], types ) );
         }
 
         void load( AbstractZone &zone, const Domainname &apex, const std::string &config )
@@ -597,7 +597,7 @@ namespace dns
                                  << type_code_to_string( type ) << "\t"
                                  << (*data_ptr)->toZone()       << std::endl;
                         
-                        }
+                    }
                 }
             }
             return zonefile.str();

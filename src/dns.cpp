@@ -298,7 +298,7 @@ namespace dns
         sec.r_ttl            = ntohl( get_bytes<uint32_t>( &pos ) );
         uint16_t data_length = ntohs( get_bytes<uint16_t>( &pos ) );
 
-        ResourceDataPtr parsed_data;
+        RDATAPtr parsed_data;
         switch ( sec.r_type ) {
         case TYPE_A:
             parsed_data = RecordA::parse( pos, pos + data_length );
@@ -613,9 +613,9 @@ namespace dns
 	return toString();
     }
 
-    ResourceDataPtr RecordA::parse( const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordA::parse( const uint8_t *begin, const uint8_t *end )
     {
-        return ResourceDataPtr( new RecordA( *( reinterpret_cast<const uint32_t *>( begin ) ) ) );
+        return RDATAPtr( new RecordA( *( reinterpret_cast<const uint32_t *>( begin ) ) ) );
     }
 
     RecordAAAA::RecordAAAA( const uint8_t *addr )
@@ -660,11 +660,11 @@ namespace dns
 	return toString();
     }
 
-    ResourceDataPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordAAAA::parse( const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin != 16 )
             throw FormatError( "invalid AAAA Record length" );
-        return ResourceDataPtr( new RecordAAAA( begin ) );
+        return RDATAPtr( new RecordAAAA( begin ) );
     }
 
     RecordNS::RecordNS( const Domainname &name, Offset off ) : domainname( name ), offset( off )
@@ -691,11 +691,11 @@ namespace dns
         domainname.outputCanonicalWireFormat( message );
     }
 
-    ResourceDataPtr RecordNS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname name;
         Domainname::parsePacket( name, packet, begin );
-        return ResourceDataPtr( new RecordNS( name ) );
+        return RDATAPtr( new RecordNS( name ) );
     }
 
     RecordMX::RecordMX( uint16_t pri, const Domainname &name, Offset off )
@@ -727,7 +727,7 @@ namespace dns
         domainname.outputCanonicalWireFormat( message );
     }
 
-    ResourceDataPtr RecordMX::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordMX::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin < 3 )
             throw FormatError( "too few length for MX record," );
@@ -736,7 +736,7 @@ namespace dns
 
         Domainname name;
         Domainname::parsePacket( name, packet, pos );
-        return ResourceDataPtr( new RecordMX( priority, name ) );
+        return RDATAPtr( new RecordMX( priority, name ) );
     }
 
     RecordTXT::RecordTXT( const std::string &d )
@@ -789,7 +789,7 @@ namespace dns
         return s;
     }
 
-    ResourceDataPtr RecordTXT::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordTXT::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin < 1 )
             throw FormatError( "too few length for TXT record" );
@@ -803,7 +803,7 @@ namespace dns
             txt_data.push_back( std::string( pos, pos + length ) );
             pos += length;
         }
-        return ResourceDataPtr( new RecordTXT( txt_data ) );
+        return RDATAPtr( new RecordTXT( txt_data ) );
     }
 
     RecordSPF::RecordSPF( const std::string &d )
@@ -855,7 +855,7 @@ namespace dns
         return s;
     }
 
-    ResourceDataPtr RecordSPF::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordSPF::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin < 1 )
             throw FormatError( "too few length for SPF record" );
@@ -869,7 +869,7 @@ namespace dns
             txt_data.push_back( std::string( pos, pos + length ) );
             pos += length;
         }
-        return ResourceDataPtr( new RecordSPF( txt_data ) );
+        return RDATAPtr( new RecordSPF( txt_data ) );
     }
 
     RecordCNAME::RecordCNAME( const Domainname &name, uint16_t off ) : domainname( name ), offset( off )
@@ -897,11 +897,11 @@ namespace dns
     }
 
 
-    ResourceDataPtr RecordCNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordCNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname name;
         Domainname::parsePacket( name, packet, begin );
-        return ResourceDataPtr( new RecordCNAME( name ) );
+        return RDATAPtr( new RecordCNAME( name ) );
     }
 
     RecordNAPTR::RecordNAPTR( uint16_t           in_order,
@@ -956,10 +956,10 @@ namespace dns
     uint16_t RecordNAPTR::size() const
     {
         return sizeof( order ) + sizeof( preference ) + 1 + flags.size() + 1 + regexp.size() +
-               replacement.size( offset );
+            replacement.size( offset );
     }
 
-    ResourceDataPtr RecordNAPTR::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNAPTR::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin < 2 + 2 + 1 + 1 + 1 + 1 )
             throw FormatError( "too short for NAPTR RR" );
@@ -975,8 +975,8 @@ namespace dns
 
         Domainname in_replacement;
         Domainname::parsePacket( in_replacement, packet, pos );
-        return ResourceDataPtr(
-            new RecordNAPTR( in_order, in_preference, in_flags, in_services, in_regexp, in_replacement ) );
+        return RDATAPtr(
+                        new RecordNAPTR( in_order, in_preference, in_flags, in_services, in_regexp, in_replacement ) );
     }
 
     RecordDNAME::RecordDNAME( const Domainname &name, uint16_t off ) : domainname( name ), offset( off )
@@ -1004,11 +1004,11 @@ namespace dns
     }
 
 
-    ResourceDataPtr RecordDNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname name;
         Domainname::parsePacket( name, packet, begin );
-        return ResourceDataPtr( new RecordDNAME( name ) );
+        return RDATAPtr( new RecordDNAME( name ) );
     }
 
     RecordSOA::RecordSOA( const Domainname &mn,
@@ -1063,10 +1063,10 @@ namespace dns
     uint16_t RecordSOA::size() const
     {
         return mname.size( mname_offset ) + rname.size( rname_offset ) + sizeof( serial ) + sizeof( refresh ) +
-               sizeof( retry ) + sizeof( expire ) + sizeof( minimum );
+            sizeof( retry ) + sizeof( expire ) + sizeof( minimum );
     }
 
-    ResourceDataPtr RecordSOA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordSOA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         Domainname     mname_result, rname_result;
         const uint8_t *pos = begin;
@@ -1078,7 +1078,7 @@ namespace dns
         uint32_t expire    = ntohl( get_bytes<uint32_t>( &pos ) );
         uint32_t minimum   = ntohl( get_bytes<uint32_t>( &pos ) );
 
-        return ResourceDataPtr( new RecordSOA( mname_result, rname_result, serial, refresh, retry, expire, minimum ) );
+        return RDATAPtr( new RecordSOA( mname_result, rname_result, serial, refresh, retry, expire, minimum ) );
     }
 
     std::string RecordAPL::toZone() const
@@ -1122,7 +1122,7 @@ namespace dns
         return s;
     }
 
-    ResourceDataPtr RecordAPL::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordAPL::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         std::vector<APLEntry> entries;
         const uint8_t *       pos = begin;
@@ -1147,7 +1147,7 @@ namespace dns
             entries.push_back( entry );
         }
 
-        return ResourceDataPtr( new RecordAPL( entries ) );
+        return RDATAPtr( new RecordAPL( entries ) );
     }
 
 
@@ -1181,7 +1181,7 @@ namespace dns
         return 1 + 1 + mTag.size() + mValue.size();
     }
 
-    ResourceDataPtr RecordCAA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordCAA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         if ( end - begin <= 1 + 1 )
             throw FormatError( "too short for CAA RR" );
@@ -1199,7 +1199,7 @@ namespace dns
         value.insert( value.end(),
                       reinterpret_cast<const uint8_t *>( pos ), end );
 
-        return ResourceDataPtr( new RecordCAA( tag, value, flag ) );
+        return RDATAPtr( new RecordCAA( tag, value, flag ) );
     }
 
 
@@ -1307,7 +1307,7 @@ namespace dns
         outputWireFormat( message );
     }
 
-    ResourceDataPtr RecordDNSKEY::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDNSKEY::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *      pos   = begin;
         uint16_t             f     = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -1316,7 +1316,7 @@ namespace dns
         std::vector<uint8_t> key;
         key.insert( key.end(), pos, end );
 
-        return ResourceDataPtr( new RecordDNSKEY( f, algo, key ) );
+        return RDATAPtr( new RecordDNSKEY( f, algo, key ) );
     }
 
     std::string RecordDS::toZone() const
@@ -1358,7 +1358,7 @@ namespace dns
         outputWireFormat( message );
     }
 
-    ResourceDataPtr RecordDS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *      pos   = begin;
         uint16_t             tag   = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -1367,12 +1367,13 @@ namespace dns
         std::vector<uint8_t> d;
         d.insert( d.end(), pos, end );
 
-        return ResourceDataPtr( new RecordDS( tag, algo, dtype, d ) );
+        return RDATAPtr( new RecordDS( tag, algo, dtype, d ) );
     }
 
 
     void NSECBitmapField::Window::add( Type t )
     {
+        std::cerr << "added type: " << t << std::endl;
 	types.push_back( t );
     }
 
@@ -1382,6 +1383,7 @@ namespace dns
 	for ( Type t : types ) {
 	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t ) / 8 + 1 );
 	}
+        std::cout << "window size" << (int)max_bytes << std::endl;
 	return max_bytes;
     }
 
@@ -1392,18 +1394,18 @@ namespace dns
 
     void NSECBitmapField::Window::outputWireFormat( WireFormat &message ) const
     {
+        uint8_t window_size = getWindowSize();
 	message.pushUInt8( index );
-	message.pushUInt8( getWindowSize() );
+	message.pushUInt8( window_size );
 
 	std::vector<uint8_t> bitmaps;
-	bitmaps.resize( getWindowSize());
+	bitmaps.resize( window_size );
 	for ( uint8_t &v : bitmaps )
 	    v = 0;
 	for ( Type t : types ) {
 	    uint8_t index = 7 - ( typeToBitmapIndex( t ) % 8 );
 	    uint8_t flag  = 1 << index;
-            //	    bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
-            bitmaps.at( typeToBitmapIndex( t ) / 8 ) = 0xff;
+            bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
 	}
 	message.pushBuffer( bitmaps );
     }
@@ -1445,6 +1447,7 @@ namespace dns
 
     void NSECBitmapField::add( Type t )
     {
+        std::cerr << "added to field: " << (int)t << std::endl;
 	uint8_t window_index = typeToWindowIndex( t );
 	auto window = windows.find( window_index );
 	if ( window == windows.end() ) {
@@ -1490,14 +1493,14 @@ namespace dns
     uint16_t NSECBitmapField::size() const
     {
 	uint16_t s = 0;
-	for ( auto win : windows )
+	for ( auto win : windows ) {
 	    s += win.second.size();
+        }
 	return s;
     }
 
     void NSECBitmapField::outputWireFormat( WireFormat &message ) const
     {
-        //        for ( auto win : boost::adaptors::reverse( windows ) )
 	for ( auto win : windows )
 	    win.second.outputWireFormat( message );
     }
@@ -1537,14 +1540,13 @@ namespace dns
 
     void RecordNSEC::outputWireFormat( WireFormat &message ) const
     {
-	next_domainname.outputWireFormat( message );
+	next_domainname.outputCanonicalWireFormat( message );
 	bitmaps.outputWireFormat( message );
     }
 
     void RecordNSEC::outputCanonicalWireFormat( WireFormat &message ) const
     {
-	next_domainname.outputCanonicalWireFormat( message );
-	bitmaps.outputWireFormat( message );
+        outputWireFormat( message );
     }
 
     uint16_t RecordNSEC::size() const
@@ -1552,13 +1554,13 @@ namespace dns
 	return next_domainname.size() + bitmaps.size();
     }
 
-    ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
 	Domainname next;
 	const uint8_t *pos = Domainname::parsePacket( next, packet, begin );
 	NSECBitmapField bitmaps;
 	NSECBitmapField::parse( bitmaps, packet, pos, end );
-	return ResourceDataPtr( new RecordNSEC( next, bitmaps ) );
+	return RDATAPtr( new RecordNSEC( next, bitmaps ) );
     }
 
 
@@ -1594,7 +1596,7 @@ namespace dns
         outputWireFormat( message );
     }
 
-    ResourceDataPtr RecordOptionsData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordOptionsData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *pos = begin;
 
@@ -1626,7 +1628,7 @@ namespace dns
             pos += option_size;
         }
 
-        return ResourceDataPtr( new RecordOptionsData( options ) );
+        return RDATAPtr( new RecordOptionsData( options ) );
     }
 
     ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord &opt )
@@ -1775,14 +1777,14 @@ namespace dns
     uint16_t RecordTKey::size() const
     {
         return algorithm.size() + //
-               4 +                // inception
-               4 +                // expiration
-               2 +                // mode
-               2 +                // error
-               2 +                // key size
-               key.size() +       // key
-               2 +                // other data size
-               other_data.size();
+            4 +                // inception
+            4 +                // expiration
+            2 +                // mode
+            2 +                // error
+            2 +                // key size
+            key.size() +       // key
+            2 +                // other data size
+            other_data.size();
     }
 
     void RecordTKey::outputWireFormat( WireFormat &message ) const
@@ -1806,14 +1808,14 @@ namespace dns
     uint16_t RecordTSIGData::size() const
     {
         return algorithm.size() + // ALGORITHM
-               6 +                // signed time
-               2 +                // FUDGE
-               2 +                // MAC SIZE
-               mac.size() +       // MAC
-               2 +                // ORIGINAL ID
-               2 +                // ERROR
-               2 +                // OTHER LENGTH
-               other.size();      // OTHER
+            6 +                // signed time
+            2 +                // FUDGE
+            2 +                // MAC SIZE
+            mac.size() +       // MAC
+            2 +                // ORIGINAL ID
+            2 +                // ERROR
+            2 +                // OTHER LENGTH
+            other.size();      // OTHER
     }
 
     void RecordTSIGData::outputWireFormat( WireFormat &message ) const
@@ -1877,7 +1879,7 @@ namespace dns
         return os.str();
     }
 
-    ResourceDataPtr
+    RDATAPtr
     RecordTSIGData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name )
     {
         const uint8_t *pos = begin;
@@ -1913,16 +1915,16 @@ namespace dns
         other.insert( other.end(), pos, pos + other_length );
         pos += other_length;
 
-        return ResourceDataPtr( new RecordTSIGData( key_name.toString(),
-                                                    algorithm.toString(),
-                                                    signed_time,
-                                                    fudge,
-                                                    mac_size,
-                                                    mac,
-                                                    original_id,
-                                                    error,
-                                                    other_length,
-                                                    other ) );
+        return RDATAPtr( new RecordTSIGData( key_name.toString(),
+                                             algorithm.toString(),
+                                             signed_time,
+                                             fudge,
+                                             mac_size,
+                                             mac,
+                                             original_id,
+                                             error,
+                                             other_length,
+                                             other ) );
     }
 
     struct TSIGHash {
@@ -2011,16 +2013,16 @@ namespace dns
         entry.r_type          = TYPE_TSIG;
         entry.r_class         = CLASS_ANY;
         entry.r_ttl           = 0;
-        entry.r_resource_data = ResourceDataPtr( new RecordTSIGData( tsig_info.name,
-                                                                     tsig_info.algorithm,
-                                                                     tsig_info.signed_time,
-                                                                     tsig_info.fudge,
-                                                                     mac.size(),
-                                                                     mac,
-                                                                     tsig_info.original_id,
-                                                                     tsig_info.error,
-                                                                     tsig_info.other.size(),
-                                                                     tsig_info.other ) );
+        entry.r_resource_data = RDATAPtr( new RecordTSIGData( tsig_info.name,
+                                                              tsig_info.algorithm,
+                                                              tsig_info.signed_time,
+                                                              tsig_info.fudge,
+                                                              mac.size(),
+                                                              mac,
+                                                              tsig_info.original_id,
+                                                              tsig_info.error,
+                                                              tsig_info.other.size(),
+                                                              tsig_info.other ) );
         entry.r_offset = NO_COMPRESSION;
 
         PacketData         packet  = message.get();

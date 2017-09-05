@@ -21,8 +21,8 @@ TEST_F( RRSetTest, AddRRData )
 {
     dns::RRSet rrset( "www.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 );
 
-    EXPECT_NO_THROW( { rrset.add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
-    EXPECT_NO_THROW( { rrset.add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
+    EXPECT_NO_THROW( { rrset.add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
+    EXPECT_NO_THROW( { rrset.add( dns::RDATAPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
     EXPECT_EQ( 2, rrset.count() );
     auto a = rrset.begin();
     EXPECT_STREQ( "192.168.0.1", (*a)->toString().c_str() );
@@ -47,12 +47,12 @@ public:
 TEST_F( NodeTest, AddSet )
 {
     dns::Node::RRSetPtr rrset_a( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
 
     dns::Node::RRSetPtr rrset_ns( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_NS, 86400 ) );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
 
     dns::Node node;
     EXPECT_NO_THROW( { node.add( rrset_ns ); } );
@@ -87,21 +87,21 @@ TEST_F( ZoneTest, AddSet )
     dns::Zone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
-    EXPECT_NO_THROW( { rrset_soa->add( dns::ResourceDataPtr( new dns::RecordSOA( "ns01.example.com",
-                                                                                 "hostmaster.example.com",
-                                                                                 1,
-                                                                                 86400,
-                                                                                 3600,
-                                                                                 16800,
-                                                                                 300 ) ) ); } );
+    EXPECT_NO_THROW( { rrset_soa->add( dns::RDATAPtr( new dns::RecordSOA( "ns01.example.com",
+                                                                          "hostmaster.example.com",
+                                                                          1,
+                                                                          86400,
+                                                                          3600,
+                                                                          16800,
+                                                                          300 ) ) ); } );
 
     dns::Node::RRSetPtr rrset_a( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
 
     dns::Node::RRSetPtr rrset_ns( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_NS, 86400 ) );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
 
     dns::Node::RRSetPtr rrset_www( new dns::RRSet( "www.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
 
@@ -127,12 +127,12 @@ TEST_F( ZoneTest, NoSOAError )
     dns::Zone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_a( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_a->add( dns::ResourceDataPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.2" ) ) ); } );
 
     dns::Node::RRSetPtr rrset_ns( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_NS, 86400 ) );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
-    EXPECT_NO_THROW( { rrset_ns->add( dns::ResourceDataPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns01.example.com" ) ) ); } );
+    EXPECT_NO_THROW( { rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns02.example.com" ) ) ); } );
 
     EXPECT_NO_THROW( { zone.add( rrset_a ); } );
     EXPECT_NO_THROW( { zone.add( rrset_ns ); } );
@@ -145,13 +145,13 @@ TEST_F( ZoneTest, NoNSError )
     dns::Zone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
-    EXPECT_NO_THROW( { rrset_soa->add( dns::ResourceDataPtr( new dns::RecordSOA( "ns01.example.com",
-                                                                                 "hostmaster.example.com",
-                                                                                 1,
-                                                                                 86400,
-                                                                                 3600,
-                                                                                 16800,
-                                                                                 300 ) ) ); } );
+    EXPECT_NO_THROW( { rrset_soa->add( dns::RDATAPtr( new dns::RecordSOA( "ns01.example.com",
+                                                                          "hostmaster.example.com",
+                                                                          1,
+                                                                          86400,
+                                                                          3600,
+                                                                          16800,
+                                                                          300 ) ) ); } );
 
     EXPECT_NO_THROW( { zone.add( rrset_soa ); } );
 

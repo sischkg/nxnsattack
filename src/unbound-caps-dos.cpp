@@ -29,7 +29,7 @@ public:
         answer1.r_type          = dns::TYPE_A;
         answer1.r_class         = query_question.q_class;
         answer1.r_ttl           = TTL;
-        answer1.r_resource_data = dns::ResourceDataPtr(
+        answer1.r_resource_data = dns::RDATAPtr(
             new dns::RecordA( "127.0.0.1" ) );
         response.answer_section.push_back( answer1 );
 

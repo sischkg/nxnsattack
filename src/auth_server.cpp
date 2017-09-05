@@ -52,7 +52,7 @@ namespace dns
                 if ( replace.flags & MATCH_TTL )
                     entry.r_ttl = replace.ttl;
                 if ( replace.flags & MATCH_DATA )
-                    entry.r_resource_data = ResourceDataPtr( replace.resource_data->clone() );
+                    entry.r_resource_data = RDATAPtr( replace.resource_data->clone() );
             }
         }
         return is_replace;

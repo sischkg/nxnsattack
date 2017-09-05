@@ -80,14 +80,14 @@ namespace dns
     const ResponseCode BADKEY         = 17;
     const ResponseCode BADTIME        = 18;
 
-    class ResourceData;
-    typedef std::shared_ptr<ResourceData> ResourceDataPtr;
-    typedef std::shared_ptr<const ResourceData> ConstResourceDataPtr;
+    class RDATA;
+    typedef std::shared_ptr<RDATA> RDATAPtr;
+    typedef std::shared_ptr<const RDATA> ConstRDATAPtr;
 
-    class ResourceData
+    class RDATA
     {
     public:
-        virtual ~ResourceData()
+        virtual ~RDATA()
         {
         }
 
@@ -97,7 +97,7 @@ namespace dns
         virtual void outputCanonicalWireFormat( WireFormat &message ) const = 0;
         virtual Type     type() const                                       = 0;
         virtual uint16_t size() const                                       = 0;
-	virtual ResourceData *clone() const                                 = 0;
+	virtual RDATA *clone() const                                 = 0;
 	
         std::ostream &operator<<( std::ostream &os ) const
         {
@@ -106,7 +106,7 @@ namespace dns
         }
     };
 
-    class RecordRaw : public ResourceData
+    class RecordRaw : public RDATA
     {
     private:
         uint16_t             rrtype;
@@ -132,7 +132,7 @@ namespace dns
 	virtual RecordRaw *clone() const { return new RecordRaw( rrtype, data ); }
     };
 
-    class RecordA : public ResourceData
+    class RecordA : public RDATA
     {
     private:
         uint32_t sin_addr;
@@ -156,10 +156,10 @@ namespace dns
 	virtual RecordA *clone() const { return new RecordA( sin_addr ); }
 
 	std::string getAddress() const;
-        static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordAAAA : public ResourceData
+    class RecordAAAA : public RDATA
     {
     private:
         uint8_t sin_addr[ 16 ];
@@ -184,10 +184,10 @@ namespace dns
 
 	std::string getAddress() const;
 
-        static ResourceDataPtr parse( const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordNS : public ResourceData
+    class RecordNS : public RDATA
     {
     private:
         Domainname domainname;
@@ -211,10 +211,10 @@ namespace dns
 	virtual RecordNS *clone() const { return new RecordNS( domainname, offset ); }
 	const Domainname &getNameServer() const { return domainname; }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordMX : public ResourceData
+    class RecordMX : public RDATA
     {
     private:
         uint16_t   priority;
@@ -238,10 +238,10 @@ namespace dns
         }
 	virtual RecordMX *clone() const { return new RecordMX( priority, domainname, offset ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordTXT : public ResourceData
+    class RecordTXT : public RDATA
     {
     private:
         std::vector<std::string> data;
@@ -261,10 +261,10 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordTXT *clone() const { return new RecordTXT( data ); }
 	const std::vector<std::string> &getTexts() const { return data; }
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordSPF : public ResourceData
+    class RecordSPF : public RDATA
     {
     private:
         std::vector<std::string> data;
@@ -284,10 +284,10 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordSPF *clone() const { return new RecordSPF( data ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordCNAME : public ResourceData
+    class RecordCNAME : public RDATA
     {
     private:
         Domainname domainname;
@@ -312,10 +312,10 @@ namespace dns
 
         const Domainname &getCanonicalName() const { return domainname; }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordNAPTR : public ResourceData
+    class RecordNAPTR : public RDATA
     {
     private:
         uint16_t    order;
@@ -346,10 +346,10 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordNAPTR *clone() const { return new RecordNAPTR( order, preference, flags, services, regexp, replacement, offset ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordDNAME : public ResourceData
+    class RecordDNAME : public RDATA
     {
     private:
         Domainname domainname;
@@ -374,10 +374,10 @@ namespace dns
 
 	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname, offset ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordSOA : public ResourceData
+    class RecordSOA : public RDATA
     {
     private:
         Domainname mname;
@@ -437,7 +437,7 @@ namespace dns
 	uint32_t getExpire() const { return expire; }
 	uint32_t getMinimum() const { return minimum; }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
 
@@ -448,7 +448,7 @@ namespace dns
         PacketData afd;
     };
 
-    class RecordAPL : public ResourceData
+    class RecordAPL : public RDATA
     {
     private:
         std::vector<APLEntry> apl_entries;
@@ -473,10 +473,10 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordAPL *clone() const { return new RecordAPL( apl_entries ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordCAA : public ResourceData
+    class RecordCAA : public RDATA
     {
     private:
         uint8_t     mFlag;
@@ -503,10 +503,10 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordCAA *clone() const { return new RecordCAA( *this ); }
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordRRSIG : public ResourceData
+    class RecordRRSIG : public RDATA
     {
     private:
         Type     type_covered;
@@ -564,14 +564,14 @@ namespace dns
         virtual uint16_t size() const
         {
             return 2 +  // type_covered(uint16_t)
-                   1 +  // algorithm
-                   1 +  // label count
-                   4 +  // original ttl
-                   4 +  // expiration
-                   4 +  // inception
-                   2 +  // key tag
-                   signer.size() +
-                   signature.size();
+                1 +  // algorithm
+                1 +  // label count
+                4 +  // original ttl
+                4 +  // expiration
+                4 +  // inception
+                2 +  // key tag
+                signer.size() +
+                signature.size();
         }
 
         virtual uint16_t type() const
@@ -591,11 +591,11 @@ namespace dns
 				    signature );
 	}
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
 
-    class RecordDNSKEY : public ResourceData
+    class RecordDNSKEY : public RDATA
     {
     private:
         uint16_t             flag;
@@ -640,11 +640,11 @@ namespace dns
 	    return new RecordDNSKEY( flag, algorithm, public_key );
 	}
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
 
-    class RecordDS : public ResourceData
+    class RecordDS : public RDATA
     {
     private:
         uint16_t             key_tag;
@@ -684,7 +684,7 @@ namespace dns
 				 digest );
 	}
 
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
 
@@ -732,7 +732,7 @@ namespace dns
         static NSECBitmapField parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordNSEC : public ResourceData
+    class RecordNSEC : public RDATA
     {
     private:
         Domainname      next_domainname;
@@ -761,7 +761,7 @@ namespace dns
 	    return new RecordNSEC( next_domainname, bitmaps );
 	}
 	
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
 
@@ -796,14 +796,14 @@ namespace dns
     {
     public:
         RecordSIG( Type                       t,
-                     uint8_t                    algo,
-                     uint8_t                    label,
-                     uint32_t                   ttl,
-                     uint32_t                   expire,
-                     uint32_t                   incept,
-                     uint16_t                   tag,
-                     const Domainname           &sign,
-                     const std::vector<uint8_t> &sig )
+                   uint8_t                    algo,
+                   uint8_t                    label,
+                   uint32_t                   ttl,
+                   uint32_t                   expire,
+                   uint32_t                   incept,
+                   uint16_t                   tag,
+                   const Domainname           &sign,
+                   const std::vector<uint8_t> &sig )
             : RecordRRSIG( t, algo, label, ttl, expire, incept, tag, sign, sig )
         {}
 
@@ -955,7 +955,7 @@ namespace dns
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
-    class RecordOptionsData : public ResourceData
+    class RecordOptionsData : public RDATA
     {
     private:
         std::vector<OptPseudoRROptPtr> options;
@@ -998,7 +998,7 @@ namespace dns
         {
             return options;
         }
-        static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
     struct OptPseudoRecord {
@@ -1007,7 +1007,7 @@ namespace dns
         uint8_t         rcode;
         uint8_t         version;
 	bool            dobit;
-        ResourceDataPtr record_options_data;
+        RDATAPtr record_options_data;
         uint32_t        offset;
 
         OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
@@ -1023,7 +1023,7 @@ namespace dns
 	    offset( opt.offset )
         {
 	    if ( opt.record_options_data )
-		record_options_data = ResourceDataPtr( opt.record_options_data->clone() );
+		record_options_data = RDATAPtr( opt.record_options_data->clone() );
         }
 
 	OptPseudoRecord &operator=( const OptPseudoRecord &rhs )
@@ -1034,15 +1034,15 @@ namespace dns
 	    version             = rhs.version;
 	    dobit               = rhs.dobit;
 	    if ( rhs.record_options_data )
-		record_options_data = ResourceDataPtr( rhs.record_options_data->clone() );
+		record_options_data = RDATAPtr( rhs.record_options_data->clone() );
 	    else
-		record_options_data = ResourceDataPtr();
+		record_options_data = RDATAPtr();
 	    offset              = rhs.offset;
 	    return *this;
 	}
     };
 
-    class RecordTKey : public ResourceData
+    class RecordTKey : public RDATA
     {
     public:
         Domainname domain;
@@ -1109,7 +1109,7 @@ namespace dns
         }
     };
 
-    class RecordTSIGData : public ResourceData
+    class RecordTSIGData : public RDATA
     {
     public:
         Domainname key_name;
@@ -1162,7 +1162,7 @@ namespace dns
 				       other_length,
 				       other );
 	}
-        static ResourceDataPtr
+        static RDATAPtr
         parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name );
     };
 
@@ -1216,7 +1216,7 @@ namespace dns
         uint16_t        r_type;
         uint16_t        r_class;
         uint32_t        r_ttl;
-        ResourceDataPtr r_resource_data;
+        RDATAPtr r_resource_data;
         uint32_t        r_offset;
 
         ResponseSectionEntry() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
@@ -1233,7 +1233,7 @@ namespace dns
 	      r_offset( entry.r_offset )
 	{
 	    if ( entry.r_resource_data )
-		r_resource_data = ResourceDataPtr( entry.r_resource_data->clone() );
+		r_resource_data = RDATAPtr( entry.r_resource_data->clone() );
 	}
 	
 	ResponseSectionEntry &operator=( const ResponseSectionEntry &rhs )
@@ -1243,9 +1243,9 @@ namespace dns
 	    r_class      = rhs.r_class;
 	    r_ttl        = rhs.r_ttl;
 	    if ( rhs.r_resource_data )
-		r_resource_data = ResourceDataPtr( rhs.r_resource_data->clone() );
+		r_resource_data = RDATAPtr( rhs.r_resource_data->clone() );
 	    else
-		r_resource_data = ResourceDataPtr();
+		r_resource_data = RDATAPtr();
 	    
 	    r_offset     = rhs.r_offset;
 	    return *this;
