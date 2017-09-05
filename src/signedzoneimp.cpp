@@ -148,6 +148,43 @@ namespace dns
             }
         }
 
+        // find DNAME
+        for ( auto parent_name = qname ; parent_name != mApex ; parent_name.popSubdomain() ) {
+            auto dname_rrset = findRRSet( parent_name, TYPE_DNAME );
+            if ( dname_rrset ) {
+                if ( dname_rrset->count() != 1 )
+                    throw std::logic_error( "multiple DNAME records exist " + parent_name.toString() );
+                response.response_code = NO_ERROR;
+                addRRSet( response.answer_section, *dname_rrset );
+                if ( response.isDNSSECOK() ) {
+                    addRRSIG( response.answer_section, *dname_rrset );
+                }
+
+                auto dname_rdata    = std::dynamic_pointer_cast<RecordDNAME>( (*dname_rrset)[0] );
+                auto relative_name  = parent_name.getRelativeDomainname( qname );
+                std::cerr << "relative: " << relative_name.toString() << ", canonical: " << dname_rdata->getCanonicalName() << std::endl;
+                auto canonical_name = relative_name + dname_rdata->getCanonicalName();
+                std::shared_ptr<RecordCNAME> cname_rdata( new RecordCNAME( canonical_name ) );
+                RRSet cname_rrset( canonical_name, dname_rrset->getClass(), TYPE_CNAME, dname_rrset->getTTL() );
+                cname_rrset.add( cname_rdata );
+
+                addRRSet( response.answer_section, cname_rrset );
+                if ( response.isDNSSECOK() ) {
+                    addRRSIG( response.answer_section, cname_rrset );
+                }
+
+                auto canonical_node  = findNode( canonical_name );
+                auto canonical_rrset = canonical_node->find( qtype );
+                if ( canonical_rrset ) {
+                    addRRSet( response.answer_section, *canonical_rrset );
+                    if ( response.isDNSSECOK() ) {
+                        addRRSIG( response.answer_section, *canonical_rrset );
+                    }
+                }
+                return response;
+            }   
+        }
+
 	// find qname
         auto node = findNode( qname );
         if ( node ) {
@@ -156,7 +193,9 @@ namespace dns
 		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
                         auto rrset = *(rrset_itr->second);
                         addRRSet( response.answer_section, rrset );
-                        addRRSIG( response.authority_section, rrset );
+                        if ( response.isDNSSECOK() ) {
+                            addRRSIG( response.authority_section, rrset );
+                        }
 		    }
 		}
 		else {

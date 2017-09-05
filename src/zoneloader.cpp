@@ -487,7 +487,7 @@ namespace dns
 
         ResourceDataPtr parseRecordDNAME( const std::vector<std::string> &data )
         {
-            return ResourceDataPtr( new RecordCNAME( data[0] ) );
+            return ResourceDataPtr( new RecordDNAME( data[0] ) );
         }
 
 	ResourceDataPtr parseRecordTXT( const std::vector<std::string> &data )

@@ -400,11 +400,17 @@ namespace dns
         case TYPE_SOA:
             res = "SOA";
             break;
+        case TYPE_SIG:
+            res = "SIG";
+            break;
         case TYPE_KEY:
             res = "KEY";
             break;
         case TYPE_AAAA:
             res = "AAAA";
+            break;
+        case TYPE_NXT:
+            res = "NXT";
             break;
         case TYPE_OPT:
             res = "OPT";
@@ -495,7 +501,9 @@ namespace dns
         if ( t == "TXT" )    return TYPE_TXT;
         if ( t == "SPF" )    return TYPE_SPF;
         if ( t == "SOA" )    return TYPE_SOA;
+        if ( t == "SIG" )    return TYPE_SIG;
         if ( t == "KEY" )    return TYPE_KEY;
+        if ( t == "NXT" )    return TYPE_NXT;
         if ( t == "OPT" )    return TYPE_OPT;
         if ( t == "DS" )     return TYPE_DS;
         if ( t == "RRSIG" )  return TYPE_RRSIG;

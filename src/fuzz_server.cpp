@@ -48,6 +48,15 @@ namespace dns
             PacketInfo modified_response = original_response;
 
             ResourceRecordGenerator rr_generator;
+
+            // clear rr
+            if ( ! getRandom( 16 ) )
+                modified_response.clearAnswerSection();
+            if ( ! getRandom( 16 ) )
+                modified_response.clearAuthoritySection();
+            if ( ! getRandom( 16 ) )
+                modified_response.clearAdditionalInfomationSection();
+
             // appand new rrsets
             unsigned int rrsets_count = getRandom( 16 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {

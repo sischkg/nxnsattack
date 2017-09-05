@@ -44,7 +44,7 @@ namespace dns
     std::string DomainnameGenerator::generateLabel()
     {
         std::string label;
-        unsigned int label_size = getRandom( 64 );
+        unsigned int label_size = 1 + getRandom( 63 );
         for ( unsigned int i = 0 ; i < label_size ; i++ )
             label.push_back( getRandom( 256 ) );
         return label;
@@ -52,7 +52,7 @@ namespace dns
 
     Domainname DomainnameGenerator::generate()
     {
-        unsigned int label_count = getRandom( 128 );
+        unsigned int label_count = 1 + getRandom( 100 );
         unsigned int domainname_size = 0;
         std::deque<std::string> labels;
         for ( unsigned int i = 0 ; i < label_count ; i++ ) {
@@ -69,7 +69,7 @@ namespace dns
     Domainname DomainnameGenerator::generate( const Domainname &hint )
     {
         Domainname result = hint;
-        switch ( getRandom( 3 ) ) {
+        switch ( getRandom( 4 ) ) {
         case 0:
             return result;
         case 1: // erase labels;
@@ -87,9 +87,30 @@ namespace dns
                 unsigned int append_label_count = getRandom( 255 - hint.getLabels().size() );
                 unsigned int domainname_size    = hint.size();
                 for ( unsigned int i = 0 ; i < append_label_count ; i++ ) {
-                    if ( label_count >= 128 || domainname_size >= 255 )
-                        break;
                     std::string new_label = generateLabel();
+                    if ( label_count + 1 >= 128 || domainname_size + new_label.size() + 1 >= 255 )
+                        break;
+                    result.addSubdomain( new_label );
+                    domainname_size += ( new_label.size() + 1 );
+                    label_count++;
+                }
+
+                return result; 
+            }
+        case 3: // replace labels;
+            {
+                unsigned int erased_label_count = getRandom( hint.getLabels().size() );
+                for ( unsigned int i = 0 ; i < erased_label_count ; i++ ) {
+                    result.popSubdomain();
+                }
+
+                unsigned int label_count        = result.getLabels().size();
+                unsigned int append_label_count = getRandom( 255 - result.getLabels().size() );
+                unsigned int domainname_size    = result.size();
+                for ( unsigned int i = 0 ; i < append_label_count ; i++ ) {
+                    std::string new_label = generateLabel();
+                    if ( label_count + 1 >= 128 || domainname_size + new_label.size() + 1 >= 255 )
+                        break;
                     result.addSubdomain( new_label );
                     domainname_size += ( new_label.size() + 1 );
                     label_count++;
@@ -118,6 +139,9 @@ namespace dns
     Domainname getDomainname( const PacketInfo &hint )
     {
         std::vector<Domainname> names;
+        for ( auto rr : hint.getQuestionSection() ) {
+            names.push_back( rr.q_domainname );
+        }
         for ( auto rr : hint.getAnswerSection() ) {
             names.push_back( rr.r_domainname );
         }
@@ -128,6 +152,10 @@ namespace dns
             names.push_back( rr.r_domainname );
         }
 
+        unsigned int index = getRandom( names.size() );
+        std::cerr << "index: " << index << ", "
+                  << "size: "  << names.size() << ", "
+                  << "Domainname: " << names[index] << std::endl;
         return names[getRandom( names.size() )];
     }
 
@@ -332,14 +360,14 @@ namespace dns
     std::shared_ptr<ResourceData> DSGenerator::generate( const PacketInfo &hint )
     {
         if ( getRandom( 2 ) ) {
-            std::vector<uint8_t> hash = getRandomStream( 40 );
+            std::vector<uint8_t> hash = getRandomStream( 20 );
             return std::shared_ptr<ResourceData>( new RecordDS( getRandom( 0xffff ),
                                                                 5,
                                                                 1,
                                                                 hash ) );
         }
         else {
-            std::vector<uint8_t> hash = getRandomStream( 64 );
+            std::vector<uint8_t> hash = getRandomStream( 32 );
             return std::shared_ptr<ResourceData>( new RecordDS( getRandom( 0xffff ),
                                                                 5,
                                                                 2,
@@ -392,6 +420,88 @@ namespace dns
         return std::shared_ptr<ResourceData>( new RecordNSEC( generateDomainname(), types ) );
     }
 
+    /**********************************************************
+     * SIGGenarator
+     **********************************************************/
+    std::shared_ptr<ResourceData> SIGGenerator::generate( const PacketInfo &hint )
+    {
+        std::vector<uint8_t> signature = getRandomStream( 256 );
+
+	std::shared_ptr<ResourceData> p( new RecordSIG( getRandom( 0xffff ), // type covered
+							getRandom( 0xff ),   // algorithm
+							getRandom( 0xff ),   // label
+							getRandom(),         // original ttl
+							getRandom(),         // expiration
+							getRandom(),         // inception
+							getRandom( 0xffff ), // key tag
+							generateDomainname( getDomainname( hint ) ),
+							signature ) );
+        return p;
+    }
+
+    std::shared_ptr<ResourceData> SIGGenerator::generate()
+    {
+        std::vector<uint8_t> signature = getRandomStream( 256 );
+	return std::shared_ptr<ResourceData>( new RecordSIG( getRandom( 0xffff ), // type covered
+							     getRandom( 0xff ),   // algorithm
+							     getRandom( 0xff ),   // label
+							     getRandom(),         // original ttl
+							     getRandom(),         // expiration
+							     getRandom(),         // inception
+							     getRandom( 0xffff ), // key tag
+							     generateDomainname(),
+							     signature ) );
+    }
+
+    /**********************************************************
+     * KEYGenarator
+     **********************************************************/
+    std::shared_ptr<ResourceData> KEYGenerator::generate( const PacketInfo &hint )
+    {
+        std::vector<uint8_t> public_key = getRandomStream( 132 );
+	return std::shared_ptr<ResourceData>( new RecordKEY( 0xffff,
+							     RecordDNSKEY::RSASHA1,
+							     public_key ) );
+    }
+
+    std::shared_ptr<ResourceData> KEYGenerator::generate()
+    {
+        std::vector<uint8_t> public_key = getRandomStream( 132 );
+	return std::shared_ptr<ResourceData>( new RecordKEY( getRandom( 0xffff ),
+							     RecordDNSKEY::RSASHA1,
+							     public_key ) );
+    }
+
+    /**********************************************************
+     * NXTGenarator
+     **********************************************************/
+    std::shared_ptr<ResourceData> NXTGenerator::generate( const PacketInfo &hint )
+    {
+        std::vector<Type> types;
+        unsigned int type_count = getRandom( 0xffff );
+        for ( unsigned int i = 0 ; i < type_count ; i++ ) {
+            types.push_back( getRandom( 0xffff ) );
+        }
+
+        return std::shared_ptr<ResourceData>( new RecordNXT( getDomainname( hint ),
+							     types ) );
+    }
+
+    std::shared_ptr<ResourceData> NXTGenerator::generate()
+    {
+        std::vector<Type> types;
+        unsigned int type_count = getRandom( 0xffff );
+        for ( unsigned int i = 0 ; i < type_count ; i++ ) {
+            types.push_back( getRandom( 0xffff ) );
+        }
+
+        return std::shared_ptr<ResourceData>( new RecordNXT( generateDomainname(), types ) );
+    }
+
+
+    /**********************************************************
+     * ResourceRecordGenarator
+     **********************************************************/
     ResourceRecordGenerator::ResourceRecordGenerator()
     {
         mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new NSGenerator ) );
@@ -404,6 +514,9 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new DNSKEYGenerator ) );
         mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new DSGenerator ) );
         mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new NSECGenerator ) );
+        mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new SIGGenerator ) );
+        mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new KEYGenerator ) );
+        mGenerators.push_back( std::shared_ptr<ResourceDataGeneratable>( new NXTGenerator ) );
     }
 
 
@@ -416,10 +529,9 @@ namespace dns
         RRSet rrset( getDomainname( hint ),
                      class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ],
                      resource_data->type(),
-                     getRandom( 0xffffffff ) );
+                     getRandom( 60 ) );
         rrset.add( resource_data );
 
         return rrset;
     }
-
 }

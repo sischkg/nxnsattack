@@ -39,8 +39,10 @@ namespace dns
     const Type       TYPE_SOA    = 6;
     const Type       TYPE_MX     = 15;
     const Type       TYPE_TXT    = 16;
+    const Type       TYPE_SIG    = 24;
     const Type       TYPE_KEY    = 25;
     const Type       TYPE_AAAA   = 28;
+    const Type       TYPE_NXT    = 30;
     const Type       TYPE_NAPTR  = 35;
     const Type       TYPE_DNAME  = 39;
     const Type       TYPE_OPT    = 41;
@@ -368,6 +370,8 @@ namespace dns
         {
             return domainname.size( offset );
         }
+        const Domainname &getCanonicalName() const { return domainname; }
+
 	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname, offset ); }
 
         static ResourceDataPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
@@ -545,7 +549,7 @@ namespace dns
 
         Type     getTypeCovered() const { return type_covered; }
         uint8_t  getAlgorithm() const { return algorithm; }
-        uint8_t  getLablCount() const { return label_count; }
+        uint8_t  getLabelCount() const { return label_count; }
         uint32_t getOriginalTTL() const { return original_ttl; }
         uint32_t getExpiration() const { return expiration; }
         uint32_t getInception() const { return inception; }
@@ -769,62 +773,79 @@ namespace dns
 
     const uint8_t ALGORITHM_DH = 0x02;
 
-    class RecordKey : public ResourceData
+    class RecordKEY : public RecordDNSKEY
     {
     public:
-        uint8_t ac;
-        uint8_t xt;
-        uint8_t namtyp;
-        uint8_t sig;
-
-        uint8_t    protocol;
-        uint8_t    algorithm;
-        PacketData public_key;
-
-    public:
-        RecordKey( uint8_t in_ac        = 0,
-                   uint8_t in_xt        = 0,
-                   uint8_t in_namtyp    = 0,
-                   uint8_t in_sig       = 0,
-                   uint8_t in_protocol  = PROTOCOL_DNSSEC,
-                   uint8_t in_algorithm = ALGORITHM_DH )
-            : ac( 0 ), xt( 0 ), namtyp( 0 ), sig( 0 ), protocol( in_protocol ), algorithm( in_algorithm )
-        {
-        }
-
-        virtual std::string toZone() const;
-        virtual std::string toString() const
-        {
-            return "";
-        }
-
-        virtual void outputWireFormat( WireFormat &message ) const
-        {
-            message.pushUInt8( 0 );
-            message.pushUInt8( 0 );
-            message.pushUInt8( protocol );
-            message.pushUInt8( algorithm );
-        }
-        virtual void outputCanonicalWireFormat( WireFormat &message ) const
-	{
-	    outputWireFormat( message );
-	}
-        virtual uint16_t size() const
-        {
-            return 4;
-        }
+	RecordKEY( uint16_t f, uint8_t a, const std::vector<uint8_t> &p )
+	    : RecordDNSKEY( f, a, p )
+	{}
 
         virtual uint16_t type() const
         {
             return TYPE_KEY;
         }
 
-    	virtual RecordKey *clone() const
+    	virtual RecordKEY *clone() const
 	{
-	    return new RecordKey( ac, xt, namtyp, sig, protocol, algorithm );
+	    return new RecordKEY( getFlag(), getAlgorithm(), getPublicKey() );
 	}
     };
 
+
+    class RecordSIG : public RecordRRSIG
+    {
+    public:
+        RecordSIG( Type                       t,
+                     uint8_t                    algo,
+                     uint8_t                    label,
+                     uint32_t                   ttl,
+                     uint32_t                   expire,
+                     uint32_t                   incept,
+                     uint16_t                   tag,
+                     const Domainname           &sign,
+                     const std::vector<uint8_t> &sig )
+            : RecordRRSIG( t, algo, label, ttl, expire, incept, tag, sign, sig )
+        {}
+
+        virtual uint16_t type() const
+        {
+            return TYPE_SIG;
+        }
+	virtual RecordSIG *clone() const
+	{
+	    return new RecordSIG( getTypeCovered(),
+				  getAlgorithm(),
+				  getLabelCount(),
+				  getOriginalTTL(),
+				  getExpiration(),
+				  getInception(),
+				  getKeyTag(),
+				  getSigner(),
+				  getSignature() );
+	}
+    };
+
+
+    class RecordNXT : public RecordNSEC
+    {
+    public:
+	RecordNXT( const Domainname &next, const NSECBitmapField &b )
+	    : RecordNSEC( next, b )
+	{}
+	RecordNXT( const Domainname &next, const std::vector<Type> &types )
+	    : RecordNSEC( next, types )
+	{}
+	
+        virtual uint16_t type() const
+        {
+            return TYPE_NXT;
+        }
+	virtual RecordNXT *clone() const
+	{
+	    return new RecordNXT( getNextDomainname(), getTypes() );
+	}
+    };
+    
     class OptPseudoRROption
     {
     public:
@@ -1283,6 +1304,12 @@ namespace dns
         void pushAnswerSection( const ResponseSectionEntry &e ) { return answer_section.push_back( e ); }
         void pushAuthoritySection( const ResponseSectionEntry &e ) { return authority_section.push_back( e ); }
         void pushAdditionalInfomationSection( const ResponseSectionEntry &e ) { return additional_infomation_section.push_back( e ); }
+
+
+        void clearQuestionSection() { return question_section.clear(); }
+        void clearAnswerSection() { return answer_section.clear(); }
+        void clearAuthoritySection() { return authority_section.clear(); }
+        void clearAdditionalInfomationSection() { return additional_infomation_section.clear(); }
     };
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );

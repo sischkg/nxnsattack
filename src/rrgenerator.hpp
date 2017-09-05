@@ -137,7 +137,21 @@ namespace dns
         std::shared_ptr<ResourceData> generate();
     };
 
+    class SIGGenerator : public ResourceDataGeneratable
+    {
+    public:
+        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
+        std::shared_ptr<ResourceData> generate();
+    };
+
     class KEYGenerator : public ResourceDataGeneratable
+    {
+    public:
+        std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
+        std::shared_ptr<ResourceData> generate();
+    };
+
+    class NXTGenerator : public ResourceDataGeneratable
     {
     public:
         std::shared_ptr<ResourceData> generate( const PacketInfo &hint );
