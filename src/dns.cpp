@@ -1761,17 +1761,17 @@ namespace dns
         }
     }
 
-    std::string RecordTKey::toZone() const
+    std::string RecordTKEY::toZone() const
     {
         return "";
     }
 
-    std::string RecordTKey::toString() const
+    std::string RecordTKEY::toString() const
     {
         return "";
     }
 
-    uint16_t RecordTKey::size() const
+    uint16_t RecordTKEY::size() const
     {
         return algorithm.size() + //
             4 +                // inception
@@ -1784,7 +1784,7 @@ namespace dns
             other_data.size();
     }
 
-    void RecordTKey::outputWireFormat( WireFormat &message ) const
+    void RecordTKEY::outputWireFormat( WireFormat &message ) const
     {
         algorithm.outputCanonicalWireFormat( message );
         message.pushUInt32HtoN( inception );
@@ -1797,7 +1797,7 @@ namespace dns
         message.pushBuffer( other_data );
     }
 
-    void RecordTKey::outputCanonicalWireFormat( WireFormat &message ) const
+    void RecordTKEY::outputCanonicalWireFormat( WireFormat &message ) const
     {
         outputWireFormat( message );
     }

@@ -157,7 +157,6 @@ namespace dns
         std::shared_ptr<RDATA> generate( const PacketInfo &hint );
         std::shared_ptr<RDATA> generate();
     };
-
 }
 
 #endif

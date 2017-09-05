@@ -1042,7 +1042,7 @@ namespace dns
 	}
     };
 
-    class RecordTKey : public RDATA
+    class RecordTKEY : public RDATA
     {
     public:
         Domainname domain;
@@ -1055,7 +1055,7 @@ namespace dns
         PacketData other_data;
 
     public:
-        RecordTKey( const std::string &dom    = "",
+        RecordTKEY( const std::string &dom    = "",
                     const std::string &algo   = "HMAC-MD5.SIG-ALG.REG.INT",
                     uint32_t           incept = 0,
                     uint32_t           expire = 0,
@@ -1077,9 +1077,9 @@ namespace dns
             return TYPE_TKEY;
         }
         virtual uint16_t size() const;
-	virtual RecordTKey *clone() const
+	virtual RecordTKEY *clone() const
 	{
-	    return new RecordTKey( domain.toString(),
+	    return new RecordTKEY( domain.toString(),
 				   domain.toString(),
 				   inception,
 				   expiration,
