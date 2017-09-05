@@ -1373,7 +1373,6 @@ namespace dns
 
     void NSECBitmapField::Window::add( Type t )
     {
-        std::cerr << "added type: " << t << std::endl;
 	types.push_back( t );
     }
 
@@ -1447,7 +1446,6 @@ namespace dns
 
     void NSECBitmapField::add( Type t )
     {
-        std::cerr << "added to field: " << (int)t << std::endl;
 	uint8_t window_index = typeToWindowIndex( t );
 	auto window = windows.find( window_index );
 	if ( window == windows.end() ) {
@@ -1523,8 +1521,8 @@ namespace dns
     RecordNSEC::RecordNSEC( const Domainname &next, const std::vector<Type> &types )
 	: next_domainname( next )
     {
-        for ( unsigned int i = 1 ; i < 0xffff ; i += 0xff ) {
-            bitmaps.add( i );
+        for ( auto t : types ) {
+            bitmaps.add( t );
         } 
     }
 
@@ -1654,7 +1652,6 @@ namespace dns
         opt.dobit               = ( ( 1 << 7 ) & ( record.r_ttl >> 8 ) ) ? true : false; 
         opt.record_options_data = record.r_resource_data;
 
-        std::cerr << "TTL: " << record.r_ttl << std::endl;
         return opt;
     }
 
