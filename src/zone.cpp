@@ -194,7 +194,7 @@ namespace dns
         if ( ! soa || soa->count() != 1 )
             throw std::logic_error( "SOA record must be exist in zone" );
 
-        ResponseSectionEntry r;
+        ResourceRecord r;
         r.r_domainname  = soa->getOwner();
         r.r_type        = soa->getType();
         r.r_class       = soa->getClass();
@@ -213,10 +213,10 @@ namespace dns
 
     }
 
-    void Zone::addRRSet( std::vector<ResponseSectionEntry> &section, const RRSet &rrset ) const
+    void Zone::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset ) const
     {
 	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
-	    ResponseSectionEntry r;
+	    ResourceRecord r;
 	    r.r_domainname  = rrset.getOwner();
 	    r.r_type        = rrset.getType();
 	    r.r_class       = rrset.getClass();
@@ -241,13 +241,13 @@ namespace dns
     }
 
 
-    void Zone::addRRSIG( std::vector<ResponseSectionEntry> &section,
+    void Zone::addRRSIG( std::vector<ResourceRecord> &section,
                          const RRSet &rrsigs,
                          Type type_covered ) const
     {
         for( auto rrsig : rrsigs ) {
             if ( std::dynamic_pointer_cast<RecordRRSIG>( rrsig )->getTypeCovered() == type_covered ) {
-                ResponseSectionEntry r;
+                ResourceRecord r;
                 r.r_domainname  = rrsigs.getOwner();
                 r.r_type        = rrsigs.getType();
                 r.r_class       = rrsigs.getClass();

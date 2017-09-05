@@ -32,7 +32,7 @@ namespace dns
 	return original_response;
     }
 
-    bool AuthServer::replace( std::vector<ResponseSectionEntry> &section,
+    bool AuthServer::replace( std::vector<ResourceRecord> &section,
                               const Condition &condition,
                               const Replacement &replace ) const
     {
@@ -58,7 +58,7 @@ namespace dns
         return is_replace;
     }
 
-    bool AuthServer::erase( std::vector<ResponseSectionEntry> &section,
+    bool AuthServer::erase( std::vector<ResourceRecord> &section,
                             const Condition &condition ) const
     {
         bool is_erase = false;

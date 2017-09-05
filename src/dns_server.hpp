@@ -14,9 +14,9 @@ namespace dns
     struct ResponseInfo {
         PacketHeaderField                 header;
         std::vector<QuestionSectionEntry> question_section;
-        std::vector<ResponseSectionEntry> answer_section;
-        std::vector<ResponseSectionEntry> authority_section;
-        std::vector<ResponseSectionEntry> additional_infomation_section;
+        std::vector<ResourceRecord> answer_section;
+        std::vector<ResourceRecord> authority_section;
+        std::vector<ResourceRecord> additional_infomation_section;
     };
 
     struct TSIGKey {

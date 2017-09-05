@@ -110,8 +110,8 @@ namespace dns
         void addSOAToAuthoritySection( PacketInfo &res ) const;
         void addEmptyNode( const Domainname & );
 	void addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const;
-        void addRRSet( std::vector<ResponseSectionEntry> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResponseSectionEntry> &, const RRSet &rrsig, Type covered_type ) const;
+        void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
+        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &rrsig, Type covered_type ) const;
 	//    	void generateFoundAnswer( PacketInfo &response ) const;
 	//	void generateNoDataAnswer( PacketInfo &response ) const;
         void addNSECAndRRSIG( PacketInfo &response, const Domainname & ) const;

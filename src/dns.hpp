@@ -1134,9 +1134,9 @@ namespace dns
                         uint16_t           in_error        = 0,
                         uint16_t           in_other_length = 0,
                         const PacketData & in_other        = PacketData() )
-            : key_name( in_key_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
-              mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
-              other_length( in_other_length ), other( in_other )
+	: key_name( in_key_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
+	  mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
+	  other_length( in_other_length ), other( in_other )
         {
         }
 
@@ -1191,9 +1191,9 @@ namespace dns
                     uint16_t           in_error        = 0,
                     uint16_t           in_other_length = 0,
                     PacketData         in_other        = PacketData() )
-            : name( in_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
-              mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
-              other_length( in_other_length ), other( in_other )
+	: name( in_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
+	  mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
+	  other_length( in_other_length ), other( in_other )
         {
         }
     };
@@ -1211,7 +1211,7 @@ namespace dns
 	uint16_t size() const;
     };
 
-    struct ResponseSectionEntry {
+    struct ResourceRecord {
         Domainname      r_domainname;
         uint16_t        r_type;
         uint16_t        r_class;
@@ -1219,13 +1219,13 @@ namespace dns
         RDATAPtr r_resource_data;
         uint32_t        r_offset;
 
-        ResponseSectionEntry() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
+        ResourceRecord() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
         {
         }
 
     	uint16_t size() const;
 
-	ResponseSectionEntry( const ResponseSectionEntry &entry )
+	ResourceRecord( const ResourceRecord &entry )
 	    : r_domainname( entry.r_domainname ),
 	      r_type( entry.r_type ),
 	      r_class( entry.r_class ),
@@ -1236,7 +1236,7 @@ namespace dns
 		r_resource_data = RDATAPtr( entry.r_resource_data->clone() );
 	}
 	
-	ResponseSectionEntry &operator=( const ResponseSectionEntry &rhs )
+	ResourceRecord &operator=( const ResourceRecord &rhs )
 	{
 	    r_domainname = rhs.r_domainname;
 	    r_type       = rhs.r_type;
@@ -1274,9 +1274,9 @@ namespace dns
         RecordTSIGData  tsig_rr;
 
         std::vector<QuestionSectionEntry> question_section;
-        std::vector<ResponseSectionEntry> answer_section;
-        std::vector<ResponseSectionEntry> authority_section;
-        std::vector<ResponseSectionEntry> additional_infomation_section;
+        std::vector<ResourceRecord> answer_section;
+        std::vector<ResourceRecord> authority_section;
+        std::vector<ResourceRecord> additional_infomation_section;
 
         PacketInfo()
             : id( 0 ), query_response( 0 ), opcode( 0 ), authoritative_answer( 0 ), truncation( false ),
@@ -1296,14 +1296,14 @@ namespace dns
 	}
 
         const std::vector<QuestionSectionEntry> &getQuestionSection() const { return question_section; }
-        const std::vector<ResponseSectionEntry> &getAnswerSection() const { return answer_section; }
-        const std::vector<ResponseSectionEntry> &getAuthoritySection() const { return authority_section; }
-        const std::vector<ResponseSectionEntry> &getAdditionalInfomationSection() const { return additional_infomation_section; }
+        const std::vector<ResourceRecord> &getAnswerSection() const { return answer_section; }
+        const std::vector<ResourceRecord> &getAuthoritySection() const { return authority_section; }
+        const std::vector<ResourceRecord> &getAdditionalInfomationSection() const { return additional_infomation_section; }
 
         void pushQuestionSection( const QuestionSectionEntry &e ) { return question_section.push_back( e ); }
-        void pushAnswerSection( const ResponseSectionEntry &e ) { return answer_section.push_back( e ); }
-        void pushAuthoritySection( const ResponseSectionEntry &e ) { return authority_section.push_back( e ); }
-        void pushAdditionalInfomationSection( const ResponseSectionEntry &e ) { return additional_infomation_section.push_back( e ); }
+        void pushAnswerSection( const ResourceRecord &e ) { return answer_section.push_back( e ); }
+        void pushAuthoritySection( const ResourceRecord &e ) { return authority_section.push_back( e ); }
+        void pushAdditionalInfomationSection( const ResourceRecord &e ) { return additional_infomation_section.push_back( e ); }
 
 
         void clearQuestionSection() { return question_section.clear(); }
@@ -1352,7 +1352,7 @@ namespace dns
 
     std::string type_code_to_string( Type t );
     Type string_to_type_code( const std::string &t );
-    ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord & );
+    ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord & );
 
     void
     addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac = PacketData() );

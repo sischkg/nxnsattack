@@ -22,8 +22,8 @@ namespace dns
         RRSetPtr mNameServers;
 
         void addEmptyNode( const Domainname & );
-        void addRRSet( std::vector<ResponseSectionEntry> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResponseSectionEntry> &, const RRSet &original_rrset ) const;
+        void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
+        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
         void addSOAToAuthoritySection( PacketInfo &res ) const;
 
 	RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;

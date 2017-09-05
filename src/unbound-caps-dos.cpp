@@ -24,7 +24,7 @@ public:
         question1.q_offset     = 1024;
         response.question_section.push_back( question1 );
 
-        dns::ResponseSectionEntry answer1;
+        dns::ResourceRecord answer1;
         answer1.r_domainname    = query_question.q_domainname;
         answer1.r_type          = dns::TYPE_A;
         answer1.r_class         = query_question.q_class;

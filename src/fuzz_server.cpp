@@ -14,13 +14,13 @@ namespace dns
 	    : dns::SignedAuthServer( addr, port, debug )
 	{}
 
-        std::vector<ResponseSectionEntry> newRRs( const RRSet &rrset ) const
+        std::vector<ResourceRecord> newRRs( const RRSet &rrset ) const
         {
-            std::vector<ResponseSectionEntry> rrs;
+            std::vector<ResourceRecord> rrs;
             std::shared_ptr<RRSet> rrsigs = signRRSet( rrset );
 
             for( auto rr : rrset.getRRSet() ) {
-                ResponseSectionEntry r;
+                ResourceRecord r;
                 r.r_domainname    = rrset.getOwner();
                 r.r_type          = rrset.getType();
                 r.r_class         = rrset.getClass();
@@ -29,7 +29,7 @@ namespace dns
                 rrs.push_back( r );
             }
             for( auto rrsig : rrsigs->getRRSet() ) {
-                ResponseSectionEntry r;
+                ResourceRecord r;
                 r.r_domainname    = rrsigs->getOwner();
                 r.r_type          = rrsigs->getType();
                 r.r_class         = rrsigs->getClass();

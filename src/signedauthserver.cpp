@@ -40,7 +40,7 @@ namespace dns
 	return original_response;
     }
 
-    bool SignedAuthServer::replace( std::vector<ResponseSectionEntry> &section,
+    bool SignedAuthServer::replace( std::vector<ResourceRecord> &section,
                                     const Condition &condition,
                                     const Replacement &replace ) const
     {
@@ -66,7 +66,7 @@ namespace dns
         return is_replace;
     }
 
-    bool SignedAuthServer::erase( std::vector<ResponseSectionEntry> &section,
+    bool SignedAuthServer::erase( std::vector<ResourceRecord> &section,
                                   const Condition &condition ) const
     {
         bool is_erase = false;

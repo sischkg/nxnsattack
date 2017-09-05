@@ -318,10 +318,10 @@ namespace dns
 
     }
 
-    void SignedZoneImp::addRRSet( std::vector<ResponseSectionEntry> &section, const RRSet &rrset ) const
+    void SignedZoneImp::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset ) const
     {
 	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
-	    ResponseSectionEntry r;
+	    ResourceRecord r;
 	    r.r_domainname  = rrset.getOwner();
 	    r.r_type        = rrset.getType();
 	    r.r_class       = rrset.getClass();
@@ -341,12 +341,12 @@ namespace dns
     }
 
 
-    void SignedZoneImp::addRRSIG( std::vector<ResponseSectionEntry> &section, const RRSet &original_rrset ) const
+    void SignedZoneImp::addRRSIG( std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {
 	std::shared_ptr<RRSet> rrsigs = mSigner.signRRSet( original_rrset );
 	
 	for( auto rrsig : rrsigs->getRRSet() ) {
-	    ResponseSectionEntry r;
+	    ResourceRecord r;
 	    r.r_domainname    = rrsigs->getOwner();
 	    r.r_type          = rrsigs->getType();
 	    r.r_class         = rrsigs->getClass();

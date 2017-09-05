@@ -28,14 +28,14 @@ namespace dns
                                                                                  int recur = 0 ) throw( FormatError );
 
     void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
-    void generate_response_section( const ResponseSectionEntry &r, WireFormat &message );
+    void generate_response_section( const ResourceRecord &r, WireFormat &message );
     
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
-    typedef std::pair<ResponseSectionEntry, const uint8_t *> ResponseSectionEntryPair;
+    typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *section );
-    ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *section );
+    ResourceRecordPair parse_response_section( const uint8_t *packet, const uint8_t *section );
 
-    OptPseudoRecord      parse_opt_pseudo_record( const ResponseSectionEntry & );
+    OptPseudoRecord      parse_opt_pseudo_record( const ResourceRecord & );
 
     static const uint8_t *
     parseCharacterString( const uint8_t *begin, const uint8_t *packet_end, std::string &ref_output )
@@ -61,7 +61,7 @@ namespace dns
         return q_domainname.size() + sizeof(q_type) + sizeof(q_class);
     }
 
-    uint16_t ResponseSectionEntry::size() const
+    uint16_t ResourceRecord::size() const
     {
         return r_domainname.size() + sizeof(r_type) + sizeof(r_class) + sizeof(r_ttl) +
 	    sizeof(uint16_t) +       // size of resource data size
@@ -91,7 +91,7 @@ namespace dns
         header.checking_disabled    = info.checking_disabled;
         header.response_code        = info.response_code;
 
-        std::vector<ResponseSectionEntry> additional = info.additional_infomation_section;
+        std::vector<ResourceRecord> additional = info.additional_infomation_section;
 
         if ( info.edns0 ) {
             additional.push_back( generate_opt_pseudo_record( info.opt_pseudo_rr ) );
@@ -149,17 +149,17 @@ namespace dns
             packet = pair.second;
         }
         for ( int i = 0; i < answer_count; i++ ) {
-            ResponseSectionEntryPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, packet );
             packet_info.answer_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < authority_count; i++ ) {
-            ResponseSectionEntryPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, packet );
             packet_info.authority_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
-            ResponseSectionEntryPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, packet );
             if ( pair.first.r_type == TYPE_OPT ) {
                 packet_info.edns0 = true;
 		packet_info.opt_pseudo_rr.domainname   = pair.first.r_domainname;
@@ -274,7 +274,7 @@ namespace dns
         return QuestionSectionEntryPair( question, pos );
     }
 
-    void generate_response_section( const ResponseSectionEntry &response, WireFormat &message )
+    void generate_response_section( const ResourceRecord &response, WireFormat &message )
     {
         response.r_domainname.outputWireFormat( message, response.r_offset );
         message.pushUInt16HtoN( response.r_type );
@@ -288,9 +288,9 @@ namespace dns
         }
     }
 
-    ResponseSectionEntryPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
+    ResourceRecordPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
     {
-        ResponseSectionEntry sec;
+        ResourceRecord sec;
 
         const uint8_t *pos   = Domainname::parsePacket( sec.r_domainname, packet, begin );
         sec.r_type           = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -350,7 +350,7 @@ namespace dns
         pos += data_length;
 
         sec.r_resource_data = parsed_data;
-        return ResponseSectionEntryPair( sec, pos );
+        return ResourceRecordPair( sec, pos );
     }
 
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet )
@@ -1631,9 +1631,9 @@ namespace dns
         return RDATAPtr( new RecordOptionsData( options ) );
     }
 
-    ResponseSectionEntry generate_opt_pseudo_record( const OptPseudoRecord &opt )
+    ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord &opt )
     {
-        ResponseSectionEntry entry;
+        ResourceRecord entry;
         entry.r_domainname    = opt.domainname;
         entry.r_type          = TYPE_OPT;
         entry.r_class         = opt.payload_size;
@@ -1644,7 +1644,7 @@ namespace dns
         return entry;
     }
 
-    OptPseudoRecord parse_opt_pseudo_record( const ResponseSectionEntry &record )
+    OptPseudoRecord parse_opt_pseudo_record( const ResourceRecord &record )
     {
         OptPseudoRecord opt;
         opt.domainname          = record.r_domainname;
@@ -2008,7 +2008,7 @@ namespace dns
     {
         PacketData mac = getTSIGMAC( tsig_info, message.get(), query_mac );
 
-        ResponseSectionEntry entry;
+        ResourceRecord entry;
         entry.r_domainname    = tsig_info.name;
         entry.r_type          = TYPE_TSIG;
         entry.r_class         = CLASS_ANY;
@@ -2066,7 +2066,7 @@ namespace dns
         // skip non TSIG Record in additional section
         bool is_found_tsig = false;
         for ( uint16_t i = 0; i < packet_info.additional_infomation_section.size(); i++ ) {
-            ResponseSectionEntryPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], pos );
+            ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], pos );
             if ( parsed_rr_pair.first.r_type == TYPE_TSIG ) {
                 is_found_tsig = true;
                 break;

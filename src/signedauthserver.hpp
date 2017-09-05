@@ -45,10 +45,10 @@ namespace dns
             TTL             ttl   = 0;
             RDATAPtr        resource_data;
         };
-	bool replace( std::vector<ResponseSectionEntry> &section,
+	bool replace( std::vector<ResourceRecord> &section,
                       const Condition &condition,
                       const Replacement &replace ) const;
-	bool erase( std::vector<ResponseSectionEntry> &section,
+	bool erase( std::vector<ResourceRecord> &section,
                     const Condition &condition ) const;
         
         std::shared_ptr<RRSet> signRRSet( const RRSet &rrset ) const;
