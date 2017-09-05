@@ -153,9 +153,6 @@ namespace dns
         }
 
         unsigned int index = getRandom( names.size() );
-        std::cerr << "index: " << index << ", "
-                  << "size: "  << names.size() << ", "
-                  << "Domainname: " << names[index] << std::endl;
         return names[getRandom( names.size() )];
     }
 
@@ -224,10 +221,7 @@ namespace dns
         if ( record_a_list.size() == 0 )
             return generate();
 
-        std::cerr << "hint: " << hint << std::endl;
-        std::cerr << "record_a_list size: " << record_a_list.size() << std::endl;
         unsigned int index = getRandom( record_a_list.size() );
-        std::cerr << "index: " << index << std::endl;
 	return std::shared_ptr<RDATA>( record_a_list[index]->clone() );
     }
 
@@ -262,10 +256,7 @@ namespace dns
         if ( record_a_list.size() == 0 )
             return generate();
 
-        std::cerr << "hint: " << hint << std::endl;
-        std::cerr << "record_a_list size: " << record_a_list.size() << std::endl;
         unsigned int index = getRandom( record_a_list.size() );
-        std::cerr << "index: " << index << std::endl;
 	return std::shared_ptr<RDATA>( record_a_list[index]->clone() );
     }
 
