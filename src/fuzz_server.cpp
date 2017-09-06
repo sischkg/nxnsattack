@@ -1,4 +1,4 @@
-#include "signedauthserver.hpp"
+#include "unsignedauthserver.hpp"
 #include "rrgenerator.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
@@ -7,11 +7,11 @@
 
 namespace dns
 {
-    class FuzzServer : public SignedAuthServer
+    class FuzzServer : public UnsignedAuthServer
     {
     public:
 	FuzzServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::SignedAuthServer( addr, port, debug )
+	    : dns::UnsignedAuthServer( addr, port, debug )
 	{}
 
         std::vector<ResourceRecord> newRRs( const RRSet &rrset ) const
@@ -88,7 +88,69 @@ namespace dns
                     break;
                 }
             }
+
+            replaceClass( modified_response.answer_section );
+            replaceClass( modified_response.authority_section );
+            replaceClass( modified_response.additional_infomation_section );
+
+            if ( query.question_section[0].q_type != TYPE_RRSIG &&
+                 modified_response.getAnswerSection().size() != 0 &&
+                 modified_response.response_code != NO_ERROR ) {
+                signSection( modified_response.answer_section );
+            }
+            signSection( modified_response.authority_section );
+            signSection( modified_response.additional_infomation_section );
+
             return modified_response;
+        }
+
+        void replaceClass( std::vector<ResourceRecord> &section ) const
+        {
+            if ( getRandom( 5 ) )
+                return;
+
+            Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
+            for ( ResourceRecord &rr : section ) {
+                rr.r_class = class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ];
+            }
+        }
+
+        void signSection( std::vector<ResourceRecord> &section ) const
+        {
+            std::vector<ResourceRecord> rrsigs;
+            std::vector< std::shared_ptr<RRSet> > signed_targets = cumulate( section );
+            for ( auto signed_target : signed_targets ) {
+                std::shared_ptr<RRSet> rrsig = signRRSet( *signed_target );
+                ResourceRecord rr;
+                rr.r_domainname = rrsig->getOwner();
+                rr.r_class      = rrsig->getClass();
+                rr.r_type       = rrsig->getType();
+                rr.r_resource_data = (*rrsig)[0];
+                rrsigs.push_back( rr );
+            }
+            section.insert( section.end(), rrsigs.begin(), rrsigs.end() );
+        }
+
+        std::vector<std::shared_ptr<RRSet> > cumulate( const std::vector<ResourceRecord> &rrs ) const
+        {
+            std::vector<std::shared_ptr<RRSet> > rrsets;
+
+            for ( auto rr : rrs ) {
+                for ( auto rrset : rrsets ) {
+                    if ( rr.r_domainname == rrset->getOwner() &&
+                         rr.r_class      == rrset->getClass() && 
+                         rr.r_type       == rrset->getType()  ) {
+                        rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                    }
+                    else {
+                        std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.r_domainname, rr.r_class, rr.r_type, rr.r_ttl ) ) );
+                        new_rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                        rrsets.push_back( new_rrset );
+                    }
+                }
+            }
+
+            return rrsets;
         }
     };
  

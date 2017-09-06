@@ -1382,7 +1382,6 @@ namespace dns
 	for ( Type t : types ) {
 	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t ) / 8 + 1 );
 	}
-        std::cout << "window size" << (int)max_bytes << std::endl;
 	return max_bytes;
     }
 
