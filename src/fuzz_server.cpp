@@ -101,6 +101,22 @@ namespace dns
             signSection( modified_response.authority_section );
             signSection( modified_response.additional_infomation_section );
 
+            if ( ! getRandom( 5 ) ) {
+                ResourceRecord opt_pseudo_rr = generate_opt_pseudo_record( modified_response.opt_pseudo_rr );
+                RRSet rrset( opt_pseudo_rr.r_domainname,
+                             opt_pseudo_rr.r_class,
+                             opt_pseudo_rr.r_type,
+                             opt_pseudo_rr.r_ttl );
+
+                std::shared_ptr<RRSet> rrsig = signRRSet( rrset );
+                ResourceRecord rrsig_rr;
+                rrsig_rr.r_domainname = rrsig->getOwner();
+                rrsig_rr.r_class      = rrsig->getClass();
+                rrsig_rr.r_type       = rrsig->getType();
+                rrsig_rr.r_resource_data = (*rrsig)[0];
+                modified_response.pushAdditionalInfomationSection( rrsig_rr );
+            }
+
             return modified_response;
         }
 
