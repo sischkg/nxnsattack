@@ -43,7 +43,7 @@ namespace dns
 	return private_key;
     }
 
-    std::shared_ptr<PrivateKeyImp> PrivateKeyImp::loadConfig( const std::string &config_filename )
+    std::vector<std::shared_ptr<PrivateKeyImp>> PrivateKeyImp::loadConfig( const std::string &config_filename )
     {
         std::ifstream fs( config_filename );
         std::istreambuf_iterator<char> begin( fs );
@@ -57,7 +57,7 @@ namespace dns
     }
 
 
-    std::shared_ptr<PrivateKeyImp> PrivateKeyImp::load( const std::string &config )
+    std::vector<std::shared_ptr<PrivateKeyImp>> PrivateKeyImp::load( const std::string &config )
     {
         YAML::Node top;
         try {
@@ -68,25 +68,35 @@ namespace dns
             throw std::runtime_error( "cannot load private key " + config + ": " + e.what() );
         }
 
-        KeyType     key_type    = ZSK;
-        EVP_PKEY   *private_key = nullptr;
-        uint16_t    tag         = 0;
-        uint32_t    not_before  = 0;
-        uint32_t    not_after   = 0;
-        Domainname  domain;
+	std::vector<std::shared_ptr<PrivateKeyImp>> keys;
+	for ( auto key_config = top.begin() ; key_config != top.end() ; key_config++ ) {
+	
+	    KeyType     key_type    = ZSK;
+	    EVP_PKEY   *private_key = nullptr;
+	    uint16_t    tag         = 0;
+	    uint32_t    not_before  = 0;
+	    uint32_t    not_after   = 0;
+	    Domainname  domain;
 
-        std::string key_type_name = loadParameter<std::string>( top, "type" );
-        if ( key_type_name == "ksk" ) 
-            key_type = KSK;
+	    std::string key_type_name = loadParameter<std::string>( *key_config, "type" );
+	    if ( key_type_name == "ksk" )
+		key_type = KSK;
    
-        private_key = loadPrivateKey( loadParameter<std::string>( top, "key_file" ) );
+	    private_key = loadPrivateKey( loadParameter<std::string>( *key_config, "key_file" ) );
 
-        tag        = loadParameter<uint16_t>( top, "tag" );
-        not_before = loadParameter<uint32_t>( top, "not_before" );
-        not_after  = loadParameter<uint32_t>( top, "not_after" );
-        domain     = loadParameter<std::string>( top, "domain" );
+	    tag        = loadParameter<uint16_t>( *key_config, "tag" );
+	    not_before = loadParameter<uint32_t>( *key_config, "not_before" );
+	    not_after  = loadParameter<uint32_t>( *key_config, "not_after" );
+	    domain     = loadParameter<std::string>( *key_config, "domain" );
 
-        return std::shared_ptr<PrivateKeyImp>( new PrivateKeyImp( key_type, private_key, tag, not_before, not_after, domain ) );
+	    keys.push_back( std::shared_ptr<PrivateKeyImp>( new PrivateKeyImp( key_type,
+									       private_key,
+									       tag,
+									       not_before,
+									       not_after,
+									       domain ) ) );
+	}
+        return keys;
     }
 
 
@@ -110,14 +120,16 @@ namespace dns
         std::runtime_error( err.str() );
     }
 
-    ZoneSignerImp::ZoneSignerImp( const Domainname &apex, const std::string &ksk_filename, const std::string &zsk_filename )
+    ZoneSignerImp::ZoneSignerImp( const Domainname &apex,
+				  const std::string &ksk_filename,
+				  const std::string &zsk_filename )
         : mApex( apex ), mMDContext( nullptr )
     {
 	try {
-            mKSK = PrivateKeyImp::loadConfig( ksk_filename );
-            mZSK = PrivateKeyImp::loadConfig( zsk_filename );
+	    mKSKs = PrivateKeyImp::loadConfig( ksk_filename );
+	    mZSKs = PrivateKeyImp::loadConfig( zsk_filename );
 
-	    mMDContext = EVP_MD_CTX_create();
+	    mMDContext = EVP_MD_CTX_new();
 	    if ( ! mMDContext ) {
 		throwException( "cannot create MD_CTX" );
 	    }
@@ -142,64 +154,24 @@ namespace dns
 	
 
 	unsigned int digest_length = EVP_MAX_MD_SIZE;
-	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex( mdctx, EVP_sha1(), NULL);
+        EVP_DigestInit_ex( mMDContext, EVP_sha1(), NULL);
 
 	std::vector<uint8_t> digest_target = message.get();
-	int res = EVP_DigestUpdate( mdctx, &digest_target[0], digest_target.size() );
-				    /*
-				    message.foreachBuffers(
-			       [mdctx]( const uint8_t *begin, const uint8_t *end ) {
-				   int res = EVP_DigestUpdate( mdctx, begin, end - begin );
-				   if ( res != 1 ) {
-				       throwException( "cannot update DigestUpdate" );
-				   }
-			       } );
-				    */
+	int res = EVP_DigestUpdate( mMDContext, &digest_target[0], digest_target.size() );
 
         std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
-        EVP_DigestFinal_ex( mdctx, &digest[0], &digest_length );
+        EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
         digest.resize( digest_length );
-        EVP_MD_CTX_free( mdctx );
 
 	RSA* rsa = EVP_PKEY_get0_RSA( key.getPrivateKey() );
 	unsigned int signature_length = RSA_size( rsa );
  	signature.resize( signature_length );
 	int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
-        std::cerr << "sign:" << message.size() << std::endl;
+
         if ( result != 1 ) {
             throwException( "RSA_sign failed" );
         }
 	signature.resize( signature_length );
-	/*
-
-        int result =  EVP_DigestSignInit( mMDContext, NULL, enumToSignMD( algo ), NULL, key.getPrivateKey() );
-        if ( result != 1 ) {
-            throwException( "cannot initialize DigestSign" );
-        }
-
-	message.foreachBuffers(
-			       [this]( const uint8_t *begin, const uint8_t *end ) {
-				   int res = EVP_DigestSignUpdate( this->mMDContext, begin, end - begin );
-				   if ( res != 1 ) {
-				       throwException( "cannot update DigestSign" );
-				   }
-			       } );
-
-        size_t sign_length;
-        result = EVP_DigestSignFinal( mMDContext, NULL, &sign_length );
-        if ( result != 1 ) {
-            throwException( "cannot fetch result buffer length" );
-        }
-
-        signature.resize( sign_length );
-
-        result = EVP_DigestSignFinal( mMDContext, &signature[0], &sign_length );
-        if ( result != 1 ) {
-            ERR_print_errors_fp(stderr);
-            throw std::runtime_error( "cannot create signature" );
-        }
-	*/
     }
 
     void ZoneSignerImp::generateSignData( const RRSet &rrset, const PrivateKeyImp &key, WireFormat &sign_target ) const
@@ -272,22 +244,20 @@ namespace dns
 
     std::shared_ptr<RRSet> ZoneSignerImp::signRRSet( const RRSet &rrset ) const
     {
-        std::vector<std::shared_ptr<PrivateKeyImp> > keys;
-        keys.push_back( mZSK );
-	return signRRSetByKeys( rrset, keys );
+	return signRRSetByKeys( rrset, mZSKs );
     }
 
     std::shared_ptr<RRSet> ZoneSignerImp::signDNSKEY( TTL ttl ) const
     {
 	std::vector<std::shared_ptr<RecordDNSKEY>> dnskeys = getDNSKEYRecords();
-	RRSet rrset( mKSK->getDomainname(), CLASS_IN, TYPE_DNSKEY, ttl );
+	RRSet rrset( mApex, CLASS_IN, TYPE_DNSKEY, ttl );
 	for ( auto k : dnskeys )
 	    rrset.add( k );
 
         std::vector<std::shared_ptr<PrivateKeyImp> > keys;
-        keys.push_back( mKSK );
-        keys.push_back( mZSK );
-        std::cerr << "signDNSKEY:" << rrset.getOwner().toString() << std::endl;
+        keys.insert( keys.end(), mKSKs.begin(), mKSKs.end() );
+        keys.insert( keys.end(), mZSKs.begin(), mZSKs.end() );
+
 	return signRRSetByKeys( rrset, keys );
     }
 
@@ -318,30 +288,30 @@ namespace dns
     std::vector<std::shared_ptr<RecordDNSKEY>> ZoneSignerImp::getDNSKEYRecords() const
     {
         std::vector<std::shared_ptr<RecordDNSKEY>> result;
-        result.push_back( getDNSKEYRecord( *mKSK ) );
-        result.push_back( getDNSKEYRecord( *mZSK ) );
+	for ( auto ksk : mKSKs )
+	    result.push_back( getDNSKEYRecord( *ksk ) );
+	for ( auto zsk : mZSKs )
+	    result.push_back( getDNSKEYRecord( *zsk ) );
         return result;
     }
 
-    std::shared_ptr<RecordDS> ZoneSignerImp::getDSRecord( HashAlgorithm algo ) const
+    std::shared_ptr<RecordDS> ZoneSignerImp::getDSRecord( const PrivateKeyImp &ksk, HashAlgorithm algo ) const
     {
         WireFormat hash_target;
-        mKSK->getDomainname().outputCanonicalWireFormat( hash_target );
-        std::shared_ptr<RecordDNSKEY> dnskey = getDNSKEYRecord( *mKSK );
+        ksk.getDomainname().outputCanonicalWireFormat( hash_target );
+        std::shared_ptr<RecordDNSKEY> dnskey = getDNSKEYRecord( ksk );
         dnskey->outputWireFormat( hash_target );
         std::vector<uint8_t> hash_target_data = hash_target.get();
 
         unsigned int digest_length = EVP_MAX_MD_SIZE;
-        EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-        EVP_DigestInit_ex( mdctx, enumToDigestMD( algo ), NULL);
-        EVP_DigestUpdate( mdctx, &hash_target_data[0], hash_target_data.size() );
+        EVP_DigestInit_ex( mMDContext, enumToDigestMD( algo ), NULL);
+        EVP_DigestUpdate( mMDContext, &hash_target_data[0], hash_target_data.size() );
         std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
-        EVP_DigestFinal_ex( mdctx, &digest[0], &digest_length );
+        EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
         digest.resize( digest_length );
-        EVP_MD_CTX_free( mdctx );
 
-        return std::shared_ptr<RecordDS>( new RecordDS( getKeyTag( *mKSK ),
-                                                        mKSK->getAlgorithm(),
+        return std::shared_ptr<RecordDS>( new RecordDS( getKeyTag( ksk ),
+                                                        ksk.getAlgorithm(),
                                                         algo,
                                                         digest ) );
     }
@@ -349,8 +319,10 @@ namespace dns
     std::vector<std::shared_ptr<RecordDS>> ZoneSignerImp::getDSRecords() const
     {
         std::vector<std::shared_ptr<RecordDS>> result;
-        result.push_back( getDSRecord( DNSSEC_SHA1 ) );
-        result.push_back( getDSRecord( DNSSEC_SHA256 ) );
+	for ( auto ksk : mKSKs ) {
+	    result.push_back( getDSRecord( *ksk, DNSSEC_SHA1 ) );
+	    result.push_back( getDSRecord( *ksk, DNSSEC_SHA256 ) );
+	}
         return result;
     }
 
@@ -396,17 +368,22 @@ namespace dns
 	return std::shared_ptr<RSAPublicKey>( new RSAPublicKey( public_exponent_buf, modulus_buf ) );
     }
 
-    std::shared_ptr<PublicKey> ZoneSignerImp::getKSKPublicKey() const
+    std::vector<std::shared_ptr<PublicKey>> ZoneSignerImp::getKSKPublicKeys() const
     {
-	return getPublicKey( mKSK->getPrivateKey() );
+	std::vector<std::shared_ptr<PublicKey> > keys;
+	for ( auto ksk : mKSKs )
+	    keys.push_back( getPublicKey(  ksk->getPrivateKey() ) );
+	return keys;
     }
 
-    std::shared_ptr<PublicKey> ZoneSignerImp::getZSKPublicKey() const
+    std::vector<std::shared_ptr<PublicKey>> ZoneSignerImp::getZSKPublicKeys() const
     {
-	return getPublicKey( mZSK->getPrivateKey() );
+	std::vector<std::shared_ptr<PublicKey> > keys;
+	for ( auto zsk : mZSKs )
+	    keys.push_back( getPublicKey(  zsk->getPrivateKey() ) );
+	return keys;
     }
 
-    
     /*******************************************************************************************
      * RSAPublicKeyImp
      *******************************************************************************************/

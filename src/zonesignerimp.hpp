@@ -35,8 +35,8 @@ namespace dns
         uint32_t  getNotAfter() const  { return mNotAfter; }
         const Domainname getDomainname() const { return mDomainname; }
 
-        static std::shared_ptr<PrivateKeyImp> load( const std::string &config );
-        static std::shared_ptr<PrivateKeyImp> loadConfig( const std::string &config_file );
+	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
+        static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
     private:
         KeyType     mKeyType;
         EVP_PKEY   *mPrivateKey;
@@ -71,19 +71,22 @@ namespace dns
     private:
         Domainname  mApex;
         EVP_MD_CTX *mMDContext;
-        std::shared_ptr<PrivateKeyImp> mKSK;
-        std::shared_ptr<PrivateKeyImp> mZSK;
+	std::vector< std::shared_ptr<PrivateKeyImp> > mKSKs;
+        std::vector< std::shared_ptr<PrivateKeyImp> > mZSKs;
 
         uint16_t getKeyTag( const PrivateKeyImp &key ) const;
 	std::shared_ptr<RecordRRSIG> generateRRSIG( const RRSet &, const PrivateKeyImp &key ) const;
-	std::shared_ptr<RRSet> signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
+	std::shared_ptr<RRSet>       signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
+        std::shared_ptr<RecordDS>     getDSRecord( const PrivateKeyImp &ksk, HashAlgorithm algo ) const;
+        std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
+
         static void      throwException( const char *message, const char *other = nullptr );
 	static std::shared_ptr<PublicKey> getPublicKey( EVP_PKEY *private_key );
         static const EVP_MD *enumToDigestMD( HashAlgorithm );
         static const EVP_MD *enumToSignMD( SignAlgorithm );
 
     public:
-        ZoneSignerImp( const Domainname &d, const std::string &ksk, const std::string &zsk );
+        ZoneSignerImp( const Domainname &d, const std::string &ksks, const std::string &zsks );
         ~ZoneSignerImp();
 
 	void sign( const WireFormat &message,
@@ -91,11 +94,9 @@ namespace dns
 		   const PrivateKeyImp &key,
 		   SignAlgorithm algo ) const;
 
-	std::shared_ptr<PublicKey> getKSKPublicKey() const;
-	std::shared_ptr<PublicKey> getZSKPublicKey() const;
+	std::vector<std::shared_ptr<PublicKey>> getKSKPublicKeys() const;
+	std::vector<std::shared_ptr<PublicKey>> getZSKPublicKeys() const;
 
-        std::shared_ptr<RecordDS>     getDSRecord( HashAlgorithm algo ) const;
-        std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
         std::vector<std::shared_ptr<RecordDS> >     getDSRecords() const;
         std::vector<std::shared_ptr<RecordDNSKEY> > getDNSKEYRecords() const;
 

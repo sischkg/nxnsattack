@@ -50,13 +50,13 @@ namespace dns
     class ZoneSigner
     {
     public:
-        ZoneSigner( const Domainname &d, const std::string &ksk, const std::string &zsk );
+        ZoneSigner( const Domainname &d, const std::string &ksks, const std::string &zsk );
 
 	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
 	std::shared_ptr<RRSet> signDNSKEY( TTL ttl ) const;
 
-	std::shared_ptr<PublicKey> getKSKPublicKey() const;
-	std::shared_ptr<PublicKey> getZSKPublicKey() const;
+	std::vector<std::shared_ptr<PublicKey>> getKSKPublicKeys() const;
+	std::vector<std::shared_ptr<PublicKey>> getZSKPublicKeys() const;
 
         std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
         std::vector<std::shared_ptr<RecordDNSKEY>> getDNSKEYRecords() const;
