@@ -1551,13 +1551,116 @@ namespace dns
 	return next_domainname.size() + bitmaps.size();
     }
 
-    RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNSEC::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
     {
 	Domainname next;
 	const uint8_t *pos = Domainname::parsePacket( next, packet, begin );
 	NSECBitmapField bitmaps;
 	NSECBitmapField::parse( bitmaps, packet, pos, end );
 	return RDATAPtr( new RecordNSEC( next, bitmaps ) );
+    }
+
+
+    RecordNSEC3::RecordNSEC3( HashAlgorithm               algo,
+			      uint8_t                     flag,
+			      uint16_t                    iteration,
+			      const std::vector<uint8_t> &salt,
+			      const std::vector<uint8_t> &next_hash,
+			      const std::vector<Type>    &types )
+	: mHashAlgorithm( algo ),
+	  mFlag( flag ),
+	  mIteration( iteration ),
+	  mSalt( salt ),
+	  mNextHash( next_hash )
+    {
+        for ( auto t : types ) {
+            mBitmaps.add( t );
+        }
+    }
+
+    std::string RecordNSEC3::toZone() const
+    {
+	return toZone();
+    }
+
+    std::string RecordNSEC3::toString() const
+    {
+	std::string salt_string;
+	encodeToHex( mSalt, salt_string );
+	
+	std::string hash_string;
+	encodeToBase32Hex( mNextHash, hash_string );
+
+	std::stringstream os;
+	os << (uint32_t)mHashAlgorithm << " "
+	   << (uint32_t)mFlag          << " "
+	   << (uint32_t)mIteration     << " "
+	   << salt_string              << " "
+	   << hash_string              << " "
+	   << mBitmaps.toString();
+	return os.str();
+    }
+
+    void RecordNSEC3::outputWireFormat( WireFormat &message ) const
+    {
+	message.pushUInt8( mHashAlgorithm );
+	message.pushUInt8( mFlag );
+	message.pushUInt16HtoN( mIteration );
+	message.pushUInt8( mSalt.size() );
+	message.pushBuffer( mSalt );
+	message.pushUInt8( mNextHash.size() );
+	message.pushBuffer( mNextHash );
+	mBitmaps.outputWireFormat( message );
+    }
+
+    void RecordNSEC3::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
+    uint16_t RecordNSEC3::size() const
+    {
+	return
+	    + 1                 // Hash Algorithm
+	    + 1                 // Flags
+	    + 2                 // Iteration
+	    + 1                 // Salt size
+	    + mSalt.size()      // Salt
+	    + 1                 // Next Hash size
+	    + mNextHash.size()  // Hash
+	    + mBitmaps.size();  // Bitmaps
+    }
+
+    RDATAPtr RecordNSEC3::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+	//                alg flag itr ssize salt hsize hash bitmaps   
+	if ( end - begin < 1 + 1  + 2  + 1   + 1   + 1   + 1 + 3 ) {
+	    throw std::runtime_error( "too few size for NSEC3" );
+	}
+        const uint8_t *      pos   = begin;
+	uint8_t  algo      = get_bytes<uint8_t>( &pos );
+	uint8_t  flag      = get_bytes<uint8_t>( &pos );
+        uint16_t iteration = ntohs( get_bytes<uint16_t>( &pos ) );
+
+        uint8_t salt_size = get_bytes<uint8_t>( &pos );
+	if ( end - pos < salt_size + 1 + 1 + 3 ) {
+	    throw std::runtime_error( "too few size for salt,hash,bitmaps of NSEC3" );
+	}
+	std::vector<uint8_t> salt;
+	salt.insert( salt.end(), pos, pos + salt_size );
+	pos += salt_size;
+
+        uint8_t next_hash_size = get_bytes<uint8_t>( &pos );
+	if ( end - pos < next_hash_size + 3 ) {
+	    throw std::runtime_error( "too few size for hash,bitmaps of NSEC3" );
+	}
+	std::vector<uint8_t> next_hash;
+	next_hash.insert( next_hash.end(), pos, pos + next_hash_size );
+	pos += next_hash_size;
+
+	NSECBitmapField bitmaps;
+	NSECBitmapField::parse( bitmaps, packet, pos, end );
+	return RDATAPtr( new RecordNSEC3( algo, flag, iteration, salt, next_hash, bitmaps ) );
     }
 
 

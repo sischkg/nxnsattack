@@ -494,3 +494,217 @@ std::string printPacketData( const PacketData &p )
 
     return os.str();
 }
+
+
+//   +--first octet--+-second octet--+--third octet--+-fourth octet--+--fifth octet--+
+//   |7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|
+//   +---------+-----+---+---------+-+-------+-------+-+---------+---+-----+---------+
+//   |4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|
+//   +-1.index-+-2.index-+-3.index-+-4.index-+-5.index-+-6.index-+-7.index-+-8.index-|
+//   +    a1   | b1  |b2 |    c1   |d1| d2   |  e1  |e2| f1      | g1| g2  |  h1     |
+//   +---------+-----+---+---------+--+------+------+--+---------+---+-----+---------+
+
+union Base32Field {
+    Base32Field()
+    {
+        std::memset( array, sizeof(array), 0 );
+    }
+    uint8_t array[ 5 ];
+    struct {
+        uint8_t b1 : 3;
+        uint8_t a1 : 5;
+	uint8_t b2 : 2;
+        uint8_t c1 : 5;
+        uint8_t d1 : 1;
+        uint8_t d2 : 4;
+        uint8_t e1 : 4;
+        uint8_t e2 : 1;
+        uint8_t f1 : 5;
+        uint8_t g1 : 2;
+        uint8_t g2 : 3;
+        uint8_t h1 : 5;
+    } base32;
+    struct {
+        uint8_t a : 5;
+        uint8_t b : 5;
+        uint8_t c : 5;
+        uint8_t d : 5;
+        uint8_t e : 5;
+        uint8_t f : 5;
+        uint8_t g : 5;
+        uint8_t h : 5;
+    } b;
+};
+
+static const char to_base32_hex[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+
+static char convertToBase32Hex( uint8_t v )
+{
+    if ( v >= sizeof(to_base32_hex) ) {
+        std::ostringstream os;
+        os << "invalid base32 data \"" << (int)v << "\"";
+        throw std::logic_error( os.str() );
+    }
+
+    return to_base32_hex[ v ];
+}
+
+void encodeToBase32Hex( const std::vector<uint8_t> &src, std::string &dst )
+{
+    dst.clear();
+
+    const uint8_t *pos = &src[0];
+    const uint8_t *end = &src[0] + src.size();
+    
+    while ( pos + 4 < end ) {
+        uint8_t array[5];
+        array[ 0 ] = *pos++;
+        array[ 1 ] = *pos++;
+        array[ 2 ] = *pos++;
+        array[ 3 ] = *pos++;
+        array[ 4 ] = *pos++;
+
+        dst.push_back( convertToBase32Hex( ( array[0] >> 3 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x07 & array[0] ) << 2 ) + ( array[1] >> 6 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x3f & array[1] ) >> 1 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x01 & array[1] ) << 4 ) + ( array[2] >> 4 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x0f & array[2] ) << 1 ) + ( array[3] >> 7 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x7f & array[3] ) >> 2 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x03 & array[3] ) << 3 ) + ( array[4] >> 5 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x1f & array[4] ) >> 0 ) ) );
+    }
+    if ( pos + 4 == end ) {
+        uint8_t array[5];
+        array[ 0 ] = *pos++;
+        array[ 1 ] = *pos++;
+        array[ 2 ] = *pos++;
+        array[ 3 ] = *pos++;
+        array[ 4 ] = 0;
+
+        dst.push_back( convertToBase32Hex( ( array[0] >> 3 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x07 & array[0] ) << 2 ) + ( array[1] >> 6 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x3f & array[1] ) >> 1 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x01 & array[1] ) << 4 ) + ( array[2] >> 4 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x0f & array[2] ) << 1 ) + ( array[3] >> 7 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x7f & array[3] ) >> 2 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x03 & array[3] ) << 3 ) + ( array[4] >> 5 ) ) );
+    }
+    if ( pos + 3 == end ) {   
+        uint8_t array[4];
+        array[ 0 ] = *pos++;
+        array[ 1 ] = *pos++;
+        array[ 2 ] = *pos++;
+        array[ 3 ] = 0;
+
+        dst.push_back( convertToBase32Hex( ( array[0] >> 3 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x07 & array[0] ) << 2 ) + ( array[1] >> 6 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x3f & array[1] ) >> 1 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x01 & array[1] ) << 4 ) + ( array[2] >> 4 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x0f & array[2] ) << 1 ) + ( array[3] >> 7 ) ) );
+    }
+    if ( pos + 2 == end ) {
+        uint8_t array[3];
+        array[ 0 ] = *pos++;
+        array[ 1 ] = *pos++;
+        array[ 2 ] = 0;
+
+        dst.push_back( convertToBase32Hex( ( array[0] >> 3 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x07 & array[0] ) << 2 ) + ( array[1] >> 6 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x3f & array[1] ) >> 1 ) ) );
+	dst.push_back( convertToBase32Hex( ( ( 0x01 & array[1] ) << 4 ) + ( array[2] >> 4 ) ) );
+    }
+    if ( pos + 1 == end ) {
+        uint8_t array[2];
+        array[ 0 ] = *pos++;
+        array[ 1 ] = 0;
+
+        dst.push_back( convertToBase32Hex( ( array[0] >> 3 ) ) );
+        dst.push_back( convertToBase32Hex( ( ( 0x07 & array[0] ) << 2 ) + ( array[1] >> 6 ) ) );
+    }
+}
+
+static uint8_t  from_base32_hex[] = {
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 0
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 10
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 20
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 30
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01, // 40 0 - 1
+    0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xff, 0xff, // 50 2 - 9
+    0xff, 0xff, 0xff, 0xff, 0xff, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, // 60 A - E
+    0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, // 70 F - O
+    0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0xff, 0xff, 0xff, // 80 P - V
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 90
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 100
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 110
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 120
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 130
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 140
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 150
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 160
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 170
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 180
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 190
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 200
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 210
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 220
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 230
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // 240
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff                          // 250
+};
+
+static uint8_t convertFromBase32Hex( char c )
+{
+    uint8_t d = from_base32_hex[ (uint8_t)c ];
+    if ( d == 0xff ) {
+        std::ostringstream os;
+        os << "invalid base32 data \'" << (uint32_t)c << "\'";
+        throw std::runtime_error( os.str() );
+    }
+    return d;
+}
+
+
+void decodeFromBase32Hex( const std::string &src, std::vector<uint8_t> &dst )
+{
+    dst.clear();
+    if ( src.size() == 0 ) {
+        return;
+    }
+    
+    const char *begin = src.c_str();
+    const char *end   = begin + src.size();
+    const char *pos   = begin;
+
+    //   +--first octet--+-second octet--+--third octet--+-fourth octet--+--fifth octet--+
+    //   |7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|7 6 5 4 3 2 1 0|
+    //   +---------+-----+---+---------+-+-------+-------+-+---------+---+-----+---------+
+    //   |4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|4 3 2 1 0|
+    //   +-1.index-+-2.index-+-3.index-+-4.index-+-5.index-+-6.index-+-7.index-+-8.index-|
+    //   +    a1   | b1  |b2 |    c1   |d1| d2   |  e1  |e2| f1      | g1| g2  |  h1     |
+    //   +---------+-----+---+---------+--+------+------+--+---------+---+-----+---------+
+    while ( pos + 7 < end ) {
+        dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 3 ) + ( convertFromBase32Hex( *( pos + 1 ) ) >> 2 ) );
+        dst.push_back( ( convertFromBase32Hex( *( pos + 1 ) ) << 6 ) + ( convertFromBase32Hex( *( pos + 2 ) ) << 1 ) + ( convertFromBase32Hex( *( pos + 3 ) ) >> 4 ) );
+        dst.push_back( ( convertFromBase32Hex( *( pos + 3 ) ) << 4 ) + ( convertFromBase32Hex( *( pos + 4 ) ) >> 1 ) );
+        dst.push_back( ( convertFromBase32Hex( *( pos + 4 ) ) << 7 ) + ( convertFromBase32Hex( *( pos + 5 ) ) << 2 ) + ( convertFromBase32Hex( *( pos + 6 ) ) >> 3 ) );
+        dst.push_back( ( convertFromBase32Hex( *( pos + 6 ) ) << 5 ) + ( convertFromBase32Hex( *( pos + 7 ) )      ) );
+        pos += 8;
+    }
+
+    if ( pos + 2 <= end ) {
+        dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 3 ) + ( convertFromBase32Hex( *( pos + 1 ) ) >> 2 ) );
+        pos += 1;
+    }
+    if ( pos + 3 <= end ) {
+        dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 6 ) + ( convertFromBase32Hex( *( pos + 1 ) ) << 1 ) + ( convertFromBase32Hex( *( pos + 2 ) ) >> 4 ) );
+        pos += 2;
+    }
+    if ( pos + 2 <= end ) {
+        dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 4 ) + ( convertFromBase32Hex( *( pos + 1 ) ) >> 1 ) );
+        pos += 1;
+    }
+    if ( pos + 3 <= end ) {
+        dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 7 ) + ( convertFromBase32Hex( *( pos + 1 ) ) << 2 ) + ( convertFromBase32Hex( *( pos + 2 ) ) >> 3 ) );
+        pos += 3;
+    }
+}

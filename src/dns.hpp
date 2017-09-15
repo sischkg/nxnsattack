@@ -764,6 +764,63 @@ namespace dns
         static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
+    class RecordNSEC3 : public RDATA
+    {
+    public:
+	typedef uint8_t HashAlgorithm;
+    private:
+	HashAlgorithm        mHashAlgorithm;
+	uint8_t              mFlag;
+	uint16_t             mIteration;
+	std::vector<uint8_t> mSalt;
+	std::vector<uint8_t> mNextHash;
+        NSECBitmapField      mBitmaps;
+
+    public:
+	RecordNSEC3( HashAlgorithm              algo,
+		     uint8_t                    flag,
+		     uint16_t                   iteration,
+		     const std::vector<uint8_t> &salt,
+		     const std::vector<uint8_t> &next_hash,
+		     const std::vector<Type>    &bitmaps );
+	RecordNSEC3( HashAlgorithm               algo,
+		     uint8_t                     flag,
+		     uint16_t                    iteration,
+		     const std::vector<uint8_t> &salt,
+		     const std::vector<uint8_t> &next_hash,
+		     const NSECBitmapField      &bitmaps )
+	    : mHashAlgorithm( algo ),
+	      mFlag( flag ),
+	      mIteration( iteration ),
+	      mSalt( salt ),
+	      mNextHash( next_hash ),
+	      mBitmaps( bitmaps )
+	{}
+	
+	HashAlgorithm        getHashAlgoritm() const { return mHashAlgorithm; }
+	uint8_t              getFlag() const { return mFlag; }
+	uint16_t             getIteration() const { return mIteration; }
+	std::vector<uint8_t> getSalt() const { return mSalt; }
+	std::vector<uint8_t> getNextHash() const { return mNextHash; }
+        std::vector<Type>    getTypes() const { return mBitmaps.getTypes(); }
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_NSEC3;
+        }
+	virtual RecordNSEC3 *clone() const
+	{
+	    return new RecordNSEC3( mHashAlgorithm, mFlag, mIteration, mSalt, mNextHash, mBitmaps.getTypes() );
+	}
+	
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
 
     const uint8_t PROTOCOL_TLS    = 0x01;
     const uint8_t PROTOCOL_MAIL   = 0x02;

@@ -65,6 +65,9 @@ uint8_t *decode_from_base64( const char *begin, const char *end, uint8_t *output
 uint8_t *decode_from_base64( const char *data, uint8_t *output );
 void decode_from_base64( const std::string &, std::vector<uint8_t> & );
 
+void encodeToBase32Hex( const std::vector<uint8_t> &, std::string & );
+void decodeFromBase32Hex( const std::string &, std::vector<uint8_t> & );
+
 uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end );
 uint32_t decode_from_base64_size( const char *begin, const char *end );
 
