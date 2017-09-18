@@ -36,7 +36,8 @@ namespace dns
         const Domainname  getDomainname() const { return mDomainname; }
 
 	std::shared_ptr<PublicKey> getPublicKey() const;
-	
+	void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+
 	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
         static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
     private:
@@ -95,11 +96,6 @@ namespace dns
 	std::shared_ptr<RRSet>        signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
         std::shared_ptr<RecordDS>     getDSRecord( const PrivateKeyImp &ksk, HashAlgorithm algo ) const;
         std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
-
-        static void      throwException( const char *message, const char *other = nullptr );
-
-       static const EVP_MD *enumToDigestMD( HashAlgorithm );
-        static const EVP_MD *enumToSignMD( SignAlgorithm );
 
     public:
         ZoneSignerImp( const Domainname &d, const std::string &ksks, const std::string &zsks );

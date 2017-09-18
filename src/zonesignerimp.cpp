@@ -25,7 +25,52 @@ namespace dns
 
 	throw std::runtime_error( "unknown algorithm \"" + str + "\"" );
     }
-    
+
+    static const EVP_MD *enumToDigestMD( HashAlgorithm algo )
+    {
+        switch ( algo ) {
+        case DNSSEC_SHA1:
+            return EVP_sha1();
+        case DNSSEC_SHA256:
+            return EVP_sha256();
+        case DNSSEC_SHA384:
+            return EVP_sha384();
+        default:
+            throw std::runtime_error( "unknown hash algorighm for DS" );
+        }
+    }
+
+    static const EVP_MD *enumToSignMD( SignAlgorithm algo )
+    {
+        switch ( algo ) {
+        case DNSSEC_RSASHA1:
+            return EVP_sha1();
+        case DNSSEC_ECDSASHA256:
+            return EVP_sha256();
+        case DNSSEC_ECDSASHA384:
+            return EVP_sha384();
+        default:
+            throw std::runtime_error( "unknown hash algorighm for RRSIG" );
+        }
+    }
+
+    static void throwException( const char *message, const char *other = nullptr )
+    {
+        unsigned int code = ERR_get_error();
+        char openssl_error[1024];
+        std::memset( openssl_error, 0, sizeof(openssl_error) );
+        ERR_error_string_n( code, openssl_error, sizeof(openssl_error) );
+ 
+        std::ostringstream err;
+        err << message;
+        if ( other != nullptr )
+            err << "\"" << other << "\"";
+        err << "(" << openssl_error << ")";
+
+        std::runtime_error( err.str() );
+    }
+
+
     /*******************************************************************************************
      * PrivateKeyImp
      *******************************************************************************************/
@@ -140,25 +185,56 @@ namespace dns
 	}
     }
 
+    void PrivateKeyImp::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, std::vector<uint8_t> &signature ) const
+    {
+	unsigned int digest_length = EVP_MAX_MD_SIZE;
+	const EVP_MD *sign_algo = enumToSignMD( getAlgorithm() );
+
+	if ( getAlgorithm() == DNSSEC_RSASHA1 ) {
+	    EVP_DigestInit_ex( md_ctx, sign_algo, NULL);
+
+	    std::vector<uint8_t> digest_target = message.get();
+	    int res = EVP_DigestUpdate( md_ctx, &digest_target[0], digest_target.size() );
+
+	    std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	    EVP_DigestFinal_ex( md_ctx, &digest[0], &digest_length );
+	    digest.resize( digest_length );
+
+	    RSA* rsa = EVP_PKEY_get0_RSA( getPrivateKey() );
+	    unsigned int signature_length = RSA_size( rsa );
+	    signature.resize( signature_length );
+	    int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
+
+	    if ( result != 1 ) {
+		throwException( "RSA_sign failed" );
+	    }
+	    signature.resize( signature_length );
+	}
+	else if ( getAlgorithm() == DNSSEC_ECDSASHA256 ) {
+	    EVP_DigestInit_ex( md_ctx, sign_algo, NULL);
+
+	    std::vector<uint8_t> digest_target = message.get();
+	    int res = EVP_DigestUpdate( md_ctx, &digest_target[0], digest_target.size() );
+
+	    std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	    EVP_DigestFinal_ex( md_ctx, &digest[0], &digest_length );
+	    digest.resize( digest_length );
+
+	    EC_KEY *ec = EVP_PKEY_get1_EC_KEY( getPrivateKey() );
+	    unsigned int signature_length = ECDSA_size( ec );
+	    signature.resize( signature_length );
+	    int result = ECDSA_sign( 0, &digest[0], digest_length, &signature[0], &signature_length, ec );
+
+	    if ( result != 1 ) {
+		throwException( "ECDSA_sign failed" );
+	    }
+	    signature.resize( signature_length );
+	}
+    }
+    
     /*******************************************************************************************
      * ZoneSingerImp
      *******************************************************************************************/
-
-    void ZoneSignerImp::throwException( const char *message, const char *other )
-    {
-        unsigned int code = ERR_get_error();
-        char openssl_error[1024];
-        std::memset( openssl_error, 0, sizeof(openssl_error) );
-        ERR_error_string_n( code, openssl_error, sizeof(openssl_error) );
- 
-        std::ostringstream err;
-        err << message;
-        if ( other != nullptr )
-            err << "\"" << other << "\"";
-        err << "(" << openssl_error << ")";
-
-        std::runtime_error( err.str() );
-    }
 
     ZoneSignerImp::ZoneSignerImp( const Domainname &apex,
 				  const std::string &ksk_filename,
@@ -392,34 +468,6 @@ namespace dns
     void ZoneSignerImp::initialize()
     {
         SSL_library_init();
-    }
-
-    const EVP_MD *ZoneSignerImp::enumToDigestMD( HashAlgorithm algo )
-    {
-        switch ( algo ) {
-        case DNSSEC_SHA1:
-            return EVP_sha1();
-        case DNSSEC_SHA256:
-            return EVP_sha256();
-        case DNSSEC_SHA384:
-            return EVP_sha384();
-        default:
-            throw std::runtime_error( "unknown hash algorighm for DS" );
-        }
-    }
-
-    const EVP_MD *ZoneSignerImp::enumToSignMD( SignAlgorithm algo )
-    {
-        switch ( algo ) {
-        case DNSSEC_RSASHA1:
-            return EVP_sha1();
-        case DNSSEC_ECDSASHA256:
-            return EVP_sha256();
-        case DNSSEC_ECDSASHA384:
-            return EVP_sha384();
-        default:
-            throw std::runtime_error( "unknown hash algorighm for RRSIG" );
-        }
     }
 
     std::vector<std::shared_ptr<PublicKey>> ZoneSignerImp::getKSKPublicKeys() const
