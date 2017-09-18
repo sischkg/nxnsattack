@@ -17,39 +17,55 @@ namespace dns
     /*
       type: KSK
       domain: example.com
-      tag: 12345
+      algorithm: RSASHA1
       not_before: 1502238577
-      not_after:  1502413242
-      key_file:   /etc/nsd/keys/Kexample.com.+008.123456
+      not_after: 1502413242
+      key_file: /etc/nsd/keys/example.com.ksk.key
     */
     class PrivateKeyImp : private boost::noncopyable
     {
     public:
         ~PrivateKeyImp();
 
-        KeyType   getKeyType() const   { return mKeyType; }
-        SignAlgorithm getAlgorithm() const { return DNSSEC_RSASHA1; }
-        EVP_PKEY *getPrivateKey() const { return mPrivateKey; }
-        uint16_t  getKeyTag() const { return mKeyTag; }
-        uint32_t  getNotBefore() const { return mNotBefore; }
-        uint32_t  getNotAfter() const  { return mNotAfter; }
-        const Domainname getDomainname() const { return mDomainname; }
+        KeyType           getKeyType() const    { return mKeyType; }
+        SignAlgorithm     getAlgorithm() const  { return mSignAlgorithm; }
+        EVP_PKEY         *getPrivateKey() const { return mPrivateKey; }
+        uint16_t          getKeyTag() const     { return mKeyTag; }
+        uint32_t          getNotBefore() const  { return mNotBefore; }
+        uint32_t          getNotAfter() const   { return mNotAfter; }
+        const Domainname  getDomainname() const { return mDomainname; }
 
+	std::shared_ptr<PublicKey> getPublicKey() const;
+	
 	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
         static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
     private:
-        KeyType     mKeyType;
-        EVP_PKEY   *mPrivateKey;
-        uint16_t    mKeyTag;
-        uint32_t    mNotBefore;
-        uint32_t    mNotAfter;
-        Domainname  mDomainname;
+        KeyType        mKeyType;
+	SignAlgorithm  mSignAlgorithm;
+        EVP_PKEY      *mPrivateKey;
+        uint16_t       mKeyTag;
+        uint32_t       mNotBefore;
+        uint32_t       mNotAfter;
+        Domainname     mDomainname;
 
-        PrivateKeyImp( KeyType key_type, EVP_PKEY *key, uint16_t tag, uint32_t not_before, uint32_t not_after, const Domainname &domain )
-            : mKeyType( key_type ), mPrivateKey( key ), mKeyTag( tag ), mNotBefore( not_before ), mNotAfter( not_after ), mDomainname( domain )
+        PrivateKeyImp( KeyType key_type,
+		       SignAlgorithm algo,
+		       EVP_PKEY *key,
+		       uint16_t tag,
+		       uint32_t not_before,
+		       uint32_t not_after,
+		       const Domainname &domain )
+            : mKeyType( key_type ),
+	      mSignAlgorithm( algo ),
+	      mPrivateKey( key ),
+	      mKeyTag( tag ),
+	      mNotBefore( not_before ),
+	      mNotAfter( not_after ),
+	      mDomainname( domain )
         {}
 
         static EVP_PKEY *loadPrivateKey( const std::string &key_file );
+
         template<typename TYPE>
         static TYPE loadParameter( const YAML::Node &node, const std::string param_name )
         {
@@ -75,14 +91,14 @@ namespace dns
         std::vector< std::shared_ptr<PrivateKeyImp> > mZSKs;
 
         uint16_t getKeyTag( const PrivateKeyImp &key ) const;
-	std::shared_ptr<RecordRRSIG> generateRRSIG( const RRSet &, const PrivateKeyImp &key ) const;
-	std::shared_ptr<RRSet>       signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
+	std::shared_ptr<RecordRRSIG>  generateRRSIG( const RRSet &, const PrivateKeyImp &key ) const;
+	std::shared_ptr<RRSet>        signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
         std::shared_ptr<RecordDS>     getDSRecord( const PrivateKeyImp &ksk, HashAlgorithm algo ) const;
         std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
 
         static void      throwException( const char *message, const char *other = nullptr );
-	static std::shared_ptr<PublicKey> getPublicKey( EVP_PKEY *private_key );
-        static const EVP_MD *enumToDigestMD( HashAlgorithm );
+
+       static const EVP_MD *enumToDigestMD( HashAlgorithm );
         static const EVP_MD *enumToSignMD( SignAlgorithm );
 
     public:
@@ -125,6 +141,23 @@ namespace dns
     private:
 	std::vector<uint8_t> exponent;
 	std::vector<uint8_t> modulus;
+    };
+
+    /*******************************************************************************************
+     * ECDSAPublicKeyImp
+     *******************************************************************************************/
+    /*!
+     * ECDSAPublicKeyImp
+     */
+    class ECDSAPublicKeyImp
+    {
+    public:
+        ECDSAPublicKeyImp( const std::vector<uint8_t> &public_key );
+
+        std::string toString() const;
+        std::vector<uint8_t> getDNSKEYFormat() const;
+    private:
+	std::vector<uint8_t> mQ;
     };
 
 }

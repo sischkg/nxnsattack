@@ -11,6 +11,8 @@ namespace dns
     class PublicKey;
     class RSAPublicKey;
     class RSAPublicKeyImp;
+    class ECDSAPublicKey;
+    class ECDSAPublicKeyImp;
 
     enum KeyType {
         KSK = 257,
@@ -20,10 +22,13 @@ namespace dns
     enum HashAlgorithm {
 	DNSSEC_SHA1   = 1,
 	DNSSEC_SHA256 = 2,
+	DNSSEC_SHA384 = 4,
     };
 
     enum SignAlgorithm {
-	DNSSEC_RSASHA1 = 5,
+	DNSSEC_RSASHA1     = 5,
+	DNSSEC_ECDSASHA256 = 13,
+	DNSSEC_ECDSASHA384 = 14,
     };
     
     class PublicKey {
@@ -41,9 +46,20 @@ namespace dns
         virtual std::string toString() const;
         const std::vector<uint8_t> &getExponent() const;
         const std::vector<uint8_t> &getModulus() const;
-        std::vector<uint8_t> getDNSKEYFormat() const;
+        virtual std::vector<uint8_t> getDNSKEYFormat() const;
     private:
 	std::shared_ptr<RSAPublicKeyImp> mImp;
+    };
+	
+    class ECDSAPublicKey : public PublicKey
+    {
+    public:
+        ECDSAPublicKey( const std::vector<uint8_t> &k );
+	
+        virtual std::string toString() const;
+        virtual std::vector<uint8_t> getDNSKEYFormat() const;
+    private:
+	std::shared_ptr<ECDSAPublicKeyImp> mImp;
     };
 	
 

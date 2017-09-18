@@ -7,13 +7,25 @@
 #include <cstring>
 #include <iterator>
 #include <openssl/rsa.h>
+#include <openssl/ecdsa.h>
 #include <openssl/bn.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
 namespace dns
 {
+    static SignAlgorithm stringToSignAlgorithm( const std::string &str )
+    {
+	if ( str == "RSASHA1" )
+	    return DNSSEC_RSASHA1;
+	else if ( str == "ECDSASHA256" )
+	    return DNSSEC_ECDSASHA256;
+	else if ( str == "ECDSASHA256" )
+	    return DNSSEC_ECDSASHA256;
 
+	throw std::runtime_error( "unknown algorithm \"" + str + "\"" );
+    }
+    
     /*******************************************************************************************
      * PrivateKeyImp
      *******************************************************************************************/
@@ -71,12 +83,13 @@ namespace dns
 	std::vector<std::shared_ptr<PrivateKeyImp>> keys;
 	for ( auto key_config = top.begin() ; key_config != top.end() ; key_config++ ) {
 	
-	    KeyType     key_type    = ZSK;
-	    EVP_PKEY   *private_key = nullptr;
-	    uint16_t    tag         = 0;
-	    uint32_t    not_before  = 0;
-	    uint32_t    not_after   = 0;
-	    Domainname  domain;
+	    KeyType        key_type    = ZSK;
+	    SignAlgorithm  sign_algo   = DNSSEC_RSASHA1;
+	    EVP_PKEY      *private_key = nullptr;
+	    uint16_t       tag         = 0;
+	    uint32_t       not_before  = 0;
+	    uint32_t       not_after   = 0;
+	    Domainname     domain;
 
 	    std::string key_type_name = loadParameter<std::string>( *key_config, "type" );
 	    if ( key_type_name == "ksk" )
@@ -85,11 +98,13 @@ namespace dns
 	    private_key = loadPrivateKey( loadParameter<std::string>( *key_config, "key_file" ) );
 
 	    tag        = loadParameter<uint16_t>( *key_config, "tag" );
+	    sign_algo  = stringToSignAlgorithm( loadParameter<std::string>( *key_config, "algorithm" ) );
 	    not_before = loadParameter<uint32_t>( *key_config, "not_before" );
 	    not_after  = loadParameter<uint32_t>( *key_config, "not_after" );
 	    domain     = loadParameter<std::string>( *key_config, "domain" );
 
 	    keys.push_back( std::shared_ptr<PrivateKeyImp>( new PrivateKeyImp( key_type,
+									       sign_algo,
 									       private_key,
 									       tag,
 									       not_before,
@@ -99,6 +114,31 @@ namespace dns
         return keys;
     }
 
+    std::shared_ptr<PublicKey> PrivateKeyImp::getPublicKey() const
+    {
+	if ( getAlgorithm() == DNSSEC_RSASHA1 ) {
+	    RSA* r = EVP_PKEY_get0_RSA( getPrivateKey() );
+	    const BIGNUM *modulus, *public_exponent, *private_exponent;
+
+	    RSA_get0_key( r, &modulus, &public_exponent, &private_exponent );
+	    std::vector<uint8_t> public_exponent_buf( BN_num_bytes( public_exponent ) );
+	    std::vector<uint8_t> modulus_buf( BN_num_bytes( modulus ) );
+
+	    BN_bn2bin( public_exponent, &public_exponent_buf[0] );
+	    BN_bn2bin( modulus,         &modulus_buf[0] );
+
+	    return std::shared_ptr<RSAPublicKey>( new RSAPublicKey( public_exponent_buf, modulus_buf ) );
+	}
+	else if ( getAlgorithm() == DNSSEC_ECDSASHA256 ) {
+	    EC_KEY* ec = EVP_PKEY_get1_EC_KEY( getPrivateKey() );
+	    unsigned int public_key_size = i2o_ECPublicKey( ec, nullptr );
+	    std::vector<uint8_t> buf( public_key_size );
+	    uint8_t *p = &buf[0];
+	    if ( ! i2o_ECPublicKey( ec, &p ) )
+		throw std::runtime_error( "cannot get public key from private key" );
+	    return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( buf ) );
+	}
+    }
 
     /*******************************************************************************************
      * ZoneSingerImp
@@ -151,27 +191,49 @@ namespace dns
 			      const PrivateKeyImp &key,
 			      SignAlgorithm algo ) const
     {
-	
-
 	unsigned int digest_length = EVP_MAX_MD_SIZE;
-        EVP_DigestInit_ex( mMDContext, EVP_sha1(), NULL);
+	const EVP_MD *sign_algo = enumToSignMD( key.getAlgorithm() );
 
-	std::vector<uint8_t> digest_target = message.get();
-	int res = EVP_DigestUpdate( mMDContext, &digest_target[0], digest_target.size() );
+	if ( key.getAlgorithm() == DNSSEC_RSASHA1 ) {
+	    EVP_DigestInit_ex( mMDContext, sign_algo, NULL);
 
-        std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
-        EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
-        digest.resize( digest_length );
+	    std::vector<uint8_t> digest_target = message.get();
+	    int res = EVP_DigestUpdate( mMDContext, &digest_target[0], digest_target.size() );
 
-	RSA* rsa = EVP_PKEY_get0_RSA( key.getPrivateKey() );
-	unsigned int signature_length = RSA_size( rsa );
- 	signature.resize( signature_length );
-	int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
+	    std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	    EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
+	    digest.resize( digest_length );
 
-        if ( result != 1 ) {
-            throwException( "RSA_sign failed" );
-        }
-	signature.resize( signature_length );
+	    RSA* rsa = EVP_PKEY_get0_RSA( key.getPrivateKey() );
+	    unsigned int signature_length = RSA_size( rsa );
+	    signature.resize( signature_length );
+	    int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
+
+	    if ( result != 1 ) {
+		throwException( "RSA_sign failed" );
+	    }
+	    signature.resize( signature_length );
+	}
+	else if ( key.getAlgorithm() == DNSSEC_ECDSASHA256 ) {
+	    EVP_DigestInit_ex( mMDContext, sign_algo, NULL);
+
+	    std::vector<uint8_t> digest_target = message.get();
+	    int res = EVP_DigestUpdate( mMDContext, &digest_target[0], digest_target.size() );
+
+	    std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	    EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
+	    digest.resize( digest_length );
+
+	    EC_KEY *ec = EVP_PKEY_get1_EC_KEY( key.getPrivateKey() );
+	    unsigned int signature_length = ECDSA_size( ec );
+	    signature.resize( signature_length );
+	    int result = ECDSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, ec );
+
+	    if ( result != 1 ) {
+		throwException( "ECDSA_sign failed" );
+	    }
+	    signature.resize( signature_length );
+	}
     }
 
     void ZoneSignerImp::generateSignData( const RRSet &rrset, const PrivateKeyImp &key, WireFormat &sign_target ) const
@@ -278,7 +340,7 @@ namespace dns
 
     std::shared_ptr<RecordDNSKEY> ZoneSignerImp::getDNSKEYRecord( const PrivateKeyImp &key ) const
     {
-        std::shared_ptr<PublicKey> public_key = getPublicKey( key.getPrivateKey() );
+        std::shared_ptr<PublicKey> public_key = key.getPublicKey();
 
         return std::shared_ptr<RecordDNSKEY>( new RecordDNSKEY( key.getKeyType(),
                                                                 key.getAlgorithm(),
@@ -322,6 +384,7 @@ namespace dns
 	for ( auto ksk : mKSKs ) {
 	    result.push_back( getDSRecord( *ksk, DNSSEC_SHA1 ) );
 	    result.push_back( getDSRecord( *ksk, DNSSEC_SHA256 ) );
+	    result.push_back( getDSRecord( *ksk, DNSSEC_SHA384 ) );
 	}
         return result;
     }
@@ -338,6 +401,8 @@ namespace dns
             return EVP_sha1();
         case DNSSEC_SHA256:
             return EVP_sha256();
+        case DNSSEC_SHA384:
+            return EVP_sha384();
         default:
             throw std::runtime_error( "unknown hash algorighm for DS" );
         }
@@ -348,31 +413,20 @@ namespace dns
         switch ( algo ) {
         case DNSSEC_RSASHA1:
             return EVP_sha1();
+        case DNSSEC_ECDSASHA256:
+            return EVP_sha256();
+        case DNSSEC_ECDSASHA384:
+            return EVP_sha384();
         default:
             throw std::runtime_error( "unknown hash algorighm for RRSIG" );
         }
-    }
-
-    std::shared_ptr<PublicKey> ZoneSignerImp::getPublicKey( EVP_PKEY *private_key )
-    {
-        RSA* r = EVP_PKEY_get0_RSA( private_key );
-	const BIGNUM *modulus, *public_exponent, *private_exponent;
-
-	RSA_get0_key( r, &modulus, &public_exponent, &private_exponent );
-	std::vector<uint8_t> public_exponent_buf( BN_num_bytes( public_exponent ) );
-	std::vector<uint8_t> modulus_buf( BN_num_bytes( modulus ) );
-
-	BN_bn2bin( public_exponent, &public_exponent_buf[0] );
-	BN_bn2bin( modulus,         &modulus_buf[0] );
-
-	return std::shared_ptr<RSAPublicKey>( new RSAPublicKey( public_exponent_buf, modulus_buf ) );
     }
 
     std::vector<std::shared_ptr<PublicKey>> ZoneSignerImp::getKSKPublicKeys() const
     {
 	std::vector<std::shared_ptr<PublicKey> > keys;
 	for ( auto ksk : mKSKs )
-	    keys.push_back( getPublicKey(  ksk->getPrivateKey() ) );
+	    keys.push_back( ksk->getPublicKey() );
 	return keys;
     }
 
@@ -380,7 +434,7 @@ namespace dns
     {
 	std::vector<std::shared_ptr<PublicKey> > keys;
 	for ( auto zsk : mZSKs )
-	    keys.push_back( getPublicKey(  zsk->getPrivateKey() ) );
+	    keys.push_back( zsk->getPublicKey() );
 	return keys;
     }
 
@@ -436,6 +490,31 @@ namespace dns
 	result.insert( result.end(), exponent_tmp.begin(), exponent_tmp.end() );
 	result.insert( result.end(), modulus_tmp.begin(),  modulus_tmp.end() );
 	return result;
+    }
+
+
+    /*******************************************************************************************
+     * ECDSAPublicKeyImp
+     *******************************************************************************************/
+
+    ECDSAPublicKeyImp::ECDSAPublicKeyImp( const std::vector<uint8_t> &q )
+	: mQ( q )
+    {}
+
+    std::string ECDSAPublicKeyImp::toString() const
+    {
+	std::ostringstream os;
+	std::string q_base64;
+	encode_to_base64( mQ, q_base64 );
+
+	os << "Q: " << q_base64;
+
+	return os.str();
+    }
+
+    std::vector<uint8_t> ECDSAPublicKeyImp::getDNSKEYFormat() const
+    {
+	return mQ;
     }
 
 

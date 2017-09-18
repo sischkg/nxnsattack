@@ -79,5 +79,23 @@ namespace dns
 	return mImp->getDNSKEYFormat();
     }
 
+    /*******************************************************************************************
+     * ECDSAPublicKey
+     *******************************************************************************************/
+
+    ECDSAPublicKey::ECDSAPublicKey( const std::vector<uint8_t> &public_key )
+	: mImp( new ECDSAPublicKeyImp( public_key ) )
+    {}
+
+    std::string ECDSAPublicKey::toString() const
+    {
+	return mImp->toString();
+    }
+
+    std::vector<uint8_t> ECDSAPublicKey::getDNSKEYFormat() const
+    {
+	return mImp->getDNSKEYFormat();
+    }
+
 }
 
