@@ -5,6 +5,7 @@
 *.a
 *.orig
 Testing
+local.build.sh
 bin/
 lib/
 CMakeCache.txt

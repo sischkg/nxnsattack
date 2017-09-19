@@ -25,45 +25,44 @@ namespace dns
     class PrivateKeyImp : private boost::noncopyable
     {
     public:
-        ~PrivateKeyImp();
-
-        KeyType           getKeyType() const    { return mKeyType; }
-        SignAlgorithm     getAlgorithm() const  { return mSignAlgorithm; }
-        EVP_PKEY         *getPrivateKey() const { return mPrivateKey; }
-        uint16_t          getKeyTag() const     { return mKeyTag; }
-        uint32_t          getNotBefore() const  { return mNotBefore; }
-        uint32_t          getNotAfter() const   { return mNotAfter; }
-        const Domainname  getDomainname() const { return mDomainname; }
-
-	std::shared_ptr<PublicKey> getPublicKey() const;
-	void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
-
-	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
-        static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
-    private:
-        KeyType        mKeyType;
-	SignAlgorithm  mSignAlgorithm;
-        EVP_PKEY      *mPrivateKey;
-        uint16_t       mKeyTag;
-        uint32_t       mNotBefore;
-        uint32_t       mNotAfter;
-        Domainname     mDomainname;
-
         PrivateKeyImp( KeyType key_type,
 		       SignAlgorithm algo,
 		       EVP_PKEY *key,
-		       uint16_t tag,
 		       uint32_t not_before,
 		       uint32_t not_after,
 		       const Domainname &domain )
             : mKeyType( key_type ),
 	      mSignAlgorithm( algo ),
 	      mPrivateKey( key ),
-	      mKeyTag( tag ),
 	      mNotBefore( not_before ),
 	      mNotAfter( not_after ),
 	      mDomainname( domain )
         {}
+
+        ~PrivateKeyImp();
+
+        KeyType           getKeyType() const    { return mKeyType; }
+        SignAlgorithm     getAlgorithm() const  { return mSignAlgorithm; }
+        EVP_PKEY         *getPrivateKey() const { return mPrivateKey; }
+        uint32_t          getNotBefore() const  { return mNotBefore; }
+        uint32_t          getNotAfter() const   { return mNotAfter; }
+        const Domainname  getDomainname() const { return mDomainname; }
+        uint16_t          getKeyTag() const; 
+        std::shared_ptr<RecordDNSKEY> getDNSKEYRecord() const;
+        
+	virtual std::shared_ptr<PublicKey> getPublicKey() const = 0;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const = 0;
+
+	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
+        static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
+
+    private:
+        KeyType        mKeyType;
+	SignAlgorithm  mSignAlgorithm;
+        EVP_PKEY      *mPrivateKey;
+        uint32_t       mNotBefore;
+        uint32_t       mNotAfter;
+        Domainname     mDomainname;
 
         static EVP_PKEY *loadPrivateKey( const std::string &key_file );
 
@@ -74,7 +73,56 @@ namespace dns
                 return node[param_name].as<TYPE>();
             throw std::runtime_error( param_name + " must be specified" ); 
         }
+
     };
+
+    /*******************************************************************************************
+     * RSAPrivateKeyImp
+     *******************************************************************************************/
+    class RSAPrivateKeyImp : public PrivateKeyImp 
+    {
+    public:
+	RSAPrivateKeyImp( KeyType key_type,
+			  EVP_PKEY *key,
+			  uint32_t not_before,
+			  uint32_t not_after,
+			  const Domainname &domain )
+            : PrivateKeyImp( key_type,
+			     DNSSEC_RSASHA1,
+			     key,
+			     not_before,
+			     not_after,
+			     domain )
+        {}
+
+    	virtual std::shared_ptr<PublicKey> getPublicKey() const;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+    };
+
+
+    /*******************************************************************************************
+     * ECDSAPrivateKeyImp
+     *******************************************************************************************/
+    class ECDSAPrivateKeyImp : public PrivateKeyImp 
+    {
+    public:
+	ECDSAPrivateKeyImp( KeyType key_type,
+                            EVP_PKEY *key,
+                            uint32_t not_before,
+                            uint32_t not_after,
+                            const Domainname &domain )
+            : PrivateKeyImp( key_type,
+			     DNSSEC_ECDSASHA256,
+			     key,
+			     not_before,
+			     not_after,
+			     domain )
+        {}
+
+	virtual std::shared_ptr<PublicKey> getPublicKey() const;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+    };
+
 
     /*******************************************************************************************
      * ZoneSingerImp
@@ -91,11 +139,9 @@ namespace dns
 	std::vector< std::shared_ptr<PrivateKeyImp> > mKSKs;
         std::vector< std::shared_ptr<PrivateKeyImp> > mZSKs;
 
-        uint16_t getKeyTag( const PrivateKeyImp &key ) const;
 	std::shared_ptr<RecordRRSIG>  generateRRSIG( const RRSet &, const PrivateKeyImp &key ) const;
 	std::shared_ptr<RRSet>        signRRSetByKeys( const RRSet &, const std::vector<std::shared_ptr<PrivateKeyImp> > &keys ) const;
         std::shared_ptr<RecordDS>     getDSRecord( const PrivateKeyImp &ksk, HashAlgorithm algo ) const;
-        std::shared_ptr<RecordDNSKEY> getDNSKEYRecord( const PrivateKeyImp &private_key ) const;
 
     public:
         ZoneSignerImp( const Domainname &d, const std::string &ksks, const std::string &zsks );
@@ -103,8 +149,7 @@ namespace dns
 
 	void sign( const WireFormat &message,
 		   std::vector<uint8_t> &signature,
-		   const PrivateKeyImp &key,
-		   SignAlgorithm algo ) const;
+		   const PrivateKeyImp &key ) const;
 
 	std::vector<std::shared_ptr<PublicKey>> getKSKPublicKeys() const;
 	std::vector<std::shared_ptr<PublicKey>> getZSKPublicKeys() const;
