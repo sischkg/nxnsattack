@@ -69,6 +69,35 @@ namespace dns
     }
 
 
+    void PacketInfo::generateMessage( WireFormat &message ) const
+    {
+        generate_dns_packet( *this, message );
+    }
+
+    uint32_t PacketInfo::getMessageSize() const
+    {
+        uint32_t message_size = sizeof(PacketHeaderField);
+
+        if ( edns0 ) {
+            message_size += opt_pseudo_rr.payload_size;
+        }
+
+        for ( auto q = question_section.begin(); q != question_section.end(); ++q ) {
+            message_size += q->size();
+        }
+        for ( auto q = answer_section.begin(); q != answer_section.end(); ++q ) {
+            message_size += q->size();
+        }
+        for ( auto q = authority_section.begin(); q != authority_section.end(); ++q ) {
+            message_size += q->size();
+        }
+        for ( auto q = additional_infomation_section.begin(); q != additional_infomation_section.end(); ++q ) {
+            message_size += q->size();
+        }
+
+        return message_size;
+    }
+
     PacketData generate_dns_packet( const PacketInfo &info )
     {
         WireFormat message;

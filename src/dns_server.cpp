@@ -86,7 +86,25 @@ namespace dns
                     if ( isDebug() )
                         std::cerr << "Response:" << response_info << std::endl; 
 
-                    WireFormat response_packet( generate_dns_packet( response_info ) );
+                    uint32_t requested_max_payload_size = 512;
+                    if ( query.isEDNS0() &&
+                         query.opt_pseudo_rr.payload_size > 512 ) {
+                        requested_max_payload_size = query.opt_pseudo_rr.payload_size;
+                        if ( query.opt_pseudo_rr.payload_size > 4096 )
+                            query.opt_pseudo_rr.payload_size = 4096;
+                    }
+
+                    std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+                    if ( response_info.getMessageSize() > requested_max_payload_size ) {
+                        std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+                        response_info.truncation = 1;
+                        response_info.clearAnswerSection();
+                        response_info.clearAuthoritySection();
+                        response_info.clearAdditionalInfomationSection();
+                    }
+
+                    WireFormat response_packet;
+                    response_info.generateMessage( response_packet );
 
                     udpv4::ClientParameters client;
                     client.destination_address = recv_data.source_address;
@@ -130,6 +148,16 @@ namespace dns
                     } else {
                         PacketInfo response_info = generateResponse( query, true );
                         WireFormat response_stream;
+                        std::cerr << "response size(TCP): " << response_info.getMessageSize() << std::endl;
+
+                        if ( response_info.getMessageSize() > 0xffff ) {
+                            std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;
+                            response_info.response_code = SERVER_ERROR;
+                            response_info.clearAnswerSection();
+                            response_info.clearAuthoritySection();
+                            response_info.clearAdditionalInfomationSection();
+                        }
+
                         generate_dns_packet( response_info, response_stream );
 
                         uint16_t send_size = htons( response_stream.size() );

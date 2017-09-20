@@ -1362,11 +1362,13 @@ namespace dns
         void pushAuthoritySection( const ResourceRecord &e ) { return authority_section.push_back( e ); }
         void pushAdditionalInfomationSection( const ResourceRecord &e ) { return additional_infomation_section.push_back( e ); }
 
-
         void clearQuestionSection() { return question_section.clear(); }
         void clearAnswerSection() { return answer_section.clear(); }
         void clearAuthoritySection() { return authority_section.clear(); }
         void clearAdditionalInfomationSection() { return additional_infomation_section.clear(); }
+
+        void generateMessage( WireFormat & ) const;
+        uint32_t getMessageSize() const;
     };
 
     std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
