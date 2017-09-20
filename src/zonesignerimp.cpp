@@ -18,10 +18,10 @@ namespace dns
     {
 	if ( str == "RSASHA1" )
 	    return DNSSEC_RSASHA1;
-	else if ( str == "ECDSASHA256" )
-	    return DNSSEC_ECDSASHA256;
-	else if ( str == "ECDSASHA256" )
-	    return DNSSEC_ECDSASHA256;
+	else if ( str == "ECDSAP256SHA256" )
+	    return DNSSEC_ECDSAP256SHA256;
+	else if ( str == "ECDSAP256SHA256" )
+	    return DNSSEC_ECDSAP384SHA384;
 
 	throw std::runtime_error( "unknown algorithm \"" + str + "\"" );
     }
@@ -45,9 +45,9 @@ namespace dns
         switch ( algo ) {
         case DNSSEC_RSASHA1:
             return EVP_sha1();
-        case DNSSEC_ECDSASHA256:
+        case DNSSEC_ECDSAP256SHA256:
             return EVP_sha256();
-        case DNSSEC_ECDSASHA384:
+        case DNSSEC_ECDSAP384SHA384:
             return EVP_sha384();
         default:
             throw std::runtime_error( "unknown hash algorighm for RRSIG" );
@@ -153,14 +153,14 @@ namespace dns
                                                                                       not_after,
                                                                                       domain ) ) );
                 break;
-            case DNSSEC_ECDSASHA256:
+            case DNSSEC_ECDSAP256SHA256:
                 keys.push_back( std::shared_ptr<PrivateKeyImp>( new ECDSAPrivateKeyImp( key_type,
                                                                                         private_key,
                                                                                         not_before,
                                                                                         not_after,
                                                                                         domain ) ) );
                 break;
-            case DNSSEC_ECDSASHA384:
+            case DNSSEC_ECDSAP384SHA384:
                 throw std::logic_error( "not support ECDSASHAR384" );
                 break;
             }

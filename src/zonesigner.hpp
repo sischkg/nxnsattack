@@ -26,9 +26,9 @@ namespace dns
     };
 
     enum SignAlgorithm {
-	DNSSEC_RSASHA1     = 5,
-	DNSSEC_ECDSASHA256 = 13,
-	DNSSEC_ECDSASHA384 = 14,
+	DNSSEC_RSASHA1         = 5,
+	DNSSEC_ECDSAP256SHA256 = 13,
+	DNSSEC_ECDSAP384SHA384 = 14,
     };
     
     class PublicKey {

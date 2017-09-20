@@ -112,7 +112,7 @@ namespace dns
                             uint32_t not_after,
                             const Domainname &domain )
             : PrivateKeyImp( key_type,
-			     DNSSEC_ECDSASHA256,
+			     DNSSEC_ECDSAP256SHA256,
 			     key,
 			     not_before,
 			     not_after,
