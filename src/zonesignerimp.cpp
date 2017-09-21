@@ -154,14 +154,18 @@ namespace dns
                                                                                       domain ) ) );
                 break;
             case DNSSEC_ECDSAP256SHA256:
-                keys.push_back( std::shared_ptr<PrivateKeyImp>( new ECDSAPrivateKeyImp( key_type,
-                                                                                        private_key,
-                                                                                        not_before,
-                                                                                        not_after,
-                                                                                        domain ) ) );
+                keys.push_back( std::shared_ptr<PrivateKeyImp>( new ECDSAP256SHA256PrivateKeyImp( key_type,
+                                                                                                  private_key,
+                                                                                                  not_before,
+                                                                                                  not_after,
+                                                                                                  domain ) ) );
                 break;
             case DNSSEC_ECDSAP384SHA384:
-                throw std::logic_error( "not support ECDSASHAR384" );
+                keys.push_back( std::shared_ptr<PrivateKeyImp>( new ECDSAP384SHA384PrivateKeyImp( key_type,
+                                                                                                  private_key,
+                                                                                                  not_before,
+                                                                                                  not_after,
+                                                                                                  domain ) ) );
                 break;
             }
 	}
@@ -194,6 +198,9 @@ namespace dns
     }
 
 
+    /*******************************************************************************************
+     * RSAPrivateKeyImp
+     *******************************************************************************************/
     std::shared_ptr<PublicKey> RSAPrivateKeyImp::getPublicKey() const
     {
 	RSA* r = EVP_PKEY_get0_RSA( getPrivateKey() );
@@ -238,7 +245,11 @@ namespace dns
     }
 
 
-    std::shared_ptr<PublicKey> ECDSAPrivateKeyImp::getPublicKey() const
+    /*******************************************************************************************
+     * ECDSAPrivateKeyImp
+     *******************************************************************************************/
+    template <uint8_t SIGN_ALGO>
+    std::shared_ptr<PublicKey> ECDSAPrivateKeyImp<SIGN_ALGO>::getPublicKey() const
     {
 	EC_KEY* ec = EVP_PKEY_get1_EC_KEY( getPrivateKey() );
 	unsigned int public_key_size = i2o_ECPublicKey( ec, nullptr );
@@ -249,7 +260,8 @@ namespace dns
 	return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( buf ) );
     }
     
-    void ECDSAPrivateKeyImp::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, std::vector<uint8_t> &signature ) const
+    template <uint8_t SIGN_ALGO>
+    void ECDSAPrivateKeyImp<SIGN_ALGO>::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, std::vector<uint8_t> &signature ) const
     {
 	unsigned int digest_length = EVP_MAX_MD_SIZE;
 	const EVP_MD *sign_algo = enumToSignMD( getAlgorithm() );
@@ -258,7 +270,9 @@ namespace dns
 
 	std::vector<uint8_t> digest_target = message.get();
 	int res = EVP_DigestUpdate( md_ctx, &digest_target[0], digest_target.size() );
-
+        if ( res != 1 ) {
+	    throwException( "EVP_DigestUpdate failed" );
+        }
 	std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
 	EVP_DigestFinal_ex( md_ctx, &digest[0], &digest_length );
 	digest.resize( digest_length );
@@ -267,7 +281,6 @@ namespace dns
 	unsigned int signature_length = ECDSA_size( ec );
 	signature.resize( signature_length );
 	int result = ECDSA_sign( 0, &digest[0], digest_length, &signature[0], &signature_length, ec );
-
 	if ( result != 1 ) {
 	    throwException( "ECDSA_sign failed" );
 	}

@@ -14,18 +14,18 @@ namespace dns
     class ECDSAPublicKey;
     class ECDSAPublicKeyImp;
 
-    enum KeyType {
+    enum KeyType : uint16_t {
         KSK = 257,
         ZSK = 256,
     };
 
-    enum HashAlgorithm {
+    enum HashAlgorithm : uint8_t {
 	DNSSEC_SHA1   = 1,
 	DNSSEC_SHA256 = 2,
 	DNSSEC_SHA384 = 4,
     };
 
-    enum SignAlgorithm {
+    enum SignAlgorithm : uint8_t {
 	DNSSEC_RSASHA1         = 5,
 	DNSSEC_ECDSAP256SHA256 = 13,
 	DNSSEC_ECDSAP384SHA384 = 14,

@@ -102,17 +102,19 @@ namespace dns
 
     /*******************************************************************************************
      * ECDSAPrivateKeyImp
-     *******************************************************************************************/
+     ***********************************************************************************/
+    template<uint8_t SIGN_ALGO>
     class ECDSAPrivateKeyImp : public PrivateKeyImp 
     {
     public:
-	ECDSAPrivateKeyImp( KeyType key_type,
-                            EVP_PKEY *key,
-                            uint32_t not_before,
-                            uint32_t not_after,
+	ECDSAPrivateKeyImp( KeyType           key_type,
+                            //                            SignAlgorithm     alog,
+                            EVP_PKEY         *key,
+                            uint32_t          not_before,
+                            uint32_t          not_after,
                             const Domainname &domain )
             : PrivateKeyImp( key_type,
-			     DNSSEC_ECDSAP256SHA256,
+                             static_cast<SignAlgorithm>(SIGN_ALGO),//			     algo,
 			     key,
 			     not_before,
 			     not_after,
@@ -123,6 +125,8 @@ namespace dns
 	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
     };
 
+    typedef ECDSAPrivateKeyImp<DNSSEC_ECDSAP256SHA256> ECDSAP256SHA256PrivateKeyImp;
+    typedef ECDSAPrivateKeyImp<DNSSEC_ECDSAP384SHA384> ECDSAP384SHA384PrivateKeyImp;
 
     /*******************************************************************************************
      * ZoneSingerImp
