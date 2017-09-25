@@ -65,7 +65,7 @@ generate_private_key()
     do
         key_file=`key_filename $domain $type $i`
 
-        if [ x$algo = xECDSASHA256 ]
+        if [ x$algo = xECDSAP256SHA256 ]
         then
             $OPENSSL ecparam -genkey -name prime256v1 -out $key_file
         else
@@ -96,5 +96,5 @@ generate_keys()
 mkdir -p $keys
 
 generate_keys child.siskrn.co RSASHA1 100
-generate_keys ecdsa.siskrn.co ECDSASHA256 100
+generate_keys ecdsa.siskrn.co ECDSAP256SHA256 100
 
