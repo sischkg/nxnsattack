@@ -20,7 +20,7 @@ namespace dns
 	    return DNSSEC_RSASHA1;
 	else if ( str == "ECDSAP256SHA256" )
 	    return DNSSEC_ECDSAP256SHA256;
-	else if ( str == "ECDSAP256SHA256" )
+	else if ( str == "ECDSAP256SHA384" )
 	    return DNSSEC_ECDSAP384SHA384;
 
 	throw std::runtime_error( "unknown algorithm \"" + str + "\"" );
