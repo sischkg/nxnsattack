@@ -1059,13 +1059,13 @@ namespace dns
     };
 
     struct OptPseudoRecord {
-        Domainname      domainname;
-        uint16_t        payload_size;
-        uint8_t         rcode;
-        uint8_t         version;
-	bool            dobit;
-        RDATAPtr record_options_data;
-        uint32_t        offset;
+        Domainname domainname;
+        uint16_t   payload_size;
+        uint8_t    rcode;
+        uint8_t    version;
+	bool       dobit;
+        RDATAPtr   record_options_data;
+        uint32_t   offset;
 
         OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
         {
@@ -1269,12 +1269,12 @@ namespace dns
     };
 
     struct ResourceRecord {
-        Domainname      r_domainname;
-        uint16_t        r_type;
-        uint16_t        r_class;
-        uint32_t        r_ttl;
-        RDATAPtr r_resource_data;
-        uint32_t        r_offset;
+        Domainname r_domainname;
+        uint16_t   r_type;
+        uint16_t   r_class;
+        uint32_t   r_ttl;
+        RDATAPtr   r_resource_data;
+        uint32_t   r_offset;
 
         ResourceRecord() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
         {

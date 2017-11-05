@@ -79,7 +79,8 @@ namespace dns
         uint32_t message_size = sizeof(PacketHeaderField);
 
         if ( edns0 ) {
-            message_size += opt_pseudo_rr.payload_size;
+	    ResourceRecord rr = generate_opt_pseudo_record( opt_pseudo_rr );
+	    message_size += rr.size();
         }
 
         for ( auto q = question_section.begin(); q != question_section.end(); ++q ) {
@@ -1302,7 +1303,7 @@ namespace dns
         encode_to_base64( public_key, public_key_str );
 
         std::ostringstream os;
-        os << ( flag == KSK ? "257" : "254" ) << " "
+        os << ( flag == KSK ? "257" : "256" ) << " "
            << 3                               << " "
            << (unsigned int)algorithm         << " "
            << public_key_str;
