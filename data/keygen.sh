@@ -87,14 +87,14 @@ generate_keys()
     domain=$1
     algo=$2
     count=$3
-    generate_config $domain ksk 86400 $algo $count
-    generate_config $domain zsk 86400 $algo $count
+    generate_config $domain ksk 864000 $algo $count
+    generate_config $domain zsk 864000 $algo $count
     generate_private_key $domain ksk $algo  $count
     generate_private_key $domain zsk $algo  $count
 }
 
 mkdir -p $keys
 
-generate_keys child.siskrn.co RSASHA1 100
-generate_keys ecdsa.siskrn.co ECDSAP256SHA256 100
+#generate_keys child.siskrn.co RSASHA1 60
+generate_keys ecdsa.siskrn.co ECDSAP256SHA256 1
 

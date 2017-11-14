@@ -278,13 +278,27 @@ namespace dns
 	digest.resize( digest_length );
 
 	EC_KEY *ec = EVP_PKEY_get1_EC_KEY( getPrivateKey() );
-	unsigned int signature_length = ECDSA_size( ec );
-	signature.resize( signature_length );
-	int result = ECDSA_sign( 0, &digest[0], digest_length, &signature[0], &signature_length, ec );
-	if ( result != 1 ) {
+        ECDSA_SIG *ecdsa_sig = ECDSA_do_sign( &digest[0], digest_length, ec );
+	if ( ecdsa_sig == nullptr ) {
 	    throwException( "ECDSA_sign failed" );
 	}
-	signature.resize( signature_length );
+	unsigned int signature_length = ECDSA_size( ec );
+
+        const BIGNUM *r, *s;
+        ECDSA_SIG_get0( ecdsa_sig, &r, &s );
+        std::vector<uint8_t> r_buf( BN_num_bytes(r) );
+        std::vector<uint8_t> s_buf( BN_num_bytes(s) );
+
+        std::cerr << "bn len r" << BN_num_bytes(r) << std::endl;
+        std::cerr << "bn len s" << BN_num_bytes(s) << std::endl;
+        std::cerr << "sinlen" << signature_length << std::endl;
+
+        BN_bn2bin( r, &r_buf[0] );
+        BN_bn2bin( s, &s_buf[0] );
+        signature.clear();
+	signature.insert( signature.end(), r_buf.begin(), r_buf.end() );
+	signature.insert( signature.end(), s_buf.begin(), s_buf.end() );
+        ECDSA_SIG_free( ecdsa_sig );
     }
 
     /*******************************************************************************************
@@ -345,7 +359,7 @@ namespace dns
 		       WireFormat lhs_data, rhs_data;
 		       lhs->outputCanonicalWireFormat( lhs_data );
 		       rhs->outputCanonicalWireFormat( rhs_data );
-		       return lhs < rhs;
+		       return lhs_data < rhs_data;
 		   } );
 
 	for ( auto rr : ordered_rrs ) {

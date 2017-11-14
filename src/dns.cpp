@@ -1698,8 +1698,8 @@ namespace dns
     {
         std::ostringstream os;
 
-        for ( auto i = options.begin(); i != options.end(); ++i )
-            os << ( *i )->toString();
+        for ( auto option : options )
+            os << option->toString();
 
         return os.str();
     }
@@ -1708,16 +1708,16 @@ namespace dns
     uint16_t RecordOptionsData::size() const
     {
         uint16_t rr_size = 0;
-        for ( auto i = options.begin(); i != options.end(); i++ ) {
-            rr_size += ( *i )->size();
+        for ( auto option : options ) {
+            rr_size += option->size();
         }
         return rr_size;
     }
 
     void RecordOptionsData::outputWireFormat( WireFormat &message ) const
     {
-        for ( auto i = options.begin(); i != options.end(); i++ ) {
-            ( *i )->outputWireFormat( message );
+        for ( auto option : options ) {
+            option->outputWireFormat( message );
         }
     }
 
@@ -1768,7 +1768,7 @@ namespace dns
         entry.r_type          = TYPE_OPT;
         entry.r_class         = opt.payload_size;
         entry.r_ttl           = ( ( (uint32_t)opt.rcode ) << 24 ) + ( opt.dobit ? ( (uint32_t)1 << 15 ) : 0 );
-        entry.r_resource_data = opt.record_options_data;
+        entry.r_resource_data = RDATAPtr( opt.record_options_data->clone() );
         entry.r_offset        = opt.offset;
 
         return entry;

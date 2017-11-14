@@ -1019,8 +1019,9 @@ namespace dns
 
     public:
         RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
-            : options( in_options )
         {
+	    for ( auto op : in_options )
+		options.push_back( OptPseudoRROptPtr( op->clone() ) );
         }
 
 	RecordOptionsData( const RecordOptionsData &data )
@@ -1067,9 +1068,14 @@ namespace dns
         RDATAPtr   record_options_data;
         uint32_t   offset;
 
-        OptPseudoRecord() : domainname( "." ), payload_size( 1280 ), rcode( 0 ), dobit(false), offset( NO_COMPRESSION )
-        {
-        }
+        OptPseudoRecord()
+            : domainname( "." ),
+              payload_size( 1280 ),
+              rcode( 0 ),
+              dobit(false),
+              record_options_data( RDATAPtr( new RecordOptionsData ) ),
+              offset( NO_COMPRESSION )
+        {}
 
 	OptPseudoRecord( const OptPseudoRecord &opt ) :
 	    domainname( opt.domainname ),
@@ -1093,7 +1099,7 @@ namespace dns
 	    if ( rhs.record_options_data )
 		record_options_data = RDATAPtr( rhs.record_options_data->clone() );
 	    else
-		record_options_data = RDATAPtr();
+		record_options_data = RDATAPtr( new RecordOptionsData );
 	    offset              = rhs.offset;
 	    return *this;
 	}
