@@ -257,7 +257,7 @@ namespace dns
 	uint8_t *p = &buf[0];
 	if ( ! i2o_ECPublicKey( ec, &p ) )
 	    throw std::runtime_error( "cannot get public key from private key" );
-	return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( buf ) );
+	return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( &buf[1], buf.size() - 1 ) );
     }
     
     template <uint8_t SIGN_ALGO>
@@ -552,6 +552,11 @@ namespace dns
     ECDSAPublicKeyImp::ECDSAPublicKeyImp( const std::vector<uint8_t> &q )
 	: mQ( q )
     {}
+
+    ECDSAPublicKeyImp::ECDSAPublicKeyImp( const uint8_t *p, ssize_t size )
+        : mQ( p, p + size )
+    {}
+
 
     std::string ECDSAPublicKeyImp::toString() const
     {

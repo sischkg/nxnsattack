@@ -198,6 +198,7 @@ namespace dns
     {
     public:
         ECDSAPublicKeyImp( const std::vector<uint8_t> &public_key );
+        ECDSAPublicKeyImp( const uint8_t *p, ssize_t size );
 
         std::string toString() const;
         std::vector<uint8_t> getDNSKEYFormat() const;

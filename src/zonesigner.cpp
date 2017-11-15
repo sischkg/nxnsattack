@@ -87,6 +87,10 @@ namespace dns
 	: mImp( new ECDSAPublicKeyImp( public_key ) )
     {}
 
+    ECDSAPublicKey::ECDSAPublicKey( const uint8_t *p, ssize_t size )
+        : mImp( new ECDSAPublicKeyImp( p, size ) )
+    {}
+
     std::string ECDSAPublicKey::toString() const
     {
 	return mImp->toString();
