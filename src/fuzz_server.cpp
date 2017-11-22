@@ -1,5 +1,6 @@
 #include "unsignedauthserver.hpp"
 #include "rrgenerator.hpp"
+#include "shufflebytes.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
@@ -50,19 +51,19 @@ namespace dns
             ResourceRecordGenerator rr_generator;
 
             // clear rr
-            if ( ! getRandom( 16 ) )
+            if ( ! getRandom( 32 ) )
                 modified_response.clearAnswerSection();
-            if ( ! getRandom( 16 ) )
+            if ( ! getRandom( 32 ) )
                 modified_response.clearAuthoritySection();
-            if ( ! getRandom( 16 ) )
+            if ( ! getRandom( 32 ) )
                 modified_response.clearAdditionalInfomationSection();
 
             // appand new rrsets
-            unsigned int rrsets_count = getRandom( 16 );
+            unsigned int rrsets_count = getRandom( 8 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 RRSet rrset = rr_generator.generate( original_response );
 
-                switch ( getRandom( 16 ) ) {
+                switch ( getRandom( 32 ) ) {
                 case 0:
                     {
                         auto new_rrs = newRRs( rrset );
@@ -120,6 +121,12 @@ namespace dns
             return modified_response;
         }
 
+	void modifyMessage( WireFormat &message )
+	{
+	    WireFormat src = message;
+	    shuffle( src, message );
+	}
+	
         void replaceClass( std::vector<ResourceRecord> &section ) const
         {
             if ( getRandom( 5 ) )

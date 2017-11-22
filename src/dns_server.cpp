@@ -106,6 +106,8 @@ namespace dns
                     WireFormat response_packet;
                     response_info.generateMessage( response_packet );
 
+		    modifyMessage( response_packet );
+		    
                     udpv4::ClientParameters client;
                     client.destination_address = recv_data.source_address;
                     client.destination_port    = recv_data.source_port;
@@ -158,8 +160,9 @@ namespace dns
                             response_info.clearAdditionalInfomationSection();
                         }
 
-                        generate_dns_packet( response_info, response_stream );
-
+			response_info.generateMessage( response_stream );
+			modifyMessage( response_stream );
+			
                         uint16_t send_size = htons( response_stream.size() );
                         connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
                         connection->send( response_stream );

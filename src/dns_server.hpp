@@ -47,18 +47,14 @@ namespace dns
     public:
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool debug = false )
             : mBindAddress( address ), mBindPort( port ), mDebug( debug )
-        {
-        }
+        {}
 
         ~DNSServer()
-        {
-        }
+        {}
 
         virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
-        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn )
-        {
-        }
-
+        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
+	virtual void modifyMessage( WireFormat &messge ) {} 
         void start();
 
         void addTSIGKey( const std::string &name, const TSIGKey &key );

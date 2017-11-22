@@ -257,6 +257,7 @@ namespace dns
 	uint8_t *p = &buf[0];
 	if ( ! i2o_ECPublicKey( ec, &p ) )
 	    throw std::runtime_error( "cannot get public key from private key" );
+        std::cerr << "PC: " << (int)buf[0] << ", size: " << buf.size() << std::endl;
 	return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( &buf[1], buf.size() - 1 ) );
     }
     
