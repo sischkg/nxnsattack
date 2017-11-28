@@ -417,6 +417,51 @@ TEST_F( WireFormatTest, compare_value_3 )
     EXPECT_FALSE( lhs < rhs ); 
 }
 
+TEST_F( WireFormatTest, assign_size_0 )
+{
+    WireFormat src, dst;
+
+    dst = src;
+
+    EXPECT_EQ( 0, dst.size() );
+    EXPECT_EQ( src.getBufferSize(), dst.getBufferSize() );
+}
+
+TEST_F( WireFormatTest, assing_size_n )
+{
+    WireFormat src, dst;
+    src.push_back( 0 );
+    src.push_back( 1 );
+    src.push_back( 2 );
+    src.push_back( 3 );
+
+    dst = src;
+
+    EXPECT_EQ( src.size(), dst.size() );
+    EXPECT_EQ( src.getBufferSize(), dst.getBufferSize() );
+    for ( auto i = 0 ; i < src.size() ; i++ ) {
+	EXPECT_EQ( src[i], dst[i] );
+    }
+}
+
+TEST_F( WireFormatTest, copy_size_n )
+{
+    WireFormat src;
+    src.push_back( 0 );
+    src.push_back( 1 );
+    src.push_back( 2 );
+    src.push_back( 3 );
+
+    WireFormat dst( src );
+
+    EXPECT_EQ( src.size(), dst.size() );
+    EXPECT_EQ( src.getBufferSize(), dst.getBufferSize() );
+    for ( auto i = 0 ; i < src.size() ; i++ ) {
+	EXPECT_EQ( src[i], dst[i] );
+    }
+}
+
+
 int main( int argc, char **argv )
 {
     ::testing::InitGoogleTest( &argc, argv );

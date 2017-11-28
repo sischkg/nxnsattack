@@ -21,6 +21,31 @@ WireFormat::WireFormat( const uint8_t *begin, const uint8_t *end, uint16_t buffe
     }
 }
 
+
+WireFormat::WireFormat( const WireFormat &src )
+    : mBufferSize( src.getBufferSize() ), mEnd( 0 )
+{
+    for ( auto i = 0 ; i < src.size() ; i++ ) {
+        push_back( src[i] );
+    }
+}
+
+WireFormat &WireFormat::operator=( const WireFormat &src )
+{
+    for ( auto buf : mBuffers )
+	delete buf;
+    mBuffers.resize( 0 );
+    mEnd = 0;
+    mBufferSize = src.getBufferSize();
+
+    for ( auto i = 0 ; i < src.size() ; i++ ) {
+        push_back( src[i] );
+    }
+
+    return *this;
+}
+
+
 WireFormat::~WireFormat()
 {
     clear();

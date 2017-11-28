@@ -86,23 +86,25 @@ namespace dns
                     if ( isDebug() )
                         std::cerr << "Response:" << response_info << std::endl; 
 
-                    uint32_t requested_max_payload_size = 512;
-                    if ( query.isEDNS0() &&
-                         query.opt_pseudo_rr.payload_size > 512 ) {
-                        requested_max_payload_size = query.opt_pseudo_rr.payload_size;
-                        if ( query.opt_pseudo_rr.payload_size > 4096 )
-                            query.opt_pseudo_rr.payload_size = 4096;
-                    }
+		    if ( mTruncation ) {
+			uint32_t requested_max_payload_size = 512;
+			if ( query.isEDNS0() &&
+			     query.opt_pseudo_rr.payload_size > 512 ) {
+			    requested_max_payload_size = query.opt_pseudo_rr.payload_size;
+			    if ( query.opt_pseudo_rr.payload_size > 4096 )
+				query.opt_pseudo_rr.payload_size = 4096;
+			}
 
-                    std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
-                    if ( response_info.getMessageSize() > requested_max_payload_size ) {
-                        std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
-                        response_info.truncation = 1;
-                        response_info.clearAnswerSection();
-                        response_info.clearAuthoritySection();
-                        response_info.clearAdditionalInfomationSection();
-                    }
-
+			std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+			if ( response_info.getMessageSize() > requested_max_payload_size ) {
+			    std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+			    response_info.truncation = 1;
+			    response_info.clearAnswerSection();
+			    response_info.clearAuthoritySection();
+			    response_info.clearAdditionalInfomationSection();
+			}
+		    }
+		    
                     WireFormat response_packet;
                     response_info.generateMessage( response_packet );
 

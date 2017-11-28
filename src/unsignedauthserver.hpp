@@ -11,7 +11,7 @@ namespace dns
     {
     public:
 	UnsignedAuthServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::DNSServer( addr, port, debug )
+	    : dns::DNSServer( addr, port, true, debug )
 	{}
 
 	void load( const std::string &apex, const std::string &zone_filename,

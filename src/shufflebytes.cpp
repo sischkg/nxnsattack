@@ -7,10 +7,13 @@ namespace dns
     {
 	uint16_t src_size = src.size();
 	dst.clear();
-	
-	switch( getRandom( 16 ) ) {
+	int r = getRandom( 16 );
+	std::cerr << "random: " << r << std::endl;
+	switch( r ) {
 	case 0: // insert data
 	    {
+		std::cerr << "insert data" << std::endl;
+ 
 		uint32_t insert_position = getRandom( src_size );
 		uint32_t insert_size     = getRandom( 1024 );
 		if ( src_size + insert_size > 0xffff ) {
@@ -24,10 +27,11 @@ namespace dns
 		    dst.push_back( getRandom( 0xff ) );
 		for ( ; i < src_size ; i++ )
 		    dst.push_back( src[i] );
-		break;
 	    }
+	    break;
 	case 1: // repleace data
 	    {
+		std::cerr << "replace data" << std::endl;
 		uint32_t begin_replace = getRandom( src_size );
 		uint32_t end_replace   = getRandom( src_size - begin_replace );
 		uint32_t insert_size   = getRandom( 1024 );
@@ -41,21 +45,24 @@ namespace dns
 		    dst.push_back( getRandom( 0xff ) );
 		for ( uint32_t i = end_replace ; i < src_size ; i++ )
 		    dst.push_back( src[i] );
-		break;
 	    }
+	    break;
 	case 2: // remove data
 	    {
+		std::cerr << "remove data" << std::endl;
 		uint32_t begin_remove = getRandom( src_size );
 		uint32_t end_remove   = getRandom( src_size - begin_remove );
 		for ( uint32_t i = 0 ; i < begin_remove ; i++ )
 		    dst.push_back( src[i] );
 		for ( uint32_t i = end_remove ; i < src_size ; i++ )
 		    dst.push_back( src[i] );
-		break;
 	    }
-	dafault: // not modify
-	    dst = src;
 	    break;
+	default: // not modify
+	    {
+		std::cerr << "not modified" << std::endl;
+		dst = src;
+	    }
 	}
 
 	std::string original_message_hex, modified_message_hex;

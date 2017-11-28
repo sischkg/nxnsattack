@@ -15,6 +15,7 @@ namespace dns
 	    config += "\n";
 	}
 	std::cerr << config << std::endl;
+        zone.reset( new Zone( apex ) );
 	dns::full::load( *zone, apex, config );
     }
 

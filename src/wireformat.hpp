@@ -31,6 +31,8 @@ public:
     WireFormat( uint16_t buffer_size = 512 );
     WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size = 512 );
     WireFormat( const uint8_t *begin, const uint8_t *end, uint16_t buffer_size = 512 );
+    WireFormat( const WireFormat & );
+    WireFormat &operator=( const WireFormat &rhs );
 
     ~WireFormat();
 
@@ -172,6 +174,11 @@ public:
         void setBuffers( uint16_t size, const std::vector<uint8_t *>, uint16_t buffer_size );
         void setDestination( const sockaddr *dest, uint16_t len );
     };
+
+    uint16_t getBufferSize() const
+    {
+	return mBufferSize;
+    }
 };
 
 #endif
