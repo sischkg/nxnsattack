@@ -102,6 +102,11 @@ namespace dns
             signSection( modified_response.authority_section );
             signSection( modified_response.additional_infomation_section );
 
+	    OptionGenerator option_generator;
+	    unsigned int option_count = getRandom( 2 );
+	    for ( unsigned int i = 0 ; i < option_count ; i++ )
+		option_generator.generate( modified_response );
+	    
             if ( ! getRandom( 5 ) ) {
                 ResourceRecord opt_pseudo_rr = generate_opt_pseudo_record( modified_response.opt_pseudo_rr );
                 RRSet rrset( opt_pseudo_rr.r_domainname,
