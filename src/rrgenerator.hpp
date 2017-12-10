@@ -62,6 +62,13 @@ namespace dns
         std::vector<std::shared_ptr<RDATAGeneratable>> mGenerators;
     };
 
+    class RawGenerator : public RDATAGeneratable
+    {
+    public:
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
+    };
+
     template <class T> 
     class XNameGenerator : public RDATAGeneratable
     {

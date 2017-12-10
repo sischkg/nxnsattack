@@ -198,6 +198,23 @@ namespace dns
 
 
     /**********************************************************
+     * RAWGenarator
+     **********************************************************/
+    std::shared_ptr<RDATA> RawGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<RDATA> RawGenerator::generate()
+    {
+        uint16_t size = getRandom( 0xffff );
+        std::vector<uint8_t> data;
+        for ( uint16_t i = 0 ; i < size ; i++ )
+            data.push_back( getRandom( 0xff ) );
+        return std::shared_ptr<RDATA>( new RecordRaw( getRandom( 0xff ), data ) );
+    }
+
+    /**********************************************************
      * AGenarator
      **********************************************************/
     std::shared_ptr<RDATA> AGenerator::generate( const PacketInfo &hint )
@@ -590,6 +607,7 @@ namespace dns
      **********************************************************/
     ResourceRecordGenerator::ResourceRecordGenerator()
     {
+        mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new RawGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new CNAMEGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DNAMEGenerator ) );

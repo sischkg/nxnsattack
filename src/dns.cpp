@@ -577,6 +577,13 @@ namespace dns
         return os;
     }
 
+    std::string RecordRaw::toZone() const
+    {
+        std::string hex;
+        encodeToHex( data, hex );
+        return hex;
+    }
+
     std::string RecordRaw::toString() const
     {
         std::ostringstream os;
