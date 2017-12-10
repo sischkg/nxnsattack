@@ -66,6 +66,7 @@ namespace dns
     typedef uint16_t OptType;
     const OptType    OPT_NSID          = 3;
     const OptType    OPT_CLIENT_SUBNET = 8;
+    const OptType    OPT_COOKIE        = 10;
 
     typedef uint8_t    ResponseCode;
     const ResponseCode NO_ERROR       = 0;
@@ -916,7 +917,7 @@ namespace dns
 	virtual OptPseudoRROption *clone() const                   = 0;
     };
 
-    typedef boost::shared_ptr<OptPseudoRROption> OptPseudoRROptPtr;
+    typedef std::shared_ptr<OptPseudoRROption> OptPseudoRROptPtr;
 
     class RAWOption : public OptPseudoRROption
     {
@@ -1012,6 +1013,33 @@ namespace dns
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
 
+    class CookieOption : public OptPseudoRROption
+    {
+    private:
+        std::vector<uint8_t> mClientCookie;
+        std::vector<uint8_t> mServerCookie;
+
+    public:
+        CookieOption( const std::vector<uint8_t> &client, const std::vector<uint8_t> &server = std::vector<uint8_t>() )
+            : mClientCookie( client ), mServerCookie( server )
+        {
+        }
+
+        virtual std::string toString() const;
+        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual uint16_t    code() const
+        {
+            return OPT_COOKIE;
+        }
+	virtual CookieOption *clone() const
+	{
+	    return new CookieOption( mClientCookie, mServerCookie );
+	}
+        virtual uint16_t size() const;
+
+        static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+    };
+
     class RecordOptionsData : public RDATA
     {
     private:
@@ -1038,6 +1066,7 @@ namespace dns
 	    return *this;
 	}
 
+	void add( OptPseudoRROptPtr opt ) { options.push_back( opt ); }
         virtual std::string toZone() const { return ""; }
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;

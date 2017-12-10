@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <sstream>
 
 namespace dns
 {
@@ -621,4 +622,88 @@ namespace dns
 
         return rrset;
     }
+
+
+    std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate()
+    {
+	ssize_t length = getRandom( 0xff00 );
+	std::string id;
+	for ( ssize_t i = 0 ; i < length ; i++ )
+	    id.push_back( getRandom( 0xff ) );
+	return std::shared_ptr<OptPseudoRROption>( new NSIDOption( id ) );
+    }
+
+    std::shared_ptr<OptPseudoRROption> ClientSubnetGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> ClientSubnetGenerator::generate()
+    {
+	if ( getRandom( 2 ) ) {
+	    std::ostringstream os;
+	    os << getRandom( 0xff ) << "." << getRandom( 0xff ) << "." << getRandom( 0xff ) << getRandom( 0xff );
+	    return std::shared_ptr<OptPseudoRROption>( new ClientSubnetOption( ClientSubnetOption::IPv4,
+									       getRandom( 32 ),
+									       getRandom( 32 ),
+									       os.str() ) );
+	}
+	else {
+	    std::ostringstream os;
+	    os << std::hex << getRandom( 0xff );
+	    for ( int i = 0 ; i < 15 ; i++ )
+		os << ":" << getRandom( 0xff );
+	    return std::shared_ptr<OptPseudoRROption>( new ClientSubnetOption( ClientSubnetOption::IPv6,
+									       getRandom( 128 ),
+									       getRandom( 128 ),
+									       os.str() ) );
+	}
+    }
+
+
+    std::shared_ptr<OptPseudoRROption> CookieGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> CookieGenerator::generate()
+    {
+        std::vector<uint8_t> client, server;
+        unsigned int client_length = getRandom( 64 );
+        unsigned int server_length = getRandom( 64 );
+        
+        for ( unsigned int i = 0 ; i < client_length ; i++ )
+            client.push_back( getRandom( 0xff ) );
+        for ( unsigned int i = 0 ; i < server_length ; i++ )
+            server.push_back( getRandom( 0xff ) );
+
+        return std::shared_ptr<OptPseudoRROption>( new CookieOption( client, server ) );
+    }
+
+    /**********************************************************
+     * OptionGenarator
+     **********************************************************/
+    OptionGenerator::OptionGenerator()
+    {
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new NSIDGenerator ) );
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new ClientSubnetGenerator ) );
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new CookieGenerator ) );
+    }
+
+
+    void OptionGenerator::generate( PacketInfo &packet )
+    {
+	if ( ! packet.isEDNS0() )
+	    return;
+
+        std::shared_ptr<OptPseudoRROption> option = mGenerators[ getRandom( mGenerators.size() )]->generate( packet );
+	std::dynamic_pointer_cast<RecordOptionsData>( packet.opt_pseudo_rr.record_options_data )->add( option );
+    }
+
 }
+

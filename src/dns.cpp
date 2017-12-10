@@ -1752,6 +1752,9 @@ namespace dns
             case OPT_NSID:
                 options.push_back( NSIDOption::parse( pos, pos + option_size ) );
                 break;
+            case OPT_COOKIE:
+                options.push_back( CookieOption::parse( pos, pos + option_size ) );
+                break;
             default:
                 break;
             }
@@ -1891,6 +1894,49 @@ namespace dns
         } else {
             throw FormatError( "invalid family of EDNS-Client-Subet" );
         }
+    }
+
+    void CookieOption::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( OPT_COOKIE );
+        message.pushUInt16HtoN( mClientCookie.size() + mServerCookie.size() );
+        message.pushBuffer( mClientCookie );
+        message.pushBuffer( mServerCookie );
+    }
+
+    uint16_t CookieOption::size() const
+    {
+        return 2 + 2 + mClientCookie.size() + mServerCookie.size();
+    }
+
+    std::string CookieOption::toString() const
+    {
+        std::string client, server;
+        std::ostringstream os;
+        encodeToHex( mClientCookie, client );
+        encodeToHex( mServerCookie, server );
+        os << "DNSCookie: "
+           << "client:  " << client << ", server:   " << server;
+        return os.str();
+    }
+
+    OptPseudoRROptPtr CookieOption::parse( const uint8_t *begin, const uint8_t *end )
+    {
+        const uint8_t *pos = begin;
+
+        unsigned int size = end - begin;
+        if ( size < 8 ) {
+            std::ostringstream os;
+            os << "DNS Cookie length " << size << " is too short"; 
+            std::cerr << os.str() << std::endl;
+            //throw FormatError( os.str());
+            return OptPseudoRROptPtr( new CookieOption( std::vector<uint8_t>(), std::vector<uint8_t>() ) );        
+        }
+
+        std::vector<uint8_t> client( begin, begin + 8 );
+        std::vector<uint8_t> server( begin + 8, end );
+
+        return OptPseudoRROptPtr( new CookieOption( client, server ) );        
     }
 
     std::string RecordTKEY::toZone() const

@@ -157,6 +157,47 @@ namespace dns
         std::shared_ptr<RDATA> generate( const PacketInfo &hint );
         std::shared_ptr<RDATA> generate();
     };
+
+    class OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint ) = 0;
+	virtual std::shared_ptr<OptPseudoRROption> generate() = 0;
+    };
+
+
+    class NSIDGenerator : public OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate();
+    };
+
+    class ClientSubnetGenerator : public OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate();
+    };
+
+
+    class CookieGenerator : public OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate();
+    };
+
+    class OptionGenerator
+    {
+    public:
+        OptionGenerator();
+
+	void generate( PacketInfo &packet );
+    private:
+        std::vector<std::shared_ptr<OptGeneratable>> mGenerators;
+    };
+
 }
 
 #endif
