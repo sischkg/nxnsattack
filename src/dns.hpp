@@ -923,12 +923,11 @@ namespace dns
     {
     private:
         uint16_t             option_code;
-        uint16_t             option_size;
         std::vector<uint8_t> option_data;
 
     public:
-        RAWOption( uint16_t in_code, uint16_t in_size, const std::vector<uint8_t> &in_data )
-            : option_code( in_code ), option_size( in_size ), option_data( in_data )
+        RAWOption( uint16_t in_code, const std::vector<uint8_t> &in_data )
+            : option_code( in_code ), option_data( in_data )
         {
         }
 
@@ -940,11 +939,11 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return option_size;
+            return option_data.size() + 2;
         }
 	virtual RAWOption *clone() const
 	{
-	    return new RAWOption( option_code, option_size, option_data );
+	    return new RAWOption( option_code, option_data );
 	}
     };
 

@@ -172,6 +172,12 @@ namespace dns
 	virtual std::shared_ptr<OptPseudoRROption> generate() = 0;
     };
 
+    class RawOptionGenerator : public OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate();
+    };
 
     class NSIDGenerator : public OptGeneratable
     {

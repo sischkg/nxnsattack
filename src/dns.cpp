@@ -1797,6 +1797,20 @@ namespace dns
         return opt;
     }
 
+    std::string RAWOption::toString() const
+    {
+        std::string hex;
+        encodeToHex( option_data, hex );
+        return hex;
+    }
+
+    void RAWOption::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( option_code );
+        message.pushUInt16HtoN( option_data.size() );
+        message.pushBuffer( option_data );
+    }
+
     void NSIDOption::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( OPT_NSID );

@@ -641,6 +641,19 @@ namespace dns
         return rrset;
     }
 
+    std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate()
+    {
+	ssize_t length = getRandom( 0xffff );
+	std::vector<uint8_t> data;
+	for ( ssize_t i = 0 ; i < length ; i++ )
+	    data.push_back( getRandom( 0xff ) );
+	return std::shared_ptr<OptPseudoRROption>( new RAWOption( getRandom( 0xff ), data ) );
+    }
 
     std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate( const PacketInfo &hint )
     {
@@ -708,6 +721,7 @@ namespace dns
      **********************************************************/
     OptionGenerator::OptionGenerator()
     {
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new RawOptionGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new NSIDGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new ClientSubnetGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new CookieGenerator ) );
