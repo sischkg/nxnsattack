@@ -159,9 +159,11 @@ namespace dns
                 addRRSet( response.answer_section, cname_rrset );
 
                 auto canonical_node  = findNode( canonical_name );
-                auto canonical_rrset = canonical_node->find( qtype );
-                if ( canonical_rrset ) {
-                    addRRSet( response.answer_section, *canonical_rrset );
+                if ( canonical_node ) {
+                    auto canonical_rrset = canonical_node->find( qtype );
+                    if ( canonical_rrset ) {
+                        addRRSet( response.answer_section, *canonical_rrset );
+                    }
                 }
                 return response;
             }   

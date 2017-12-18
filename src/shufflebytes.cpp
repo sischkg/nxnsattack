@@ -8,7 +8,6 @@ namespace dns
 	uint16_t src_size = src.size();
 	dst.clear();
 	int r = getRandom( 16 );
-	std::cerr << "random: " << r << std::endl;
 	switch( r ) {
 	case 0: // insert data
 	    {
@@ -35,7 +34,7 @@ namespace dns
 		uint32_t begin_replace = getRandom( src_size );
 		uint32_t end_replace   = getRandom( src_size - begin_replace );
 		uint32_t insert_size   = getRandom( 1024 );
-		if ( src_size + ( end_replace - begin_replace ) + insert_size > 0xffff ) {
+		if ( src_size - ( end_replace - begin_replace ) + insert_size > 0xffff ) {
 		    dst = src;
 		    break;
 		}
@@ -64,12 +63,6 @@ namespace dns
 		dst = src;
 	    }
 	}
-
-	std::string original_message_hex, modified_message_hex;
-	encodeToHex( src.get(), original_message_hex );
-	encodeToHex( dst.get(), modified_message_hex );
-	std::cerr << "original message: " << original_message_hex << std::endl;
-	std::cerr << "modified message: " << modified_message_hex << std::endl;
     }
 
 }

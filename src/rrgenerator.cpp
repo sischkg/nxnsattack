@@ -32,6 +32,15 @@ namespace dns
 	return stream;
     }
 
+    std::vector<uint8_t> RandomGenerator::randSizeStream( unsigned int max_size )
+    {
+        unsigned int size = rand( max_size );
+        std::vector<uint8_t> stream;
+        for ( unsigned int i = 0 ; i < size ; i++ )
+            stream.push_back( this->rand( 0xff ) );
+	return stream;
+    }
+
     RandomGenerator &RandomGenerator::getInstance()
     {
 	if ( mInstance == nullptr )
@@ -315,7 +324,7 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> RRSIGGenerator::generate( const PacketInfo &hint )
     {
-        std::vector<uint8_t> signature = getRandomStream( 256 );
+        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
 
 	std::shared_ptr<RDATA> p( new RecordRRSIG( getRandom( 0xffff ), // type covered
 						   getRandom( 0xff ),   // algorithm
@@ -331,7 +340,7 @@ namespace dns
 
     std::shared_ptr<RDATA> RRSIGGenerator::generate()
     {
-        std::vector<uint8_t> signature = getRandomStream( 256 );
+        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
 	return std::shared_ptr<RDATA>( new RecordRRSIG( getRandom( 0xffff ), // type covered
 							getRandom( 0xff ),   // algorithm
 							getRandom( 0xff ),   // label
@@ -430,6 +439,30 @@ namespace dns
     }
 
     /**********************************************************
+     * NSEC3Genarator
+     **********************************************************/
+    std::shared_ptr<RDATA> NSEC3Generator::generate( const PacketInfo &hint )
+    {
+        return generate();
+    }
+
+    std::shared_ptr<RDATA> NSEC3Generator::generate()
+    {
+        std::vector<Type> types;
+        unsigned int type_count = getRandom( 0xffff );
+        for ( unsigned int i = 0 ; i < type_count ; i++ ) {
+            types.push_back( getRandom( 0xffff ) );
+        }
+        std::cerr << "generate NSEC3" << std::endl;
+        return std::shared_ptr<RDATA>( new RecordNSEC3( getRandom( 0xff ),
+                                                        getRandom( 0xff ),
+                                                        getRandom( 0x00ff ),
+                                                        getRandomSizeStream( 0xff ),
+                                                        getRandomSizeStream( 100 ),
+                                                        types ) );
+    }
+
+    /**********************************************************
      * SIGGenarator
      **********************************************************/
     std::shared_ptr<RDATA> SIGGenerator::generate( const PacketInfo &hint )
@@ -450,7 +483,7 @@ namespace dns
 
     std::shared_ptr<RDATA> SIGGenerator::generate()
     {
-        std::vector<uint8_t> signature = getRandomStream( 256 );
+        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
 	return std::shared_ptr<RDATA>( new RecordSIG( getRandom( 0xffff ), // type covered
 						      getRandom( 0xff ),   // algorithm
 						      getRandom( 0xff ),   // label
@@ -618,6 +651,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DNSKEYGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DSGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSECGenerator ) );
+        mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSEC3Generator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new SIGGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new KEYGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NXTGenerator ) );
@@ -632,7 +666,17 @@ namespace dns
 
         std::shared_ptr<RDATA> resource_data = mGenerators[ getRandom( mGenerators.size() )]->generate( hint );
 
-        RRSet rrset( getDomainname( hint ),
+        Domainname owner;
+        if ( resource_data->type() == TYPE_NSEC3 ) {
+            std::string next_hash;
+            encodeToHex( getRandomStream( 32 ), next_hash ); 
+            owner = (Domainname)(next_hash + "." + getDomainname( hint ).toString());
+        }
+        else {
+            owner = getDomainname( hint );
+        }
+
+        RRSet rrset( owner,
                      class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ],
                      resource_data->type(),
                      getRandom( 60 ) );

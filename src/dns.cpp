@@ -366,6 +366,12 @@ namespace dns
         case TYPE_DNSKEY:
             parsed_data = RecordDNSKEY::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_NSEC:
+            parsed_data = RecordNSEC::parse( packet, pos, pos + data_length );
+            break;
+        case TYPE_NSEC3:
+            parsed_data = RecordNSEC3::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_TSIG:
             parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length, sec.r_domainname );
             break;
@@ -457,6 +463,9 @@ namespace dns
         case TYPE_NSEC:
             res = "NSEC";
             break;
+        case TYPE_NSEC3:
+            res = "NSEC3";
+            break;
         case TYPE_TSIG:
             res = "TSIG";
             break;
@@ -539,6 +548,7 @@ namespace dns
         if ( t == "RRSIG" )  return TYPE_RRSIG;
         if ( t == "DNSKEY" ) return TYPE_DNSKEY;
         if ( t == "NSEC" )   return TYPE_NSEC;
+        if ( t == "NSEC3" )   return TYPE_NSEC3;
         if ( t == "TSIG" )   return TYPE_TSIG;
         if ( t == "TKEY" )   return TYPE_TKEY;
         if ( t == "IXFR" )   return TYPE_IXFR;

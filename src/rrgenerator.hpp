@@ -15,6 +15,7 @@ namespace dns
     public:
 	uint32_t rand( uint32_t = 0 );
         std::vector<uint8_t> randStream( unsigned int );
+        std::vector<uint8_t> randSizeStream( unsigned int );
 
 	static RandomGenerator &getInstance();
     private:
@@ -31,6 +32,11 @@ namespace dns
     inline std::vector<uint8_t> getRandomStream( unsigned int size )
     {
         return RandomGenerator::getInstance().randStream( size );
+    }
+
+    inline std::vector<uint8_t> getRandomSizeStream( unsigned int max_size )
+    {
+        return RandomGenerator::getInstance().randSizeStream( max_size );
     }
 
 
@@ -124,6 +130,13 @@ namespace dns
     };
 
     class NSECGenerator : public RDATAGeneratable
+    {
+    public:
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
+    };
+
+    class NSEC3Generator : public RDATAGeneratable
     {
     public:
         std::shared_ptr<RDATA> generate( const PacketInfo &hint );
