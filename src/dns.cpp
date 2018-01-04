@@ -372,6 +372,9 @@ namespace dns
         case TYPE_NSEC3:
             parsed_data = RecordNSEC3::parse( packet, pos, pos + data_length );
             break;
+        case TYPE_NSEC3PARAM:
+            parsed_data = RecordNSEC3PARAM::parse( packet, pos, pos + data_length );
+            break;
         case TYPE_TSIG:
             parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length, sec.r_domainname );
             break;
@@ -466,6 +469,9 @@ namespace dns
         case TYPE_NSEC3:
             res = "NSEC3";
             break;
+        case TYPE_NSEC3PARAM:
+            res = "NSEC3PARAM";
+            break;
         case TYPE_TSIG:
             res = "TSIG";
             break;
@@ -530,31 +536,32 @@ namespace dns
 
     Type string_to_type_code( const std::string &t )
     {
-        if ( t == "A" )      return TYPE_A;
-        if ( t == "AAAA" )   return TYPE_AAAA;
-        if ( t == "NS" )     return TYPE_NS;
-        if ( t == "CNAME" )  return TYPE_CNAME;
-        if ( t == "NAPTR" )  return TYPE_NAPTR;
-        if ( t == "DNAME" )  return TYPE_DNAME;
-        if ( t == "MX" )     return TYPE_MX;
-        if ( t == "TXT" )    return TYPE_TXT;
-        if ( t == "SPF" )    return TYPE_SPF;
-        if ( t == "SOA" )    return TYPE_SOA;
-        if ( t == "SIG" )    return TYPE_SIG;
-        if ( t == "KEY" )    return TYPE_KEY;
-        if ( t == "NXT" )    return TYPE_NXT;
-        if ( t == "OPT" )    return TYPE_OPT;
-        if ( t == "DS" )     return TYPE_DS;
-        if ( t == "RRSIG" )  return TYPE_RRSIG;
-        if ( t == "DNSKEY" ) return TYPE_DNSKEY;
-        if ( t == "NSEC" )   return TYPE_NSEC;
-        if ( t == "NSEC3" )   return TYPE_NSEC3;
-        if ( t == "TSIG" )   return TYPE_TSIG;
-        if ( t == "TKEY" )   return TYPE_TKEY;
-        if ( t == "IXFR" )   return TYPE_IXFR;
-        if ( t == "AXFR" )   return TYPE_AXFR;
-        if ( t == "ANY" )    return TYPE_ANY;
-        if ( t == "CAA" )    return TYPE_CAA;
+        if ( t == "A" )          return TYPE_A;
+        if ( t == "AAAA" )       return TYPE_AAAA;
+        if ( t == "NS" )         return TYPE_NS;
+        if ( t == "CNAME" )      return TYPE_CNAME;
+        if ( t == "NAPTR" )      return TYPE_NAPTR;
+        if ( t == "DNAME" )      return TYPE_DNAME;
+        if ( t == "MX" )         return TYPE_MX;
+        if ( t == "TXT" )        return TYPE_TXT;
+        if ( t == "SPF" )        return TYPE_SPF;
+        if ( t == "SOA" )        return TYPE_SOA;
+        if ( t == "SIG" )        return TYPE_SIG;
+        if ( t == "KEY" )        return TYPE_KEY;
+        if ( t == "NXT" )        return TYPE_NXT;
+        if ( t == "OPT" )        return TYPE_OPT;
+        if ( t == "DS" )         return TYPE_DS;
+        if ( t == "RRSIG" )      return TYPE_RRSIG;
+        if ( t == "DNSKEY" )     return TYPE_DNSKEY;
+        if ( t == "NSEC" )       return TYPE_NSEC;
+        if ( t == "NSEC3" )      return TYPE_NSEC3;
+        if ( t == "NSEC3PARAM" ) return TYPE_NSEC3PARAM;
+        if ( t == "TSIG" )       return TYPE_TSIG;
+        if ( t == "TKEY" )       return TYPE_TKEY;
+        if ( t == "IXFR" )       return TYPE_IXFR;
+        if ( t == "AXFR" )       return TYPE_AXFR;
+        if ( t == "ANY" )        return TYPE_ANY;
+        if ( t == "CAA" )        return TYPE_CAA;
 
         throw std::runtime_error( "unknown type \"" + t + "\"" );
     }
@@ -1710,6 +1717,78 @@ namespace dns
 	return RDATAPtr( new RecordNSEC3( algo, flag, iteration, salt, next_hash, bitmaps ) );
     }
 
+    RecordNSEC3PARAM::RecordNSEC3PARAM( HashAlgorithm              algo,
+                                        uint8_t                    flag,
+                                        uint16_t                   iteration,
+                                        const std::vector<uint8_t> &salt )
+        : mHashAlgorithm( algo ),
+          mFlag( flag ),
+          mIteration( iteration ),
+          mSalt( salt )
+    {}
+
+    std::string RecordNSEC3PARAM::toZone() const
+    {
+	return toZone();
+    }
+
+    std::string RecordNSEC3PARAM::toString() const
+    {
+	std::string salt_string;
+	encodeToHex( mSalt, salt_string );
+	
+	std::stringstream os;
+	os << (uint32_t)mHashAlgorithm << " "
+	   << (uint32_t)mFlag          << " "
+	   << (uint32_t)mIteration     << " "
+	   << salt_string;
+	return os.str();
+    }
+
+    void RecordNSEC3PARAM::outputWireFormat( WireFormat &message ) const
+    {
+	message.pushUInt8( mHashAlgorithm );
+	message.pushUInt8( mFlag );
+	message.pushUInt16HtoN( mIteration );
+	message.pushUInt8( mSalt.size() );
+	message.pushBuffer( mSalt );
+    }
+
+    void RecordNSEC3PARAM::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
+    uint16_t RecordNSEC3PARAM::size() const
+    {
+	return
+	    + 1                 // Hash Algorithm
+	    + 1                 // Flags
+	    + 2                 // Iteration
+	    + 1                 // Salt size
+	    + mSalt.size();     // Salt
+    }
+
+    RDATAPtr RecordNSEC3PARAM::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    {
+	//                alg flag itr ssize salt
+	if ( end - begin < 1 + 1  + 2  + 1   + 1 ) {
+	    throw std::runtime_error( "too few size for NSEC3PARAM" );
+	}
+        const uint8_t *      pos   = begin;
+	uint8_t  algo      = get_bytes<uint8_t>( &pos );
+	uint8_t  flag      = get_bytes<uint8_t>( &pos );
+        uint16_t iteration = ntohs( get_bytes<uint16_t>( &pos ) );
+
+        uint8_t salt_size = get_bytes<uint8_t>( &pos );
+	if ( end - pos < salt_size ) {
+	    throw std::runtime_error( "too few size for salt" );
+	}
+	std::vector<uint8_t> salt;
+	salt.insert( salt.end(), pos, pos + salt_size );
+	pos += salt_size;
+	return RDATAPtr( new RecordNSEC3PARAM( algo, flag, iteration, salt ) );
+    }
 
     std::string RecordOptionsData::toString() const
     {

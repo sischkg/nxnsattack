@@ -33,33 +33,34 @@ namespace dns
     const Class      UPDATE_DELETE = 255;
 
     typedef uint16_t Type;
-    const Type       TYPE_A      = 1;
-    const Type       TYPE_NS     = 2;
-    const Type       TYPE_CNAME  = 5;
-    const Type       TYPE_SOA    = 6;
-    const Type       TYPE_MX     = 15;
-    const Type       TYPE_TXT    = 16;
-    const Type       TYPE_SIG    = 24;
-    const Type       TYPE_KEY    = 25;
-    const Type       TYPE_AAAA   = 28;
-    const Type       TYPE_NXT    = 30;
-    const Type       TYPE_NAPTR  = 35;
-    const Type       TYPE_DNAME  = 39;
-    const Type       TYPE_OPT    = 41;
-    const Type       TYPE_APL    = 42;
-    const Type       TYPE_DS     = 43;
-    const Type       TYPE_RRSIG  = 46;
-    const Type       TYPE_NSEC   = 47;
-    const Type       TYPE_DNSKEY = 48;
-    const Type       TYPE_NSEC3  = 50;
-    const Type       TYPE_TLSA   = 52;
-    const Type       TYPE_SPF    = 99;
-    const Type       TYPE_TKEY   = 249;
-    const Type       TYPE_TSIG   = 250;
-    const Type       TYPE_IXFR   = 251;
-    const Type       TYPE_AXFR   = 252;
-    const Type       TYPE_ANY    = 255;
-    const Type       TYPE_CAA    = 257;
+    const Type       TYPE_A           = 1;
+    const Type       TYPE_NS          = 2;
+    const Type       TYPE_CNAME       = 5;
+    const Type       TYPE_SOA         = 6;
+    const Type       TYPE_MX          = 15;
+    const Type       TYPE_TXT         = 16;
+    const Type       TYPE_SIG         = 24;
+    const Type       TYPE_KEY         = 25;
+    const Type       TYPE_AAAA        = 28;
+    const Type       TYPE_NXT         = 30;
+    const Type       TYPE_NAPTR       = 35;
+    const Type       TYPE_DNAME       = 39;
+    const Type       TYPE_OPT         = 41;
+    const Type       TYPE_APL         = 42;
+    const Type       TYPE_DS          = 43;
+    const Type       TYPE_RRSIG       = 46;
+    const Type       TYPE_NSEC        = 47;
+    const Type       TYPE_DNSKEY      = 48;
+    const Type       TYPE_NSEC3       = 50;
+    const Type       TYPE_NSEC3PARAM  = 51;
+    const Type       TYPE_TLSA        = 52;
+    const Type       TYPE_SPF         = 99;
+    const Type       TYPE_TKEY        = 249;
+    const Type       TYPE_TSIG        = 250;
+    const Type       TYPE_IXFR        = 251;
+    const Type       TYPE_AXFR        = 252;
+    const Type       TYPE_ANY         = 255;
+    const Type       TYPE_CAA         = 257;
 
     typedef uint32_t TTL;
 
@@ -818,6 +819,46 @@ namespace dns
 	virtual RecordNSEC3 *clone() const
 	{
 	    return new RecordNSEC3( mHashAlgorithm, mFlag, mIteration, mSalt, mNextHash, mBitmaps.getTypes() );
+	}
+	
+        static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
+    };
+
+
+    class RecordNSEC3PARAM : public RDATA
+    {
+    public:
+	typedef uint8_t HashAlgorithm;
+    private:
+	HashAlgorithm        mHashAlgorithm;
+	uint8_t              mFlag;
+	uint16_t             mIteration;
+	std::vector<uint8_t> mSalt;
+
+    public:
+	RecordNSEC3PARAM( HashAlgorithm              algo,
+                          uint8_t                    flag,
+                          uint16_t                   iteration,
+                          const std::vector<uint8_t> &salt );
+	
+	HashAlgorithm        getHashAlgoritm() const { return mHashAlgorithm; }
+	uint8_t              getFlag() const { return mFlag; }
+	uint16_t             getIteration() const { return mIteration; }
+	std::vector<uint8_t> getSalt() const { return mSalt; }
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint16_t size() const;
+        virtual uint16_t type() const
+        {
+            return TYPE_NSEC3PARAM;
+        }
+	virtual RecordNSEC3PARAM *clone() const
+	{
+	    return new RecordNSEC3PARAM( mHashAlgorithm, mFlag, mIteration, mSalt );
 	}
 	
         static RDATAPtr parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );

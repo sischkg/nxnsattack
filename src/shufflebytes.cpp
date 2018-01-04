@@ -7,12 +7,10 @@ namespace dns
     {
 	uint16_t src_size = src.size();
 	dst.clear();
-	int r = getRandom( 16 );
+	int r = getRandom( 6 );
 	switch( r ) {
 	case 0: // insert data
 	    {
-		std::cerr << "insert data" << std::endl;
- 
 		uint32_t insert_position = getRandom( src_size );
 		uint32_t insert_size     = getRandom( 1024 );
 		if ( src_size + insert_size > 0xffff ) {
@@ -30,7 +28,6 @@ namespace dns
 	    break;
 	case 1: // repleace data
 	    {
-		std::cerr << "replace data" << std::endl;
 		uint32_t begin_replace = getRandom( src_size );
 		uint32_t end_replace   = getRandom( src_size - begin_replace );
 		uint32_t insert_size   = getRandom( 1024 );
@@ -48,7 +45,6 @@ namespace dns
 	    break;
 	case 2: // remove data
 	    {
-		std::cerr << "remove data" << std::endl;
 		uint32_t begin_remove = getRandom( src_size );
 		uint32_t end_remove   = getRandom( src_size - begin_remove );
 		for ( uint32_t i = 0 ; i < begin_remove ; i++ )
@@ -59,7 +55,6 @@ namespace dns
 	    break;
 	default: // not modify
 	    {
-		std::cerr << "not modified" << std::endl;
 		dst = src;
 	    }
 	}

@@ -162,7 +162,6 @@ namespace dns
 
                 auto dname_rdata    = std::dynamic_pointer_cast<RecordDNAME>( (*dname_rrset)[0] );
                 auto relative_name  = parent_name.getRelativeDomainname( qname );
-                std::cerr << "relative: " << relative_name.toString() << ", canonical: " << dname_rdata->getCanonicalName() << std::endl;
                 auto canonical_name = relative_name + dname_rdata->getCanonicalName();
                 std::shared_ptr<RecordCNAME> cname_rdata( new RecordCNAME( canonical_name ) );
                 RRSet cname_rrset( canonical_name, dname_rrset->getClass(), TYPE_CNAME, dname_rrset->getTTL() );

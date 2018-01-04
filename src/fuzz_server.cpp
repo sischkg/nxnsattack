@@ -63,7 +63,7 @@ namespace dns
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 RRSet rrset = rr_generator.generate( original_response );
 
-                switch ( getRandom( 32 ) ) {
+                switch ( getRandom( 8 ) ) {
                 case 0:
                     {
                         auto new_rrs = newRRs( rrset );
@@ -94,11 +94,7 @@ namespace dns
             replaceClass( modified_response.authority_section );
             replaceClass( modified_response.additional_infomation_section );
 
-            if ( query.question_section[0].q_type != TYPE_RRSIG &&
-                 modified_response.getAnswerSection().size() != 0 &&
-                 modified_response.response_code != NO_ERROR ) {
-                signSection( modified_response.answer_section );
-            }
+            signSection( modified_response.answer_section );
             signSection( modified_response.authority_section );
             signSection( modified_response.additional_infomation_section );
 
@@ -148,13 +144,15 @@ namespace dns
             std::vector<ResourceRecord> rrsigs;
             std::vector< std::shared_ptr<RRSet> > signed_targets = cumulate( section );
             for ( auto signed_target : signed_targets ) {
-                std::shared_ptr<RRSet> rrsig = signRRSet( *signed_target );
-                ResourceRecord rr;
-                rr.r_domainname = rrsig->getOwner();
-                rr.r_class      = rrsig->getClass();
-                rr.r_type       = rrsig->getType();
-                rr.r_resource_data = (*rrsig)[0];
-                rrsigs.push_back( rr );
+                std::shared_ptr<RRSet> rrsig_rrset = signRRSet( *signed_target );
+                for ( auto rrsig = rrsig_rrset->begin() ; rrsig != rrsig_rrset->end() ; rrsig++ ) {
+                    ResourceRecord rr;
+                    rr.r_domainname    = rrsig_rrset->getOwner();
+                    rr.r_class         = rrsig_rrset->getClass();
+                    rr.r_type          = rrsig_rrset->getType();
+                    rr.r_resource_data = *rrsig;
+                    rrsigs.push_back( rr );
+                }
             }
             section.insert( section.end(), rrsigs.begin(), rrsigs.end() );
         }
@@ -164,17 +162,20 @@ namespace dns
             std::vector<std::shared_ptr<RRSet> > rrsets;
 
             for ( auto rr : rrs ) {
+                bool is_found = false;
                 for ( auto rrset : rrsets ) {
                     if ( rr.r_domainname == rrset->getOwner() &&
                          rr.r_class      == rrset->getClass() && 
                          rr.r_type       == rrset->getType()  ) {
                         rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                        is_found = true;
+                        break;
                     }
-                    else {
-                        std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.r_domainname, rr.r_class, rr.r_type, rr.r_ttl ) ) );
-                        new_rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
-                        rrsets.push_back( new_rrset );
-                    }
+                }
+                if ( ! is_found ) {
+                    std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.r_domainname, rr.r_class, rr.r_type, rr.r_ttl ) ) );
+                    new_rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                    rrsets.push_back( new_rrset );
                 }
             }
 

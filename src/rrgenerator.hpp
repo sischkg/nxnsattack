@@ -143,6 +143,13 @@ namespace dns
         std::shared_ptr<RDATA> generate();
     };
 
+    class NSEC3PARAMGenerator : public RDATAGeneratable
+    {
+    public:
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
+    };
+
     class TKEYGenerator : public RDATAGeneratable
     {
     public:
