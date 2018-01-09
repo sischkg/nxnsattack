@@ -448,18 +448,44 @@ namespace dns
 
     std::shared_ptr<RDATA> NSEC3Generator::generate()
     {
+        uint8_t optout = 0x07;
+        if ( getRandom( 8 ) ) {
+            optout = 0;
+        }
         std::vector<Type> types;
         unsigned int type_count = getRandom( 0xffff );
         for ( unsigned int i = 0 ; i < type_count ; i++ ) {
             types.push_back( getRandom( 0xffff ) );
         }
-        std::cerr << "generate NSEC3" << std::endl;
-        return std::shared_ptr<RDATA>( new RecordNSEC3( getRandom( 0xff ),
-                                                        getRandom( 0xff ),
+
+        return std::shared_ptr<RDATA>( new RecordNSEC3( 0x01,
+                                                        optout,
                                                         getRandom( 0x00ff ),
                                                         getRandomSizeStream( 0xff ),
-                                                        getRandomSizeStream( 100 ),
+                                                        getRandomStream( 20 ),
                                                         types ) );
+    }
+
+
+    /**********************************************************
+     * NSEC3PARAMGenarator
+     **********************************************************/
+    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate( const PacketInfo &hint )
+    {
+        return generate();
+    }
+
+    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate()
+    {
+        uint8_t optout = 0x07;
+        if ( getRandom( 8 ) ) {
+            optout = 0;
+        }
+
+        return std::shared_ptr<RDATA>( new RecordNSEC3PARAM( 0x01,
+                                                             optout,
+                                                             getRandom( 0x00ff ),
+                                                             getRandomSizeStream( 0xff ) ) );
     }
 
     /**********************************************************
@@ -652,6 +678,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DSGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSECGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSEC3Generator ) );
+        mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NSEC3PARAMGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new SIGGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new KEYGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new NXTGenerator ) );
@@ -668,9 +695,10 @@ namespace dns
 
         Domainname owner;
         if ( resource_data->type() == TYPE_NSEC3 ) {
-            std::string next_hash;
-            encodeToHex( getRandomStream( 32 ), next_hash ); 
-            owner = (Domainname)(next_hash + "." + getDomainname( hint ).toString());
+            std::string hash;
+            encodeToBase32Hex( getRandomStream( 20 ), hash ); 
+            owner = getDomainname( hint );
+            owner.addSubdomain( hash );
         }
         else {
             owner = getDomainname( hint );

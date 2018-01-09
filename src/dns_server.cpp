@@ -95,9 +95,11 @@ namespace dns
 				query.opt_pseudo_rr.payload_size = 4096;
 			}
 
-			std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+                        if ( isDebug() )
+                            std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
 			if ( response_info.getMessageSize() > requested_max_payload_size ) {
-			    std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+                            if ( isDebug() )
+                                std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
 			    response_info.truncation = 1;
 			    response_info.clearAnswerSection();
 			    response_info.clearAuthoritySection();
@@ -152,7 +154,9 @@ namespace dns
                     } else {
                         PacketInfo response_info = generateResponse( query, true );
                         WireFormat response_stream;
-                        std::cerr << "response size(TCP): " << response_info.getMessageSize() << std::endl;
+
+                        if ( isDebug() )
+                            std::cerr << "response size(TCP): " << response_info.getMessageSize() << std::endl;
 
                         if ( response_info.getMessageSize() > 0xffff ) {
                             std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;

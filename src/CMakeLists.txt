@@ -5,13 +5,12 @@ add_library(
   readbuffer.cpp
   ipv4.cpp udpv4.cpp udpv4client.cpp udpv4server.cpp
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
-add_library( libdns dns.cpp domainname.cpp )
+add_library( libdns dns.cpp domainname.cpp rrgenerator.cpp )
 add_library( libdnsserver dns_server.cpp )
 add_library( libzone
              signedauthserver.cpp
              unsignedauthserver.cpp
              auth_server.cpp
-             rrgenerator.cpp
 	     shufflebytes.cpp
              signedzone.cpp
              signedzoneimp.cpp
@@ -43,6 +42,7 @@ add_executable( cve-2017-3137     cve-2017-3137.cpp )
 add_executable( cve-2017-3139     cve-2017-3139.cpp )
 add_executable( dnssec_server     dnssec_server.cpp )
 add_executable( fuzz_server       fuzz_server.cpp )
+add_executable( fuzz_client       fuzz_client.cpp )
 add_executable( unbound-caps-dos  unbound-caps-dos.cpp )
 add_executable( cve-2017-15120    cve-2017-15120.cpp )
 
@@ -59,6 +59,7 @@ target_link_libraries( cve-2017-3137     ${SERVER_LIBRARY} )
 target_link_libraries( cve-2017-3139     ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( dnssec_server     ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( fuzz_server       ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( fuzz_client       ${CLIENT_LIBRARY} )
 target_link_libraries( unbound-caps-dos  ${SERVER_LIBRARY} )
 target_link_libraries( cve-2017-15120    ${SERVER_LIBRARY} )
 target_link_libraries( cve-2016-7068     ${CLIENT_LIBRARY} )

@@ -76,6 +76,9 @@ namespace tcpv4
             SocketError( get_error_message( "cannot create socket", errno ) );
         }
 
+        const int one = 1;
+        setsockopt( tcp_socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one) );
+
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;

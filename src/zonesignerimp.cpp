@@ -257,7 +257,6 @@ namespace dns
 	uint8_t *p = &buf[0];
 	if ( ! i2o_ECPublicKey( ec, &p ) )
 	    throw std::runtime_error( "cannot get public key from private key" );
-        std::cerr << "PC: " << (int)buf[0] << ", size: " << buf.size() << std::endl;
 	return std::shared_ptr<ECDSAPublicKey>( new ECDSAPublicKey( &buf[1], buf.size() - 1 ) );
     }
     
@@ -283,16 +282,11 @@ namespace dns
 	if ( ecdsa_sig == nullptr ) {
 	    throwException( "ECDSA_sign failed" );
 	}
-	unsigned int signature_length = ECDSA_size( ec );
 
         const BIGNUM *r, *s;
         ECDSA_SIG_get0( ecdsa_sig, &r, &s );
         std::vector<uint8_t> r_buf( BN_num_bytes(r) );
         std::vector<uint8_t> s_buf( BN_num_bytes(s) );
-
-        std::cerr << "bn len r" << BN_num_bytes(r) << std::endl;
-        std::cerr << "bn len s" << BN_num_bytes(s) << std::endl;
-        std::cerr << "sinlen" << signature_length << std::endl;
 
         BN_bn2bin( r, &r_buf[0] );
         BN_bn2bin( s, &s_buf[0] );
@@ -400,7 +394,6 @@ namespace dns
                                                        TYPE_RRSIG,
                                                        rrset.getTTL() ) );
         for ( auto key : keys ) {
-            std::cerr << "generate rrsig rdata" << std::endl;
             rrsig_rrset->add( generateRRSIG( rrset, *key ) );
         }
 
