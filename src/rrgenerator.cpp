@@ -54,6 +54,8 @@ namespace dns
     std::string DomainnameGenerator::generateLabel()
     {
         std::string label;
+	if ( getRandom( 32 ) == 0 )
+	    return "*";
         unsigned int label_size = 1 + getRandom( 62 );
         for ( unsigned int i = 0 ; i < label_size ; i++ )
             label.push_back( getRandom( 256 ) );
@@ -724,7 +726,7 @@ namespace dns
 	std::vector<uint8_t> data;
 	for ( ssize_t i = 0 ; i < length ; i++ )
 	    data.push_back( getRandom( 0xff ) );
-	return std::shared_ptr<OptPseudoRROption>( new RAWOption( getRandom( 0xff ), data ) );
+	return std::shared_ptr<OptPseudoRROption>( new RAWOption( getRandom( 0x0f ), data ) );
     }
 
     std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate( const PacketInfo &hint )
@@ -788,6 +790,21 @@ namespace dns
         return std::shared_ptr<OptPseudoRROption>( new CookieOption( client, server ) );
     }
 
+
+    std::shared_ptr<OptPseudoRROption> TCPKeepaliveGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> TCPKeepaliveGenerator::generate()
+    {
+        uint16_t timeout = 0;
+        if ( getRandom( 4 ) ) {
+            timeout = getRandom( 0xffff );
+        }
+        return std::shared_ptr<OptPseudoRROption>( new TCPKeepaliveOption( timeout ) );
+    }
+
     /**********************************************************
      * OptionGenarator
      **********************************************************/
@@ -797,6 +814,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new NSIDGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new ClientSubnetGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new CookieGenerator ) );
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new TCPKeepaliveGenerator ) );
     }
 
 

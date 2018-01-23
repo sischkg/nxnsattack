@@ -1851,6 +1851,9 @@ namespace dns
             case OPT_COOKIE:
                 options.push_back( CookieOption::parse( pos, pos + option_size ) );
                 break;
+            case OPT_TCP_KEEPALIVE:
+                options.push_back( TCPKeepaliveOption::parse( pos, pos + option_size ) );
+                break;
             default:
                 break;
             }
@@ -2047,6 +2050,41 @@ namespace dns
         std::vector<uint8_t> server( begin + 8, end );
 
         return OptPseudoRROptPtr( new CookieOption( client, server ) );        
+    }
+
+    void TCPKeepaliveOption::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( OPT_TCP_KEEPALIVE );
+        message.pushUInt16HtoN( 2 );
+        message.pushUInt16HtoN( mTimeout );
+    }
+
+    uint16_t TCPKeepaliveOption::size() const
+    {
+        return 2 + 2 + 2;
+    }
+
+    std::string TCPKeepaliveOption::toString() const
+    {
+        std::ostringstream os;
+        os << "DNSTCPKeepalive: " << mTimeout;
+        return os.str();
+    }
+
+    OptPseudoRROptPtr TCPKeepaliveOption::parse( const uint8_t *begin, const uint8_t *end )
+    {
+        const uint8_t *pos = begin;
+
+        unsigned int size = end - begin;
+        if ( size != 2 ) {
+            std::ostringstream os;
+            os << "DNS TCPKeepalive length " << size << " must be 2."; 
+            std::cerr << os.str() << std::endl;
+            return OptPseudoRROptPtr( new TCPKeepaliveOption( 0 ) );        
+        }
+
+        uint16_t timeout = ntohs( get_bytes<uint16_t>( &pos ) );
+        return OptPseudoRROptPtr( new TCPKeepaliveOption( timeout ) );        
     }
 
     std::string RecordTKEY::toZone() const

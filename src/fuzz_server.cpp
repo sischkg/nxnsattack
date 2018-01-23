@@ -63,7 +63,7 @@ namespace dns
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 RRSet rrset = rr_generator.generate( original_response );
 
-                switch ( getRandom( 8 ) ) {
+                switch ( getRandom( 4 ) ) {
                 case 0:
                     {
                         auto new_rrs = newRRs( rrset );
@@ -99,9 +99,19 @@ namespace dns
             signSection( modified_response.additional_infomation_section );
 
 	    OptionGenerator option_generator;
-	    unsigned int option_count = getRandom( 2 );
+	    unsigned int option_count = getRandom( 8 );
 	    for ( unsigned int i = 0 ; i < option_count ; i++ )
 		option_generator.generate( modified_response );
+
+            if ( ! getRandom( 7 ) ) {
+                modified_response.opt_pseudo_rr.payload_size = getRandom( 1100 );
+            }
+            if ( ! getRandom( 7 ) ) {
+                modified_response.opt_pseudo_rr.rcode = getRandom( 16);
+            }
+            if ( ! getRandom( 7 ) ) {
+                modified_response.opt_pseudo_rr.dobit = getRandom( 1 );
+            }
 	    
             if ( ! getRandom( 5 ) ) {
                 ResourceRecord opt_pseudo_rr = generate_opt_pseudo_record( modified_response.opt_pseudo_rr );
@@ -119,6 +129,9 @@ namespace dns
                 modified_response.pushAdditionalInfomationSection( rrsig_rr );
             }
 
+            if ( ! getRandom( 16 ) ) {
+                modified_response.response_code = getRandom( 16 );
+            }
             return modified_response;
         }
 

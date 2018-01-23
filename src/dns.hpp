@@ -68,6 +68,7 @@ namespace dns
     const OptType    OPT_NSID          = 3;
     const OptType    OPT_CLIENT_SUBNET = 8;
     const OptType    OPT_COOKIE        = 10;
+    const OptType    OPT_TCP_KEEPALIVE = 11;
 
     typedef uint8_t    ResponseCode;
     const ResponseCode NO_ERROR       = 0;
@@ -1074,6 +1075,32 @@ namespace dns
 	virtual CookieOption *clone() const
 	{
 	    return new CookieOption( mClientCookie, mServerCookie );
+	}
+        virtual uint16_t size() const;
+
+        static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+    };
+
+    class TCPKeepaliveOption : public OptPseudoRROption
+    {
+    private:
+        uint16_t mTimeout;
+
+    public:
+        TCPKeepaliveOption( uint16_t timeout )
+            : mTimeout( timeout )
+        {
+        }
+
+        virtual std::string toString() const;
+        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual uint16_t    code() const
+        {
+            return OPT_TCP_KEEPALIVE;
+        }
+	virtual TCPKeepaliveOption *clone() const
+	{
+	    return new TCPKeepaliveOption( mTimeout );
 	}
         virtual uint16_t size() const;
 

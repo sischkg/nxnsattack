@@ -101,6 +101,7 @@ namespace dns
                             if ( isDebug() )
                                 std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
 			    response_info.truncation = 1;
+                            
 			    response_info.clearAnswerSection();
 			    response_info.clearAuthoritySection();
 			    response_info.clearAdditionalInfomationSection();

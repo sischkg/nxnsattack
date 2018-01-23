@@ -44,6 +44,8 @@ int main( int argc, char **argv )
         return 1;
     }
 
+    dns::OptionGenerator option_generator;
+
     while ( true ) {
 	dns::PacketInfo packet_info;
 
@@ -54,10 +56,25 @@ int main( int argc, char **argv )
 	    packet_info.opt_pseudo_rr.version      = 0;
 	    packet_info.opt_pseudo_rr.dobit        = 1;
 	    packet_info.edns0 = true;
+
+            unsigned int count = dns::getRandom( 8 );
+            for ( unsigned int i = 0 ; i < count ; i++ ) {
+                option_generator.generate( packet_info );
+            }
+
+            if ( ! dns::getRandom( 7 ) ) {
+                packet_info.opt_pseudo_rr.payload_size = dns::getRandom( 11000 );
+            }
+            if ( ! dns::getRandom( 7 ) ) {
+                packet_info.opt_pseudo_rr.rcode = dns::getRandom( 16);
+            }
+            if ( ! dns::getRandom( 7 ) ) {
+                packet_info.opt_pseudo_rr.dobit = dns::getRandom( 1 );
+            }
 	}
 
 	dns::Domainname qname = basename;
-	switch ( dns::getRandom( 5 ) ) {
+	switch ( dns::getRandom( 7 ) ) {
 	case 0:
 	    qname.addSubdomain( "www" );
 	    break;
@@ -71,27 +88,64 @@ int main( int argc, char **argv )
 		qname.addSubdomain( "www" );
 		break;
 	    case 1:
+		qname.addSubdomain( "zzz" );
+		break;
+	    case 2:
 		qname.addSubdomain( "ns01" );
+		break;
+	    case 3:
+		qname.addSubdomain( "*" );
 		break;
 	    }
 	    break;
 	case 3:
 	    qname.addSubdomain( "zzz" );
-	    switch ( dns::getRandom( 3 ) ) {
+	    switch ( dns::getRandom( 4 ) ) {
 	    case 0:
 		qname.addSubdomain( "www" );
 		break;
 	    case 1:
 		qname.addSubdomain( "ns01" );
 		break;
+	    case 2:
+		qname.addSubdomain( "*" );
+		break;
 	    }
 	    break;
 	case 4:
+	    qname.addSubdomain( "yyyy" );
+	    switch ( dns::getRandom( 4 ) ) {
+	    case 0:
+		qname.addSubdomain( "www" );
+		break;
+	    case 1:
+		qname.addSubdomain( "ns01" );
+		break;
+	    case 2:
+		qname.addSubdomain( "*" );
+		break;
+	    }
+	    break;
+	case 5:
+	    qname.addSubdomain( "*" );
+	    switch ( dns::getRandom( 4 ) ) {
+	    case 0:
+		qname.addSubdomain( "www" );
+		break;
+	    case 1:
+		qname.addSubdomain( "ns01" );
+		break;
+	    case 2:
+		qname.addSubdomain( "*" );
+		break;
+	    }
+	    break;
+	case 6:
 	    qname.addSubdomain( "xxxxxxxxxx" );
 	    break;
 	}
 
-	dns::Type  qtype  = dns::TYPE_A;//dns::getRandom( 128 );
+	dns::Type  qtype  = dns::getRandom( 64 );
 	dns::Class qclass = dns::CLASS_IN;
 	if ( dns::getRandom( 16 ) == 0 )
 	    qclass = dns::CLASS_ANY;
@@ -127,7 +181,7 @@ int main( int argc, char **argv )
 
 	timespec wait_time;
 	wait_time.tv_sec = 0;
-	wait_time.tv_nsec = 1000 * 1000 * interval;
+	wait_time.tv_nsec = 1000* 1000 * interval;
 	nanosleep( &wait_time, nullptr );
     }
 
