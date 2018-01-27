@@ -1365,7 +1365,7 @@ namespace dns
     {
         const uint8_t *      pos   = begin;
         uint16_t             f     = ntohs( get_bytes<uint16_t>( &pos ) );
-        uint8_t              proto = get_bytes<uint8_t>( &pos );
+        get_bytes<uint8_t>( &pos );             // skip unsed protocol field
         uint8_t              algo  = get_bytes<uint8_t>( &pos );
         std::vector<uint8_t> key;
         key.insert( key.end(), pos, end );
@@ -2035,8 +2035,6 @@ namespace dns
 
     OptPseudoRROptPtr CookieOption::parse( const uint8_t *begin, const uint8_t *end )
     {
-        const uint8_t *pos = begin;
-
         unsigned int size = end - begin;
         if ( size < 8 ) {
             std::ostringstream os;
