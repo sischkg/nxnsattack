@@ -157,7 +157,7 @@ namespace dns
     const uint8_t *Domainname::parsePacket( Domainname &   ref_domainname,
                                             const uint8_t *packet,
                                             const uint8_t *begin,
-                                            int            recur ) throw( FormatError )
+                                            int            recur )
     {
         if ( recur > 100 ) {
             throw FormatError( "detected domainname decompress loop" );

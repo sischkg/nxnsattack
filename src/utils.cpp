@@ -35,7 +35,7 @@ uint16_t compute_checksum( const uint8_t *data, size_t length )
     return ~sum;
 }
 
-in_addr convert_address_string_to_binary( const std::string &str, int address_family ) throw( InvalidAddressFormatError )
+in_addr convert_address_string_to_binary( const std::string &str, int address_family )
 {
     in_addr address;
     if ( inet_pton( address_family, str.c_str(), &address ) > 0 )
@@ -44,7 +44,7 @@ in_addr convert_address_string_to_binary( const std::string &str, int address_fa
         throw InvalidAddressFormatError( str + " is invalid IPv4 address" );
 }
 
-std::string convert_address_binary_to_string( in_addr bin, int address_family ) throw( InvalidAddressFormatError )
+std::string convert_address_binary_to_string( in_addr bin, int address_family )
 {
     char address[ 16 ];
     if ( NULL == inet_ntop( address_family, &bin, address, sizeof( address ) ) ) {

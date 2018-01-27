@@ -25,7 +25,7 @@ namespace dns
                                                               uint32_t           compress_offset = NO_COMPRESSION );
     std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
                                                                                  const uint8_t *domainame,
-                                                                                 int recur = 0 ) throw( FormatError );
+                                                                                 int recur = 0 );
 
     void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
     void generate_response_section( const ResourceRecord &r, WireFormat &message );
@@ -252,7 +252,7 @@ namespace dns
     }
 
     std::pair<std::string, const uint8_t *>
-    convert_domainname_binary_to_string( const uint8_t *packet, const uint8_t *begin, int recur ) throw( FormatError )
+    convert_domainname_binary_to_string( const uint8_t *packet, const uint8_t *begin, int recur )
     {
         if ( recur > 100 ) {
             throw FormatError( "detected domainname decompress loop" );

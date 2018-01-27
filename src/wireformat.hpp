@@ -21,7 +21,7 @@ private:
     uint16_t               mEnd;
     std::vector<uint8_t *> mBuffers;
 
-    void checkIndex( uint16_t i ) const throw( std::runtime_error )
+    void checkIndex( uint16_t i ) const
     {
         if ( i >= mEnd )
             throw std::runtime_error( "range error" );
@@ -45,7 +45,7 @@ public:
         mEnd++;
     }
 
-    uint8_t pop_back() throw( std::runtime_error )
+    uint8_t pop_back()
     {
         if ( mEnd == 0 )
             throw std::runtime_error( "cannot pop_back because buffer is emptry." );
@@ -117,21 +117,21 @@ public:
                     reinterpret_cast<const uint8_t *>( str.c_str() ) + str.size() );
     }
 
-    const uint8_t &operator[]( uint16_t i ) const throw( std::runtime_error )
+    const uint8_t &operator[]( uint16_t i ) const
     {
         checkIndex( i );
 
         return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
     }
 
-    uint8_t &operator[]( uint16_t i ) throw( std::runtime_error )
+    uint8_t &operator[]( uint16_t i )
     {
         checkIndex( i );
 
         return mBuffers[ i / mBufferSize ][ i % mBufferSize ];
     }
 
-    const uint8_t &at( uint16_t i ) const throw( std::runtime_error )
+    const uint8_t &at( uint16_t i ) const
     {
         return ( *this )[ i ];
     }
@@ -161,8 +161,7 @@ public:
 	func( mBuffers[last_buffer_index], mBuffers[last_buffer_index] + mEnd % mBufferSize );
     }
 
-    uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const
-        throw( std::runtime_error );
+    uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const;
     std::vector<uint8_t> get() const;
 
     struct MessageHeader {

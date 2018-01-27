@@ -61,7 +61,6 @@ void WireFormat::clear()
 }
 
 uint16_t WireFormat::send( int fd, const sockaddr *dest, socklen_t dest_length, int flags ) const
-    throw( std::runtime_error )
 {
     if ( mEnd == 0 )
         return 0;

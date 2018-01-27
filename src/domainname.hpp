@@ -88,7 +88,7 @@ namespace dns
         static const uint8_t *parsePacket( Domainname &   ref_domainname,
                                            const uint8_t *packet,
                                            const uint8_t *begin,
-                                           int            recur = 0 ) throw( FormatError );
+                                           int            recur = 0 );
     };
 
     std::ostream &operator<<( const Domainname &name, std::ostream &os );
