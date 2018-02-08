@@ -50,6 +50,7 @@ add_executable( huge_client     huge_client.cpp )
 add_executable( nsec_client     nsec_client.cpp )
 add_executable( huge_nsec_response huge_nsec_response.cpp )
 add_executable( dup_nsec_response dup_nsec_response.cpp )
+add_executable( nsec_axfr_server  nsec_axfr_server.cpp )
 
 target_link_libraries( zone_server       ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( cve-2015-8000     ${SERVER_LIBRARY} )
@@ -73,4 +74,5 @@ target_link_libraries( huge_client       ${CLIENT_LIBRARY} )
 target_link_libraries( nsec_client       ${CLIENT_LIBRARY} )
 target_link_libraries( huge_nsec_response ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( dup_nsec_response ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( nsec_axfr_server  ${ZONE_SERVER_LIBRARY} )
 
