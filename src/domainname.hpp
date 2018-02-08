@@ -86,7 +86,8 @@ namespace dns
         Domainname getCanonicalDomainname() const;
 
         static const uint8_t *parsePacket( Domainname &   ref_domainname,
-                                           const uint8_t *packet,
+                                           const uint8_t *packet_begin,
+                                           const uint8_t *packet_end,
                                            const uint8_t *begin,
                                            int            recur = 0 );
     };

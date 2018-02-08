@@ -155,12 +155,16 @@ namespace dns
 
     
     const uint8_t *Domainname::parsePacket( Domainname &   ref_domainname,
-                                            const uint8_t *packet,
+                                            const uint8_t *packet_begin,
+                                            const uint8_t *packet_end,
                                             const uint8_t *begin,
                                             int            recur )
     {
         if ( recur > 100 ) {
             throw FormatError( "detected domainname decompress loop" );
+        }
+        if ( packet_begin == packet_end ) {
+            throw FormatError( "cannot parse empty data as a domainname" );
         }
 
         std::string    label;
@@ -168,17 +172,25 @@ namespace dns
         while ( *p != 0 ) {
             // メッセージ圧縮を行っている場合
             if ( *p & 0xC0 ) {
+                if ( packet_end - p < 2 ) {
+                    throw FormatError( "domainname size is too short for decopression" );
+                }
                 int offset = ntohs( *( reinterpret_cast<const uint16_t *>( p ) ) ) & 0x0bff;
-                if ( packet + offset > begin - 2 ) {
+                if ( packet_begin + offset > p - 2 ) {
                     throw FormatError( "detected forword reference of domainname decompress..." );
                 }
 
-                parsePacket( ref_domainname, packet, packet + offset, recur + 1 );
+                parsePacket( ref_domainname, packet_begin, packet_end, packet_begin + offset, recur + 1 );
                 return p + 2;
             }
 
+            if ( packet_end - p < 1 )
+                throw FormatError( "domainname size is too short(truncated ?)" );
             uint8_t label_length = *p;
             p++;
+
+            if ( packet_end - p < label_length )
+                throw FormatError( "domainname size is too short(truncated ?)" );
             for ( uint8_t i = 0; i < label_length; i++, p++ ) {
                 label.push_back( *p );
             }
@@ -186,6 +198,8 @@ namespace dns
             label = "";
         }
 
+        if ( packet_end - p < 1 )
+            throw FormatError( "domainname size is too short(truncated ?)" );
         p++;
         return p;
     }

@@ -8,17 +8,20 @@ namespace tcpv4
 
     Connection::~Connection()
     {
-        close( tcp_socket );
+        if ( tcp_socket > 0 )
+            close( tcp_socket );
     }
 
     void Connection::shutdownReceive()
     {
-        shutdown( tcp_socket, SHUT_RD );
+        if ( tcp_socket > 0 )
+            shutdown( tcp_socket, SHUT_RD );
     }
 
     void Connection::shutdownSend()
     {
-        shutdown( tcp_socket, SHUT_WR );
+        if ( tcp_socket > 0 )
+            shutdown( tcp_socket, SHUT_WR );
     }
 
     PacketData Connection::receive( int size )
@@ -32,10 +35,13 @@ namespace tcpv4
             if ( errno == EINTR || errno == EAGAIN )
                 goto retry;
             else {
+                close( tcp_socket );
+                tcp_socket = 0;
                 throw SocketError( get_error_message( "cannot read data from peer", errno ) );
             }
         }
 
+        recv_buffer.resize( recv_size );
         return recv_buffer;
     }
 

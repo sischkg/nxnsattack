@@ -2,7 +2,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 
-const int   TTL          = 10;
+const int   TTL          = 86400;
 const char *BIND_ADDRESS = "0.0.0.0";
 
 class CrashPDNSServer : public dns::DNSServer
@@ -44,7 +44,7 @@ public:
             return response;
         }
 
-        dns::ResourceRecord answer;
+        dns::ResourceRecord answer, auth, additional;
         dns::Domainname next_name = query_question.q_domainname;
         next_name.addSubdomain( "a" );
 

@@ -145,7 +145,12 @@ namespace dns
                 try {
                     tcpv4::ConnectionPtr connection = dns_receiver.acceptConnection();
                     PacketData           size_data  = connection->receive( 2 );
-                    uint16_t             size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
+                    if ( size_data.size() < 2 ) {
+                        throw std::runtime_error( "cannot get message of dns message" );
+                    }
+                    uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
+                    if ( isDebug() )
+                        std::cerr << "DNS message size: " << size << std::endl;
 
                     PacketData recv_data = connection->receive( size );
                     PacketInfo query     = parse_dns_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );

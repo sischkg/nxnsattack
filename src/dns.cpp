@@ -32,8 +32,8 @@ namespace dns
     
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
-    QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *section );
-    ResourceRecordPair parse_response_section( const uint8_t *packet, const uint8_t *section );
+    QuestionSectionEntryPair parse_question_section( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
+    ResourceRecordPair parse_response_section( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
 
     OptPseudoRecord      parse_opt_pseudo_record( const ResourceRecord & );
 
@@ -153,6 +153,10 @@ namespace dns
     {
         const uint8_t *packet = begin;
 
+        if ( ( end - begin ) < sizeof(PacketHeaderField) ) {
+            throw FormatError( "too short message size( less than DNS message header size )." );
+        }
+
         PacketInfo               packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
 
@@ -174,22 +178,22 @@ namespace dns
 
         packet += sizeof( PacketHeaderField );
         for ( int i = 0; i < question_count; i++ ) {
-            QuestionSectionEntryPair pair = parse_question_section( begin, packet );
+            QuestionSectionEntryPair pair = parse_question_section( begin, end, packet );
             packet_info.question_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < answer_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, end, packet );
             packet_info.answer_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < authority_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, end, packet );
             packet_info.authority_section.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, packet );
+            ResourceRecordPair pair = parse_response_section( begin, end, packet );
             if ( pair.first.r_type == TYPE_OPT ) {
                 packet_info.edns0 = true;
 		packet_info.opt_pseudo_rr.domainname   = pair.first.r_domainname;
@@ -293,10 +297,10 @@ namespace dns
         message.pushUInt16HtoN( question.q_class );
     }
 
-    QuestionSectionEntryPair parse_question_section( const uint8_t *packet, const uint8_t *p )
+    QuestionSectionEntryPair parse_question_section( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *p )
     {
         QuestionSectionEntry question;
-        const uint8_t *      pos = Domainname::parsePacket( question.q_domainname, packet, p );
+        const uint8_t *      pos = Domainname::parsePacket( question.q_domainname, packet_begin, packet_end, p );
 
         question.q_type  = ntohs( get_bytes<uint16_t>( &pos ) );
         question.q_class = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -318,11 +322,11 @@ namespace dns
         }
     }
 
-    ResourceRecordPair parse_response_section( const uint8_t *packet, const uint8_t *begin )
+    ResourceRecordPair parse_response_section( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *section_begin )
     {
         ResourceRecord sec;
 
-        const uint8_t *pos   = Domainname::parsePacket( sec.r_domainname, packet, begin );
+        const uint8_t *pos   = Domainname::parsePacket( sec.r_domainname, packet_begin, packet_end, section_begin );
         sec.r_type           = ntohs( get_bytes<uint16_t>( &pos ) );
         sec.r_class          = ntohs( get_bytes<uint16_t>( &pos ) );
         sec.r_ttl            = ntohl( get_bytes<uint32_t>( &pos ) );
@@ -337,49 +341,49 @@ namespace dns
             parsed_data = RecordAAAA::parse( pos, pos + data_length );
             break;
         case TYPE_NS:
-            parsed_data = RecordNS::parse( packet, pos, pos + data_length );
+            parsed_data = RecordNS::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_CNAME:
-            parsed_data = RecordCNAME::parse( packet, pos, pos + data_length );
+            parsed_data = RecordCNAME::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_NAPTR:
-            parsed_data = RecordNAPTR::parse( packet, pos, pos + data_length );
+            parsed_data = RecordNAPTR::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_DNAME:
-            parsed_data = RecordDNAME::parse( packet, pos, pos + data_length );
+            parsed_data = RecordDNAME::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_MX:
-            parsed_data = RecordMX::parse( packet, pos, pos + data_length );
+            parsed_data = RecordMX::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_TXT:
-            parsed_data = RecordTXT::parse( packet, pos, pos + data_length );
+            parsed_data = RecordTXT::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_SPF:
-            parsed_data = RecordSPF::parse( packet, pos, pos + data_length );
+            parsed_data = RecordSPF::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_SOA:
-            parsed_data = RecordSOA::parse( packet, pos, pos + data_length );
+            parsed_data = RecordSOA::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_CAA:
-            parsed_data = RecordCAA::parse( packet, pos, pos + data_length );
+            parsed_data = RecordCAA::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_DNSKEY:
-            parsed_data = RecordDNSKEY::parse( packet, pos, pos + data_length );
+            parsed_data = RecordDNSKEY::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_NSEC:
-            parsed_data = RecordNSEC::parse( packet, pos, pos + data_length );
+            parsed_data = RecordNSEC::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_NSEC3:
-            parsed_data = RecordNSEC3::parse( packet, pos, pos + data_length );
+            parsed_data = RecordNSEC3::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_NSEC3PARAM:
-            parsed_data = RecordNSEC3PARAM::parse( packet, pos, pos + data_length );
+            parsed_data = RecordNSEC3PARAM::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_TSIG:
-            parsed_data = RecordTSIGData::parse( packet, pos, pos + data_length, sec.r_domainname );
+            parsed_data = RecordTSIGData::parse( packet_begin, packet_end, pos, pos + data_length, sec.r_domainname );
             break;
         case TYPE_OPT:
-            parsed_data = RecordOptionsData::parse( packet, pos, pos + data_length );
+            parsed_data = RecordOptionsData::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         default:
             std::ostringstream msg;
@@ -745,10 +749,10 @@ namespace dns
         domainname.outputCanonicalWireFormat( message );
     }
 
-    RDATAPtr RecordNS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNS::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
         Domainname name;
-        Domainname::parsePacket( name, packet, begin );
+        Domainname::parsePacket( name, packet_begin, packet_end, rdata_begin );
         return RDATAPtr( new RecordNS( name ) );
     }
 
@@ -781,15 +785,15 @@ namespace dns
         domainname.outputCanonicalWireFormat( message );
     }
 
-    RDATAPtr RecordMX::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordMX::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        if ( end - begin < 3 )
+        if ( rdata_end - rdata_begin < 3 )
             throw FormatError( "too few length for MX record," );
-        const uint8_t *pos      = begin;
+        const uint8_t *pos      = rdata_begin;
         uint16_t       priority = get_bytes<uint16_t>( &pos );
 
         Domainname name;
-        Domainname::parsePacket( name, packet, pos );
+        Domainname::parsePacket( name, packet_begin, packet_end, pos );
         return RDATAPtr( new RecordMX( priority, name ) );
     }
 
@@ -843,16 +847,16 @@ namespace dns
         return s;
     }
 
-    RDATAPtr RecordTXT::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordTXT::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        if ( end - begin < 1 )
+        if ( rdata_end - rdata_begin < 1 )
             throw FormatError( "too few length for TXT record" );
-        const uint8_t *          pos = begin;
+        const uint8_t *          pos = rdata_begin;
         std::vector<std::string> txt_data;
 
-        while ( pos < end ) {
+        while ( pos < rdata_end ) {
             uint8_t length = get_bytes<uint8_t>( &pos );
-            if ( pos + length > end )
+            if ( pos + length > rdata_end )
                 throw FormatError( "bad charactor-code length" );
             txt_data.push_back( std::string( pos, pos + length ) );
             pos += length;
@@ -909,16 +913,16 @@ namespace dns
         return s;
     }
 
-    RDATAPtr RecordSPF::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordSPF::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        if ( end - begin < 1 )
+        if ( rdata_end - rdata_begin < 1 )
             throw FormatError( "too few length for SPF record" );
-        const uint8_t *          pos = begin;
+        const uint8_t *          pos = rdata_begin;
         std::vector<std::string> txt_data;
 
-        while ( pos < end ) {
+        while ( pos < rdata_end ) {
             uint8_t length = get_bytes<uint8_t>( &pos );
-            if ( pos + length > end )
+            if ( pos + length > rdata_end )
                 throw FormatError( "bad charactor-code length" );
             txt_data.push_back( std::string( pos, pos + length ) );
             pos += length;
@@ -951,10 +955,10 @@ namespace dns
     }
 
 
-    RDATAPtr RecordCNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordCNAME::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
         Domainname name;
-        Domainname::parsePacket( name, packet, begin );
+        Domainname::parsePacket( name, packet_begin, packet_end, rdata_begin );
         return RDATAPtr( new RecordCNAME( name ) );
     }
 
@@ -1013,22 +1017,22 @@ namespace dns
             replacement.size( offset );
     }
 
-    RDATAPtr RecordNAPTR::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNAPTR::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        if ( end - begin < 2 + 2 + 1 + 1 + 1 + 1 )
+        if ( rdata_end - rdata_begin < 2 + 2 + 1 + 1 + 1 + 1 )
             throw FormatError( "too short for NAPTR RR" );
 
-        const uint8_t *pos           = begin;
+        const uint8_t *pos           = rdata_begin;
         uint16_t       in_order      = ntohs( get_bytes<uint16_t>( &pos ) );
         uint16_t       in_preference = ntohs( get_bytes<uint16_t>( &pos ) );
 
         std::string in_flags, in_services, in_regexp;
-        pos = parseCharacterString( pos, end, in_flags );
-        pos = parseCharacterString( pos, end, in_services );
-        pos = parseCharacterString( pos, end, in_regexp );
+        pos = parseCharacterString( pos, rdata_end, in_flags );
+        pos = parseCharacterString( pos, rdata_end, in_services );
+        pos = parseCharacterString( pos, rdata_end, in_regexp );
 
         Domainname in_replacement;
-        Domainname::parsePacket( in_replacement, packet, pos );
+        Domainname::parsePacket( in_replacement, packet_begin, packet_end, pos );
         return RDATAPtr(
                         new RecordNAPTR( in_order, in_preference, in_flags, in_services, in_regexp, in_replacement ) );
     }
@@ -1058,10 +1062,10 @@ namespace dns
     }
 
 
-    RDATAPtr RecordDNAME::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDNAME::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
         Domainname name;
-        Domainname::parsePacket( name, packet, begin );
+        Domainname::parsePacket( name, packet_begin, packet_end, rdata_begin );
         return RDATAPtr( new RecordDNAME( name ) );
     }
 
@@ -1120,12 +1124,14 @@ namespace dns
             sizeof( retry ) + sizeof( expire ) + sizeof( minimum );
     }
 
-    RDATAPtr RecordSOA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordSOA::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
         Domainname     mname_result, rname_result;
-        const uint8_t *pos = begin;
-        pos                = Domainname::parsePacket( mname_result, packet, pos );
-        pos                = Domainname::parsePacket( rname_result, packet, pos );
+        const uint8_t *pos = rdata_begin;
+        pos                = Domainname::parsePacket( mname_result, packet_begin, packet_end, pos );
+        pos                = Domainname::parsePacket( rname_result, packet_begin, packet_end, pos );
+        if ( ( rdata_end - pos ) < ( sizeof(uint32_t) * 5 ) )
+            throw FormatError( "too short RDATA size for SOA" );
         uint32_t serial    = ntohl( get_bytes<uint32_t>( &pos ) );
         uint32_t refresh   = ntohl( get_bytes<uint32_t>( &pos ) );
         uint32_t retry     = ntohl( get_bytes<uint32_t>( &pos ) );
@@ -1176,13 +1182,13 @@ namespace dns
         return s;
     }
 
-    RDATAPtr RecordAPL::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordAPL::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
         std::vector<APLEntry> entries;
-        const uint8_t *       pos = begin;
+        const uint8_t *       pos = rdata_begin;
 
-        while ( pos < end ) {
-            if ( end - pos < 4 )
+        while ( pos < rdata_end ) {
+            if ( rdata_end - pos < 4 )
                 throw FormatError( "too short length of APL RDdata" );
 
             APLEntry entry;
@@ -1192,7 +1198,7 @@ namespace dns
             entry.negation       = ( neg_afd_len & 0x01 ) == 0x01;
             uint8_t afd_length   = ( neg_afd_len >> 1 );
 
-            if ( end - pos < afd_length )
+            if ( rdata_end - pos < afd_length )
                 throw FormatError( "invalid AFD Data length" );
 
             PacketData in_afd;
@@ -1235,12 +1241,12 @@ namespace dns
         return 1 + 1 + mTag.size() + mValue.size();
     }
 
-    RDATAPtr RecordCAA::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordCAA::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        if ( end - begin <= 1 + 1 )
+        if ( rdata_end - rdata_begin <= 1 + 1 )
             throw FormatError( "too short for CAA RR" );
 
-        const uint8_t *pos = begin;
+        const uint8_t *pos = rdata_begin;
         uint8_t flag     = get_bytes<uint8_t>( &pos );
         uint8_t tag_size = get_bytes<uint8_t>( &pos );
 
@@ -1248,10 +1254,10 @@ namespace dns
         tag.insert( tag.end(),
                     reinterpret_cast<const uint8_t *>( pos ),
                     reinterpret_cast<const uint8_t *>( pos ) + tag_size ); pos += tag_size;
-        if ( pos > end )
+        if ( pos > rdata_end )
             throw FormatError( "invalid tag/value size for CAA" );
         value.insert( value.end(),
-                      reinterpret_cast<const uint8_t *>( pos ), end );
+                      reinterpret_cast<const uint8_t *>( pos ), rdata_end );
 
         return RDATAPtr( new RecordCAA( tag, value, flag ) );
     }
@@ -1361,14 +1367,14 @@ namespace dns
         outputWireFormat( message );
     }
 
-    RDATAPtr RecordDNSKEY::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDNSKEY::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        const uint8_t *      pos   = begin;
-        uint16_t             f     = ntohs( get_bytes<uint16_t>( &pos ) );
+        const uint8_t *pos = rdata_begin;
+        uint16_t       f   = ntohs( get_bytes<uint16_t>( &pos ) );
         get_bytes<uint8_t>( &pos );             // skip unsed protocol field
         uint8_t              algo  = get_bytes<uint8_t>( &pos );
         std::vector<uint8_t> key;
-        key.insert( key.end(), pos, end );
+        key.insert( key.end(), pos, rdata_end );
 
         return RDATAPtr( new RecordDNSKEY( f, algo, key ) );
     }
@@ -1412,14 +1418,18 @@ namespace dns
         outputWireFormat( message );
     }
 
-    RDATAPtr RecordDS::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordDS::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        const uint8_t *      pos   = begin;
-        uint16_t             tag   = ntohs( get_bytes<uint16_t>( &pos ) );
-        uint8_t              algo  = get_bytes<uint8_t>( &pos );
-        uint8_t              dtype = get_bytes<uint8_t>( &pos );
+        if ( ( rdata_end - rdata_begin ) < ( 2 + 1 + 1 ) )
+            throw FormatError( "too short RDATA for DS" );
+
+        const uint8_t *pos   = rdata_begin;
+        uint16_t       tag   = ntohs( get_bytes<uint16_t>( &pos ) );
+        uint8_t        algo  = get_bytes<uint8_t>( &pos );
+        uint8_t        dtype = get_bytes<uint8_t>( &pos );
+
         std::vector<uint8_t> d;
-        d.insert( d.end(), pos, end );
+        d.insert( d.end(), pos, rdata_end );
 
         return RDATAPtr( new RecordDS( tag, algo, dtype, d ) );
     }
@@ -1479,7 +1489,7 @@ namespace dns
 	return (0xff & t);
     }
 
-    const uint8_t *NSECBitmapField::Window::parse( NSECBitmapField::Window &ref_win, const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    const uint8_t *NSECBitmapField::Window::parse( NSECBitmapField::Window &ref_win, const uint8_t *packet_begin, const uint8_t *begin, const uint8_t *end )
     {
 	uint8_t window_index = *begin++;
 	uint8_t window_size  = *begin++;
@@ -1561,14 +1571,15 @@ namespace dns
 	return (0xff00 & t) >> 8;
     }
 
-    const uint8_t *NSECBitmapField::parse( NSECBitmapField &ref_bitmaps, const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    const uint8_t *NSECBitmapField::parse( NSECBitmapField &ref_bitmaps, const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *bitmap_begin, const uint8_t *bitmap_end )
     {
-	while ( begin < end ) {
+        const uint8_t *pos = bitmap_begin;
+	while ( pos < bitmap_end ) {
 	    NSECBitmapField::Window win;
-	    begin = NSECBitmapField::Window::parse( win, packet, begin, end );
+	    pos = NSECBitmapField::Window::parse( win, packet_begin, pos, bitmap_end );
 	    ref_bitmaps.addWindow( win );
 	}
-	return begin;
+	return pos;
     }
 
     RecordNSEC::RecordNSEC( const Domainname &next, const std::vector<Type> &types )
@@ -1605,12 +1616,12 @@ namespace dns
 	return next_domainname.size() + bitmaps.size();
     }
 
-    RDATAPtr RecordNSEC::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNSEC::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
 	Domainname next;
-	const uint8_t *pos = Domainname::parsePacket( next, packet, begin );
+	const uint8_t *pos = Domainname::parsePacket( next, packet_begin, packet_end, rdata_begin );
 	NSECBitmapField bitmaps;
-	NSECBitmapField::parse( bitmaps, packet, pos, end );
+	NSECBitmapField::parse( bitmaps, packet_begin, packet_end, pos, rdata_end );
 	return RDATAPtr( new RecordNSEC( next, bitmaps ) );
     }
 
@@ -1685,35 +1696,36 @@ namespace dns
 	    + mBitmaps.size();  // Bitmaps
     }
 
-    RDATAPtr RecordNSEC3::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNSEC3::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-	//                alg flag itr ssize salt hsize hash bitmaps   
-	if ( end - begin < 1 + 1  + 2  + 1   + 1   + 1   + 1 + 3 ) {
-	    throw std::runtime_error( "too few size for NSEC3" );
+	//                           alg flag itr ssize salt hsize hash bitmaps   
+	if ( rdata_end - rdata_begin < 1 + 1  + 2  + 1   + 1   + 1   + 1 + 3 ) {
+	    throw FormatError( "too few size for NSEC3" );
 	}
-        const uint8_t *      pos   = begin;
+
+        const uint8_t *pos = rdata_begin;
 	uint8_t  algo      = get_bytes<uint8_t>( &pos );
 	uint8_t  flag      = get_bytes<uint8_t>( &pos );
         uint16_t iteration = ntohs( get_bytes<uint16_t>( &pos ) );
 
         uint8_t salt_size = get_bytes<uint8_t>( &pos );
-	if ( end - pos < salt_size + 1 + 1 + 3 ) {
-	    throw std::runtime_error( "too few size for salt,hash,bitmaps of NSEC3" );
+	if ( rdata_end - pos < salt_size + 1 + 1 + 3 ) {
+	    throw FormatError( "too few size for salt,hash,bitmaps of NSEC3" );
 	}
 	std::vector<uint8_t> salt;
 	salt.insert( salt.end(), pos, pos + salt_size );
 	pos += salt_size;
 
         uint8_t next_hash_size = get_bytes<uint8_t>( &pos );
-	if ( end - pos < next_hash_size + 3 ) {
-	    throw std::runtime_error( "too few size for hash,bitmaps of NSEC3" );
+	if ( rdata_end - pos < next_hash_size + 3 ) {
+	    throw FormatError( "too few size for hash,bitmaps of NSEC3" );
 	}
 	std::vector<uint8_t> next_hash;
 	next_hash.insert( next_hash.end(), pos, pos + next_hash_size );
 	pos += next_hash_size;
 
 	NSECBitmapField bitmaps;
-	NSECBitmapField::parse( bitmaps, packet, pos, end );
+	NSECBitmapField::parse( bitmaps, packet_begin, packet_end, pos, rdata_end );
 	return RDATAPtr( new RecordNSEC3( algo, flag, iteration, salt, next_hash, bitmaps ) );
     }
 
@@ -1769,20 +1781,20 @@ namespace dns
 	    + mSalt.size();     // Salt
     }
 
-    RDATAPtr RecordNSEC3PARAM::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordNSEC3PARAM::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
 	//                alg flag itr ssize salt
-	if ( end - begin < 1 + 1  + 2  + 1   + 1 ) {
-	    throw std::runtime_error( "too few size for NSEC3PARAM" );
+	if ( rdata_end - rdata_begin < 1 + 1  + 2  + 1   + 1 ) {
+	    throw FormatError( "too few size for NSEC3PARAM" );
 	}
-        const uint8_t *      pos   = begin;
+        const uint8_t *pos = rdata_begin;
 	uint8_t  algo      = get_bytes<uint8_t>( &pos );
 	uint8_t  flag      = get_bytes<uint8_t>( &pos );
         uint16_t iteration = ntohs( get_bytes<uint16_t>( &pos ) );
 
         uint8_t salt_size = get_bytes<uint8_t>( &pos );
-	if ( end - pos < salt_size ) {
-	    throw std::runtime_error( "too few size for salt" );
+	if ( rdata_end - pos < salt_size ) {
+	    throw FormatError( "too few size for salt" );
 	}
 	std::vector<uint8_t> salt;
 	salt.insert( salt.end(), pos, pos + salt_size );
@@ -1822,15 +1834,15 @@ namespace dns
         outputWireFormat( message );
     }
 
-    RDATAPtr RecordOptionsData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end )
+    RDATAPtr RecordOptionsData::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
-        const uint8_t *pos = begin;
+        const uint8_t *pos = rdata_begin;
 
         std::vector<OptPseudoRROptPtr> options;
-        while ( pos < end ) {
-            if ( end - pos < 4 ) {
+        while ( pos < rdata_end ) {
+            if ( rdata_end - pos < 4 ) {
                 std::ostringstream os;
-                os << "remains data " << end - pos << " is too few size.";
+                os << "remains data " << rdata_end - pos << " is too few size.";
                 throw FormatError( os.str() );
             }
             uint16_t option_code = ntohs( get_bytes<uint16_t>( &pos ) );
@@ -1838,9 +1850,9 @@ namespace dns
 
             if ( option_size == 0 )
                 continue;
-            if ( pos + option_size > end ) {
+            if ( pos + option_size > rdata_end ) {
                 std::ostringstream os;
-                os << "option data size is missmatch: option_size: " << option_size << "; remain size " << end - pos;
+                os << "option data size is missmatch: option_size: " << option_size << "; remain size " << rdata_end - pos;
                 throw FormatError( os.str() );
             }
 
@@ -2201,36 +2213,43 @@ namespace dns
     }
 
     RDATAPtr
-    RecordTSIGData::parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end, const Domainname &key_name )
+    RecordTSIGData::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end, const Domainname &key_name )
     {
-        const uint8_t *pos = begin;
+        const uint8_t *pos = rdata_begin;
 
         Domainname algorithm;
-        pos = Domainname::parsePacket( algorithm, packet, pos );
-        if ( pos >= end )
-            throw FormatError( "too short message for TSIG RR" );
+        pos = Domainname::parsePacket( algorithm, packet_begin, packet_end, pos );
 
+        if ( rdata_end - pos < 8 + 4 )
+            throw FormatError( "too short message for TSIG RR" );
         uint64_t time_high = ntohl( get_bytes<uint32_t>( &pos ) );
         uint32_t time_low  = ntohl( get_bytes<uint32_t>( &pos ) );
-        if ( pos >= end )
+
+        if ( rdata_end - pos < 8 )
             throw FormatError( "too short message for TSIG RR" );
         uint64_t signed_time = ( time_high << 16 ) + ( time_low >> 16 );
         uint16_t fudge       = time_low;
 
+        if ( rdata_end - pos < 2 )
+            throw FormatError( "too short message for TSIG RR" );
         uint16_t mac_size = ntohs( get_bytes<uint16_t>( &pos ) );
-        if ( pos + mac_size >= end )
+        if ( rdata_end - pos > mac_size )
             throw FormatError( "too short message for TSIG RR" );
         PacketData mac;
         mac.insert( mac.end(), pos, pos + mac_size );
         pos += mac_size;
 
+        if ( rdata_end - pos < 2 + 2 )
+            throw FormatError( "too short message for TSIG RR" );
         uint16_t original_id = ntohs( get_bytes<uint16_t>( &pos ) );
         uint16_t error       = ntohs( get_bytes<uint16_t>( &pos ) );
-        if ( pos >= end )
+        if ( pos >= rdata_end )
             throw FormatError( "too short message for TSIG RR" );
 
+        if ( rdata_end - pos < 2 )
+            throw FormatError( "too short message for TSIG RR" );
         uint16_t other_length = ntohs( get_bytes<uint16_t>( &pos ) );
-        if ( pos + other_length > end )
+        if ( pos + other_length > rdata_end )
             throw FormatError( "too short message for TSIG RR" );
         PacketData other;
         other.insert( other.end(), pos, pos + other_length );
@@ -2374,20 +2393,20 @@ namespace dns
 
         // skip question section
         for ( uint16_t i = 0; i < packet_info.question_section.size(); i++ )
-            pos = parse_question_section( &hash_data[ 0 ], pos ).second;
+            pos = parse_question_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip answer section
         for ( uint16_t i = 0; i < packet_info.answer_section.size(); i++ )
-            pos = parse_response_section( &hash_data[ 0 ], pos ).second;
+            pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip authority section
         for ( uint16_t i = 0; i < packet_info.authority_section.size(); i++ )
-            pos = parse_response_section( &hash_data[ 0 ], pos ).second;
+            pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip non TSIG Record in additional section
         bool is_found_tsig = false;
         for ( uint16_t i = 0; i < packet_info.additional_infomation_section.size(); i++ ) {
-            ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], pos );
+            ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos );
             if ( parsed_rr_pair.first.r_type == TYPE_TSIG ) {
                 is_found_tsig = true;
                 break;
