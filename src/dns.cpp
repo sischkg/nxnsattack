@@ -398,7 +398,7 @@ namespace dns
            << "Recursion Desired: " << packet.recursion_desired << std::endl
            << "Recursion Available: " << packet.recursion_available << std::endl
            << "Checking Disabled: " << packet.checking_disabled << std::endl
-           << "Response Code: " << response_code_to_string( packet.response_code ) << std::endl;
+           << "Response Code: " << responseCodeToString( packet.response_code ) << std::endl;
 
         return os;
     }
@@ -495,7 +495,7 @@ namespace dns
         return res;
     }
 
-    std::string response_code_to_string( uint8_t rcode )
+    std::string responseCodeToString( uint8_t rcode )
     {
         std::string res;
 
@@ -577,7 +577,7 @@ namespace dns
            << "Recursion Desired: " << res.recursion_desired << std::endl
            << "Recursion Available: " << res.recursion_available << std::endl
            << "Checking Disabled: " << res.checking_disabled << std::endl
-           << "Response Code: " << response_code_to_string( res.response_code ) << std::endl;
+           << "Response Code: " << responseCodeToString( res.response_code ) << std::endl;
 
         for ( auto q : res.question_section )
             os << "Query: " << q.q_domainname << " " << typeCodeToString( q.q_type ) << "  ?" << std::endl;

@@ -1515,7 +1515,7 @@ namespace dns
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
     std::string typeCodeToString( Type t );
-    std::string response_code_to_string( uint8_t rcode );
+    std::string responseCodeToString( uint8_t rcode );
     Type string_to_type_code( const std::string & );
 
     struct PacketHeaderField {
@@ -1547,7 +1547,6 @@ namespace dns
         uint32_t minimum;
     };
 
-    Type string_to_type_code( const std::string &t );
     ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord & );
 
     void
