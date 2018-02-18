@@ -591,11 +591,11 @@ namespace dns
                           data_ptr != rrset_itr->second->end() ;
                           data_ptr++ ) {
 
-                        zonefile << owner.toString()            << "\t"
-                                 << ttl                         << "\t"
-                                 << "IN"                        << "\t"
-                                 << type_code_to_string( type ) << "\t"
-                                 << (*data_ptr)->toZone()       << std::endl;
+                        zonefile << owner.toString()         << "\t"
+                                 << ttl                      << "\t"
+                                 << "IN"                     << "\t"
+                                 << typeCodeToString( type ) << "\t"
+                                 << (*data_ptr)->toZone()    << std::endl;
                         
                     }
                 }

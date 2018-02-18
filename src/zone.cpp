@@ -11,7 +11,7 @@ namespace dns
 
         os << getOwner().toString() << " "
            << getTTL() << " "
-           << type_code_to_string( getType() ) << std::endl;
+           << typeCodeToString( getType() ) << std::endl;
 
         for ( auto rr : resource_data )
             os << "  " << rr->toString() << std::endl;

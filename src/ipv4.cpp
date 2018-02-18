@@ -29,7 +29,7 @@ namespace ipv4
 
     uint16_t compute_ipv4_checksum( IPv4Header header );
 
-    void print_header( IPv4Header header )
+    void printHeader( IPv4Header header )
     {
         for ( int i = 0; i < 20; i++ ) {
             std::printf( "%x ", header.data[ i ] );

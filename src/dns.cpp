@@ -388,7 +388,7 @@ namespace dns
         return ResourceRecordPair( sec, pos );
     }
 
-    std::ostream &print_header( std::ostream &os, const PacketInfo &packet )
+    std::ostream &printHeader( std::ostream &os, const PacketInfo &packet )
     {
         os << "ID: " << packet.id << std::endl
            << "Query/Response: " << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
@@ -403,7 +403,7 @@ namespace dns
         return os;
     }
 
-    std::string type_code_to_string( Type t )
+    std::string typeCodeToString( Type t )
     {
         std::string res;
 
@@ -580,15 +580,15 @@ namespace dns
            << "Response Code: " << response_code_to_string( res.response_code ) << std::endl;
 
         for ( auto q : res.question_section )
-            os << "Query: " << q.q_domainname << " " << type_code_to_string( q.q_type ) << "  ?" << std::endl;
+            os << "Query: " << q.q_domainname << " " << typeCodeToString( q.q_type ) << "  ?" << std::endl;
         for ( auto a : res.answer_section )
-            std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
+            std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << typeCodeToString( a.r_type )
                       << " " << a.r_resource_data->toString() << std::endl;
         for ( auto a : res.authority_section )
-            std::cout << "Authority: " << a.r_domainname << a.r_ttl << " " << type_code_to_string( a.r_type ) << " "
+            std::cout << "Authority: " << a.r_domainname << a.r_ttl << " " << typeCodeToString( a.r_type ) << " "
                       << a.r_resource_data->toString() << std::endl;
         for ( auto a : res.additional_infomation_section )
-            std::cout << "Additional: " << a.r_domainname << " " << a.r_ttl << " " << type_code_to_string( a.r_type )
+            std::cout << "Additional: " << a.r_domainname << " " << a.r_ttl << " " << typeCodeToString( a.r_type )
                       << " " << a.r_resource_data->toString() << std::endl;
 
         return os;
@@ -1357,14 +1357,14 @@ namespace dns
         strftime( inception_str,  sizeof(inception_str),  "%Y%m%d%H%M%S", &inception_tm );
         
         std::ostringstream os;
-        os << type_code_to_string( type_covered ) << " "
-           << (uint32_t)algorithm                 << " "
-           << (uint32_t)label_count               << " "
-           << original_ttl                        << " "
-           << expiration_str                      << " "
-           << inception_str                       << " "
-           << key_tag                             << " "
-           << signer.toString()                   << " "
+        os << typeCodeToString( type_covered ) << " "
+           << (uint32_t)algorithm              << " "
+           << (uint32_t)label_count            << " "
+           << original_ttl                     << " "
+           << expiration_str                   << " "
+           << inception_str                    << " "
+           << key_tag                          << " "
+           << signer.toString()                << " "
            << signature_str;
         return os.str();
     }
@@ -1375,14 +1375,14 @@ namespace dns
         encode_to_base64( signature, signature_str );
 
         std::ostringstream os;
-        os << "Type Covered: " << type_code_to_string( type_covered ) << ", "
-           << "Algorithm: "    << (uint32_t)algorithm                 << ", "
-           << "Label Count: "  << (uint32_t)label_count               << ", "
-           << "Original TTL: " << original_ttl                        << ", "
-           << "Expiration: "   << expiration                          << ", "
-           << "Inception: "    << inception                           << ", "
-           << "Key Tag: "      << key_tag                             << ", "
-           << "signer: "       << signer                              << ", "
+        os << "Type Covered: " << typeCodeToString( type_covered ) << ", "
+           << "Algorithm: "    << (uint32_t)algorithm              << ", "
+           << "Label Count: "  << (uint32_t)label_count            << ", "
+           << "Original TTL: " << original_ttl                     << ", "
+           << "Expiration: "   << expiration                       << ", "
+           << "Inception: "    << inception                        << ", "
+           << "Key Tag: "      << key_tag                          << ", "
+           << "signer: "       << signer                           << ", "
            << "Signature: "    << signature_str;
         return os.str();
     }
@@ -1554,7 +1554,7 @@ namespace dns
     {
 	std::ostringstream os;
 	for ( Type t : types ) {
-	    os << type_code_to_string( t ) << ",";
+	    os << typeCodeToString( t ) << ",";
 	}
 
 	std::string result( os.str() );

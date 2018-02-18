@@ -1513,8 +1513,8 @@ namespace dns
 
     PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
-    std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
-    std::string type_code_to_string( Type t );
+    std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
+    std::string typeCodeToString( Type t );
     std::string response_code_to_string( uint8_t rcode );
     Type string_to_type_code( const std::string & );
 
@@ -1547,7 +1547,6 @@ namespace dns
         uint32_t minimum;
     };
 
-    std::string type_code_to_string( Type t );
     Type string_to_type_code( const std::string &t );
     ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord & );
 
