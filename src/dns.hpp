@@ -1547,7 +1547,7 @@ namespace dns
         uint32_t minimum;
     };
 
-    ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord & );
+    ResourceRecord generateOptPseudoRecord( const OptPseudoRecord & );
 
     void
     addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac = PacketData() );

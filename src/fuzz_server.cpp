@@ -114,7 +114,7 @@ namespace dns
             }
 	    
             if ( ! getRandom( 5 ) ) {
-                ResourceRecord opt_pseudo_rr = generate_opt_pseudo_record( modified_response.opt_pseudo_rr );
+                ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.opt_pseudo_rr );
                 RRSet rrset( opt_pseudo_rr.r_domainname,
                              opt_pseudo_rr.r_class,
                              opt_pseudo_rr.r_type,

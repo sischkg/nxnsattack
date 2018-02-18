@@ -87,7 +87,7 @@ namespace dns
         std::vector<ResourceRecord> additional = this->additional_infomation_section;
 
         if ( this->edns0 ) {
-            additional.push_back( generate_opt_pseudo_record( this->opt_pseudo_rr ) );
+            additional.push_back( generateOptPseudoRecord( this->opt_pseudo_rr ) );
         }
 
         header.question_count              = htons( this->question_section.size() );
@@ -117,7 +117,7 @@ namespace dns
         uint32_t message_size = sizeof(PacketHeaderField);
 
         if ( edns0 ) {
-	    ResourceRecord rr = generate_opt_pseudo_record( opt_pseudo_rr );
+	    ResourceRecord rr = generateOptPseudoRecord( opt_pseudo_rr );
 	    message_size += rr.size();
         }
 
@@ -1953,7 +1953,7 @@ namespace dns
         return RDATAPtr( new RecordOptionsData( options ) );
     }
 
-    ResourceRecord generate_opt_pseudo_record( const OptPseudoRecord &opt )
+    ResourceRecord generateOptPseudoRecord( const OptPseudoRecord &opt )
     {
         ResourceRecord entry;
         entry.r_domainname    = opt.domainname;
