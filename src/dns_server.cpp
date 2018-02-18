@@ -69,7 +69,7 @@ namespace dns
             while ( true ) {
                 try {
                     udpv4::PacketInfo recv_data = dns_receiver.receivePacket();
-                    PacketInfo        query     = parse_dns_packet( recv_data.begin(), recv_data.end() );
+                    PacketInfo        query     = parseDNSMessage( recv_data.begin(), recv_data.end() );
 
                     if ( isDebug() )
                         std::cerr << "Query:" << query << std::endl; 
@@ -153,7 +153,7 @@ namespace dns
                         std::cerr << "DNS message size: " << size << std::endl;
 
                     PacketData recv_data = connection->receive( size );
-                    PacketInfo query     = parse_dns_packet( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
+                    PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
                     if ( query.question_section[ 0 ].q_type == dns::TYPE_AXFR ||
                          query.question_section[ 0 ].q_type == dns::TYPE_IXFR ) {
                         boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );

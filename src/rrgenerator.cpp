@@ -192,7 +192,7 @@ namespace dns
             hint_name = hint.getAuthoritySection()[index - qdcount - ancount].r_domainname;
         }
         else if ( index < qdcount + ancount + nscount + adcount ) {
-            hint_name = hint.getAuthoritySection()[index - qdcount - ancount - nscount].r_domainname;
+            hint_name = hint.getAdditionalInfomationSection()[index - qdcount - ancount - nscount].r_domainname;
         }
         else {
             throw std::logic_error( "invalid index of XNameGenerator::generate( hint )" );
@@ -259,6 +259,33 @@ namespace dns
         return std::shared_ptr<RDATA>( new RecordA( getRandom() ) );
     }
 
+
+    /**********************************************************
+     * WKSGenarator
+     **********************************************************/
+    std::shared_ptr<RDATA> WKSGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<RDATA> WKSGenerator::generate()
+    {
+        std::vector<Type> bitmap;
+        if ( getRandom( 32 ) == 0 )
+            bitmap.resize( 0 );
+        else if ( getRandom( 32 ) == 0 ) {
+            bitmap.resize( 256 * 256 );
+            for ( unsigned int i = 0 ; i < bitmap.size() ; i++ )
+                bitmap[i] = i;
+        }
+        else {
+            bitmap.resize( getRandom( 256 * 256 ) );
+            for ( unsigned int i = 0 ; i < bitmap.size() ; i++ )
+                bitmap[i] = getRandom( 256 * 256 );
+        }
+            
+        return std::shared_ptr<RDATA>( new RecordWKS( getRandom(), getRandom( 256 ), bitmap ) );
+    }
     
     /**********************************************************
      * AAAAGenarator
@@ -674,6 +701,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DNAMEGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new AGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new AAAAGenerator ) );
+        mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new WKSGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new SOAGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new RRSIGGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DNSKEYGenerator ) );

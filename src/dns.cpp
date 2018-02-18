@@ -71,7 +71,45 @@ namespace dns
 
     void PacketInfo::generateMessage( WireFormat &message ) const
     {
-        generate_dns_packet( *this, message );
+        PacketHeaderField header;
+        header.id                   = htons( this->id );
+        header.opcode               = this->opcode;
+        header.query_response       = this->query_response;
+        header.authoritative_answer = this->authoritative_answer;
+        header.truncation           = this->truncation;
+        header.recursion_desired    = this->recursion_desired;
+        header.recursion_available  = this->recursion_available;
+        header.zero_field           = 0;
+        header.authentic_data       = this->authentic_data;
+        header.checking_disabled    = this->checking_disabled;
+        header.response_code        = this->response_code;
+
+        std::vector<ResourceRecord> additional = this->additional_infomation_section;
+
+        if ( this->edns0 ) {
+            additional.push_back( generate_opt_pseudo_record( this->opt_pseudo_rr ) );
+        }
+
+        header.question_count              = htons( this->question_section.size() );
+        header.answer_count                = htons( this->answer_section.size() );
+        header.authority_count             = htons( this->authority_section.size() );
+        header.additional_infomation_count = htons( additional.size() );
+
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
+                            reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
+
+        for ( auto q = this->question_section.begin(); q != this->question_section.end(); ++q ) {
+            generate_question_section( *q, message );
+        }
+        for ( auto q = this->answer_section.begin(); q != this->answer_section.end(); ++q ) {
+            generate_response_section( *q, message );
+        }
+        for ( auto q = this->authority_section.begin(); q != this->authority_section.end(); ++q ) {
+            generate_response_section( *q, message );
+        }
+        for ( auto q = additional.begin(); q != additional.end(); ++q ) {
+            generate_response_section( *q, message );
+        }
     }
 
     uint32_t PacketInfo::getMessageSize() const
@@ -99,57 +137,8 @@ namespace dns
         return message_size;
     }
 
-    PacketData generate_dns_packet( const PacketInfo &info )
-    {
-        WireFormat message;
-        generate_dns_packet( info, message );
-        return message.get();
-    }
 
-    void generate_dns_packet( const PacketInfo &info, WireFormat &message )
-    {
-        PacketHeaderField header;
-        header.id                   = htons( info.id );
-        header.opcode               = info.opcode;
-        header.query_response       = info.query_response;
-        header.authoritative_answer = info.authoritative_answer;
-        header.truncation           = info.truncation;
-        header.recursion_desired    = info.recursion_desired;
-        header.recursion_available  = info.recursion_available;
-        header.zero_field           = 0;
-        header.authentic_data       = info.authentic_data;
-        header.checking_disabled    = info.checking_disabled;
-        header.response_code        = info.response_code;
-
-        std::vector<ResourceRecord> additional = info.additional_infomation_section;
-
-        if ( info.edns0 ) {
-            additional.push_back( generate_opt_pseudo_record( info.opt_pseudo_rr ) );
-        }
-
-        header.question_count              = htons( info.question_section.size() );
-        header.answer_count                = htons( info.answer_section.size() );
-        header.authority_count             = htons( info.authority_section.size() );
-        header.additional_infomation_count = htons( additional.size() );
-
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
-                            reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
-
-        for ( auto q = info.question_section.begin(); q != info.question_section.end(); ++q ) {
-            generate_question_section( *q, message );
-        }
-        for ( auto q = info.answer_section.begin(); q != info.answer_section.end(); ++q ) {
-            generate_response_section( *q, message );
-        }
-        for ( auto q = info.authority_section.begin(); q != info.authority_section.end(); ++q ) {
-            generate_response_section( *q, message );
-        }
-        for ( auto q = additional.begin(); q != additional.end(); ++q ) {
-            generate_response_section( *q, message );
-        }
-    }
-
-    PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end )
+    PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *packet = begin;
 
@@ -352,6 +341,9 @@ namespace dns
         case TYPE_DNAME:
             parsed_data = RecordDNAME::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
+        case TYPE_WKS:
+            parsed_data = RecordWKS::parse( packet_begin, packet_end, pos, pos + data_length );
+            break;
         case TYPE_MX:
             parsed_data = RecordMX::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
@@ -430,6 +422,9 @@ namespace dns
             break;
         case TYPE_DNAME:
             res = "DNAME";
+            break;
+        case TYPE_WKS:
+            res = "WKS";
             break;
         case TYPE_MX:
             res = "MX";
@@ -546,6 +541,7 @@ namespace dns
         if ( t == "CNAME" )      return TYPE_CNAME;
         if ( t == "NAPTR" )      return TYPE_NAPTR;
         if ( t == "DNAME" )      return TYPE_DNAME;
+        if ( t == "WKS" )        return TYPE_WKS;
         if ( t == "MX" )         return TYPE_MX;
         if ( t == "TXT" )        return TYPE_TXT;
         if ( t == "SPF" )        return TYPE_SPF;
@@ -723,6 +719,88 @@ namespace dns
         if ( end - begin != 16 )
             throw FormatError( "invalid AAAA Record length" );
         return RDATAPtr( new RecordAAAA( begin ) );
+    }
+
+    RecordWKS::RecordWKS( uint32_t addr, uint8_t proto, const std::vector<Type> &b  )
+        : sin_addr( addr ), protocol( proto ), bitmap( b )
+    {
+    }
+
+    std::string RecordWKS::toZone() const
+    {
+        return toString();
+    }
+
+    std::string RecordWKS::toString() const
+    {
+        char buf[ 256 ];
+        std::snprintf( buf,
+                       sizeof( buf ),
+                       "%d.%d.%d.%d",
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 1 ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 2 ),
+                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 3 ) );
+        std::ostringstream os;
+        os << buf << " " << (int)protocol << " ";
+        for ( unsigned int i = 0 ; i < bitmap.size() ; i++ )
+            if ( bitmap[i] )
+                os << "1";
+            else
+                os << "0";
+        return os.str();
+    }
+
+    void RecordWKS::outputWireFormat( WireFormat &message ) const
+    {
+        message.push_back( ( sin_addr >> 0 ) & 0xff );
+        message.push_back( ( sin_addr >> 8 ) & 0xff );
+        message.push_back( ( sin_addr >> 16 ) & 0xff );
+        message.push_back( ( sin_addr >> 24 ) & 0xff );
+        message.push_back( protocol );
+
+        std::vector<uint8_t> buf( 256*256/8 );
+        std::memset( &buf[0], 0, buf.size() );
+        unsigned int max_byte_index = 0;
+        for ( unsigned int i = 0 ; i < bitmap.size() ; i++ ) {
+            unsigned int byte_index = bitmap[i]/8;
+            unsigned int bit_index  = bitmap[i]%8;
+            buf[byte_index] |= ( 1 << bit_index );
+
+            max_byte_index = std::max( max_byte_index, byte_index );
+        }
+        buf.resize( max_byte_index + 1 );
+
+        message.pushBuffer( buf );
+    }
+
+    void RecordWKS::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        outputWireFormat( message );
+    }
+
+    std::string RecordWKS::getAddress() const
+    {
+	return toString();
+    }
+
+    RDATAPtr RecordWKS::parse( const uint8_t *packet_begin, const uint8_t *packet_end,
+                               const uint8_t *rdata_begin,  const uint8_t *rdata_end )
+    {
+        if ( rdata_end - rdata_begin < 5 )
+            throw FormatError( "too short size for WKS" );
+        const uint8_t *pos = rdata_begin;
+
+        uint32_t addr  = get_bytes<uint32_t>( &pos );
+        uint8_t  proto = get_bytes<uint8_t>( &pos );
+        std::vector<Type> bitm;
+
+        for ( unsigned int i = 0 ; pos < rdata_end ; i++, pos++ ) {
+            for ( int j = 0 ; j < 8 ; j++ )
+                if ( *pos & (1<<j) )
+                    bitm.push_back( 256 * i + j );
+        }
+        return RDATAPtr( new RecordWKS( addr, proto, bitm ) );
     }
 
     RecordNS::RecordNS( const Domainname &name, Offset off ) : domainname( name ), offset( off )

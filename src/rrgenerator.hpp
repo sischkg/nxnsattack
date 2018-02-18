@@ -101,6 +101,13 @@ namespace dns
         std::shared_ptr<RDATA> generate();
     };
 
+    class WKSGenerator : public RDATAGeneratable
+    {
+    public:
+        std::shared_ptr<RDATA> generate( const PacketInfo &hint );
+        std::shared_ptr<RDATA> generate();
+    };
+
     class SOAGenerator : public RDATAGeneratable
     {
     public:

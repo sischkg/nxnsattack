@@ -37,6 +37,7 @@ namespace dns
     const Type       TYPE_NS          = 2;
     const Type       TYPE_CNAME       = 5;
     const Type       TYPE_SOA         = 6;
+    const Type       TYPE_WKS         = 11;
     const Type       TYPE_MX          = 15;
     const Type       TYPE_TXT         = 16;
     const Type       TYPE_SIG         = 24;
@@ -189,6 +190,39 @@ namespace dns
 
         static RDATAPtr parse( const uint8_t *begin, const uint8_t *end );
     };
+
+
+    class RecordWKS : public RDATA
+    {
+    private:
+        uint32_t             sin_addr;
+        uint8_t              protocol;
+        std::vector<Type> bitmap;
+
+    public:
+        RecordWKS( uint32_t in_sin_addr, uint8_t proto, const std::vector<Type> & );
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual Type type() const
+        {
+            return TYPE_WKS;
+        }
+        virtual uint16_t size() const
+        {
+            return sizeof( sin_addr );
+        }
+	virtual RecordWKS *clone() const { return new RecordWKS( sin_addr, protocol, bitmap ); }
+
+	std::string getAddress() const;
+        uint8_t     getProtocol() const { return protocol; }
+        const std::vector<Type> &getBitmap() const { return bitmap; }
+        static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end,
+                               const uint8_t *rdata_begin,  const uint8_t *rdata_end );
+    };
+
 
     class RecordNS : public RDATA
     {
@@ -1477,9 +1511,7 @@ namespace dns
         uint32_t getMessageSize() const;
     };
 
-    std::vector<uint8_t> generate_dns_packet( const PacketInfo &query );
-    void generate_dns_packet( const PacketInfo &query, WireFormat & );
-    PacketInfo parse_dns_packet( const uint8_t *begin, const uint8_t *end );
+    PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &print_header( std::ostream &os, const PacketInfo &packet );
     std::string type_code_to_string( Type t );

@@ -81,7 +81,7 @@ int main( int argc, char **argv )
 	packet_info.response_code        = 0;
 	
 	WireFormat message;
-	dns::generate_dns_packet( packet_info, message );
+	packet_info.generateMessage( message );
 
 	udpv4::ClientParameters udp_param;
 	udp_param.destination_address = target_server;

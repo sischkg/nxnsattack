@@ -78,7 +78,7 @@ private:
         response.response_code        = dns::NO_ERROR;
 
         WireFormat response_message;
-        dns::generate_dns_packet( response, response_message );
+        response.generateMessage( response_message );
 
         uint16_t send_size = htons( response_message.size() );
         conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
@@ -135,7 +135,7 @@ private:
         response.response_code        = dns::NO_ERROR;
 
         WireFormat response_message;
-        dns::generate_dns_packet( response, response_message );
+        response.generateMessage( response_message );
 
         uint16_t send_size = htons( response_message.size() );
         conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
@@ -186,7 +186,7 @@ private:
         response.response_code        = dns::NO_ERROR;
 
         WireFormat response_message;
-        dns::generate_dns_packet( response, response_message );
+        response.generateMessage( response_message );
 
         uint16_t send_size = htons( response_message.size() );
         conn->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
