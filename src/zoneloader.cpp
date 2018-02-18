@@ -221,7 +221,7 @@ namespace dns
                 std::vector<Type> types;
                 for ( unsigned int i = 0 ; i < node_types.size() ; i++ ) {
                     std::string type_string = node_types[i].as<std::string>();
-                    types.push_back( string_to_type_code( type_string ) );
+                    types.push_back( stringToTypeCode( type_string ) );
                 }
                 return std::shared_ptr<RDATA>( new RecordNSEC( node["next"].as<std::string>(),
                                                                types ) );
@@ -237,7 +237,7 @@ namespace dns
 
             std::string owner = node["owner"].as<std::string>();
             TTL  ttl          = node["ttl"].as<uint32_t>();
-            Type type         = string_to_type_code( node["type"].as<std::string>() );
+            Type type         = stringToTypeCode( node["type"].as<std::string>() );
 
             std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
   
@@ -365,7 +365,7 @@ namespace dns
 
 		if ( pos == tokens.end() )
 		    throw std::runtime_error( "no type field" );
-		Type type         = string_to_type_code( *pos ); pos++;
+		Type type         = stringToTypeCode( *pos ); pos++;
  
 		if ( pos == tokens.end() )
 		    throw std::runtime_error( "no data field" );
@@ -512,7 +512,7 @@ namespace dns
             for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
             auto signature = decode_from_base64_strings( signature_data, data.end() );
             
-            return RDATAPtr( new RecordRRSIG( string_to_type_code( data[0] ),           // type covered
+            return RDATAPtr( new RecordRRSIG( stringToTypeCode( data[0] ),           // type covered
                                               boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
                                               boost::lexical_cast<uint16_t>( data[2] ),  // label count
                                               boost::lexical_cast<uint32_t>( data[3] ),  // original ttl
@@ -550,7 +550,7 @@ namespace dns
         {
             std::vector<Type> types;
             for ( unsigned int i = 1 ; i < data.size() ; i++ ) {
-                types.push_back( string_to_type_code( data[i] ) );
+                types.push_back( stringToTypeCode( data[i] ) );
             }
             return RDATAPtr( new RecordNSEC( data[0], types ) );
         }

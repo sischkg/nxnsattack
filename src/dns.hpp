@@ -1516,7 +1516,7 @@ namespace dns
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
     std::string typeCodeToString( Type t );
     std::string responseCodeToString( uint8_t rcode );
-    Type string_to_type_code( const std::string & );
+    Type stringToTypeCode( const std::string & );
 
     struct PacketHeaderField {
         uint16_t id;

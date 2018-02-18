@@ -533,7 +533,7 @@ namespace dns
         return res;
     }
 
-    Type string_to_type_code( const std::string &t )
+    Type stringToTypeCode( const std::string &t )
     {
         if ( t == "A" )          return TYPE_A;
         if ( t == "AAAA" )       return TYPE_AAAA;
