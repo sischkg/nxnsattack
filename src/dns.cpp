@@ -1344,7 +1344,7 @@ namespace dns
     std::string RecordRRSIG::toZone() const
     {
         std::string signature_str;
-        encode_to_base64( signature, signature_str );
+        encodeToBase64( signature, signature_str );
 
         time_t expiration_time = expiration;
         time_t inception_time  = inception;
@@ -1372,7 +1372,7 @@ namespace dns
     std::string RecordRRSIG::toString() const
     {
         std::string signature_str;
-        encode_to_base64( signature, signature_str );
+        encodeToBase64( signature, signature_str );
 
         std::ostringstream os;
         os << "Type Covered: " << typeCodeToString( type_covered ) << ", "
@@ -1408,7 +1408,7 @@ namespace dns
     std::string RecordDNSKEY::toZone() const
     {
         std::string public_key_str;
-        encode_to_base64( public_key, public_key_str );
+        encodeToBase64( public_key, public_key_str );
 
         std::ostringstream os;
         os << ( flag == KSK ? "257" : "256" ) << " "
@@ -1422,7 +1422,7 @@ namespace dns
     std::string RecordDNSKEY::toString() const
     {
         std::string public_key_str;
-        encode_to_base64( public_key, public_key_str );
+        encodeToBase64( public_key, public_key_str );
 
         std::ostringstream os;
         os << "KSK/ZSK: "    << ( flag == KSK ? "KSK" : "ZSK" ) << ", "
@@ -2253,8 +2253,8 @@ namespace dns
     std::string RecordTSIGData::toZone() const
     {
         std::string mac_str, other_str;
-        encode_to_base64( mac,   mac_str );
-        encode_to_base64( other, other_str );
+        encodeToBase64( mac,   mac_str );
+        encodeToBase64( other, other_str );
 
         time_t signed_time_t = signed_time;
         tm signed_time_tm;

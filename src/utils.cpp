@@ -150,7 +150,7 @@ static uint8_t convert_from_base64( char c )
 //   |5 4 3 2 1 0|5 4 3 2 1 0|5 4 3 2 1 0|5 4 3 2 1 0|
 //   +--1.index--+--2.index--+--3.index--+--4.index--+
 
-char *encode_to_base64( const uint8_t *begin, const uint8_t *end, char *output )
+char *encodeToBase64( const uint8_t *begin, const uint8_t *end, char *output )
 {
     const uint8_t *pos = begin;
     while ( pos + 2 < end ) {
@@ -189,25 +189,25 @@ char *encode_to_base64( const uint8_t *begin, const uint8_t *end, char *output )
     return output;
 }
 
-void encode_to_base64( const std::vector<uint8_t> &data, std::string &output )
+void encodeToBase64( const std::vector<uint8_t> &data, std::string &output )
 {
-    unsigned int encoded_size = encode_to_base64_size( &data[ 0 ], &data[ 0 ] + data.size() );
+    unsigned int encoded_size = encodeToBase64Size( &data[ 0 ], &data[ 0 ] + data.size() );
     if ( encoded_size == 0 ) {
         output = "";
         return;
     }
 
     boost::scoped_array<char> out( new char[ encoded_size ] );
-    encode_to_base64( &data[ 0 ], &data[ 0 ] + data.size(), &out[ 0 ] );
+    encodeToBase64( &data[ 0 ], &data[ 0 ] + data.size(), &out[ 0 ] );
     output.assign( out.get(), encoded_size );
 }
 
-uint8_t *decode_from_base64( const char *data, uint8_t *output )
+uint8_t *decodeFromBase64( const char *data, uint8_t *output )
 {
-    return decode_from_base64( data, data + std::strlen( data ), output );
+    return decodeFromBase64( data, data + std::strlen( data ), output );
 }
 
-uint8_t *decode_from_base64( const char *begin, const char *end, uint8_t *output )
+uint8_t *decodeFromBase64( const char *begin, const char *end, uint8_t *output )
 {
     if ( ( end - begin ) % 4 != 0 ) {
         throw std::runtime_error( "invalid base64 string length" );
@@ -239,19 +239,19 @@ uint8_t *decode_from_base64( const char *begin, const char *end, uint8_t *output
     return output;
 }
 
-void decode_from_base64( const std::string &data, std::vector<uint8_t> &output )
+void decodeFromBase64( const std::string &data, std::vector<uint8_t> &output )
 {
-    unsigned int decoded_size = decode_from_base64_size( &data[ 0 ], &data[ 0 ] + data.size() );
+    unsigned int decoded_size = decodeFromBase64Size( &data[ 0 ], &data[ 0 ] + data.size() );
     output.resize( decoded_size );
-    decode_from_base64( &data[ 0 ], &data[ 0 ] + data.size(), &output[ 0 ] );
+    decodeFromBase64( &data[ 0 ], &data[ 0 ] + data.size(), &output[ 0 ] );
 }
 
-uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end )
+uint32_t encodeToBase64Size( const uint8_t *begin, const uint8_t *end )
 {
     return ( end - begin + 2 ) / 3 * 4;
 }
 
-uint32_t decode_from_base64_size( const char *begin, const char *end )
+uint32_t decodeFromBase64Size( const char *begin, const char *end )
 {
     if ( ( end - begin ) % 4 != 0 ) {
         throw std::range_error( "invalid base64 string length" );

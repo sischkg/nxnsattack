@@ -58,18 +58,18 @@ uint16_t compute_checksum( const uint8_t *data, size_t length );
 in_addr convert_address_string_to_binary( const std::string &str, int address_family = AF_INET );
 std::string convert_address_binary_to_string( in_addr bin, int address_family = AF_INET );
 
-char *encode_to_base64( const uint8_t *begin, const uint8_t *end, char *output );
-void encode_to_base64( const std::vector<uint8_t> &, std::string & );
+char *encodeToBase64( const uint8_t *begin, const uint8_t *end, char *output );
+void encodeToBase64( const std::vector<uint8_t> &, std::string & );
 
-uint8_t *decode_from_base64( const char *begin, const char *end, uint8_t *output );
-uint8_t *decode_from_base64( const char *data, uint8_t *output );
-void decode_from_base64( const std::string &, std::vector<uint8_t> & );
+uint8_t *decodeFromBase64( const char *begin, const char *end, uint8_t *output );
+uint8_t *decodeFromBase64( const char *data, uint8_t *output );
+void decodeFromBase64( const std::string &, std::vector<uint8_t> & );
 
 void encodeToBase32Hex( const std::vector<uint8_t> &, std::string & );
 void decodeFromBase32Hex( const std::string &, std::vector<uint8_t> & );
 
-uint32_t encode_to_base64_size( const uint8_t *begin, const uint8_t *end );
-uint32_t decode_from_base64_size( const char *begin, const char *end );
+uint32_t encodeToBase64Size( const uint8_t *begin, const uint8_t *end );
+uint32_t decodeFromBase64Size( const char *begin, const char *end );
 
 void encodeToHex( const std::vector<uint8_t> &src, std::string &dst );
 void decodeFromHex( const std::string &src, std::vector<uint8_t> &dst );

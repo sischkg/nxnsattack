@@ -163,7 +163,7 @@ namespace dns
                  node["signer"]  &&
                  node["signature"] ) {
                 std::vector<uint8_t> signature;
-                decode_from_base64( node["signature"].as<std::string>(), signature );
+                decodeFromBase64( node["signature"].as<std::string>(), signature );
 
                 return std::shared_ptr<RDATA>( new RecordRRSIG( node["type_covered"].as<uint16_t>(),
                                                                 node["algorithm"].as<uint16_t>(),
@@ -189,7 +189,7 @@ namespace dns
                  node["algorithm"] &&
                  node["public_key"] ) {
                 std::vector<uint8_t> public_key;
-                decode_from_base64( node["public_key"].as<std::string>(), public_key );
+                decodeFromBase64( node["public_key"].as<std::string>(), public_key );
                 return std::shared_ptr<RDATA>( new RecordDNSKEY( node["flag"].as<uint16_t>(),
                                                                  node["algorithm"].as<uint16_t>(),
                                                                  public_key ) );
@@ -431,8 +431,8 @@ namespace dns
 	    }		
         }
 
-        std::vector<uint8_t> decode_from_base64_strings( std::vector<std::string>::const_iterator begin,
-                                                         std::vector<std::string>::const_iterator end )
+        std::vector<uint8_t> decodeFromBase64Strings( std::vector<std::string>::const_iterator begin,
+						      std::vector<std::string>::const_iterator end )
         {
             std::string base64_string;
             while ( begin != end ) {
@@ -441,7 +441,7 @@ namespace dns
             }
 
             std::vector<uint8_t> decoded_data;
-            decode_from_base64( base64_string, decoded_data );
+            decodeFromBase64( base64_string, decoded_data );
             return decoded_data;
         }
 
@@ -510,7 +510,7 @@ namespace dns
         {
             auto signature_data = data.begin();
             for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
-            auto signature = decode_from_base64_strings( signature_data, data.end() );
+            auto signature = decodeFromBase64Strings( signature_data, data.end() );
             
             return RDATAPtr( new RecordRRSIG( stringToTypeCode( data[0] ),           // type covered
                                               boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
@@ -527,7 +527,7 @@ namespace dns
         {
             auto digest_data = data.begin();
             for ( int i = 0 ; i < 3 ; i++ ) digest_data++;
-            auto digest = decode_from_base64_strings( digest_data, data.end() );
+            auto digest = decodeFromBase64Strings( digest_data, data.end() );
 
             return RDATAPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
                                            boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
@@ -539,7 +539,7 @@ namespace dns
         {
             auto public_key_data = data.begin();
             for ( int i = 0 ; i < 3 ; i++ ) public_key_data++;
-            auto public_key = decode_from_base64_strings( public_key_data, data.end() );
+            auto public_key = decodeFromBase64Strings( public_key_data, data.end() );
 
             return RDATAPtr( new RecordDNSKEY( boost::lexical_cast<uint16_t>( data[0] ), // FLAG
                                                boost::lexical_cast<uint16_t>( data[2] ),  // algorithm

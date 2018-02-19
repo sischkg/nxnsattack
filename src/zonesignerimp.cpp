@@ -496,8 +496,8 @@ namespace dns
     {
 	std::ostringstream os;
 	std::string exponent_base64, modulus_base64;
-	encode_to_base64( exponent, exponent_base64 );
-	encode_to_base64( modulus,  modulus_base64 );
+	encodeToBase64( exponent, exponent_base64 );
+	encodeToBase64( modulus,  modulus_base64 );
 
 	os << "exponent: " << exponent_base64 << ", "
 	   << "modulus: "  << modulus_base64;
@@ -556,7 +556,7 @@ namespace dns
     {
 	std::ostringstream os;
 	std::string q_base64;
-	encode_to_base64( mQ, q_base64 );
+	encodeToBase64( mQ, q_base64 );
 
 	os << "Q: " << q_base64;
 
