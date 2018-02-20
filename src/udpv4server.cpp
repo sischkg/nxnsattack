@@ -45,7 +45,7 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convert_address_string_to_binary( parameters.bind_address );
+        socket_address.sin_addr   = convertAddressStringToBinary( parameters.bind_address );
         socket_address.sin_port   = htons( parameters.bind_port );
         if ( bind( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             closeSocket();
@@ -72,7 +72,7 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convert_address_string_to_binary( dest.destination_address );
+        socket_address.sin_addr   = convertAddressStringToBinary( dest.destination_address );
         socket_address.sin_port   = htons( dest.destination_port );
         int sent_size             = sendto( udp_socket,
                                 data,
@@ -97,7 +97,7 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convert_address_string_to_binary( dest.destination_address );
+        socket_address.sin_addr   = convertAddressStringToBinary( dest.destination_address );
         socket_address.sin_port   = htons( dest.destination_port );
         return data.send( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) );
     }
@@ -152,9 +152,9 @@ namespace udpv4
         }
 
         PacketInfo info;
-        info.source_address      = convert_address_binary_to_string( sin.sin_addr );
+        info.source_address      = convertAddressBinaryToString( sin.sin_addr );
         info.source_port         = ntohs( sin.sin_port );
-        info.destination_address = convert_address_binary_to_string( pktinfo->ipi_addr );
+        info.destination_address = convertAddressBinaryToString( pktinfo->ipi_addr );
         info.payload.insert( info.payload.end(), receive_buffer.begin(), receive_buffer.begin() + recv_size );
 
         return info;

@@ -107,8 +107,8 @@ namespace tcpv4
     uint16_t compute_tcpv4_checksum( const PacketInfo &info )
     {
         PseudoTCPv4HeaderField pseudo_header;
-        pseudo_header.source_address      = convert_address_string_to_binary( info.source_address );
-        pseudo_header.destination_address = convert_address_string_to_binary( info.destination_address );
+        pseudo_header.source_address      = convertAddressStringToBinary( info.source_address );
+        pseudo_header.destination_address = convertAddressStringToBinary( info.destination_address );
         pseudo_header.padding             = 0;
         pseudo_header.protocol            = 6; // TCP Protocol Number
         pseudo_header.length              = htons( info.getLength() );

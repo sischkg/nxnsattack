@@ -65,8 +65,8 @@ namespace ipv4
         header.field.ttl           = info.ttl;
         header.field.protocol      = info.protocol;
         header.field.checksum      = 0;
-        header.field.source        = convert_address_string_to_binary( info.source );
-        header.field.destination   = convert_address_string_to_binary( info.destination );
+        header.field.source        = convertAddressStringToBinary( info.source );
+        header.field.destination   = convertAddressStringToBinary( info.destination );
 
         if ( packet_length > 0xffff ) {
             throw InvalidPayloadLengthError( "invalid playload length", info.getPayloadLength() );

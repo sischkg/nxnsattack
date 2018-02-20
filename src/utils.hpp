@@ -55,8 +55,8 @@ std::string get_error_message( const std::string &msg, int error_number );
 
 uint16_t compute_checksum( const uint8_t *data, size_t length );
 
-in_addr convert_address_string_to_binary( const std::string &str, int address_family = AF_INET );
-std::string convert_address_binary_to_string( in_addr bin, int address_family = AF_INET );
+in_addr convertAddressStringToBinary( const std::string &str, int address_family = AF_INET );
+std::string convertAddressBinaryToString( in_addr bin, int address_family = AF_INET );
 
 char *encodeToBase64( const uint8_t *begin, const uint8_t *end, char *output );
 void encodeToBase64( const std::vector<uint8_t> &, std::string & );

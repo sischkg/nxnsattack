@@ -627,7 +627,7 @@ namespace dns
 
     RecordA::RecordA( const std::string &addr )
     {
-        in_addr a = convert_address_string_to_binary( addr );
+        in_addr a = convertAddressStringToBinary( addr );
         std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
     }
 
@@ -679,7 +679,7 @@ namespace dns
 
     RecordAAAA::RecordAAAA( const std::string &addr )
     {
-        in_addr a = convert_address_string_to_binary( addr );
+        in_addr a = convertAddressStringToBinary( addr );
         std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
     }
 

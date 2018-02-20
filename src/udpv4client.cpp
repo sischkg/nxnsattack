@@ -36,7 +36,7 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convert_address_string_to_binary( parameters.destination_address );
+        socket_address.sin_addr   = convertAddressStringToBinary( parameters.destination_address );
         socket_address.sin_port   = htons( parameters.destination_port );
         if ( connect( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
@@ -106,7 +106,7 @@ namespace udpv4
         }
 
         PacketInfo info;
-        info.source_address = convert_address_binary_to_string( peer_address.sin_addr );
+        info.source_address = convertAddressBinaryToString( peer_address.sin_addr );
         info.source_port    = ntohs( peer_address.sin_port );
         info.payload        = receive_buffer;
         return info;
@@ -194,7 +194,7 @@ namespace udpv4
 
         sockaddr_in recv_socket_address;
         recv_socket_address.sin_family = AF_INET;
-        recv_socket_address.sin_addr   = convert_address_string_to_binary( bind_address );
+        recv_socket_address.sin_addr   = convertAddressStringToBinary( bind_address );
         recv_socket_address.sin_port   = htons( bind_port );
         if ( bind( udp_socket,
                    reinterpret_cast<const sockaddr *>( &recv_socket_address ),
@@ -232,7 +232,7 @@ namespace udpv4
         receive_buffer.resize( recv_size );
 
         PacketInfo info;
-        info.source_address = convert_address_binary_to_string( peer_address.sin_addr );
+        info.source_address = convertAddressBinaryToString( peer_address.sin_addr );
         info.source_port    = ntohs( peer_address.sin_port );
         info.payload        = receive_buffer;
         return info;

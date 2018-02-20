@@ -88,7 +88,7 @@ namespace tcpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convert_address_string_to_binary( parameters.bind_address );
+        socket_address.sin_addr   = convertAddressStringToBinary( parameters.bind_address );
         socket_address.sin_port   = htons( parameters.bind_port );
         if ( bind( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             close( tcp_socket );
