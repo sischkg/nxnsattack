@@ -31,14 +31,14 @@ namespace udpv4
 
         udp_socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
         if ( udp_socket < 0 ) {
-            std::string msg = get_error_message( "cannot create socket", errno );
+            std::string msg = getErrorMessage( "cannot create socket", errno );
             throw SocketError( msg );
         }
 
         int one = 1;
         int err = setsockopt( udp_socket, IPPROTO_IP, IP_PKTINFO, &one, sizeof( one ) );
         if ( err ) {
-            std::string msg = get_error_message( "cannot setsocketopt", errno );
+            std::string msg = getErrorMessage( "cannot setsocketopt", errno );
             throw SocketError( msg );
         }
 
@@ -51,7 +51,7 @@ namespace udpv4
             closeSocket();
             std::ostringstream str;
             str << "cannot bind to " << parameters.bind_address << ":" << parameters.bind_port << ".";
-            std::string msg = get_error_message( str.str(), errno );
+            std::string msg = getErrorMessage( str.str(), errno );
             throw SocketError( msg );
         }
     }
@@ -83,7 +83,7 @@ namespace udpv4
         if ( sent_size < 0 ) {
             std::ostringstream s;
             s << "cannot send to " << dest.destination_address << ":" << dest.destination_port << ".";
-            std::string msg = get_error_message( s.str(), errno );
+            std::string msg = getErrorMessage( s.str(), errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -135,7 +135,7 @@ namespace udpv4
 
         int recv_size = recvmsg( udp_socket, &msg, 0 );
         if ( recv_size < 0 ) {
-            std::string msg = get_error_message( "cannot recvmsg", errno );
+            std::string msg = getErrorMessage( "cannot recvmsg", errno );
             throw SocketError( msg );
         }
 

@@ -75,7 +75,7 @@ retry:
         if ( errno == EINTR || errno == EAGAIN )
             goto retry;
         else {
-            throw SocketError( get_error_message( "cannot write data to peer", errno ) );
+            throw SocketError( getErrorMessage( "cannot write data to peer", errno ) );
         }
     }
 

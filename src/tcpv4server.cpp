@@ -37,7 +37,7 @@ namespace tcpv4
             else {
                 close( tcp_socket );
                 tcp_socket = 0;
-                throw SocketError( get_error_message( "cannot read data from peer", errno ) );
+                throw SocketError( getErrorMessage( "cannot read data from peer", errno ) );
             }
         }
 
@@ -63,7 +63,7 @@ namespace tcpv4
             if ( errno == EINTR || errno == EAGAIN )
                 goto retry;
             else {
-                throw SocketError( get_error_message( "cannot write data to peer", errno ) );
+                throw SocketError( getErrorMessage( "cannot write data to peer", errno ) );
             }
         }
 
@@ -79,7 +79,7 @@ namespace tcpv4
     {
         tcp_socket = socket( AF_INET, SOCK_STREAM, 0 );
         if ( tcp_socket < 0 ) {
-            SocketError( get_error_message( "cannot create socket", errno ) );
+            SocketError( getErrorMessage( "cannot create socket", errno ) );
         }
 
         const int one = 1;
@@ -93,13 +93,13 @@ namespace tcpv4
         if ( bind( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             close( tcp_socket );
             tcp_socket = -1;
-            throw SocketError( get_error_message( "cannot bind to " + parameters.bind_address, errno ) );
+            throw SocketError( getErrorMessage( "cannot bind to " + parameters.bind_address, errno ) );
         }
 
         if ( listen( tcp_socket, 10 ) < 0 ) {
             close( tcp_socket );
             tcp_socket = -1;
-            throw SocketError( get_error_message( "cannot listen", errno ) );
+            throw SocketError( getErrorMessage( "cannot listen", errno ) );
         }
     }
 
@@ -119,7 +119,7 @@ namespace tcpv4
         if ( new_connection < 0 ) {
             if ( errno == EAGAIN || errno == EINTR )
                 goto retry;
-            throw SocketError( get_error_message( "cannot accept", errno ) );
+            throw SocketError( getErrorMessage( "cannot accept", errno ) );
         }
         return ConnectionPtr( new Connection( new_connection ) );
     }

@@ -29,7 +29,7 @@ namespace tcpv4
 
         tcp_socket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
         if ( tcp_socket < 0 ) {
-            std::string msg = get_error_message( "cannot create socket", errno );
+            std::string msg = getErrorMessage( "cannot create socket", errno );
             throw SocketError( msg );
         }
         sockaddr_in socket_address;
@@ -40,7 +40,7 @@ namespace tcpv4
         if ( connect( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
             closeSocket();
-            std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
         }
     }
@@ -77,7 +77,7 @@ namespace tcpv4
 
         int sent_size = write( tcp_socket, data, size );
         if ( sent_size < 0 ) {
-            std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -111,7 +111,7 @@ namespace tcpv4
                 ConnectionInfo info;
                 return info;
             }
-            throw SocketError( get_error_message( "cannot recv packet", error_num ) );
+            throw SocketError( getErrorMessage( "cannot recv packet", error_num ) );
         }
         receive_buffer.resize( recv_size );
 
@@ -134,7 +134,7 @@ namespace tcpv4
                 ConnectionInfo info;
                 return info;
             }
-            throw SocketError( get_error_message( "cannot recv packet", error_num ) );
+            throw SocketError( getErrorMessage( "cannot recv packet", error_num ) );
         }
         receive_buffer.resize( recv_size );
 

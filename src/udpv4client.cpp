@@ -30,7 +30,7 @@ namespace udpv4
 
         udp_socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
         if ( udp_socket < 0 ) {
-            std::string msg = get_error_message( "cannot create socket", errno );
+            std::string msg = getErrorMessage( "cannot create socket", errno );
             throw SocketError( msg );
         }
         sockaddr_in socket_address;
@@ -41,7 +41,7 @@ namespace udpv4
         if ( connect( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
             closeSocket();
-            std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
         }
     }
@@ -61,7 +61,7 @@ namespace udpv4
 
         int sent_size = send( udp_socket, data, size, 0 );
         if ( sent_size < 0 ) {
-            std::string msg = get_error_message( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -102,7 +102,7 @@ namespace udpv4
                 return info;
             }
             std::perror( "cannot recv" );
-            throw SocketError( get_error_message( "cannot recv packet", error_num ) );
+            throw SocketError( getErrorMessage( "cannot recv packet", error_num ) );
         }
 
         PacketInfo info;
@@ -124,13 +124,13 @@ namespace udpv4
 
         raw_socket = socket( AF_INET, SOCK_RAW, IPPROTO_RAW );
         if ( raw_socket < 0 ) {
-            throw SocketError( get_error_message( "cannot create raw socket", errno ) );
+            throw SocketError( getErrorMessage( "cannot create raw socket", errno ) );
         }
         int on  = 1;
         int res = setsockopt( raw_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof( int ) );
         if ( res < 0 ) {
             closeSocket();
-            throw SocketError( get_error_message( "cannot cannot set socket option", errno ) );
+            throw SocketError( getErrorMessage( "cannot cannot set socket option", errno ) );
         }
     }
 
@@ -177,7 +177,7 @@ namespace udpv4
                             reinterpret_cast<const sockaddr *>( &dst_socket_address ),
                             sizeof( dst_socket_address ) );
         if ( sent_size < 0 )
-            throw SocketError( get_error_message( "cannot send packet", errno ) );
+            throw SocketError( getErrorMessage( "cannot send packet", errno ) );
 
         return sent_size;
     }
@@ -189,7 +189,7 @@ namespace udpv4
 
         udp_socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
         if ( udp_socket < 0 ) {
-            throw SocketError( get_error_message( "cannot create udp socket", errno ) );
+            throw SocketError( getErrorMessage( "cannot create udp socket", errno ) );
         }
 
         sockaddr_in recv_socket_address;
@@ -200,7 +200,7 @@ namespace udpv4
                    reinterpret_cast<const sockaddr *>( &recv_socket_address ),
                    sizeof( recv_socket_address ) ) < 0 ) {
             std::perror( "cannot bind" );
-            throw SocketError( get_error_message( "cannot bind receive socket", errno ) );
+            throw SocketError( getErrorMessage( "cannot bind receive socket", errno ) );
         }
     }
 
@@ -227,7 +227,7 @@ namespace udpv4
                                   reinterpret_cast<sockaddr *>( &peer_address ),
                                   &peer_address_size );
         if ( recv_size < 0 ) {
-            throw SocketError( get_error_message( "cannot recv packet", errno ) );
+            throw SocketError( getErrorMessage( "cannot recv packet", errno ) );
         }
         receive_buffer.resize( recv_size );
 

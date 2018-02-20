@@ -10,7 +10,7 @@
 
 const int ERROR_BUFFER_SIZE = 256;
 
-std::string get_error_message( const std::string &msg, int error_number )
+std::string getErrorMessage( const std::string &msg, int error_number )
 {
     char  buff[ ERROR_BUFFER_SIZE ];
     char *err = strerror_r( error_number, buff, sizeof( buff ) );

@@ -51,7 +51,7 @@ public:
     }
 };
 
-std::string get_error_message( const std::string &msg, int error_number );
+std::string getErrorMessage( const std::string &msg, int error_number );
 
 uint16_t compute_checksum( const uint8_t *data, size_t length );
 
