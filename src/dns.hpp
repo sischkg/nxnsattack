@@ -228,10 +228,9 @@ namespace dns
     {
     private:
         Domainname domainname;
-        Offset     offset;
 
     public:
-        RecordNS( const Domainname &name, Offset off = NO_COMPRESSION );
+        RecordNS( const Domainname &name );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -243,9 +242,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size( offset );
+            return domainname.size();
         }
-	virtual RecordNS *clone() const { return new RecordNS( domainname, offset ); }
+	virtual RecordNS *clone() const { return new RecordNS( domainname ); }
 	const Domainname &getNameServer() const { return domainname; }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -256,10 +255,9 @@ namespace dns
     private:
         uint16_t   priority;
         Domainname domainname;
-        Offset     offset;
 
     public:
-        RecordMX( uint16_t pri, const Domainname &name, Offset off = NO_COMPRESSION );
+        RecordMX( uint16_t pri, const Domainname &name );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -271,9 +269,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( priority ) + domainname.size( offset );
+            return sizeof( priority ) + domainname.size();
         }
-	virtual RecordMX *clone() const { return new RecordMX( priority, domainname, offset ); }
+	virtual RecordMX *clone() const { return new RecordMX( priority, domainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -329,10 +327,9 @@ namespace dns
     {
     private:
         Domainname domainname;
-        uint16_t   offset;
 
     public:
-        RecordCNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
+        RecordCNAME( const Domainname &name );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -344,9 +341,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size( offset );
+            return domainname.size();
         }
-	virtual RecordCNAME *clone() const { return new RecordCNAME( domainname, offset ); }
+	virtual RecordCNAME *clone() const { return new RecordCNAME( domainname ); }
 
         const Domainname &getCanonicalName() const { return domainname; }
 
@@ -362,7 +359,6 @@ namespace dns
         std::string services;
         std::string regexp;
         Domainname  replacement;
-        uint16_t    offset;
 
     public:
         RecordNAPTR( uint16_t           in_order,
@@ -370,8 +366,7 @@ namespace dns
                      const std::string &in_flags,
                      const std::string &in_services,
                      const std::string &in_regexp,
-                     const Domainname & in_replacement,
-                     uint16_t           in_offset = NO_COMPRESSION );
+                     const Domainname & in_replacement );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -382,7 +377,7 @@ namespace dns
             return TYPE_NAPTR;
         }
         virtual uint16_t size() const;
-	virtual RecordNAPTR *clone() const { return new RecordNAPTR( order, preference, flags, services, regexp, replacement, offset ); }
+	virtual RecordNAPTR *clone() const { return new RecordNAPTR( order, preference, flags, services, regexp, replacement ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -391,10 +386,9 @@ namespace dns
     {
     private:
         Domainname domainname;
-        uint16_t   offset;
 
     public:
-        RecordDNAME( const Domainname &name, uint16_t off = NO_COMPRESSION );
+        RecordDNAME( const Domainname &name );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -406,11 +400,11 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size( offset );
+            return domainname.size();
         }
         const Domainname &getCanonicalName() const { return domainname; }
 
-	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname, offset ); }
+	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -425,8 +419,6 @@ namespace dns
         uint32_t   retry;
         uint32_t   expire;
         uint32_t   minimum;
-        Offset     mname_offset;
-        Offset     rname_offset;
 
     public:
         RecordSOA( const Domainname &mname,
@@ -435,9 +427,7 @@ namespace dns
                    uint32_t          refresh,
                    uint32_t          retry,
                    uint32_t          expire,
-                   uint32_t          minimum,
-                   Offset            moff = NO_COMPRESSION,
-                   Offset            roff = NO_COMPRESSION );
+                   uint32_t          minimum );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -465,9 +455,8 @@ namespace dns
 				  refresh,
 				  retry,
 				  expire,
-				  minimum,
-				  mname_offset,
-				  rname_offset ); }
+				  minimum );
+	}
 
 	uint32_t getSerial() const { return serial; }
 	uint32_t getRefresh() const { return refresh; }
@@ -1200,15 +1189,13 @@ namespace dns
         uint8_t    version;
 	bool       dobit;
         RDATAPtr   record_options_data;
-        uint32_t   offset;
 
         OptPseudoRecord()
             : domainname( "." ),
               payload_size( 1280 ),
               rcode( 0 ),
               dobit(false),
-              record_options_data( RDATAPtr( new RecordOptionsData ) ),
-              offset( NO_COMPRESSION )
+              record_options_data( RDATAPtr( new RecordOptionsData ) )
         {}
 
 	OptPseudoRecord( const OptPseudoRecord &opt ) :
@@ -1216,8 +1203,7 @@ namespace dns
 	    payload_size( opt.payload_size ),
 	    rcode( opt.rcode ),
 	    version( opt.version ),
-	    dobit( opt.dobit ),
-	    offset( opt.offset )
+	    dobit( opt.dobit )
         {
 	    if ( opt.record_options_data )
 		record_options_data = RDATAPtr( opt.record_options_data->clone() );
@@ -1234,7 +1220,6 @@ namespace dns
 		record_options_data = RDATAPtr( rhs.record_options_data->clone() );
 	    else
 		record_options_data = RDATAPtr( new RecordOptionsData );
-	    offset              = rhs.offset;
 	    return *this;
 	}
     };
@@ -1399,9 +1384,8 @@ namespace dns
         Domainname q_domainname;
         uint16_t   q_type;
         uint16_t   q_class;
-        uint16_t   q_offset;
 
-        QuestionSectionEntry() : q_type( 0 ), q_class( 0 ), q_offset( NO_COMPRESSION )
+        QuestionSectionEntry() : q_type( 0 ), q_class( 0 )
         {
         }
 
@@ -1414,9 +1398,8 @@ namespace dns
         uint16_t   r_class;
         uint32_t   r_ttl;
         RDATAPtr   r_resource_data;
-        uint32_t   r_offset;
 
-        ResourceRecord() : r_type( 0 ), r_class( 0 ), r_ttl( 0 ), r_offset( NO_COMPRESSION )
+        ResourceRecord() : r_type( 0 ), r_class( 0 ), r_ttl( 0 )
         {
         }
 
@@ -1426,8 +1409,7 @@ namespace dns
 	    : r_domainname( entry.r_domainname ),
 	      r_type( entry.r_type ),
 	      r_class( entry.r_class ),
-	      r_ttl( entry.r_ttl ),
-	      r_offset( entry.r_offset )
+	      r_ttl( entry.r_ttl )
 	{
 	    if ( entry.r_resource_data )
 		r_resource_data = RDATAPtr( entry.r_resource_data->clone() );
@@ -1444,7 +1426,6 @@ namespace dns
 	    else
 		r_resource_data = RDATAPtr();
 	    
-	    r_offset     = rhs.r_offset;
 	    return *this;
 	}
     };

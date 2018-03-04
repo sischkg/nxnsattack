@@ -167,7 +167,6 @@ private:
             answer.r_type          = dns::TYPE_NSEC;
             answer.r_class         = dns::CLASS_IN;
             answer.r_ttl           = TTL;
-            answer.r_offset        = 0xFFFF;
             answer.r_resource_data = dns::RDATAPtr( new dns::RecordNSEC( next_name, bitmap ) );
             response.answer_section.push_back( answer );
         }
