@@ -40,9 +40,9 @@ const char *MODULUS_BASE64 =
 TEST_F( DNSKEYTest, CompareDNSKEY )
 {
     std::vector<uint8_t> ksk_dnskey, expected, public_exponent, modulus;
-    decode_from_base64( KSK_DNSKEY_BASE64,      expected );
-    decode_from_base64( PUBLIC_EXPONENT_BASE64, public_exponent );
-    decode_from_base64( MODULUS_BASE64,         modulus );
+    decodeFromBase64( KSK_DNSKEY_BASE64,      expected );
+    decodeFromBase64( PUBLIC_EXPONENT_BASE64, public_exponent );
+    decodeFromBase64( MODULUS_BASE64,         modulus );
 
     dns::RSAPublicKey public_key( public_exponent, modulus );
     ksk_dnskey = public_key.getDNSKEYFormat();

@@ -26,4 +26,10 @@ message( "ssl lib: ${OPENSSL_SSL_LIBRARY}" )
 message( "lib: ${_OPENSSL_LIBDIR}" )
 add_subdirectory( src )
 
+if(NOT without-test)
+  include_directories ("${PROJECT_SOURCE_DIR}/src")
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
 

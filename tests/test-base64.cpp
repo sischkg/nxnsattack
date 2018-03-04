@@ -24,7 +24,7 @@ public:
 TEST_F( Base64Test, encodable_0_bytes )
 {
     uint8_t data[] = {};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded, end ) << "encoded data is \"\"";
     EXPECT_EQ( 0, encoded[ 0 ] ) << "encoded data is NULL terminated";
@@ -33,7 +33,7 @@ TEST_F( Base64Test, encodable_0_bytes )
 TEST_F( Base64Test, encodable_1_bytes )
 {
     uint8_t data[] = {'a'};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded + 4, end ) << "encoded data size of \"a\" is 4";
     EXPECT_STREQ( "YQ==", encoded ) << "encoded data is \"YQ==\"";
@@ -42,7 +42,7 @@ TEST_F( Base64Test, encodable_1_bytes )
 TEST_F( Base64Test, encodable_2_bytes )
 {
     uint8_t data[] = {'a', 'b'};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded + 4, end ) << "encoded data size of \"ab\" is 4";
     EXPECT_STREQ( "YWI=", encoded ) << "encoded data is \"YWI=\"";
@@ -51,7 +51,7 @@ TEST_F( Base64Test, encodable_2_bytes )
 TEST_F( Base64Test, encodable_3_bytes )
 {
     uint8_t data[] = {'a', 'b', 'c'};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded + 4, end ) << "encoded data size of \"abc\" is 4";
     EXPECT_STREQ( "YWJj", encoded ) << "encoded data is \"YWJj\"";
@@ -60,7 +60,7 @@ TEST_F( Base64Test, encodable_3_bytes )
 TEST_F( Base64Test, encodable_4_bytes )
 {
     uint8_t data[] = {'a', 'b', 'c', 'd'};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded + 8, end ) << "encoded data size of \"abcd\" is 8";
     EXPECT_STREQ( "YWJjZA==", encoded ) << "encoded data is \"YWJjZA==\"";
@@ -69,7 +69,7 @@ TEST_F( Base64Test, encodable_4_bytes )
 TEST_F( Base64Test, encodable_5_bytes )
 {
     uint8_t data[] = {'a', 'b', 'c', 'd', 'e'};
-    char *  end    = encode_to_base64( data, data + sizeof( data ), encoded );
+    char *  end    = encodeToBase64( data, data + sizeof( data ), encoded );
 
     EXPECT_EQ( encoded + 8, end ) << "encoded data size of \"abcde\" is 8";
     EXPECT_STREQ( "YWJjZGU=", encoded ) << "encoded data is \"YWJjZGU=\"";
@@ -78,7 +78,7 @@ TEST_F( Base64Test, encodable_5_bytes )
 TEST_F( Base64Test, decodable_0_bytes )
 {
     char     data[] = "";
-    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+    uint8_t *end    = decodeFromBase64( data, data + std::strlen( data ), decoded );
 
     EXPECT_EQ( decoded, end ) << "decoded data is \"\"";
 }
@@ -86,7 +86,7 @@ TEST_F( Base64Test, decodable_0_bytes )
 TEST_F( Base64Test, decodable_1_bytes )
 {
     char     data[] = "YQ==";
-    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+    uint8_t *end    = decodeFromBase64( data, data + std::strlen( data ), decoded );
 
     EXPECT_EQ( decoded + 1, end ) << "decoded data size of \"YQ==\" is a";
     EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
@@ -95,7 +95,7 @@ TEST_F( Base64Test, decodable_1_bytes )
 TEST_F( Base64Test, decodable_2_bytes )
 {
     char     data[] = "YWI=";
-    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+    uint8_t *end    = decodeFromBase64( data, data + std::strlen( data ), decoded );
 
     EXPECT_EQ( decoded + 2, end ) << "decoded data size of \"YWI=\" is a";
     EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
@@ -105,7 +105,7 @@ TEST_F( Base64Test, decodable_2_bytes )
 TEST_F( Base64Test, decodable_3_bytes )
 {
     char     data[] = "YWJj";
-    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+    uint8_t *end    = decodeFromBase64( data, data + std::strlen( data ), decoded );
 
     EXPECT_EQ( decoded + 3, end ) << "decoded data size of \"YQJj\" is a";
     EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
@@ -116,7 +116,7 @@ TEST_F( Base64Test, decodable_3_bytes )
 TEST_F( Base64Test, decodable_4_bytes )
 {
     char     data[] = "YWJjZA==";
-    uint8_t *end    = decode_from_base64( data, data + std::strlen( data ), decoded );
+    uint8_t *end    = decodeFromBase64( data, data + std::strlen( data ), decoded );
 
     EXPECT_EQ( decoded + 4, end ) << "decoded data size of \"YWJjZA==\" is abcde";
     EXPECT_EQ( 'a', decoded[ 0 ] ) << "decoded data is \"a\"";
@@ -129,7 +129,7 @@ TEST_F( Base64Test, decodable_4_bytes )
 TEST_F( Base64Test, size_encodable_0_bytes )
 {
     uint8_t      data[] = {};
-    unsigned int size   = encode_to_base64_size( data, data + sizeof( data ) );
+    unsigned int size   = encodeToBase64Size( data, data + sizeof( data ) );
 
     EXPECT_EQ( 0, size ) << "size = 0";
 }
@@ -137,7 +137,7 @@ TEST_F( Base64Test, size_encodable_0_bytes )
 TEST_F( Base64Test, size_encodable_1_bytes )
 {
     uint8_t      data[] = {'a'};
-    unsigned int size   = encode_to_base64_size( data, data + sizeof( data ) );
+    unsigned int size   = encodeToBase64Size( data, data + sizeof( data ) );
 
     EXPECT_EQ( 4, size ) << "size = 4";
 }
@@ -145,7 +145,7 @@ TEST_F( Base64Test, size_encodable_1_bytes )
 TEST_F( Base64Test, size_encodable_2_bytes )
 {
     uint8_t      data[] = {'a', 'b'};
-    unsigned int size   = encode_to_base64_size( data, data + sizeof( data ) );
+    unsigned int size   = encodeToBase64Size( data, data + sizeof( data ) );
 
     EXPECT_EQ( 4, size ) << "size = 4";
 }
@@ -153,7 +153,7 @@ TEST_F( Base64Test, size_encodable_2_bytes )
 TEST_F( Base64Test, size_encodable_3_bytes )
 {
     uint8_t      data[] = {'a', 'b', 'c'};
-    unsigned int size   = encode_to_base64_size( data, data + sizeof( data ) );
+    unsigned int size   = encodeToBase64Size( data, data + sizeof( data ) );
 
     EXPECT_EQ( 4, size ) << "size = 4";
 }
@@ -161,7 +161,7 @@ TEST_F( Base64Test, size_encodable_3_bytes )
 TEST_F( Base64Test, size_encodable_4_bytes )
 {
     uint8_t      data[] = {'a', 'b', 'c', 'd'};
-    unsigned int size   = encode_to_base64_size( data, data + sizeof( data ) );
+    unsigned int size   = encodeToBase64Size( data, data + sizeof( data ) );
 
     EXPECT_EQ( 8, size ) << "size = 8";
 }
@@ -169,7 +169,7 @@ TEST_F( Base64Test, size_encodable_4_bytes )
 TEST_F( Base64Test, size_decodable_0_bytes )
 {
     char         data[] = "";
-    unsigned int size   = decode_from_base64_size( data, data + std::strlen( data ) );
+    unsigned int size   = decodeFromBase64Size( data, data + std::strlen( data ) );
 
     EXPECT_EQ( 0, size ) << "size = 0";
 }
@@ -177,7 +177,7 @@ TEST_F( Base64Test, size_decodable_0_bytes )
 TEST_F( Base64Test, size_decodable_1_bytes )
 {
     char         data[] = "YQ==";
-    unsigned int size   = decode_from_base64_size( data, data + std::strlen( data ) );
+    unsigned int size   = decodeFromBase64Size( data, data + std::strlen( data ) );
 
     EXPECT_EQ( 1, size ) << "size = 1";
 }
@@ -185,7 +185,7 @@ TEST_F( Base64Test, size_decodable_1_bytes )
 TEST_F( Base64Test, size_decodable_2_bytes )
 {
     char         data[] = "YWI=";
-    unsigned int size   = decode_from_base64_size( data, data + std::strlen( data ) );
+    unsigned int size   = decodeFromBase64Size( data, data + std::strlen( data ) );
 
     EXPECT_EQ( 2, size ) << "size = 2";
 }
@@ -193,7 +193,7 @@ TEST_F( Base64Test, size_decodable_2_bytes )
 TEST_F( Base64Test, size_decodable_3_bytes )
 {
     char         data[] = "YWJj";
-    unsigned int size   = decode_from_base64_size( data, data + std::strlen( data ) );
+    unsigned int size   = decodeFromBase64Size( data, data + std::strlen( data ) );
 
     EXPECT_EQ( 3, size ) << "size = 3";
 }
@@ -201,7 +201,7 @@ TEST_F( Base64Test, size_decodable_3_bytes )
 TEST_F( Base64Test, size_decodable_4_bytes )
 {
     char         data[] = "YWJjZA==";
-    unsigned int size   = decode_from_base64_size( data, data + std::strlen( data ) );
+    unsigned int size   = decodeFromBase64Size( data, data + std::strlen( data ) );
 
     EXPECT_EQ( 4, size ) << "size = 4";
 }
@@ -216,8 +216,8 @@ TEST_F( Base64Test, self_test )
             source.push_back( i );
             source.push_back( j );
 
-            encode_to_base64( source, encoded );
-            decode_from_base64( encoded, destination );
+            encodeToBase64( source, encoded );
+            decodeFromBase64( encoded, destination );
 
             EXPECT_EQ( source[ 0 ], destination[ 0 ] ) << "1st data";
             EXPECT_EQ( source[ 1 ], destination[ 1 ] ) << "2nd data";
