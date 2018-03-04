@@ -597,23 +597,23 @@ namespace dns
     std::string RecordRaw::toZone() const
     {
         std::string hex;
-        encodeToHex( data, hex );
+        encodeToHex( mData, hex );
         return hex;
     }
 
     std::string RecordRaw::toString() const
     {
         std::ostringstream os;
-        os << "type: " << rrtype << ", data: ";
-        for ( unsigned int i = 0; i < data.size(); i++ ) {
-            os << std::hex << (unsigned int)data[ i ] << " ";
+        os << "type: " << mRRType << ", data: ";
+        for ( unsigned int i = 0; i < mData.size(); i++ ) {
+            os << std::hex << (unsigned int)mData[ i ] << " ";
         }
         return os.str();
     }
 
     void RecordRaw::outputWireFormat( WireFormat &message ) const
     {
-        message.pushBuffer( data );
+        message.pushBuffer( mData );
     }
 
     void RecordRaw::outputCanonicalWireFormat( WireFormat &message ) const
@@ -621,14 +621,14 @@ namespace dns
         outputWireFormat( message );
     }
 
-    RecordA::RecordA( uint32_t addr ) : sin_addr( addr )
+    RecordA::RecordA( uint32_t addr ) : mSinAddr( addr )
     {
     }
 
     RecordA::RecordA( const std::string &addr )
     {
         in_addr a = convertAddressStringToBinary( addr );
-        std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
+        std::memcpy( &mSinAddr, &a, sizeof( mSinAddr ) );
     }
 
     std::string RecordA::toZone() const
@@ -642,19 +642,19 @@ namespace dns
         std::snprintf( buf,
                        sizeof( buf ),
                        "%d.%d.%d.%d",
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 1 ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 2 ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 3 ) );
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 1 ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 2 ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 3 ) );
         return std::string( buf );
     }
 
     void RecordA::outputWireFormat( WireFormat &message ) const
     {
-        message.push_back( ( sin_addr >> 0 ) & 0xff );
-        message.push_back( ( sin_addr >> 8 ) & 0xff );
-        message.push_back( ( sin_addr >> 16 ) & 0xff );
-        message.push_back( ( sin_addr >> 24 ) & 0xff );
+        message.push_back( ( mSinAddr >> 0 ) & 0xff );
+        message.push_back( ( mSinAddr >> 8 ) & 0xff );
+        message.push_back( ( mSinAddr >> 16 ) & 0xff );
+        message.push_back( ( mSinAddr >> 24 ) & 0xff );
     }
 
     void RecordA::outputCanonicalWireFormat( WireFormat &message ) const
@@ -669,18 +669,20 @@ namespace dns
 
     RDATAPtr RecordA::parse( const uint8_t *begin, const uint8_t *end )
     {
+        if ( end - begin != 4 )
+            throw FormatError( "invalid A Record length" );
         return RDATAPtr( new RecordA( *( reinterpret_cast<const uint32_t *>( begin ) ) ) );
     }
 
     RecordAAAA::RecordAAAA( const uint8_t *addr )
     {
-        std::memcpy( sin_addr, addr, sizeof( sin_addr ) );
+        std::memcpy( mSinAddr, addr, sizeof( mSinAddr ) );
     }
 
     RecordAAAA::RecordAAAA( const std::string &addr )
     {
         in_addr a = convertAddressStringToBinary( addr );
-        std::memcpy( &sin_addr, &a, sizeof( sin_addr ) );
+        std::memcpy( &mSinAddr, &a, sizeof( mSinAddr ) );
     }
 
     std::string RecordAAAA::toZone() const
@@ -691,17 +693,17 @@ namespace dns
     std::string RecordAAAA::toString() const
     {
         std::stringstream buff;
-        buff << std::hex << (uint32_t)sin_addr[ 0 ];
-        for ( unsigned int i = 1; i < sizeof( sin_addr ); i++ ) {
-            buff << ":" << (uint32_t)sin_addr[ i ];
+        buff << std::hex << (uint32_t)mSinAddr[ 0 ];
+        for ( unsigned int i = 1; i < sizeof( mSinAddr ); i++ ) {
+            buff << ":" << (uint32_t)mSinAddr[ i ];
         }
         return buff.str();
     }
 
     void RecordAAAA::outputWireFormat( WireFormat &message ) const
     {
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( &sin_addr ),
-                            reinterpret_cast<const uint8_t *>( &sin_addr ) + sizeof( sin_addr ) );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( &mSinAddr ),
+                            reinterpret_cast<const uint8_t *>( &mSinAddr ) + sizeof( mSinAddr ) );
     }
 
     void RecordAAAA::outputCanonicalWireFormat( WireFormat &message ) const
@@ -722,7 +724,7 @@ namespace dns
     }
 
     RecordWKS::RecordWKS( uint32_t addr, uint8_t proto, const std::vector<Type> &b  )
-        : sin_addr( addr ), protocol( proto ), bitmap( b )
+        : mSinAddr( addr ), mProtocol( proto ), mBitmap( b )
     {
     }
 
@@ -737,14 +739,14 @@ namespace dns
         std::snprintf( buf,
                        sizeof( buf ),
                        "%d.%d.%d.%d",
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 1 ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 2 ),
-                       *( reinterpret_cast<const uint8_t *>( &sin_addr ) + 3 ) );
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 1 ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 2 ),
+                       *( reinterpret_cast<const uint8_t *>( &mSinAddr ) + 3 ) );
         std::ostringstream os;
-        os << buf << " " << (int)protocol << " ";
-        for ( unsigned int i = 0 ; i < bitmap.size() ; i++ )
-            if ( bitmap[i] )
+        os << buf << " " << (int)mProtocol << " ";
+        for ( unsigned int i = 0 ; i < mBitmap.size() ; i++ )
+            if ( mBitmap[i] )
                 os << "1";
             else
                 os << "0";
@@ -753,18 +755,18 @@ namespace dns
 
     void RecordWKS::outputWireFormat( WireFormat &message ) const
     {
-        message.push_back( ( sin_addr >> 0 ) & 0xff );
-        message.push_back( ( sin_addr >> 8 ) & 0xff );
-        message.push_back( ( sin_addr >> 16 ) & 0xff );
-        message.push_back( ( sin_addr >> 24 ) & 0xff );
-        message.push_back( protocol );
+        message.push_back( ( mSinAddr >> 0 ) & 0xff );
+        message.push_back( ( mSinAddr >> 8 ) & 0xff );
+        message.push_back( ( mSinAddr >> 16 ) & 0xff );
+        message.push_back( ( mSinAddr >> 24 ) & 0xff );
+        message.push_back( mProtocol );
 
         std::vector<uint8_t> buf( 256*256/8 );
         std::memset( &buf[0], 0, buf.size() );
         unsigned int max_byte_index = 0;
-        for ( unsigned int i = 0 ; i < bitmap.size() ; i++ ) {
-            unsigned int byte_index = bitmap[i]/8;
-            unsigned int bit_index  = bitmap[i]%8;
+        for ( unsigned int i = 0 ; i < mBitmap.size() ; i++ ) {
+            unsigned int byte_index = mBitmap[i]/8;
+            unsigned int bit_index  = mBitmap[i]%8;
             buf[byte_index] |= ( 1 << bit_index );
 
             max_byte_index = std::max( max_byte_index, byte_index );
@@ -793,14 +795,14 @@ namespace dns
 
         uint32_t addr  = get_bytes<uint32_t>( &pos );
         uint8_t  proto = get_bytes<uint8_t>( &pos );
-        std::vector<Type> bitm;
+        std::vector<Type> bitmap;
 
         for ( unsigned int i = 0 ; pos < rdata_end ; i++, pos++ ) {
             for ( int j = 0 ; j < 8 ; j++ )
                 if ( *pos & (1<<j) )
-                    bitm.push_back( 256 * i + j );
+                    bitmap.push_back( 256 * i + j );
         }
-        return RDATAPtr( new RecordWKS( addr, proto, bitm ) );
+        return RDATAPtr( new RecordWKS( addr, proto, bitmap ) );
     }
 
     RecordNS::RecordNS( const Domainname &name ) : domainname( name )

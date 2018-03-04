@@ -113,11 +113,12 @@ namespace dns
     class RecordRaw : public RDATA
     {
     private:
-        uint16_t             rrtype;
-        std::vector<uint8_t> data;
+        uint16_t             mRRType;
+        std::vector<uint8_t> mData;
 
     public:
-        RecordRaw( uint8_t t, const std::vector<uint8_t> &d ) : rrtype( t ), data( d )
+        RecordRaw( uint8_t t, const std::vector<uint8_t> &d )
+	    : mRRType( t ), mData( d )
         {
         }
 
@@ -127,19 +128,19 @@ namespace dns
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
-            return rrtype;
+            return mRRType;
         }
         virtual uint16_t size() const
         {
-            return data.size();
+            return mData.size();
         }
-	virtual RecordRaw *clone() const { return new RecordRaw( rrtype, data ); }
+	virtual RecordRaw *clone() const { return new RecordRaw( mRRType, mData ); }
     };
 
     class RecordA : public RDATA
     {
     private:
-        uint32_t sin_addr;
+        uint32_t mSinAddr;
 
     public:
         RecordA( uint32_t in_sin_addr );
@@ -155,9 +156,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( sin_addr );
+            return sizeof( mSinAddr );
         }
-	virtual RecordA *clone() const { return new RecordA( sin_addr ); }
+	virtual RecordA *clone() const { return new RecordA( mSinAddr ); }
 
 	std::string getAddress() const;
         static RDATAPtr parse( const uint8_t *begin, const uint8_t *end );
@@ -166,7 +167,7 @@ namespace dns
     class RecordAAAA : public RDATA
     {
     private:
-        uint8_t sin_addr[ 16 ];
+        uint8_t mSinAddr[ 16 ];
 
     public:
         RecordAAAA( const uint8_t *sin_addr );
@@ -182,9 +183,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( sin_addr );
+            return sizeof( mSinAddr );
         }
-	virtual RecordAAAA *clone() const { return new RecordAAAA( sin_addr ); }
+	virtual RecordAAAA *clone() const { return new RecordAAAA( mSinAddr ); }
 
 	std::string getAddress() const;
 
@@ -195,12 +196,12 @@ namespace dns
     class RecordWKS : public RDATA
     {
     private:
-        uint32_t             sin_addr;
-        uint8_t              protocol;
-        std::vector<Type> bitmap;
+        uint32_t          mSinAddr;
+        uint8_t           mProtocol;
+        std::vector<Type> mBitmap;
 
     public:
-        RecordWKS( uint32_t in_sin_addr, uint8_t proto, const std::vector<Type> & );
+        RecordWKS( uint32_t sin_addr, uint8_t proto, const std::vector<Type> & );
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -212,13 +213,13 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( sin_addr );
+            return sizeof( mSinAddr );
         }
-	virtual RecordWKS *clone() const { return new RecordWKS( sin_addr, protocol, bitmap ); }
+	virtual RecordWKS *clone() const { return new RecordWKS( mSinAddr, mProtocol, mBitmap ); }
 
 	std::string getAddress() const;
-        uint8_t     getProtocol() const { return protocol; }
-        const std::vector<Type> &getBitmap() const { return bitmap; }
+        uint8_t     getProtocol() const { return mProtocol; }
+        const std::vector<Type> &getBitmap() const { return mBitmap; }
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end,
                                const uint8_t *rdata_begin,  const uint8_t *rdata_end );
     };
