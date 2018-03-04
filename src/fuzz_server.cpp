@@ -104,13 +104,13 @@ namespace dns
 		option_generator.generate( modified_response );
 
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.payload_size = getRandom( 1100 );
+                modified_response.opt_pseudo_rr.mPayloadSize = getRandom( 1100 );
             }
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.rcode = getRandom( 16);
+                modified_response.opt_pseudo_rr.mRCode = getRandom( 16);
             }
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.dobit = getRandom( 1 );
+                modified_response.opt_pseudo_rr.mDOBit = getRandom( 1 );
             }
 	    
             if ( ! getRandom( 5 ) ) {

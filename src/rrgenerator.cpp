@@ -852,7 +852,7 @@ namespace dns
 	    return;
 
         std::shared_ptr<OptPseudoRROption> option = mGenerators[ getRandom( mGenerators.size() )]->generate( packet );
-	std::dynamic_pointer_cast<RecordOptionsData>( packet.opt_pseudo_rr.record_options_data )->add( option );
+	std::dynamic_pointer_cast<RecordOptionsData>( packet.opt_pseudo_rr.mOptions )->add( option );
     }
 
 }

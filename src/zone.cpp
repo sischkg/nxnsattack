@@ -99,8 +99,8 @@ namespace dns
 
 	if ( query.edns0 ) {
 	    OptPseudoRecord opt;
-	    opt.payload_size = std::min<uint16_t>( 1280, query.opt_pseudo_rr.payload_size );
-	    opt.dobit = query.opt_pseudo_rr.dobit;
+	    opt.mPayloadSize = std::min<uint16_t>( 1280, query.opt_pseudo_rr.mPayloadSize );
+	    opt.mDOBit = query.opt_pseudo_rr.mDOBit;
 	    response.edns0 = true;
 	    response.opt_pseudo_rr = opt;
 	}

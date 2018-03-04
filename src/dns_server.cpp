@@ -89,10 +89,10 @@ namespace dns
 		    if ( mTruncation ) {
 			uint32_t requested_max_payload_size = 512;
 			if ( query.isEDNS0() &&
-			     query.opt_pseudo_rr.payload_size > 512 ) {
-			    requested_max_payload_size = query.opt_pseudo_rr.payload_size;
-			    if ( query.opt_pseudo_rr.payload_size > 4096 )
-				query.opt_pseudo_rr.payload_size = 4096;
+			     query.opt_pseudo_rr.mPayloadSize > 512 ) {
+			    requested_max_payload_size = query.opt_pseudo_rr.mPayloadSize;
+			    if ( query.opt_pseudo_rr.mPayloadSize > 4096 )
+				query.opt_pseudo_rr.mPayloadSize = 4096;
 			}
 
                         if ( isDebug() )

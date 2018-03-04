@@ -228,7 +228,7 @@ namespace dns
     class RecordNS : public RDATA
     {
     private:
-        Domainname domainname;
+        Domainname mDomainname;
 
     public:
         RecordNS( const Domainname &name );
@@ -243,10 +243,10 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size();
+            return mDomainname.size();
         }
-	virtual RecordNS *clone() const { return new RecordNS( domainname ); }
-	const Domainname &getNameServer() const { return domainname; }
+	virtual RecordNS *clone() const { return new RecordNS( mDomainname ); }
+	const Domainname &getNameServer() const { return mDomainname; }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -255,7 +255,7 @@ namespace dns
     {
     private:
         uint16_t   priority;
-        Domainname domainname;
+        Domainname mDomainname;
 
     public:
         RecordMX( uint16_t pri, const Domainname &name );
@@ -270,9 +270,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( priority ) + domainname.size();
+            return sizeof( priority ) + mDomainname.size();
         }
-	virtual RecordMX *clone() const { return new RecordMX( priority, domainname ); }
+	virtual RecordMX *clone() const { return new RecordMX( priority, mDomainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -327,7 +327,7 @@ namespace dns
     class RecordCNAME : public RDATA
     {
     private:
-        Domainname domainname;
+        Domainname mDomainname;
 
     public:
         RecordCNAME( const Domainname &name );
@@ -342,11 +342,11 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size();
+            return mDomainname.size();
         }
-	virtual RecordCNAME *clone() const { return new RecordCNAME( domainname ); }
+	virtual RecordCNAME *clone() const { return new RecordCNAME( mDomainname ); }
 
-        const Domainname &getCanonicalName() const { return domainname; }
+        const Domainname &getCanonicalName() const { return mDomainname; }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -386,7 +386,7 @@ namespace dns
     class RecordDNAME : public RDATA
     {
     private:
-        Domainname domainname;
+        Domainname mDomainname;
 
     public:
         RecordDNAME( const Domainname &name );
@@ -401,11 +401,11 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return domainname.size();
+            return mDomainname.size();
         }
-        const Domainname &getCanonicalName() const { return domainname; }
+        const Domainname &getCanonicalName() const { return mDomainname; }
 
-	virtual RecordDNAME *clone() const { return new RecordDNAME( domainname ); }
+	virtual RecordDNAME *clone() const { return new RecordDNAME( mDomainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -1184,43 +1184,43 @@ namespace dns
     };
 
     struct OptPseudoRecord {
-        Domainname domainname;
-        uint16_t   payload_size;
-        uint8_t    rcode;
-        uint8_t    version;
-	bool       dobit;
-        RDATAPtr   record_options_data;
+        Domainname mDomainname;
+        uint16_t   mPayloadSize;
+        uint8_t    mRCode;
+        uint8_t    mVersion;
+	bool       mDOBit;
+        RDATAPtr   mOptions;
 
         OptPseudoRecord()
-            : domainname( "." ),
-              payload_size( 1280 ),
-              rcode( 0 ),
-              dobit(false),
-              record_options_data( RDATAPtr( new RecordOptionsData ) )
+            : mDomainname( "." ),
+              mPayloadSize( 1280 ),
+              mRCode( 0 ),
+              mDOBit(false),
+              mOptions( RDATAPtr( new RecordOptionsData ) )
         {}
 
 	OptPseudoRecord( const OptPseudoRecord &opt ) :
-	    domainname( opt.domainname ),
-	    payload_size( opt.payload_size ),
-	    rcode( opt.rcode ),
-	    version( opt.version ),
-	    dobit( opt.dobit )
+	    mDomainname( opt.mDomainname ),
+	    mPayloadSize( opt.mPayloadSize ),
+	    mRCode( opt.mRCode ),
+	    mVersion( opt.mVersion ),
+	    mDOBit( opt.mDOBit )
         {
-	    if ( opt.record_options_data )
-		record_options_data = RDATAPtr( opt.record_options_data->clone() );
+	    if ( opt.mOptions )
+		mOptions = RDATAPtr( opt.mOptions->clone() );
         }
 
 	OptPseudoRecord &operator=( const OptPseudoRecord &rhs )
 	{
-	    domainname          = rhs.domainname;
-	    payload_size        = rhs.payload_size;
-	    rcode               = rhs.rcode;
-	    version             = rhs.version;
-	    dobit               = rhs.dobit;
-	    if ( rhs.record_options_data )
-		record_options_data = RDATAPtr( rhs.record_options_data->clone() );
+	    mDomainname  = rhs.mDomainname;
+	    mPayloadSize = rhs.mPayloadSize;
+	    mRCode       = rhs.mRCode;
+	    mVersion     = rhs.mVersion;
+	    mDOBit       = rhs.mDOBit;
+	    if ( rhs.mOptions )
+		mOptions = RDATAPtr( rhs.mOptions->clone() );
 	    else
-		record_options_data = RDATAPtr( new RecordOptionsData );
+		mOptions = RDATAPtr( new RecordOptionsData );
 	    return *this;
 	}
     };
@@ -1471,7 +1471,7 @@ namespace dns
 
 	bool isDNSSECOK() const
 	{
-	    return opt_pseudo_rr.dobit;
+	    return opt_pseudo_rr.mDOBit;
 	}
 
         const std::vector<QuestionSectionEntry> &getQuestionSection() const { return question_section; }

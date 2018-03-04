@@ -185,12 +185,12 @@ namespace dns
             ResourceRecordPair pair = parse_response_section( begin, end, packet );
             if ( pair.first.r_type == TYPE_OPT ) {
                 packet_info.edns0 = true;
-		packet_info.opt_pseudo_rr.domainname   = pair.first.r_domainname;
-		packet_info.opt_pseudo_rr.payload_size = pair.first.r_class;
-		packet_info.opt_pseudo_rr.rcode        = ( 0xff000000 & pair.first.r_ttl ) >> 24;
-		packet_info.opt_pseudo_rr.version      = ( 0x00ff0000 & pair.first.r_ttl ) >> 16;
-		packet_info.opt_pseudo_rr.dobit        = ( 0x00008000 & pair.first.r_ttl ) ? true : false;
-		packet_info.opt_pseudo_rr.record_options_data = pair.first.r_resource_data;
+		packet_info.opt_pseudo_rr.mDomainname  = pair.first.r_domainname;
+		packet_info.opt_pseudo_rr.mPayloadSize = pair.first.r_class;
+		packet_info.opt_pseudo_rr.mRCode       = ( 0xff000000 & pair.first.r_ttl ) >> 24;
+		packet_info.opt_pseudo_rr.mVersion     = ( 0x00ff0000 & pair.first.r_ttl ) >> 16;
+		packet_info.opt_pseudo_rr.mDOBit       = ( 0x00008000 & pair.first.r_ttl ) ? true : false;
+		packet_info.opt_pseudo_rr.mOptions     = pair.first.r_resource_data;
 		
             }
             if ( pair.first.r_type == TYPE_TSIG && pair.first.r_class == CLASS_IN ) {
@@ -805,7 +805,7 @@ namespace dns
         return RDATAPtr( new RecordWKS( addr, proto, bitmap ) );
     }
 
-    RecordNS::RecordNS( const Domainname &name ) : domainname( name )
+    RecordNS::RecordNS( const Domainname &name ) : mDomainname( name )
     {
     }
 
@@ -816,17 +816,17 @@ namespace dns
 
     std::string RecordNS::toString() const
     {
-        return domainname.toString();
+        return mDomainname.toString();
     }
 
     void RecordNS::outputWireFormat( WireFormat &message ) const
     {
-        domainname.outputWireFormat( message );
+        mDomainname.outputWireFormat( message );
     }
 
     void RecordNS::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        domainname.outputCanonicalWireFormat( message );
+        mDomainname.outputCanonicalWireFormat( message );
     }
 
     RDATAPtr RecordNS::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -837,7 +837,7 @@ namespace dns
     }
 
     RecordMX::RecordMX( uint16_t pri, const Domainname &name )
-        : priority( pri ), domainname( name )
+        : priority( pri ), mDomainname( name )
     {
     }
 
@@ -849,20 +849,20 @@ namespace dns
     std::string RecordMX::toString() const
     {
         std::ostringstream os;
-        os << priority << " " << domainname.toString();
+        os << priority << " " << mDomainname.toString();
         return os.str();
     }
 
     void RecordMX::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( priority );
-        domainname.outputWireFormat( message );
+        mDomainname.outputWireFormat( message );
     }
     
     void RecordMX::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( priority );
-        domainname.outputCanonicalWireFormat( message );
+        mDomainname.outputCanonicalWireFormat( message );
     }
 
     RDATAPtr RecordMX::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -1010,7 +1010,7 @@ namespace dns
         return RDATAPtr( new RecordSPF( txt_data ) );
     }
 
-    RecordCNAME::RecordCNAME( const Domainname &name ) : domainname( name )
+    RecordCNAME::RecordCNAME( const Domainname &name ) : mDomainname( name )
     {
     }
 
@@ -1021,17 +1021,17 @@ namespace dns
 
     std::string RecordCNAME::toString() const
     {
-        return domainname.toString();
+        return mDomainname.toString();
     }
 
     void RecordCNAME::outputWireFormat( WireFormat &message ) const
     {
-        domainname.outputWireFormat( message );
+        mDomainname.outputWireFormat( message );
     }
 
     void RecordCNAME::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        domainname.outputCanonicalWireFormat( message );
+        mDomainname.outputCanonicalWireFormat( message );
     }
 
 
@@ -1116,7 +1116,8 @@ namespace dns
                         new RecordNAPTR( in_order, in_preference, in_flags, in_services, in_regexp, in_replacement ) );
     }
 
-    RecordDNAME::RecordDNAME( const Domainname &name ) : domainname( name )
+    RecordDNAME::RecordDNAME( const Domainname &name )
+	: mDomainname( name )
     {
     }
 
@@ -1127,17 +1128,17 @@ namespace dns
 
     std::string RecordDNAME::toString() const
     {
-        return domainname.toString();
+        return mDomainname.toString();
     }
 
     void RecordDNAME::outputWireFormat( WireFormat &message ) const
     {
-        domainname.outputWireFormat( message );
+        mDomainname.outputWireFormat( message );
     }
 
     void RecordDNAME::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        domainname.outputCanonicalWireFormat( message );
+        mDomainname.outputCanonicalWireFormat( message );
     }
 
 
@@ -1954,11 +1955,11 @@ namespace dns
     ResourceRecord generateOptPseudoRecord( const OptPseudoRecord &opt )
     {
         ResourceRecord entry;
-        entry.r_domainname    = opt.domainname;
+        entry.r_domainname    = opt.mDomainname;
         entry.r_type          = TYPE_OPT;
-        entry.r_class         = opt.payload_size;
-        entry.r_ttl           = ( ( (uint32_t)opt.rcode ) << 24 ) + ( opt.dobit ? ( (uint32_t)1 << 15 ) : 0 );
-        entry.r_resource_data = RDATAPtr( opt.record_options_data->clone() );
+        entry.r_class         = opt.mPayloadSize;
+        entry.r_ttl           = ( ( (uint32_t)opt.mRCode ) << 24 ) + ( opt.mDOBit ? ( (uint32_t)1 << 15 ) : 0 );
+        entry.r_resource_data = RDATAPtr( opt.mOptions->clone() );
 
         return entry;
     }
@@ -1966,12 +1967,12 @@ namespace dns
     OptPseudoRecord parse_opt_pseudo_record( const ResourceRecord &record )
     {
         OptPseudoRecord opt;
-        opt.domainname          = record.r_domainname;
-        opt.payload_size        = record.r_class;
-        opt.rcode               = record.r_ttl >> 24;
-        opt.version             = 0xff & ( record.r_ttl >> 16 );
-        opt.dobit               = ( ( 1 << 7 ) & ( record.r_ttl >> 8 ) ) ? true : false; 
-        opt.record_options_data = record.r_resource_data;
+        opt.mDomainname  = record.r_domainname;
+        opt.mPayloadSize = record.r_class;
+        opt.mRCode       = record.r_ttl >> 24;
+        opt.mVersion     = 0xff & ( record.r_ttl >> 16 );
+        opt.mDOBit       = ( ( 1 << 7 ) & ( record.r_ttl >> 8 ) ) ? true : false; 
+        opt.mOptions     = record.r_resource_data;
 
         return opt;
     }

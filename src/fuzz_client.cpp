@@ -70,11 +70,11 @@ int main( int argc, char **argv )
             dns::PacketInfo packet_info;
 
             if ( dns::getRandom( 5 ) ) {
-                packet_info.opt_pseudo_rr.domainname   = ".";
-                packet_info.opt_pseudo_rr.payload_size = dns::getRandom( 0xffff );
-                packet_info.opt_pseudo_rr.rcode        = dns::getRandom( 0xff );
-                packet_info.opt_pseudo_rr.version      = 0;
-                packet_info.opt_pseudo_rr.dobit        = 1;
+                packet_info.opt_pseudo_rr.mDomainname  = ".";
+                packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 0xffff );
+                packet_info.opt_pseudo_rr.mRCode       = dns::getRandom( 0xff );
+                packet_info.opt_pseudo_rr.mVersion     = 0;
+                packet_info.opt_pseudo_rr.mDOBit       = 1;
                 packet_info.edns0 = true;
 
                 unsigned int count = dns::getRandom( 8 );
@@ -83,13 +83,13 @@ int main( int argc, char **argv )
                 }
 
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.payload_size = dns::getRandom( 11000 );
+                    packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 11000 );
                 }
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.rcode = dns::getRandom( 16);
+                    packet_info.opt_pseudo_rr.mRCode = dns::getRandom( 16);
                 }
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.dobit = dns::getRandom( 1 );
+                    packet_info.opt_pseudo_rr.mDOBit = dns::getRandom( 1 );
                 }
             }
 
@@ -215,13 +215,13 @@ int main( int argc, char **argv )
                 option_generator.generate( packet_info );
 
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.payload_size = dns::getRandom( 1100 );
+                packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 1100 );
             }
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.rcode = dns::getRandom( 16 );
+                packet_info.opt_pseudo_rr.mRCode = dns::getRandom( 16 );
             }
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.dobit = dns::getRandom( 1 );
+                packet_info.opt_pseudo_rr.mDOBit = dns::getRandom( 1 );
             }
 
             packet_info.id                   = 1234;
