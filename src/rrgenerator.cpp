@@ -155,13 +155,13 @@ namespace dns
             names.push_back( rr.mDomainname );
         }
         for ( auto rr : hint.getAnswerSection() ) {
-            names.push_back( rr.r_domainname );
+            names.push_back( rr.mDomainname );
         }
         for ( auto rr : hint.getAuthoritySection() ) {
-            names.push_back( rr.r_domainname );
+            names.push_back( rr.mDomainname );
         }
         for ( auto rr : hint.getAdditionalInfomationSection() ) {
-            names.push_back( rr.r_domainname );
+            names.push_back( rr.mDomainname );
         }
 
         unsigned int index = getRandom( names.size() );
@@ -186,13 +186,13 @@ namespace dns
             hint_name = hint.getQuestionSection()[index].mDomainname;
         }
         else if ( index < qdcount + ancount ) {
-            hint_name = hint.getAnswerSection()[index - qdcount].r_domainname;
+            hint_name = hint.getAnswerSection()[index - qdcount].mDomainname;
         }
         else if ( index < qdcount + ancount + nscount ) {
-            hint_name = hint.getAuthoritySection()[index - qdcount - ancount].r_domainname;
+            hint_name = hint.getAuthoritySection()[index - qdcount - ancount].mDomainname;
         }
         else if ( index < qdcount + ancount + nscount + adcount ) {
-            hint_name = hint.getAdditionalInfomationSection()[index - qdcount - ancount - nscount].r_domainname;
+            hint_name = hint.getAdditionalInfomationSection()[index - qdcount - ancount - nscount].mDomainname;
         }
         else {
             throw std::logic_error( "invalid index of XNameGenerator::generate( hint )" );
@@ -232,18 +232,18 @@ namespace dns
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
         for ( auto rr : hint.getAnswerSection() ) {
-            if ( rr.r_type == TYPE_A ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_A ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
         for ( auto rr : hint.getAuthoritySection() ) {
-            if ( rr.r_type == TYPE_A ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_A ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
         for ( auto rr : hint.getAdditionalInfomationSection() ) {
-            if ( rr.r_type == TYPE_A ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_A ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
  
@@ -294,18 +294,18 @@ namespace dns
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
         for ( auto rr : hint.getAnswerSection() ) {
-            if ( rr.r_type == TYPE_AAAA ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_AAAA ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
         for ( auto rr : hint.getAuthoritySection() ) {
-            if ( rr.r_type == TYPE_AAAA ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_AAAA ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
         for ( auto rr : hint.getAdditionalInfomationSection() ) {
-            if ( rr.r_type == TYPE_AAAA ) {
-                record_a_list.push_back( rr.r_resource_data );
+            if ( rr.mType == TYPE_AAAA ) {
+                record_a_list.push_back( rr.mRData );
             }
         }
 

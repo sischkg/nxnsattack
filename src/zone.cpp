@@ -195,12 +195,12 @@ namespace dns
             throw std::logic_error( "SOA record must be exist in zone" );
 
         ResourceRecord r;
-        r.r_domainname  = soa->getOwner();
-        r.r_type        = soa->getType();
-        r.r_class       = soa->getClass();
-        r.r_ttl         = soa->getTTL();
+        r.mDomainname = soa->getOwner();
+        r.mType       = soa->getType();
+        r.mClass      = soa->getClass();
+        r.mTTL        = soa->getTTL();
         for ( auto data_itr = soa->begin() ; data_itr != soa->end() ; data_itr++ ) {
-            r.r_resource_data = *data_itr;
+            r.mRData = *data_itr;
         }
         response.authority_section.push_back( r );
 
@@ -217,11 +217,11 @@ namespace dns
     {
 	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
 	    ResourceRecord r;
-	    r.r_domainname  = rrset.getOwner();
-	    r.r_type        = rrset.getType();
-	    r.r_class       = rrset.getClass();
-	    r.r_ttl         = rrset.getTTL();
-	    r.r_resource_data = *data_itr;
+	    r.mDomainname = rrset.getOwner();
+	    r.mType       = rrset.getType();
+	    r.mClass      = rrset.getClass();
+            r.mTTL        = rrset.getTTL();
+	    r.mRData      = *data_itr;
 	    section.push_back( r );
 	}
     }
@@ -248,11 +248,11 @@ namespace dns
         for( auto rrsig : rrsigs ) {
             if ( std::dynamic_pointer_cast<RecordRRSIG>( rrsig )->getTypeCovered() == type_covered ) {
                 ResourceRecord r;
-                r.r_domainname  = rrsigs.getOwner();
-                r.r_type        = rrsigs.getType();
-                r.r_class       = rrsigs.getClass();
-                r.r_ttl         = rrsigs.getTTL();
-                r.r_resource_data = rrsig;
+                r.mDomainname = rrsigs.getOwner();
+                r.mType       = rrsigs.getType();
+                r.mClass      = rrsigs.getClass();
+                r.mTTL        = rrsigs.getTTL();
+                r.mRData      = rrsig;
                 section.push_back( r );
             }
         }

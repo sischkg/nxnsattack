@@ -46,21 +46,21 @@ namespace dns
     {
         bool is_replace = false;
         for ( auto &entry : section ) {
-            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry.r_domainname == condition.owner ) &&
-                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry.r_type       == condition.type  ) &&
-                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry.r_class      == condition.klass ) &&
-                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry.r_ttl        == condition.ttl   ) ) {
+            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry.mDomainname == condition.owner ) &&
+                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry.mType       == condition.type  ) &&
+                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry.mClass      == condition.klass ) &&
+                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry.mTTL        == condition.ttl   ) ) {
                 is_replace = true;
                 if ( replace.flags & MATCH_OWNER )
-                    entry.r_domainname = replace.owner;
+                    entry.mDomainname = replace.owner;
                 if ( replace.flags & MATCH_TYPE )
-                    entry.r_type = replace.type;
+                    entry.mType = replace.type;
                 if ( replace.flags & MATCH_CLASS )
-                    entry.r_class = replace.klass;
+                    entry.mClass = replace.klass;
                 if ( replace.flags & MATCH_TTL )
-                    entry.r_ttl = replace.ttl;
+                    entry.mTTL = replace.ttl;
                 if ( replace.flags & MATCH_DATA )
-                    entry.r_resource_data = RDATAPtr( replace.resource_data->clone() );
+                    entry.mRData = RDATAPtr( replace.resource_data->clone() );
             }
         }
         return is_replace;
@@ -71,10 +71,10 @@ namespace dns
     {
         bool is_erase = false;
         for ( auto entry = section.begin() ; entry != section.end() ; ) {
-            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry->r_domainname == condition.owner ) &&
-                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry->r_type       == condition.type  ) &&
-                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry->r_class      == condition.klass ) &&
-                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry->r_ttl        == condition.ttl   ) ) {
+            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry->mDomainname == condition.owner ) &&
+                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry->mType       == condition.type  ) &&
+                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry->mClass      == condition.klass ) &&
+                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry->mTTL        == condition.ttl   ) ) {
                 is_erase = true;
                 entry = section.erase( entry );
             }

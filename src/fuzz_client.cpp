@@ -20,11 +20,11 @@ std::vector<dns::ResourceRecord> newRRs( const dns::RRSet &rrset )
 
     for( auto rr : rrset.getRRSet() ) {
         dns::ResourceRecord r;
-        r.r_domainname    = rrset.getOwner();
-        r.r_type          = rrset.getType();
-        r.r_class         = rrset.getClass();
-        r.r_ttl           = rrset.getTTL();
-        r.r_resource_data = rr;
+        r.mDomainname = rrset.getOwner();
+        r.mType       = rrset.getType();
+        r.mClass      = rrset.getClass();
+        r.mTTL        = rrset.getTTL();
+        r.mRData      = rr;
         rrs.push_back( r );
     }
     return rrs;

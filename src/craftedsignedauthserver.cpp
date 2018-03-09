@@ -12,10 +12,10 @@ namespace dns
 	    std::shared_ptr<RRSet> rrsig_rrset = signRRSet( *signed_target );
 	    for ( auto rrsig = rrsig_rrset->begin() ; rrsig != rrsig_rrset->end() ; rrsig++ ) {
 		ResourceRecord rr;
-		rr.r_domainname    = rrsig_rrset->getOwner();
-		rr.r_class         = rrsig_rrset->getClass();
-		rr.r_type          = rrsig_rrset->getType();
-		rr.r_resource_data = *rrsig;
+		rr.mDomainname = rrsig_rrset->getOwner();
+		rr.mClass      = rrsig_rrset->getClass();
+		rr.mType       = rrsig_rrset->getType();
+		rr.mRData      = *rrsig;
 		rrsigs.push_back( rr );
 	    }
 	}
@@ -35,17 +35,17 @@ namespace dns
 	for ( auto rr : rrs ) {
 	    bool is_found = false;
 	    for ( auto rrset : rrsets ) {
-		if ( rr.r_domainname == rrset->getOwner() &&
-		     rr.r_class      == rrset->getClass() && 
-		     rr.r_type       == rrset->getType()  ) {
-		    rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+		if ( rr.mDomainname == rrset->getOwner() &&
+		     rr.mClass      == rrset->getClass() && 
+		     rr.mType       == rrset->getType()  ) {
+		    rrset->add( std::shared_ptr<RDATA>( rr.mRData->clone() ) );
 		    is_found = true;
 		    break;
 		}
 	    }
 	    if ( ! is_found ) {
-		std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.r_domainname, rr.r_class, rr.r_type, rr.r_ttl ) ) );
-		new_rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+		std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.mDomainname, rr.mClass, rr.mType, rr.mTTL ) ) );
+		new_rrset->add( std::shared_ptr<RDATA>( rr.mRData->clone() ) );
 		rrsets.push_back( new_rrset );
 	    }
 	}

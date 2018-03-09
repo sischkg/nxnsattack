@@ -1375,38 +1375,41 @@ namespace dns
     };
 
     struct ResourceRecord {
-        Domainname r_domainname;
-        uint16_t   r_type;
-        uint16_t   r_class;
-        uint32_t   r_ttl;
-        RDATAPtr   r_resource_data;
+        Domainname mDomainname;
+        uint16_t   mType;
+        uint16_t   mClass;
+        uint32_t   mTTL;
+        RDATAPtr   mRData;
 
-        ResourceRecord() : r_type( 0 ), r_class( 0 ), r_ttl( 0 )
+        ResourceRecord() 
+            : mType( 0 ),
+              mClass( 0 ),
+              mTTL( 0 )
         {
         }
 
     	uint16_t size() const;
 
 	ResourceRecord( const ResourceRecord &entry )
-	    : r_domainname( entry.r_domainname ),
-	      r_type( entry.r_type ),
-	      r_class( entry.r_class ),
-	      r_ttl( entry.r_ttl )
+	    : mDomainname( entry.mDomainname ),
+	      mType( entry.mType ),
+	      mClass( entry.mClass ),
+	      mTTL( entry.mTTL )
 	{
-	    if ( entry.r_resource_data )
-		r_resource_data = RDATAPtr( entry.r_resource_data->clone() );
+	    if ( entry.mRData )
+		mRData = RDATAPtr( entry.mRData->clone() );
 	}
 	
 	ResourceRecord &operator=( const ResourceRecord &rhs )
 	{
-	    r_domainname = rhs.r_domainname;
-	    r_type       = rhs.r_type;
-	    r_class      = rhs.r_class;
-	    r_ttl        = rhs.r_ttl;
-	    if ( rhs.r_resource_data )
-		r_resource_data = RDATAPtr( rhs.r_resource_data->clone() );
+	    mDomainname = rhs.mDomainname;
+	    mType       = rhs.mType;
+	    mClass      = rhs.mClass;
+	    mTTL        = rhs.mTTL;
+	    if ( rhs.mRData )
+		mRData = RDATAPtr( rhs.mRData->clone() );
 	    else
-		r_resource_data = RDATAPtr();
+		mRData = RDATAPtr();
 	    
 	    return *this;
 	}

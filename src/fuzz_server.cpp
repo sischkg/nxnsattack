@@ -22,20 +22,20 @@ namespace dns
 
             for( auto rr : rrset.getRRSet() ) {
                 ResourceRecord r;
-                r.r_domainname    = rrset.getOwner();
-                r.r_type          = rrset.getType();
-                r.r_class         = rrset.getClass();
-                r.r_ttl           = rrset.getTTL();
-                r.r_resource_data = rr;
+                r.mDomainname = rrset.getOwner();
+                r.mType       = rrset.getType();
+                r.mClass      = rrset.getClass();
+                r.mTTL        = rrset.getTTL();
+                r.mRData      = rr;
                 rrs.push_back( r );
             }
             for( auto rrsig : rrsigs->getRRSet() ) {
                 ResourceRecord r;
-                r.r_domainname    = rrsigs->getOwner();
-                r.r_type          = rrsigs->getType();
-                r.r_class         = rrsigs->getClass();
-                r.r_ttl           = rrsigs->getTTL();
-                r.r_resource_data = rrsig;
+                r.mDomainname = rrsigs->getOwner();
+                r.mType       = rrsigs->getType();
+                r.mClass      = rrsigs->getClass();
+                r.mTTL        = rrsigs->getTTL();
+                r.mRData      = rrsig;
                 rrs.push_back( r );
             }
 
@@ -115,17 +115,17 @@ namespace dns
 	    
             if ( ! getRandom( 5 ) ) {
                 ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.opt_pseudo_rr );
-                RRSet rrset( opt_pseudo_rr.r_domainname,
-                             opt_pseudo_rr.r_class,
-                             opt_pseudo_rr.r_type,
-                             opt_pseudo_rr.r_ttl );
+                RRSet rrset( opt_pseudo_rr.mDomainname,
+                             opt_pseudo_rr.mClass,
+                             opt_pseudo_rr.mType,
+                             opt_pseudo_rr.mTTL );
 
                 std::shared_ptr<RRSet> rrsig = signRRSet( rrset );
                 ResourceRecord rrsig_rr;
-                rrsig_rr.r_domainname = rrsig->getOwner();
-                rrsig_rr.r_class      = rrsig->getClass();
-                rrsig_rr.r_type       = rrsig->getType();
-                rrsig_rr.r_resource_data = (*rrsig)[0];
+                rrsig_rr.mDomainname = rrsig->getOwner();
+                rrsig_rr.mClass      = rrsig->getClass();
+                rrsig_rr.mType       = rrsig->getType();
+                rrsig_rr.mRData      = (*rrsig)[0];
                 modified_response.pushAdditionalInfomationSection( rrsig_rr );
             }
 
@@ -148,7 +148,7 @@ namespace dns
 
             Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
             for ( ResourceRecord &rr : section ) {
-                rr.r_class = class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ];
+                rr.mClass = class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ];
             }
         }
 
@@ -160,10 +160,10 @@ namespace dns
                 std::shared_ptr<RRSet> rrsig_rrset = signRRSet( *signed_target );
                 for ( auto rrsig = rrsig_rrset->begin() ; rrsig != rrsig_rrset->end() ; rrsig++ ) {
                     ResourceRecord rr;
-                    rr.r_domainname    = rrsig_rrset->getOwner();
-                    rr.r_class         = rrsig_rrset->getClass();
-                    rr.r_type          = rrsig_rrset->getType();
-                    rr.r_resource_data = *rrsig;
+                    rr.mDomainname = rrsig_rrset->getOwner();
+                    rr.mClass      = rrsig_rrset->getClass();
+                    rr.mType       = rrsig_rrset->getType();
+                    rr.mRData      = *rrsig;
                     rrsigs.push_back( rr );
                 }
             }
@@ -177,17 +177,17 @@ namespace dns
             for ( auto rr : rrs ) {
                 bool is_found = false;
                 for ( auto rrset : rrsets ) {
-                    if ( rr.r_domainname == rrset->getOwner() &&
-                         rr.r_class      == rrset->getClass() && 
-                         rr.r_type       == rrset->getType()  ) {
-                        rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                    if ( rr.mDomainname == rrset->getOwner() &&
+                         rr.mClass      == rrset->getClass() && 
+                         rr.mType       == rrset->getType()  ) {
+                        rrset->add( std::shared_ptr<RDATA>( rr.mRData->clone() ) );
                         is_found = true;
                         break;
                     }
                 }
                 if ( ! is_found ) {
-                    std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.r_domainname, rr.r_class, rr.r_type, rr.r_ttl ) ) );
-                    new_rrset->add( std::shared_ptr<RDATA>( rr.r_resource_data->clone() ) );
+                    std::shared_ptr<RRSet> new_rrset( std::shared_ptr<RRSet>( new RRSet( rr.mDomainname, rr.mClass, rr.mType, rr.mTTL ) ) );
+                    new_rrset->add( std::shared_ptr<RDATA>( rr.mRData->clone() ) );
                     rrsets.push_back( new_rrset );
                 }
             }

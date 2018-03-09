@@ -323,11 +323,11 @@ namespace dns
     {
 	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
 	    ResourceRecord r;
-	    r.r_domainname  = rrset.getOwner();
-	    r.r_type        = rrset.getType();
-	    r.r_class       = rrset.getClass();
-	    r.r_ttl         = rrset.getTTL();
-	    r.r_resource_data = *data_itr;
+	    r.mDomainname = rrset.getOwner();
+	    r.mType       = rrset.getType();
+	    r.mClass      = rrset.getClass();
+	    r.mTTL        = rrset.getTTL();
+	    r.mRData      = *data_itr;
 	    section.push_back( r );
 	}
     }
@@ -348,11 +348,11 @@ namespace dns
 	
 	for( auto rrsig : rrsigs->getRRSet() ) {
 	    ResourceRecord r;
-	    r.r_domainname    = rrsigs->getOwner();
-	    r.r_type          = rrsigs->getType();
-	    r.r_class         = rrsigs->getClass();
-	    r.r_ttl           = rrsigs->getTTL();
-	    r.r_resource_data = rrsig;
+	    r.mDomainname = rrsigs->getOwner();
+	    r.mType       = rrsigs->getType();
+	    r.mClass      = rrsigs->getClass();
+	    r.mTTL        = rrsigs->getTTL();
+	    r.mRData      = rrsig;
 	    section.push_back( r );
         }
     }

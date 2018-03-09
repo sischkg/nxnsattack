@@ -63,9 +63,9 @@ namespace dns
 
     uint16_t ResourceRecord::size() const
     {
-        return r_domainname.size() + sizeof(r_type) + sizeof(r_class) + sizeof(r_ttl) +
+        return mDomainname.size() + sizeof(mType) + sizeof(mClass) + sizeof(mTTL) +
 	    sizeof(uint16_t) +       // size of resource data size
-	    r_resource_data->size();
+	    mRData->size();
     }
 
 
@@ -183,19 +183,19 @@ namespace dns
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
             ResourceRecordPair pair = parse_response_section( begin, end, packet );
-            if ( pair.first.r_type == TYPE_OPT ) {
+            if ( pair.first.mType == TYPE_OPT ) {
                 packet_info.edns0 = true;
-		packet_info.opt_pseudo_rr.mDomainname  = pair.first.r_domainname;
-		packet_info.opt_pseudo_rr.mPayloadSize = pair.first.r_class;
-		packet_info.opt_pseudo_rr.mRCode       = ( 0xff000000 & pair.first.r_ttl ) >> 24;
-		packet_info.opt_pseudo_rr.mVersion     = ( 0x00ff0000 & pair.first.r_ttl ) >> 16;
-		packet_info.opt_pseudo_rr.mDOBit       = ( 0x00008000 & pair.first.r_ttl ) ? true : false;
-		packet_info.opt_pseudo_rr.mOptions     = pair.first.r_resource_data;
+		packet_info.opt_pseudo_rr.mDomainname  = pair.first.mDomainname;
+		packet_info.opt_pseudo_rr.mPayloadSize = pair.first.mClass;
+		packet_info.opt_pseudo_rr.mRCode       = ( 0xff000000 & pair.first.mTTL ) >> 24;
+		packet_info.opt_pseudo_rr.mVersion     = ( 0x00ff0000 & pair.first.mTTL ) >> 16;
+		packet_info.opt_pseudo_rr.mDOBit       = ( 0x00008000 & pair.first.mTTL ) ? true : false;
+		packet_info.opt_pseudo_rr.mOptions     = pair.first.mRData;
 		
             }
-            if ( pair.first.r_type == TYPE_TSIG && pair.first.r_class == CLASS_IN ) {
+            if ( pair.first.mType == TYPE_TSIG && pair.first.mClass == CLASS_IN ) {
                 packet_info.tsig    = true;
-                packet_info.tsig_rr = dynamic_cast<const RecordTSIGData &>( *( pair.first.r_resource_data ) );
+                packet_info.tsig_rr = dynamic_cast<const RecordTSIGData &>( *( pair.first.mRData ) );
             }
             packet_info.additional_infomation_section.push_back( pair.first );
             packet = pair.second;
@@ -299,13 +299,13 @@ namespace dns
 
     void generate_response_section( const ResourceRecord &response, WireFormat &message )
     {
-        response.r_domainname.outputWireFormat( message );
-        message.pushUInt16HtoN( response.r_type );
-        message.pushUInt16HtoN( response.r_class );
-        message.pushUInt32HtoN( response.r_ttl );
-        if ( response.r_resource_data ) {
-            message.pushUInt16HtoN( response.r_resource_data->size() );
-            response.r_resource_data->outputWireFormat( message );
+        response.mDomainname.outputWireFormat( message );
+        message.pushUInt16HtoN( response.mType );
+        message.pushUInt16HtoN( response.mClass );
+        message.pushUInt32HtoN( response.mTTL );
+        if ( response.mRData ) {
+            message.pushUInt16HtoN( response.mRData->size() );
+            response.mRData->outputWireFormat( message );
         } else {
             message.pushUInt16HtoN( 0 );
         }
@@ -315,14 +315,14 @@ namespace dns
     {
         ResourceRecord sec;
 
-        const uint8_t *pos   = Domainname::parsePacket( sec.r_domainname, packet_begin, packet_end, section_begin );
-        sec.r_type           = ntohs( get_bytes<uint16_t>( &pos ) );
-        sec.r_class          = ntohs( get_bytes<uint16_t>( &pos ) );
-        sec.r_ttl            = ntohl( get_bytes<uint32_t>( &pos ) );
+        const uint8_t *pos   = Domainname::parsePacket( sec.mDomainname, packet_begin, packet_end, section_begin );
+        sec.mType  = ntohs( get_bytes<uint16_t>( &pos ) );
+        sec.mClass = ntohs( get_bytes<uint16_t>( &pos ) );
+        sec.mTTL   = ntohl( get_bytes<uint32_t>( &pos ) );
         uint16_t data_length = ntohs( get_bytes<uint16_t>( &pos ) );
 
         RDATAPtr parsed_data;
-        switch ( sec.r_type ) {
+        switch ( sec.mType ) {
         case TYPE_A:
             parsed_data = RecordA::parse( pos, pos + data_length );
             break;
@@ -372,33 +372,33 @@ namespace dns
             parsed_data = RecordNSEC3PARAM::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         case TYPE_TSIG:
-            parsed_data = RecordTSIGData::parse( packet_begin, packet_end, pos, pos + data_length, sec.r_domainname );
+            parsed_data = RecordTSIGData::parse( packet_begin, packet_end, pos, pos + data_length, sec.mDomainname );
             break;
         case TYPE_OPT:
             parsed_data = RecordOptionsData::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
         default:
             std::ostringstream msg;
-            msg << "not support type \"" << sec.r_type << "\".";
+            msg << "not support type \"" << sec.mType << "\".";
             throw std::runtime_error( msg.str() );
         }
         pos += data_length;
 
-        sec.r_resource_data = parsed_data;
+        sec.mRData = parsed_data;
         return ResourceRecordPair( sec, pos );
     }
 
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet )
     {
-        os << "ID: " << packet.id << std::endl
-           << "Query/Response: " << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
-           << "OpCode:" << packet.opcode << std::endl
+        os << "ID: "                  << packet.id << std::endl
+           << "Query/Response: "      << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
+           << "OpCode:"               << packet.opcode << std::endl
            << "Authoritative Answer:" << packet.authoritative_answer << std::endl
-           << "Truncation: " << packet.truncation << std::endl
-           << "Recursion Desired: " << packet.recursion_desired << std::endl
+           << "Truncation: "          << packet.truncation << std::endl
+           << "Recursion Desired: "   << packet.recursion_desired << std::endl
            << "Recursion Available: " << packet.recursion_available << std::endl
-           << "Checking Disabled: " << packet.checking_disabled << std::endl
-           << "Response Code: " << responseCodeToString( packet.response_code ) << std::endl;
+           << "Checking Disabled: "   << packet.checking_disabled << std::endl
+           << "Response Code: "       << responseCodeToString( packet.response_code ) << std::endl;
 
         return os;
     }
@@ -569,27 +569,27 @@ namespace dns
 
     std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
     {
-        os << "ID: " << res.id << std::endl
-           << "Query/Response: " << ( res.query_response ? "Response" : "Query" ) << std::endl
-           << "OpCode:" << res.opcode << std::endl
+        os << "ID: "                   << res.id << std::endl
+           << "Query/Response: "       << ( res.query_response ? "Response" : "Query" ) << std::endl
+           << "OpCode:"                << res.opcode  << std::endl
            << "Authoritative Answer: " << res.authoritative_answer << std::endl
-           << "Truncation: " << res.truncation << std::endl
-           << "Recursion Desired: " << res.recursion_desired << std::endl
-           << "Recursion Available: " << res.recursion_available << std::endl
-           << "Checking Disabled: " << res.checking_disabled << std::endl
-           << "Response Code: " << responseCodeToString( res.response_code ) << std::endl;
+           << "Truncation: "           << res.truncation << std::endl
+           << "Recursion Desired: "    << res.recursion_desired << std::endl
+           << "Recursion Available: "  << res.recursion_available << std::endl
+           << "Checking Disabled: "    << res.checking_disabled << std::endl
+           << "Response Code: "        << responseCodeToString( res.response_code ) << std::endl;
 
         for ( auto q : res.question_section )
             os << "Query: " << q.mDomainname << " " << typeCodeToString( q.mType ) << "  ?" << std::endl;
         for ( auto a : res.answer_section )
-            std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << typeCodeToString( a.r_type )
-                      << " " << a.r_resource_data->toString() << std::endl;
+            std::cout << "Answer: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
+                      << " " << a.mRData->toString() << std::endl;
         for ( auto a : res.authority_section )
-            std::cout << "Authority: " << a.r_domainname << a.r_ttl << " " << typeCodeToString( a.r_type ) << " "
-                      << a.r_resource_data->toString() << std::endl;
+            std::cout << "Authority: " << a.mDomainname << a.mTTL << " " << typeCodeToString( a.mType ) << " "
+                      << a.mRData->toString() << std::endl;
         for ( auto a : res.additional_infomation_section )
-            std::cout << "Additional: " << a.r_domainname << " " << a.r_ttl << " " << typeCodeToString( a.r_type )
-                      << " " << a.r_resource_data->toString() << std::endl;
+            std::cout << "Additional: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
+                      << " " << a.mRData->toString() << std::endl;
 
         return os;
     }
@@ -1954,11 +1954,11 @@ namespace dns
     ResourceRecord generateOptPseudoRecord( const OptPseudoRecord &opt )
     {
         ResourceRecord entry;
-        entry.r_domainname    = opt.mDomainname;
-        entry.r_type          = TYPE_OPT;
-        entry.r_class         = opt.mPayloadSize;
-        entry.r_ttl           = ( ( (uint32_t)opt.mRCode ) << 24 ) + ( opt.mDOBit ? ( (uint32_t)1 << 15 ) : 0 );
-        entry.r_resource_data = RDATAPtr( opt.mOptions->clone() );
+        entry.mDomainname = opt.mDomainname;
+        entry.mType       = TYPE_OPT;
+        entry.mClass      = opt.mPayloadSize;
+        entry.mTTL        = ( ( (uint32_t)opt.mRCode ) << 24 ) + ( opt.mDOBit ? ( (uint32_t)1 << 15 ) : 0 );
+        entry.mRData      = RDATAPtr( opt.mOptions->clone() );
 
         return entry;
     }
@@ -1966,12 +1966,12 @@ namespace dns
     OptPseudoRecord parse_opt_pseudo_record( const ResourceRecord &record )
     {
         OptPseudoRecord opt;
-        opt.mDomainname  = record.r_domainname;
-        opt.mPayloadSize = record.r_class;
-        opt.mRCode       = record.r_ttl >> 24;
-        opt.mVersion     = 0xff & ( record.r_ttl >> 16 );
-        opt.mDOBit       = ( ( 1 << 7 ) & ( record.r_ttl >> 8 ) ) ? true : false; 
-        opt.mOptions     = record.r_resource_data;
+        opt.mDomainname  = record.mDomainname;
+        opt.mPayloadSize = record.mClass;
+        opt.mRCode       = record.mTTL >> 24;
+        opt.mVersion     = 0xff & ( record.mTTL >> 16 );
+        opt.mDOBit       = ( ( 1 << 7 ) & ( record.mTTL >> 8 ) ) ? true : false; 
+        opt.mOptions     = record.mRData;
 
         return opt;
     }
@@ -2421,18 +2421,18 @@ namespace dns
         PacketData mac = getTSIGMAC( tsig_info, message.get(), query_mac );
 
         ResourceRecord entry;
-        entry.r_domainname    = tsig_info.mName;
-        entry.r_type          = TYPE_TSIG;
-        entry.r_class         = CLASS_ANY;
-        entry.r_ttl           = 0;
-        entry.r_resource_data = RDATAPtr( new RecordTSIGData( tsig_info.mName,
-                                                              tsig_info.mAlgorithm,
-                                                              tsig_info.mSignedTime,
-                                                              tsig_info.mFudge,
-                                                              mac,
-                                                              tsig_info.mOriginalID,
-                                                              tsig_info.mError,
-                                                              tsig_info.mOther ) );
+        entry.mDomainname = tsig_info.mName;
+        entry.mType       = TYPE_TSIG;
+        entry.mClass      = CLASS_ANY;
+        entry.mTTL        = 0;
+        entry.mRData      = RDATAPtr( new RecordTSIGData( tsig_info.mName,
+                                                          tsig_info.mAlgorithm,
+                                                          tsig_info.mSignedTime,
+                                                          tsig_info.mFudge,
+                                                          mac,
+                                                          tsig_info.mOriginalID,
+                                                          tsig_info.mError,
+                                                          tsig_info.mOther ) );
 
         PacketData         packet  = message.get();
         PacketHeaderField *header  = reinterpret_cast<PacketHeaderField *>( &packet[ 0 ] );
@@ -2476,7 +2476,7 @@ namespace dns
         bool is_found_tsig = false;
         for ( uint16_t i = 0; i < packet_info.additional_infomation_section.size(); i++ ) {
             ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos );
-            if ( parsed_rr_pair.first.r_type == TYPE_TSIG ) {
+            if ( parsed_rr_pair.first.mType == TYPE_TSIG ) {
                 is_found_tsig = true;
                 break;
             } else {
