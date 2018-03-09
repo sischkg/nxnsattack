@@ -991,12 +991,12 @@ namespace dns
     class RAWOption : public OptPseudoRROption
     {
     private:
-        uint16_t             option_code;
-        std::vector<uint8_t> option_data;
+        uint16_t             mCode;
+        std::vector<uint8_t> mData;
 
     public:
         RAWOption( uint16_t in_code, const std::vector<uint8_t> &in_data )
-            : option_code( in_code ), option_data( in_data )
+            : mCode( in_code ), mData( in_data )
         {
         }
 
@@ -1004,15 +1004,15 @@ namespace dns
         virtual void        outputWireFormat( WireFormat & ) const;
         virtual uint16_t    code() const
         {
-            return option_code;
+            return mCode;
         }
         virtual uint16_t size() const
         {
-            return option_data.size() + 2;
+            return mData.size() + 2;
         }
 	virtual RAWOption *clone() const
 	{
-	    return new RAWOption( option_code, option_data );
+	    return new RAWOption( mCode, mData );
 	}
     };
 

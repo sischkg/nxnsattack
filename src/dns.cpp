@@ -1981,15 +1981,15 @@ namespace dns
     std::string RAWOption::toString() const
     {
         std::string hex;
-        encodeToHex( option_data, hex );
+        encodeToHex( mData, hex );
         return hex;
     }
 
     void RAWOption::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( option_code );
-        message.pushUInt16HtoN( option_data.size() );
-        message.pushBuffer( option_data );
+        message.pushUInt16HtoN( mCode );
+        message.pushUInt16HtoN( mData.size() );
+        message.pushBuffer( mData );
     }
 
     void NSIDOption::outputWireFormat( WireFormat &message ) const
