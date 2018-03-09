@@ -538,15 +538,15 @@ namespace dns
     class RecordRRSIG : public RDATA
     {
     private:
-        Type     type_covered;
-        uint8_t  algorithm;
-        uint8_t  label_count;
-        uint32_t original_ttl;
-        uint32_t expiration;
-        uint32_t inception;
-        uint16_t key_tag;
-        Domainname signer;
-        std::vector<uint8_t> signature;
+        Type       mTypeCovered;
+        uint8_t    mAlgorithm;
+        uint8_t    mLabelCount;
+        uint32_t   mOriginalTTL;
+        uint32_t   mExpiration;
+        uint32_t   mInception;
+        uint16_t   mKeyTag;
+        Domainname mSigner;
+        std::vector<uint8_t> mSignature;
 
     public:
         static const uint16_t SIGNED_KEY = 1 << 7;
@@ -564,27 +564,27 @@ namespace dns
                      uint16_t                   tag,
                      const Domainname           &sign,
                      const std::vector<uint8_t> &sig )
-            : type_covered( t ),
-              algorithm( algo ),
-              label_count( label ),
-              original_ttl( ttl ),
-              expiration( expire ),
-              inception( incept ),
-              key_tag( tag ),
-              signer( sign ),
-              signature( sig )
+            : mTypeCovered( t ),
+              mAlgorithm( algo ),
+              mLabelCount( label ),
+              mOriginalTTL( ttl ),
+              mExpiration( expire ),
+              mInception( incept ),
+              mKeyTag( tag ),
+              mSigner( sign ),
+              mSignature( sig )
         {
         }
 
-        Type     getTypeCovered() const { return type_covered; }
-        uint8_t  getAlgorithm() const { return algorithm; }
-        uint8_t  getLabelCount() const { return label_count; }
-        uint32_t getOriginalTTL() const { return original_ttl; }
-        uint32_t getExpiration() const { return expiration; }
-        uint32_t getInception() const { return inception; }
-        uint8_t  getKeyTag() const { return key_tag; }
-        const Domainname           &getSigner() const { return signer; }
-        const std::vector<uint8_t> &getSignature() const { return signature; }
+        Type     getTypeCovered() const { return mTypeCovered; }
+        uint8_t  getAlgorithm() const { return mAlgorithm; }
+        uint8_t  getLabelCount() const { return mLabelCount; }
+        uint32_t getOriginalTTL() const { return mOriginalTTL; }
+        uint32_t getExpiration() const { return mExpiration; }
+        uint32_t getInception() const { return mInception; }
+        uint8_t  getKeyTag() const { return mKeyTag; }
+        const Domainname           &getSigner() const { return mSigner; }
+        const std::vector<uint8_t> &getSignature() const { return mSignature; }
  
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -599,8 +599,8 @@ namespace dns
                 4 +  // expiration
                 4 +  // inception
                 2 +  // key tag
-                signer.size() +
-                signature.size();
+                mSigner.size() +
+                mSignature.size();
         }
 
         virtual uint16_t type() const
@@ -609,15 +609,15 @@ namespace dns
         }
 	virtual RecordRRSIG *clone() const
 	{
-	    return new RecordRRSIG( type_covered,
-				    algorithm,
-				    label_count,
-				    original_ttl,
-				    expiration,
-				    inception,
-				    key_tag,
-				    signer,
-				    signature );
+	    return new RecordRRSIG( mTypeCovered,
+				    mAlgorithm,
+				    mLabelCount,
+				    mOriginalTTL,
+				    mExpiration,
+				    mInception,
+				    mKeyTag,
+				    mSigner,
+				    mSignature );
 	}
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );

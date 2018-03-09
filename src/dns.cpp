@@ -1344,10 +1344,10 @@ namespace dns
     std::string RecordRRSIG::toZone() const
     {
         std::string signature_str;
-        encodeToBase64( signature, signature_str );
+        encodeToBase64( mSignature, signature_str );
 
-        time_t expiration_time = expiration;
-        time_t inception_time  = inception;
+        time_t expiration_time = mExpiration;
+        time_t inception_time  = mInception;
         tm expiration_tm, inception_tm;
         gmtime_r( &expiration_time, &expiration_tm );
         gmtime_r( &inception_time,  &inception_tm );
@@ -1357,14 +1357,14 @@ namespace dns
         strftime( inception_str,  sizeof(inception_str),  "%Y%m%d%H%M%S", &inception_tm );
         
         std::ostringstream os;
-        os << typeCodeToString( type_covered ) << " "
-           << (uint32_t)algorithm              << " "
-           << (uint32_t)label_count            << " "
-           << original_ttl                     << " "
+        os << typeCodeToString( mTypeCovered ) << " "
+           << (uint32_t)mAlgorithm             << " "
+           << (uint32_t)mLabelCount            << " "
+           << mOriginalTTL                     << " "
            << expiration_str                   << " "
            << inception_str                    << " "
-           << key_tag                          << " "
-           << signer.toString()                << " "
+           << mKeyTag                          << " "
+           << mSigner.toString()               << " "
            << signature_str;
         return os.str();
     }
@@ -1372,32 +1372,32 @@ namespace dns
     std::string RecordRRSIG::toString() const
     {
         std::string signature_str;
-        encodeToBase64( signature, signature_str );
+        encodeToBase64( mSignature, signature_str );
 
         std::ostringstream os;
-        os << "Type Covered: " << typeCodeToString( type_covered ) << ", "
-           << "Algorithm: "    << (uint32_t)algorithm              << ", "
-           << "Label Count: "  << (uint32_t)label_count            << ", "
-           << "Original TTL: " << original_ttl                     << ", "
-           << "Expiration: "   << expiration                       << ", "
-           << "Inception: "    << inception                        << ", "
-           << "Key Tag: "      << key_tag                          << ", "
-           << "signer: "       << signer                           << ", "
+        os << "Type Covered: " << typeCodeToString( mTypeCovered ) << ", "
+           << "Algorithm: "    << (uint32_t)mAlgorithm             << ", "
+           << "Label Count: "  << (uint32_t)mLabelCount            << ", "
+           << "Original TTL: " << mOriginalTTL                     << ", "
+           << "Expiration: "   << mExpiration                       << ", "
+           << "Inception: "    << mInception                        << ", "
+           << "Key Tag: "      << mKeyTag                          << ", "
+           << "signer: "       << mSigner                           << ", "
            << "Signature: "    << signature_str;
         return os.str();
     }
 
     void RecordRRSIG::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( type_covered );
-        message.pushUInt8( algorithm );
-        message.pushUInt8( label_count );
-        message.pushUInt32HtoN( original_ttl );
-        message.pushUInt32HtoN( expiration );
-        message.pushUInt32HtoN( inception );
-        message.pushUInt16HtoN( key_tag );
-        signer.outputCanonicalWireFormat( message );
-        message.pushBuffer( signature );
+        message.pushUInt16HtoN( mTypeCovered );
+        message.pushUInt8( mAlgorithm );
+        message.pushUInt8( mLabelCount );
+        message.pushUInt32HtoN( mOriginalTTL );
+        message.pushUInt32HtoN( mExpiration );
+        message.pushUInt32HtoN( mInception );
+        message.pushUInt16HtoN( mKeyTag );
+        mSigner.outputCanonicalWireFormat( message );
+        message.pushBuffer( mSignature );
     }
 
     void RecordRRSIG::outputCanonicalWireFormat( WireFormat &message ) const
