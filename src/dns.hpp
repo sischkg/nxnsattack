@@ -413,13 +413,13 @@ namespace dns
     class RecordSOA : public RDATA
     {
     private:
-        Domainname mname;
-        Domainname rname;
-        uint32_t   serial;
-        uint32_t   refresh;
-        uint32_t   retry;
-        uint32_t   expire;
-        uint32_t   minimum;
+        Domainname mMName;
+        Domainname mRName;
+        uint32_t   mSerial;
+        uint32_t   mRefresh;
+        uint32_t   mRetry;
+        uint32_t   mExpire;
+        uint32_t   mMinimum;
 
     public:
         RecordSOA( const Domainname &mname,
@@ -442,51 +442,52 @@ namespace dns
 
         const std::string getMName() const
         {
-            return mname.toString();
+            return mMName.toString();
         }
         const std::string getRName() const
         {
-            return rname.toString();
+            return mRName.toString();
         }
 	virtual RecordSOA *clone() const
 	{
-	    return new RecordSOA( mname,
-				  rname,
-                                  serial,
-				  refresh,
-				  retry,
-				  expire,
-				  minimum );
+	    return new RecordSOA( mMName,
+				  mRName,
+                                  mSerial,
+				  mRefresh,
+				  mRetry,
+				  mExpire,
+				  mMinimum );
 	}
 
-	uint32_t getSerial() const { return serial; }
-	uint32_t getRefresh() const { return refresh; }
-	uint32_t getRetry() const { return retry; }
-	uint32_t getExpire() const { return expire; }
-	uint32_t getMinimum() const { return minimum; }
+	uint32_t getSerial() const { return mSerial; }
+	uint32_t getRefresh() const { return mRefresh; }
+	uint32_t getRetry() const { return mRetry; }
+	uint32_t getExpire() const { return mExpire; }
+	uint32_t getMinimum() const { return mMinimum; }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
 
 
     struct APLEntry {
-        uint16_t   address_family;
-        uint8_t    prefix;
-        bool       negation;
-        PacketData afd;
+        uint16_t   mAddressFamily;
+        uint8_t    mPrefix;
+        bool       mNegation;
+        PacketData mAFD;
     };
 
     class RecordAPL : public RDATA
     {
     private:
-        std::vector<APLEntry> apl_entries;
+        std::vector<APLEntry> mAPLEntries;
 
     public:
         static const uint16_t IPv4    = 1;
         static const uint16_t IPv6    = 2;
         static const uint16_t Invalid = 0xffff;
 
-        RecordAPL( const std::vector<APLEntry> &in_apls ) : apl_entries( in_apls )
+        RecordAPL( const std::vector<APLEntry> &in_apls )
+            : mAPLEntries( in_apls )
         {
         }
 
@@ -499,7 +500,7 @@ namespace dns
             return TYPE_APL;
         }
         virtual uint16_t size() const;
-	virtual RecordAPL *clone() const { return new RecordAPL( apl_entries ); }
+	virtual RecordAPL *clone() const { return new RecordAPL( mAPLEntries ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };

@@ -1157,7 +1157,7 @@ namespace dns
                           uint32_t          rt,
                           uint32_t          ex,
                           uint32_t          min )
-        : mname( mn ), rname( rn ), serial( sr ), refresh( rf ), retry( rt ), expire( ex ), minimum( min )
+        : mMName( mn ), mRName( rn ), mSerial( sr ), mRefresh( rf ), mRetry( rt ), mExpire( ex ), mMinimum( min )
     {
     }
 
@@ -1169,37 +1169,37 @@ namespace dns
     std::string RecordSOA::toString() const
     {
         std::ostringstream soa_str;
-        soa_str << mname.toString() << " " << rname.toString() << " " << serial << " " << refresh << " " << retry << " "
-                << expire << " " << minimum;
+        soa_str << mMName.toString() << " " << mRName.toString() << " " << mSerial << " " << mRefresh << " " << mRetry << " "
+                << mExpire << " " << mMinimum;
         return soa_str.str();
     }
 
     void RecordSOA::outputWireFormat( WireFormat &message ) const
     {
-        mname.outputWireFormat( message );
-        rname.outputWireFormat( message );
-        message.pushUInt32HtoN( serial );
-        message.pushUInt32HtoN( refresh );
-        message.pushUInt32HtoN( retry );
-        message.pushUInt32HtoN( expire );
-        message.pushUInt32HtoN( minimum );
+        mMName.outputWireFormat( message );
+        mRName.outputWireFormat( message );
+        message.pushUInt32HtoN( mSerial );
+        message.pushUInt32HtoN( mRefresh );
+        message.pushUInt32HtoN( mRetry );
+        message.pushUInt32HtoN( mExpire );
+        message.pushUInt32HtoN( mMinimum );
     }
 
     void RecordSOA::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        mname.outputCanonicalWireFormat( message );
-        rname.outputCanonicalWireFormat( message );
-        message.pushUInt32HtoN( serial );
-        message.pushUInt32HtoN( refresh );
-        message.pushUInt32HtoN( retry );
-        message.pushUInt32HtoN( expire );
-        message.pushUInt32HtoN( minimum );
+        mMName.outputCanonicalWireFormat( message );
+        mRName.outputCanonicalWireFormat( message );
+        message.pushUInt32HtoN( mSerial );
+        message.pushUInt32HtoN( mRefresh );
+        message.pushUInt32HtoN( mRetry );
+        message.pushUInt32HtoN( mExpire );
+        message.pushUInt32HtoN( mMinimum );
     }
 
     uint16_t RecordSOA::size() const
     {
-        return mname.size() + rname.size() + sizeof( serial ) + sizeof( refresh ) +
-            sizeof( retry ) + sizeof( expire ) + sizeof( minimum );
+        return mMName.size() + mRName.size() + sizeof( mSerial ) + sizeof( mRefresh ) +
+            sizeof( mRetry ) + sizeof( mExpire ) + sizeof( mMinimum );
     }
 
     RDATAPtr RecordSOA::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -1227,8 +1227,8 @@ namespace dns
     std::string RecordAPL::toString() const
     {
         std::ostringstream os;
-        for ( auto i = apl_entries.begin(); i != apl_entries.end(); i++ ) {
-            os << ( i->negation ? "!" : "" ) << i->address_family << ":" << printPacketData( i->afd ) << " ";
+        for ( auto i = mAPLEntries.begin(); i != mAPLEntries.end(); i++ ) {
+            os << ( i->mNegation ? "!" : "" ) << i->mAddressFamily << ":" << printPacketData( i->mAFD ) << " ";
         }
         std::string result( os.str() );
         if ( result.size() > 0 )
@@ -1238,11 +1238,11 @@ namespace dns
 
     void RecordAPL::outputWireFormat( WireFormat &message ) const
     {
-        for ( auto i = apl_entries.begin(); i != apl_entries.end(); i++ ) {
-            message.pushUInt16HtoN( i->address_family );
-            message.pushUInt8( i->prefix );
-            message.pushUInt8( ( i->negation ? ( 1 << 7 ) : 0 ) | i->afd.size() );
-            message.pushBuffer( i->afd );
+        for ( auto i = mAPLEntries.begin(); i != mAPLEntries.end(); i++ ) {
+            message.pushUInt16HtoN( i->mAddressFamily );
+            message.pushUInt8( i->mPrefix );
+            message.pushUInt8( ( i->mNegation ? ( 1 << 7 ) : 0 ) | i->mAFD.size() );
+            message.pushBuffer( i->mAFD );
         }
     }
 
@@ -1254,8 +1254,8 @@ namespace dns
     uint16_t RecordAPL::size() const
     {
         uint16_t s = 0;
-        for ( auto i = apl_entries.begin(); i != apl_entries.end(); i++ ) {
-            s += ( 2 + 1 + 1 + i->afd.size() );
+        for ( auto i = mAPLEntries.begin(); i != mAPLEntries.end(); i++ ) {
+            s += ( 2 + 1 + 1 + i->mAFD.size() );
         }
         return s;
     }
@@ -1270,17 +1270,17 @@ namespace dns
                 throw FormatError( "too short length of APL RDdata" );
 
             APLEntry entry;
-            entry.address_family = ntohs( get_bytes<uint16_t>( &pos ) );
-            entry.prefix         = get_bytes<uint8_t>( &pos );
+            entry.mAddressFamily = ntohs( get_bytes<uint16_t>( &pos ) );
+            entry.mPrefix        = get_bytes<uint8_t>( &pos );
             uint8_t neg_afd_len  = get_bytes<uint8_t>( &pos );
-            entry.negation       = ( neg_afd_len & 0x01 ) == 0x01;
+            entry.mNegation      = ( neg_afd_len & 0x01 ) == 0x01;
             uint8_t afd_length   = ( neg_afd_len >> 1 );
 
             if ( rdata_end - pos < afd_length )
                 throw FormatError( "invalid AFD Data length" );
 
             PacketData in_afd;
-            entry.afd.insert( in_afd.end(), pos, pos + afd_length );
+            entry.mAFD.insert( in_afd.end(), pos, pos + afd_length );
             pos += afd_length;
             entries.push_back( entry );
         }
