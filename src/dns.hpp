@@ -676,20 +676,20 @@ namespace dns
     class RecordDS : public RDATA
     {
     private:
-        uint16_t             key_tag;
-        uint8_t              algorithm;
-        uint8_t              digest_type;
-        std::vector<uint8_t> digest;
+        uint16_t             mKeyTag;
+        uint8_t              mAlgorithm;
+        uint8_t              mDigestType;
+        std::vector<uint8_t> mDigest;
 
     public:
         RecordDS( uint16_t tag, uint8_t alg, uint8_t dtype, const std::vector<uint8_t> &d )
-            : key_tag( tag ), algorithm( alg ), digest_type( dtype ), digest( d )
+            : mKeyTag( tag ), mAlgorithm( alg ), mDigestType( dtype ), mDigest( d )
         {}
 
-        uint16_t getKeyTag()    const { return key_tag; }
-        uint8_t  getAlgorighm() const { return algorithm; }
-        uint8_t  getDigesType() const { return digest_type; }
-        std::vector<uint8_t> getDigest() const { return digest; }
+        uint16_t getKeyTag()    const { return mKeyTag; }
+        uint8_t  getAlgorighm() const { return mAlgorithm; }
+        uint8_t  getDigesType() const { return mDigestType; }
+        std::vector<uint8_t> getDigest() const { return mDigest; }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -697,7 +697,7 @@ namespace dns
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
-            return 2 + 1 + 1 + digest.size();
+            return sizeof(mKeyTag) + sizeof(mAlgorithm) + sizeof(mDigestType) + mDigest.size();
         }
 
         virtual uint16_t type() const
@@ -707,10 +707,10 @@ namespace dns
 
 	virtual RecordDS *clone() const
 	{
-	    return new RecordDS( key_tag,
-				 algorithm,
-				 digest_type,
-				 digest );
+	    return new RecordDS( mKeyTag,
+				 mAlgorithm,
+				 mDigestType,
+				 mDigest );
 	}
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );

@@ -1460,12 +1460,12 @@ namespace dns
     std::string RecordDS::toZone() const
     {
         std::string digest_str;
-        encodeToHex( digest, digest_str );
+        encodeToHex( mDigest, digest_str );
 
         std::ostringstream os;
-        os << key_tag                   << " "
-           << (unsigned int)algorithm   << " "
-           << (unsigned int)digest_type << " "
+        os << mKeyTag                   << " "
+           << (unsigned int)mAlgorithm   << " "
+           << (unsigned int)mDigestType << " "
            << digest_str;
         return os.str();
     }
@@ -1473,22 +1473,22 @@ namespace dns
     std::string RecordDS::toString() const
     {
         std::string digest_str;
-        encodeToHex( digest, digest_str );
+        encodeToHex( mDigest, digest_str );
 
         std::ostringstream os;
-        os << "keytag: "      << key_tag                   << ", "
-           << "algorithm: "   << (unsigned int)algorithm   << ", "
-           << "digest type: " << (unsigned int)digest_type << ", "
+        os << "keytag: "      << mKeyTag                   << ", "
+           << "algorithm: "   << (unsigned int)mAlgorithm   << ", "
+           << "digest type: " << (unsigned int)mDigestType << ", "
            << "digest: "      << digest_str;
         return os.str();
     }
 
     void RecordDS::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( key_tag );
-        message.pushUInt8( algorithm );
-        message.pushUInt8( digest_type );
-        message.pushBuffer( digest );
+        message.pushUInt16HtoN( mKeyTag );
+        message.pushUInt8( mAlgorithm );
+        message.pushUInt8( mDigestType );
+        message.pushBuffer( mDigest );
     }
 
     void RecordDS::outputCanonicalWireFormat( WireFormat &message ) const
