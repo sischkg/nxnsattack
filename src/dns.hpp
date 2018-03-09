@@ -254,7 +254,7 @@ namespace dns
     class RecordMX : public RDATA
     {
     private:
-        uint16_t   priority;
+        uint16_t   mPriority;
         Domainname mDomainname;
 
     public:
@@ -270,9 +270,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return sizeof( priority ) + mDomainname.size();
+            return sizeof( mPriority ) + mDomainname.size();
         }
-	virtual RecordMX *clone() const { return new RecordMX( priority, mDomainname ); }
+	virtual RecordMX *clone() const { return new RecordMX( mPriority, mDomainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -280,7 +280,7 @@ namespace dns
     class RecordTXT : public RDATA
     {
     private:
-        std::vector<std::string> data;
+        std::vector<std::string> mData;
 
     public:
         RecordTXT( const std::string &data );
@@ -295,8 +295,8 @@ namespace dns
             return TYPE_TXT;
         }
         virtual uint16_t size() const;
-	virtual RecordTXT *clone() const { return new RecordTXT( data ); }
-	const std::vector<std::string> &getTexts() const { return data; }
+	virtual RecordTXT *clone() const { return new RecordTXT( mData ); }
+	const std::vector<std::string> &getTexts() const { return mData; }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
@@ -354,12 +354,12 @@ namespace dns
     class RecordNAPTR : public RDATA
     {
     private:
-        uint16_t    order;
-        uint16_t    preference;
-        std::string flags;
-        std::string services;
-        std::string regexp;
-        Domainname  replacement;
+        uint16_t    mOrder;
+        uint16_t    mPreference;
+        std::string mFlags;
+        std::string mServices;
+        std::string mRegexp;
+        Domainname  mReplacement;
 
     public:
         RecordNAPTR( uint16_t           in_order,
@@ -378,7 +378,7 @@ namespace dns
             return TYPE_NAPTR;
         }
         virtual uint16_t size() const;
-	virtual RecordNAPTR *clone() const { return new RecordNAPTR( order, preference, flags, services, regexp, replacement ); }
+	virtual RecordNAPTR *clone() const { return new RecordNAPTR( mOrder, mPreference, mFlags, mServices, mRegexp, mReplacement ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };

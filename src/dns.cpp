@@ -836,8 +836,8 @@ namespace dns
         return RDATAPtr( new RecordNS( name ) );
     }
 
-    RecordMX::RecordMX( uint16_t pri, const Domainname &name )
-        : priority( pri ), mDomainname( name )
+    RecordMX::RecordMX( uint16_t priority, const Domainname &name )
+        : mPriority( priority ), mDomainname( name )
     {
     }
 
@@ -849,19 +849,19 @@ namespace dns
     std::string RecordMX::toString() const
     {
         std::ostringstream os;
-        os << priority << " " << mDomainname.toString();
+        os << mPriority << " " << mDomainname.toString();
         return os.str();
     }
 
     void RecordMX::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( priority );
+        message.pushUInt16HtoN( mPriority );
         mDomainname.outputWireFormat( message );
     }
     
     void RecordMX::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( priority );
+        message.pushUInt16HtoN( mPriority );
         mDomainname.outputCanonicalWireFormat( message );
     }
 
@@ -879,10 +879,11 @@ namespace dns
 
     RecordTXT::RecordTXT( const std::string &d )
     {
-        data.push_back( d );
+        mData.push_back( d );
     }
 
-    RecordTXT::RecordTXT( const std::vector<std::string> &d ) : data( d )
+    RecordTXT::RecordTXT( const std::vector<std::string> &d )
+	: mData( d )
     {
     }
 
@@ -895,8 +896,8 @@ namespace dns
     std::string RecordTXT::toString() const
     {
         std::ostringstream os;
-        for ( unsigned int i = 0; i < data.size(); i++ ) {
-            os << "\"" << data[ i ] << "\" ";
+        for ( unsigned int i = 0; i < mData.size(); i++ ) {
+            os << "\"" << mData[ i ] << "\" ";
         }
 
         return os.str();
@@ -904,10 +905,10 @@ namespace dns
 
     void RecordTXT::outputWireFormat( WireFormat &message ) const
     {
-        for ( unsigned int i = 0; i < data.size(); i++ ) {
-            message.push_back( data[ i ].size() & 0xff );
-            for ( unsigned int j = 0; j < data[ i ].size(); j++ )
-                message.push_back( data[ i ][ j ] );
+        for ( unsigned int i = 0; i < mData.size(); i++ ) {
+            message.push_back( mData[ i ].size() & 0xff );
+            for ( unsigned int j = 0; j < mData[ i ].size(); j++ )
+                message.push_back( mData[ i ][ j ] );
         }
     }
 
@@ -920,7 +921,7 @@ namespace dns
     uint16_t RecordTXT::size() const
     {
         uint16_t s = 0;
-        for ( auto i = data.begin(); i != data.end(); i++ ) {
+        for ( auto i = mData.begin(); i != mData.end(); i++ ) {
             s++;
             s += i->size();
         }
@@ -1048,41 +1049,41 @@ namespace dns
                               const std::string &in_services,
                               const std::string &in_regexp,
                               const Domainname  &in_replacement )
-        : order( in_order ), preference( in_preference ), flags( in_flags ), services( in_services ),
-          regexp( in_regexp ), replacement( in_replacement )
+        : mOrder( in_order ), mPreference( in_preference ), mFlags( in_flags ), mServices( in_services ),
+          mRegexp( in_regexp ), mReplacement( in_replacement )
     {
     }
 
     std::string RecordNAPTR::toZone() const
     {
         std::stringstream os;
-        os << order << " " << preference << " "
-           << "\"" << flags       << "\" "
-           << "\"" << services    << "\" "
-           << "\"" << regexp      << "\" "
-           << "\"" << replacement << "\"";
+        os << mOrder << " " << mPreference << " "
+           << "\"" << mFlags       << "\" "
+           << "\"" << mServices    << "\" "
+           << "\"" << mRegexp      << "\" "
+           << "\"" << mReplacement << "\"";
         return os.str();
     }
 
     std::string RecordNAPTR::toString() const
     {
         std::stringstream os;
-        os << "order: " << order << ", preference: " << preference << "flags: " << flags << ", services: " << services
-           << "regexp: " << regexp << ", replacement: " << replacement;
+        os << "order: " << mOrder << ", preference: " << mPreference << "flags: " << mFlags << ", services: " << mServices
+           << "regexp: " << mRegexp << ", replacement: " << mReplacement;
         return os.str();
     }
 
     void RecordNAPTR::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( order );
-        message.pushUInt16HtoN( preference );
-        message.pushUInt8( flags.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( flags.c_str() ),
-                            reinterpret_cast<const uint8_t *>( flags.c_str() ) + flags.size() );
-        message.pushUInt8( regexp.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( regexp.c_str() ),
-                            reinterpret_cast<const uint8_t *>( regexp.c_str() ) + regexp.size() );
-        replacement.outputWireFormat( message );
+        message.pushUInt16HtoN( mOrder );
+        message.pushUInt16HtoN( mPreference );
+        message.pushUInt8( mFlags.size() );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( mFlags.c_str() ),
+                            reinterpret_cast<const uint8_t *>( mFlags.c_str() ) + mFlags.size() );
+        message.pushUInt8( mRegexp.size() );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( mRegexp.c_str() ),
+                            reinterpret_cast<const uint8_t *>( mRegexp.c_str() ) + mRegexp.size() );
+        mReplacement.outputWireFormat( message );
     }
 
     void RecordNAPTR::outputCanonicalWireFormat( WireFormat &message ) const
@@ -1092,8 +1093,8 @@ namespace dns
 
     uint16_t RecordNAPTR::size() const
     {
-        return sizeof( order ) + sizeof( preference ) + 1 + flags.size() + 1 + regexp.size() +
-            replacement.size();
+        return sizeof( mOrder ) + sizeof( mPreference ) + 1 + mFlags.size() + 1 + mRegexp.size() +
+            mReplacement.size();
     }
 
     RDATAPtr RecordNAPTR::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
