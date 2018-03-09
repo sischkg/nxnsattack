@@ -80,9 +80,9 @@ namespace dns
             throw std::logic_error( "one qname must be exist" );
         }
 	
-        Domainname qname  = query.question_section[0].q_domainname;
-        Type       qtype  = query.question_section[0].q_type;
-        Class      qclass = query.question_section[0].q_class;
+        Domainname qname  = query.question_section[0].mDomainname;
+        Type       qtype  = query.question_section[0].mType;
+        Class      qclass = query.question_section[0].mClass;
 
         PacketInfo response;
 
@@ -106,9 +106,9 @@ namespace dns
 	}
 
         QuestionSectionEntry q;
-        q.q_domainname = qname;
-        q.q_type       = qtype;
-        q.q_class      = qclass;
+        q.mDomainname = qname;
+        q.mType       = qtype;
+        q.mClass      = qclass;
         response.question_section.push_back( q );
 
         if ( ! apex.isSubDomain( qname ) ) {

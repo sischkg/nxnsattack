@@ -1363,13 +1363,13 @@ namespace dns
 
 
     struct QuestionSectionEntry {
-        Domainname q_domainname;
-        uint16_t   q_type;
-        uint16_t   q_class;
+        Domainname mDomainname;
+        uint16_t   mType;
+        uint16_t   mClass;
 
-        QuestionSectionEntry() : q_type( 0 ), q_class( 0 )
-        {
-        }
+        QuestionSectionEntry()
+            : mType( 0 ), mClass( 0 )
+        {}
 
 	uint16_t size() const;
     };

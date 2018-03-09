@@ -58,7 +58,7 @@ namespace dns
 
     uint16_t QuestionSectionEntry::size() const
     {
-        return q_domainname.size() + sizeof(q_type) + sizeof(q_class);
+        return mDomainname.size() + sizeof(mType) + sizeof(mClass);
     }
 
     uint16_t ResourceRecord::size() const
@@ -281,18 +281,18 @@ namespace dns
 
     void generate_question_section( const QuestionSectionEntry &question, WireFormat &message )
     {
-        question.q_domainname.outputWireFormat( message );
-        message.pushUInt16HtoN( question.q_type );
-        message.pushUInt16HtoN( question.q_class );
+        question.mDomainname.outputWireFormat( message );
+        message.pushUInt16HtoN( question.mType );
+        message.pushUInt16HtoN( question.mClass );
     }
 
     QuestionSectionEntryPair parse_question_section( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *p )
     {
         QuestionSectionEntry question;
-        const uint8_t *      pos = Domainname::parsePacket( question.q_domainname, packet_begin, packet_end, p );
+        const uint8_t *      pos = Domainname::parsePacket( question.mDomainname, packet_begin, packet_end, p );
 
-        question.q_type  = ntohs( get_bytes<uint16_t>( &pos ) );
-        question.q_class = ntohs( get_bytes<uint16_t>( &pos ) );
+        question.mType  = ntohs( get_bytes<uint16_t>( &pos ) );
+        question.mClass = ntohs( get_bytes<uint16_t>( &pos ) );
 
         return QuestionSectionEntryPair( question, pos );
     }
@@ -580,7 +580,7 @@ namespace dns
            << "Response Code: " << responseCodeToString( res.response_code ) << std::endl;
 
         for ( auto q : res.question_section )
-            os << "Query: " << q.q_domainname << " " << typeCodeToString( q.q_type ) << "  ?" << std::endl;
+            os << "Query: " << q.mDomainname << " " << typeCodeToString( q.mType ) << "  ?" << std::endl;
         for ( auto a : res.answer_section )
             std::cout << "Answer: " << a.r_domainname << " " << a.r_ttl << " " << typeCodeToString( a.r_type )
                       << " " << a.r_resource_data->toString() << std::endl;

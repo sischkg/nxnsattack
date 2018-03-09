@@ -153,8 +153,8 @@ namespace dns
 
                     PacketData recv_data = connection->receive( size );
                     PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
-                    if ( query.question_section[ 0 ].q_type == dns::TYPE_AXFR ||
-                         query.question_section[ 0 ].q_type == dns::TYPE_IXFR ) {
+                    if ( query.question_section[ 0 ].mType == dns::TYPE_AXFR ||
+                         query.question_section[ 0 ].mType == dns::TYPE_IXFR ) {
                         boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );
                         axfr_thread.detach();
                     } else {

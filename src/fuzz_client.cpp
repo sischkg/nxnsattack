@@ -173,9 +173,9 @@ int main( int argc, char **argv )
                 qclass = dns::CLASS_NONE;
 
             dns::QuestionSectionEntry q;
-            q.q_domainname = qname;
-            q.q_type       = qtype;
-            q.q_class      = qclass;
+            q.mDomainname = qname;
+            q.mType       = qtype;
+            q.mClass      = qclass;
             packet_info.question_section.push_back( q );
 
             // appand new rrsets

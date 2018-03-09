@@ -152,7 +152,7 @@ namespace dns
     {
         std::vector<Domainname> names;
         for ( auto rr : hint.getQuestionSection() ) {
-            names.push_back( rr.q_domainname );
+            names.push_back( rr.mDomainname );
         }
         for ( auto rr : hint.getAnswerSection() ) {
             names.push_back( rr.r_domainname );
@@ -183,7 +183,7 @@ namespace dns
 
         uint32_t index = getRandom( qdcount + ancount + nscount + adcount );
         if ( index < qdcount ) {
-            hint_name = hint.getQuestionSection()[index].q_domainname;
+            hint_name = hint.getQuestionSection()[index].mDomainname;
         }
         else if ( index < qdcount + ancount ) {
             hint_name = hint.getAnswerSection()[index - qdcount].r_domainname;
