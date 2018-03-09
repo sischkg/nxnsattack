@@ -1882,7 +1882,7 @@ namespace dns
     {
         std::ostringstream os;
 
-        for ( auto option : options )
+        for ( auto option : mOptions )
             os << option->toString();
 
         return os.str();
@@ -1892,7 +1892,7 @@ namespace dns
     uint16_t RecordOptionsData::size() const
     {
         uint16_t rr_size = 0;
-        for ( auto option : options ) {
+        for ( auto option : mOptions ) {
             rr_size += option->size();
         }
         return rr_size;
@@ -1900,7 +1900,7 @@ namespace dns
 
     void RecordOptionsData::outputWireFormat( WireFormat &message ) const
     {
-        for ( auto option : options ) {
+        for ( auto option : mOptions ) {
             option->outputWireFormat( message );
         }
     }

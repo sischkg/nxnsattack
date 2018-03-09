@@ -1137,30 +1137,30 @@ namespace dns
     class RecordOptionsData : public RDATA
     {
     private:
-        std::vector<OptPseudoRROptPtr> options;
+        std::vector<OptPseudoRROptPtr> mOptions;
 
     public:
         RecordOptionsData( const std::vector<OptPseudoRROptPtr> &in_options = std::vector<OptPseudoRROptPtr>() )
         {
 	    for ( auto op : in_options )
-		options.push_back( OptPseudoRROptPtr( op->clone() ) );
+		mOptions.push_back( OptPseudoRROptPtr( op->clone() ) );
         }
 
 	RecordOptionsData( const RecordOptionsData &data )
 	{
 	    for ( auto op : data.getOptions() )
-		options.push_back( OptPseudoRROptPtr( op->clone() ) );
+		mOptions.push_back( OptPseudoRROptPtr( op->clone() ) );
 	}
 
 	RecordOptionsData &operator=( const RecordOptionsData &data )
 	{
-	    options.clear();
+	    mOptions.clear();
 	    for ( auto op : data.getOptions() )
-		options.push_back( OptPseudoRROptPtr( op->clone() ) );
+		mOptions.push_back( OptPseudoRROptPtr( op->clone() ) );
 	    return *this;
 	}
 
-	void add( OptPseudoRROptPtr opt ) { options.push_back( opt ); }
+	void add( OptPseudoRROptPtr opt ) { mOptions.push_back( opt ); }
         virtual std::string toZone() const { return ""; }
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message ) const;
@@ -1172,12 +1172,12 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordOptionsData *clone() const
 	{
-	    return new RecordOptionsData( options );
+	    return new RecordOptionsData( mOptions );
 	}
 	
         const std::vector<OptPseudoRROptPtr> &getOptions() const
         {
-            return options;
+            return mOptions;
         }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
