@@ -627,9 +627,9 @@ namespace dns
     class RecordDNSKEY : public RDATA
     {
     private:
-        uint16_t             flag;
-        uint8_t              algorithm;
-        std::vector<uint8_t> public_key;
+        uint16_t             mFlag;
+        uint8_t              mAlgorithm;
+        std::vector<uint8_t> mPublicKey;
 
     public:
         static const uint16_t SIGNED_KEY = 1 << 7;
@@ -642,12 +642,12 @@ namespace dns
         static const uint16_t ZSK = 0;
 
         RecordDNSKEY( uint16_t f, uint8_t algo, const std::vector<uint8_t> &key )
-            : flag( f ), algorithm( algo ), public_key( key )
+            : mFlag( f ), mAlgorithm( algo ), mPublicKey( key )
         {}
         
-        uint16_t getFlag() const { return flag; }
-        uint8_t  getAlgorithm() const { return algorithm; }
-        const std::vector<uint8_t> getPublicKey() const { return public_key; }
+        uint16_t getFlag() const { return mFlag; }
+        uint8_t  getAlgorithm() const { return mAlgorithm; }
+        const std::vector<uint8_t> getPublicKey() const { return mPublicKey; }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -656,7 +656,7 @@ namespace dns
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
-            return 2 + 1 + 1 + public_key.size();
+            return sizeof(mFlag) + sizeof(mAlgorithm) + 1 + mPublicKey.size();
         }
 
         virtual uint16_t type() const
@@ -666,7 +666,7 @@ namespace dns
 
 	virtual RecordDNSKEY *clone() const
 	{
-	    return new RecordDNSKEY( flag, algorithm, public_key );
+	    return new RecordDNSKEY( mFlag, mAlgorithm, mPublicKey );
 	}
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );

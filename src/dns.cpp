@@ -1408,12 +1408,12 @@ namespace dns
     std::string RecordDNSKEY::toZone() const
     {
         std::string public_key_str;
-        encodeToBase64( public_key, public_key_str );
+        encodeToBase64( mPublicKey, public_key_str );
 
         std::ostringstream os;
-        os << ( flag == KSK ? "257" : "256" ) << " "
+        os << ( mFlag == KSK ? "257" : "256" ) << " "
            << 3                               << " "
-           << (unsigned int)algorithm         << " "
+           << (unsigned int)mAlgorithm         << " "
            << public_key_str;
         return os.str();
     }
@@ -1422,22 +1422,22 @@ namespace dns
     std::string RecordDNSKEY::toString() const
     {
         std::string public_key_str;
-        encodeToBase64( public_key, public_key_str );
+        encodeToBase64( mPublicKey, public_key_str );
 
         std::ostringstream os;
-        os << "KSK/ZSK: "    << ( flag == KSK ? "KSK" : "ZSK" ) << ", "
+        os << "KSK/ZSK: "    << ( mFlag == KSK ? "KSK" : "ZSK" ) << ", "
            << "Protocal: "   << 3                               << ", "
-           << "Algorithm: "  << (unsigned int)algorithm         << ", "
+           << "Algorithm: "  << (unsigned int)mAlgorithm         << ", "
            << "Public Key: " << public_key_str;
         return os.str();
     }
 
     void RecordDNSKEY::outputWireFormat( WireFormat &message ) const
     {
-        message.pushUInt16HtoN( flag );
+        message.pushUInt16HtoN( mFlag );
         message.pushUInt8( 3 );
-        message.pushUInt8( algorithm );
-        message.pushBuffer( public_key );
+        message.pushUInt8( mAlgorithm );
+        message.pushBuffer( mPublicKey );
     }
 
     void RecordDNSKEY::outputCanonicalWireFormat( WireFormat &message ) const
