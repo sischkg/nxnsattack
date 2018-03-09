@@ -1228,14 +1228,14 @@ namespace dns
     class RecordTKEY : public RDATA
     {
     public:
-        Domainname domain;
-        Domainname algorithm;
-        uint32_t   inception;
-        uint32_t   expiration;
-        uint16_t   mode;
-        uint16_t   error;
-        PacketData key;
-        PacketData other_data;
+        Domainname mDomain;
+        Domainname mAlgorithm;
+        uint32_t   mInception;
+        uint32_t   mExpiration;
+        uint16_t   mMode;
+        uint16_t   mError;
+        PacketData mKey;
+        PacketData mOtherData;
 
     public:
         RecordTKEY( const std::string &dom    = "",
@@ -1246,8 +1246,14 @@ namespace dns
                     uint16_t           err    = 0,
                     PacketData         k      = PacketData(),
                     PacketData         other  = PacketData() )
-            : domain( dom ), algorithm( algo ), inception( incept ), expiration( expire ), mode( m ), error( err ),
-              key( k ), other_data( other )
+            : mDomain( dom ),
+              mAlgorithm( algo ),
+              mInception( incept ),
+              mExpiration( expire ),
+              mMode( m ),
+              mError( err ),
+              mKey( k ),
+              mOtherData( other )
         {
         }
 
@@ -1262,14 +1268,14 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordTKEY *clone() const
 	{
-	    return new RecordTKEY( domain.toString(),
-				   domain.toString(),
-				   inception,
-				   expiration,
-				   mode,
-				   error,
-				   key,
-				   other_data );
+	    return new RecordTKEY( mDomain.toString(),
+				   mDomain.toString(),
+				   mInception,
+				   mExpiration,
+				   mMode,
+				   mError,
+				   mKey,
+				   mOtherData );
 	}
     };
 

@@ -2183,28 +2183,28 @@ namespace dns
 
     uint16_t RecordTKEY::size() const
     {
-        return algorithm.size() + //
+        return mAlgorithm.size() + //
             4 +                // inception
             4 +                // expiration
             2 +                // mode
             2 +                // error
             2 +                // key size
-            key.size() +       // key
+            mKey.size() +       // key
             2 +                // other data size
-            other_data.size();
+            mOtherData.size();
     }
 
     void RecordTKEY::outputWireFormat( WireFormat &message ) const
     {
-        algorithm.outputCanonicalWireFormat( message );
-        message.pushUInt32HtoN( inception );
-        message.pushUInt32HtoN( expiration );
-        message.pushUInt16HtoN( mode );
-        message.pushUInt16HtoN( error );
-        message.pushUInt16HtoN( key.size() );
-        message.pushBuffer( key );
-        message.pushUInt16HtoN( other_data.size() );
-        message.pushBuffer( other_data );
+        mAlgorithm.outputCanonicalWireFormat( message );
+        message.pushUInt32HtoN( mInception );
+        message.pushUInt32HtoN( mExpiration );
+        message.pushUInt16HtoN( mMode );
+        message.pushUInt16HtoN( mError );
+        message.pushUInt16HtoN( mKey.size() );
+        message.pushBuffer( mKey );
+        message.pushUInt16HtoN( mOtherData.size() );
+        message.pushBuffer( mOtherData );
     }
 
     void RecordTKEY::outputCanonicalWireFormat( WireFormat &message ) const
