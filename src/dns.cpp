@@ -1078,11 +1078,9 @@ namespace dns
         message.pushUInt16HtoN( mOrder );
         message.pushUInt16HtoN( mPreference );
         message.pushUInt8( mFlags.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( mFlags.c_str() ),
-                            reinterpret_cast<const uint8_t *>( mFlags.c_str() ) + mFlags.size() );
+        message.pushBuffer( mFlags );
         message.pushUInt8( mRegexp.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( mRegexp.c_str() ),
-                            reinterpret_cast<const uint8_t *>( mRegexp.c_str() ) + mRegexp.size() );
+        message.pushBuffer( mRegexp );
         mReplacement.outputWireFormat( message );
     }
 
@@ -1996,8 +1994,7 @@ namespace dns
     {
         message.pushUInt16HtoN( OPT_NSID );
         message.pushUInt16HtoN( mNSID.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( mNSID.c_str() ),
-                            reinterpret_cast<const uint8_t *>( mNSID.c_str() ) + mNSID.size() );
+        message.pushBuffer( mNSID );
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
