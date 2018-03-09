@@ -21,25 +21,24 @@ namespace dns
 
     ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end )
     {
-        auto tsig_key = mNameToKey.find( query.tsig_rr.key_name.toString() );
+        auto tsig_key = mNameToKey.find( query.tsig_rr.mKeyName.toString() );
         if ( tsig_key == mNameToKey.end() )
             return BADKEY;
 
         TSIGInfo tsig_info;
-        tsig_info.name        = query.tsig_rr.key_name.toString();
-        tsig_info.key         = tsig_key->second.key;
-        tsig_info.algorithm   = tsig_key->second.algorithm;
-        tsig_info.signed_time = query.tsig_rr.signed_time;
-        tsig_info.fudge       = query.tsig_rr.fudge;
-        tsig_info.mac         = query.tsig_rr.mac;
-        tsig_info.mac_size    = query.tsig_rr.mac_size;
-        tsig_info.original_id = query.tsig_rr.original_id;
-        tsig_info.error       = query.tsig_rr.error;
-        tsig_info.other       = query.tsig_rr.other;
+        tsig_info.mName       = query.tsig_rr.mKeyName.toString();
+        tsig_info.mKey        = tsig_key->second.key;
+        tsig_info.mAlgorithm  = tsig_key->second.algorithm;
+        tsig_info.mSignedTime = query.tsig_rr.mSignedTime;
+        tsig_info.mFudge      = query.tsig_rr.mFudge;
+        tsig_info.mMAC        = query.tsig_rr.mMAC;
+        tsig_info.mOriginalID = query.tsig_rr.mOriginalID;
+        tsig_info.mError      = query.tsig_rr.mError;
+        tsig_info.mOther      = query.tsig_rr.mOther;
 
         time_t now = time( NULL );
-        if ( query.tsig_rr.signed_time > now - query.tsig_rr.fudge &&
-             query.tsig_rr.signed_time < now + query.tsig_rr.fudge ) {
+        if ( query.tsig_rr.mSignedTime > now - query.tsig_rr.mFudge &&
+             query.tsig_rr.mSignedTime < now + query.tsig_rr.mFudge ) {
             return BADTIME;
         }
 

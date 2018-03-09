@@ -2214,31 +2214,31 @@ namespace dns
 
     uint16_t RecordTSIGData::size() const
     {
-        return algorithm.size() + // ALGORITHM
+        return mAlgorithm.size() + // ALGORITHM
             6 +                // signed time
             2 +                // FUDGE
             2 +                // MAC SIZE
-            mac.size() +       // MAC
+            mMAC.size() +       // MAC
             2 +                // ORIGINAL ID
             2 +                // ERROR
             2 +                // OTHER LENGTH
-            other.size();      // OTHER
+            mOther.size();      // OTHER
     }
 
     void RecordTSIGData::outputWireFormat( WireFormat &message ) const
     {
-        uint32_t time_high = signed_time >> 16;
-        uint32_t time_low  = ( ( 0xffff & signed_time ) << 16 ) + fudge;
+        uint32_t time_high = mSignedTime >> 16;
+        uint32_t time_low  = ( ( 0xffff & mSignedTime ) << 16 ) + mFudge;
 
-        algorithm.outputCanonicalWireFormat( message );
+        mAlgorithm.outputCanonicalWireFormat( message );
         message.pushUInt32HtoN( time_high );
         message.pushUInt32HtoN( time_low );
-        message.pushUInt16HtoN( mac_size );
-        message.pushBuffer( mac );
-        message.pushUInt16HtoN( original_id );
-        message.pushUInt16HtoN( error );
-        message.pushUInt16HtoN( other_length );
-        message.pushBuffer( other );
+        message.pushUInt16HtoN( mMAC.size() );
+        message.pushBuffer( mMAC );
+        message.pushUInt16HtoN( mOriginalID );
+        message.pushUInt16HtoN( mError );
+        message.pushUInt16HtoN( mOther.size() );
+        message.pushBuffer( mOther );
     }
 
     void RecordTSIGData::outputCanonicalWireFormat( WireFormat &message ) const
@@ -2249,10 +2249,10 @@ namespace dns
     std::string RecordTSIGData::toZone() const
     {
         std::string mac_str, other_str;
-        encodeToBase64( mac,   mac_str );
-        encodeToBase64( other, other_str );
+        encodeToBase64( mMAC,   mac_str );
+        encodeToBase64( mOther, other_str );
 
-        time_t signed_time_t = signed_time;
+        time_t signed_time_t = mSignedTime;
         tm signed_time_tm;
         gmtime_r( &signed_time_t, &signed_time_tm );
         char signed_time_str[256];
@@ -2260,13 +2260,13 @@ namespace dns
         strftime( signed_time_str, sizeof(signed_time_str), "%Y%m%d%H%M%S", &signed_time_tm );
 
         std::ostringstream os;
-        os << key_name.toString()  << " "
-           << algorithm.toString() << " "
-           << signed_time_str      << " "
-           << fudge                << " "
-           << mac_str              << " "
-           << original_id          << " "
-           << error                << " "
+        os << mKeyName.toString()   << " "
+           << mAlgorithm.toString() << " "
+           << signed_time_str       << " "
+           << mFudge                << " "
+           << mac_str               << " "
+           << mOriginalID           << " "
+           << mError                << " "
            << other_str;
 
         return os.str();
@@ -2275,19 +2275,20 @@ namespace dns
     std::string RecordTSIGData::toString() const
     {
         std::ostringstream os;
-        os << "key name: " << key_name << ", "
-           << "algorigthm: " << algorithm << ", "
-           << "signed time: " << signed_time << ", "
-           << "fudge: " << fudge << ", "
-           << "MAC: " << printPacketData( mac ) << ", "
-           << "Original ID: " << original_id << ", "
-           << "Error: " << error;
+        os << "key name: "    << mKeyName                << ", "
+           << "algorigthm: "  << mAlgorithm              << ", "
+           << "signed time: " << mSignedTime             << ", "
+           << "fudge: "       << mFudge                  << ", "
+           << "MAC: "         << printPacketData( mMAC ) << ", "
+           << "Original ID: " << mOriginalID             << ", "
+           << "Error: "       << mError;
 
         return os.str();
     }
 
-    RDATAPtr
-    RecordTSIGData::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end, const Domainname &key_name )
+    RDATAPtr RecordTSIGData::parse( const uint8_t *packet_begin, const uint8_t *packet_end,
+                                    const uint8_t *rdata_begin, const uint8_t *rdata_end,
+                                    const Domainname &key_name )
     {
         const uint8_t *pos = rdata_begin;
 
@@ -2333,11 +2334,9 @@ namespace dns
                                              algorithm.toString(),
                                              signed_time,
                                              fudge,
-                                             mac_size,
                                              mac,
                                              original_id,
                                              error,
-                                             other_length,
                                              other ) );
     }
 
@@ -2390,24 +2389,23 @@ namespace dns
 
         PacketData         presigned_message = message;
         PacketHeaderField *h                 = reinterpret_cast<PacketHeaderField *>( &presigned_message[ 0 ] );
-        h->id                                = htons( tsig_info.original_id );
+        h->id                                = htons( tsig_info.mOriginalID );
 	hash_target.pushBuffer( presigned_message );
 
         TSIGHash tsig_hash;
-        tsig_hash.name            = tsig_info.name;
-        tsig_hash.algorithm       = tsig_info.algorithm;
-        tsig_hash.signed_time     = tsig_info.signed_time;
-        tsig_hash.fudge           = tsig_info.fudge;
-        tsig_hash.error           = tsig_info.error;
-        tsig_hash.other_length    = tsig_info.other.size();
-        tsig_hash.other           = tsig_info.other;
+        tsig_hash.name            = tsig_info.mName;
+        tsig_hash.algorithm       = tsig_info.mAlgorithm;
+        tsig_hash.signed_time     = tsig_info.mSignedTime;
+        tsig_hash.fudge           = tsig_info.mFudge;
+        tsig_hash.error           = tsig_info.mError;
+        tsig_hash.other_length    = tsig_info.mOther.size();
+        tsig_hash.other           = tsig_info.mOther;
 	tsig_hash.outputWireFormat( hash_target );
 
 	PacketData ht = hash_target.get();
-	//        OpenSSL_add_all_digests();
         HMAC( EVP_get_digestbyname( "md5" ),
-              &tsig_info.key[ 0 ],
-              tsig_info.key.size(),
+              &tsig_info.mKey[ 0 ],
+              tsig_info.mKey.size(),
               reinterpret_cast<const unsigned char *>( &ht[ 0 ] ),
               hash_data.size(),
               reinterpret_cast<unsigned char *>( &mac[ 0 ] ),
@@ -2423,20 +2421,18 @@ namespace dns
         PacketData mac = getTSIGMAC( tsig_info, message.get(), query_mac );
 
         ResourceRecord entry;
-        entry.r_domainname    = tsig_info.name;
+        entry.r_domainname    = tsig_info.mName;
         entry.r_type          = TYPE_TSIG;
         entry.r_class         = CLASS_ANY;
         entry.r_ttl           = 0;
-        entry.r_resource_data = RDATAPtr( new RecordTSIGData( tsig_info.name,
-                                                              tsig_info.algorithm,
-                                                              tsig_info.signed_time,
-                                                              tsig_info.fudge,
-                                                              mac.size(),
+        entry.r_resource_data = RDATAPtr( new RecordTSIGData( tsig_info.mName,
+                                                              tsig_info.mAlgorithm,
+                                                              tsig_info.mSignedTime,
+                                                              tsig_info.mFudge,
                                                               mac,
-                                                              tsig_info.original_id,
-                                                              tsig_info.error,
-                                                              tsig_info.other.size(),
-                                                              tsig_info.other ) );
+                                                              tsig_info.mOriginalID,
+                                                              tsig_info.mError,
+                                                              tsig_info.mOther ) );
 
         PacketData         packet  = message.get();
         PacketHeaderField *header  = reinterpret_cast<PacketHeaderField *>( &packet[ 0 ] );
@@ -2454,7 +2450,7 @@ namespace dns
         PacketData hash_data = message.get();
 
         PacketHeaderField *header = reinterpret_cast<PacketHeaderField *>( &hash_data[ 0 ] );
-        header->id                = htons( tsig_info.original_id );
+        header->id                = htons( tsig_info.mOriginalID );
         uint16_t adcount          = ntohs( header->additional_infomation_count );
         if ( adcount < 1 ) {
             throw FormatError( "adcount of message with TSIG record must not be 0" );
@@ -2495,15 +2491,6 @@ namespace dns
         hash_data.resize( pos - &hash_data[ 0 ] );
 
         PacketData mac = getTSIGMAC( tsig_info, hash_data, PacketData() );
-
-        if ( mac.size() != tsig_info.mac_size )
-            return false;
-
-        for ( unsigned int i = 0; mac.size(); i++ ) {
-            if ( mac[ i ] != tsig_info.mac[ i ] )
-                return false;
-        }
-
-        return true;
+        return mac == tsig_info.mMAC;
     }
 }

@@ -651,17 +651,14 @@ namespace dns
 
 	std::vector<uint8_t> other = getRandomStream( getRandom( 0xff00 ) );
 
-	std::shared_ptr<RDATA> p( new RecordTSIGData( generateDomainname( getDomainname( hint ) ).toString(), // domain
-						      algo,                                                   // algorithm
-						      signed_time,              // signed time
-						      getRandom( 0xffff ),      // fudge
-						      signature.size(),         // mac size
-						      signature,                // mac
-						      getRandom( 0xffff ),      // original id
-						      getRandom( 0xffff ),      // error
-						      other.size(),             // other length
-						      other ) );
-        return p;
+	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint ) ).toString(), // domain
+                                                           algo,                                                   // algorithm
+                                                           signed_time,              // signed time
+                                                           getRandom( 0xffff ),      // fudge
+                                                           signature,                // mac
+                                                           getRandom( 0xffff ),      // original id
+                                                           getRandom( 0xffff ),      // error
+                                                           other ) );
     }
 
     std::shared_ptr<RDATA> TSIGGenerator::generate()
@@ -676,17 +673,14 @@ namespace dns
 
 	std::vector<uint8_t> other = getRandomStream( getRandom( 0xff00 ) );
 
-	std::shared_ptr<RDATA> p( new RecordTSIGData( generateDomainname().toString(), // domain
-						      algo,                            // algorithm
-						      signed_time,              // signed time
-						      getRandom( 0xffff ),      // fudge
-						      signature.size(),         // mac size
-						      signature,                // mac
-						      getRandom( 0xffff ),      // original id
-						      getRandom( 0xffff ),      // error
-						      other.size(),             // other length
-						      other ) );
-        return p;
+	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname().toString(), // domain
+                                                           algo,                            // algorithm
+                                                           signed_time,              // signed time
+                                                           getRandom( 0xffff ),      // fudge
+                                                           signature,                // mac
+                                                           getRandom( 0xffff ),      // original id
+                                                           getRandom( 0xffff ),      // error
+                                                           other ) );
     }
 
 

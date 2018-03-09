@@ -1280,20 +1280,26 @@ namespace dns
     };
 
     struct TSIGInfo {
-        std::string name;
-        PacketData  key;
-        std::string algorithm;
-        PacketData  mac;
-        uint64_t    signed_time;
-        uint16_t    fudge;
-        uint16_t    mac_size;
-        uint16_t    original_id;
-        uint16_t    error;
-        PacketData  other;
+        std::string mName;
+        PacketData  mKey;
+        std::string mAlgorithm;
+        PacketData  mMAC;
+        uint64_t    mSignedTime;
+        uint16_t    mFudge;
+        uint16_t    mOriginalID;
+        uint16_t    mError;
+        PacketData  mOther;
 
         TSIGInfo()
-            : name(), key(), algorithm( "HMAC-MD5.SIG-ALG.REG.INT" ), mac(), signed_time( 0 ), fudge( 0 ),
-              mac_size( 0 ), original_id( 0 ), error( 0 ), other()
+            : mName(),
+              mKey(),
+              mAlgorithm( "HMAC-MD5.SIG-ALG.REG.INT" ),
+              mMAC(),
+              mSignedTime( 0 ),
+              mFudge( 0 ),
+              mOriginalID( 0 ),
+              mError( 0 ),
+              mOther()
         {
         }
     };
@@ -1301,31 +1307,32 @@ namespace dns
     class RecordTSIGData : public RDATA
     {
     public:
-        Domainname key_name;
-        Domainname algorithm;
-        uint64_t   signed_time;
-        uint16_t   fudge;
-        uint16_t   mac_size;
-        PacketData mac;
-        uint16_t   original_id;
-        uint16_t   error;
-        uint16_t   other_length;
-        PacketData other;
+        Domainname mKeyName;
+        Domainname mAlgorithm;
+        uint64_t   mSignedTime;
+        uint16_t   mFudge;
+        PacketData mMAC;
+        uint16_t   mOriginalID;
+        uint16_t   mError;
+        PacketData mOther;
 
     public:
         RecordTSIGData( const std::string &in_key_name     = "",
                         const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
                         uint64_t           in_signed_time  = 0,
                         uint16_t           in_fudge        = 0,
-                        uint16_t           in_mac_size     = 0,
                         const PacketData & in_mac          = PacketData(),
                         uint16_t           in_original_id  = 0,
                         uint16_t           in_error        = 0,
-                        uint16_t           in_other_length = 0,
                         const PacketData & in_other        = PacketData() )
-	: key_name( in_key_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
-	  mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
-	  other_length( in_other_length ), other( in_other )
+	: mKeyName( in_key_name ),
+          mAlgorithm( in_algo ),
+          mSignedTime( in_signed_time ),
+          mFudge( in_fudge ),
+          mMAC( in_mac ),
+          mOriginalID( in_original_id ),
+          mError( in_error ),
+          mOther( in_other )
         {
         }
 
@@ -1340,52 +1347,20 @@ namespace dns
         virtual uint16_t size() const;
 	virtual RecordTSIGData *clone() const
 	{
-	    return new RecordTSIGData( key_name.toString(),
-				       algorithm.toString(),
-				       signed_time,
-				       fudge,
-				       mac_size,
-				       mac,
-				       original_id,
-				       error,
-				       other_length,
-				       other );
+	    return new RecordTSIGData( mKeyName.toString(),
+				       mAlgorithm.toString(),
+				       mSignedTime,
+				       mFudge,
+				       mMAC,
+				       mOriginalID,
+				       mError,
+				       mOther );
 	}
-        static RDATAPtr
-        parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end, const Domainname &key_name );
+        static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end,
+                               const uint8_t *rdata_begin,  const uint8_t *rdata_end,
+                               const Domainname &key_name );
     };
 
-    class RecordTSIG
-    {
-    public:
-        Domainname name;
-        Domainname algorithm;
-        uint64_t   signed_time;
-        uint16_t   fudge;
-        uint16_t   mac_size;
-        PacketData mac;
-        uint16_t   original_id;
-        uint16_t   error;
-        uint16_t   other_length;
-        PacketData other;
-
-    public:
-        RecordTSIG( const std::string &in_name         = "",
-                    const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
-                    uint64_t           in_signed_time  = 0,
-                    uint16_t           in_fudge        = 0,
-                    uint16_t           in_mac_size     = 0,
-                    PacketData         in_mac          = PacketData(),
-                    uint16_t           in_original_id  = 0,
-                    uint16_t           in_error        = 0,
-                    uint16_t           in_other_length = 0,
-                    PacketData         in_other        = PacketData() )
-	: name( in_name ), algorithm( in_algo ), signed_time( in_signed_time ), fudge( in_fudge ),
-	  mac_size( in_mac_size ), mac( in_mac ), original_id( in_original_id ), error( in_error ),
-	  other_length( in_other_length ), other( in_other )
-        {
-        }
-    };
 
     struct QuestionSectionEntry {
         Domainname q_domainname;
