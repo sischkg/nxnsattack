@@ -1019,16 +1019,16 @@ namespace dns
     class NSIDOption : public OptPseudoRROption
     {
     private:
-        std::string nsid;
+        std::string mNSID;
 
     public:
-        NSIDOption( const std::string &id = "" ) : nsid( id )
+        NSIDOption( const std::string &id = "" ) : mNSID( id )
         {
         }
 
         virtual std::string toString() const
         {
-            return "NSID: \"" + nsid + "\"";
+            return "NSID: \"" + mNSID + "\"";
         }
         virtual void     outputWireFormat( WireFormat & ) const;
         virtual uint16_t code() const
@@ -1037,11 +1037,11 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return 2 + 2 + nsid.size();
+            return 2 + 2 + mNSID.size();
         }
 	virtual NSIDOption *clone() const
 	{
-	    return new NSIDOption( nsid );
+	    return new NSIDOption( mNSID );
 	}
 
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
@@ -1050,10 +1050,10 @@ namespace dns
     class ClientSubnetOption : public OptPseudoRROption
     {
     private:
-        uint16_t    family;
-        uint8_t     source_prefix;
-        uint8_t     scope_prefix;
-        std::string address;
+        uint16_t    mFamily;
+        uint8_t     mSourcePrefix;
+        uint8_t     mScopePrefix;
+        std::string mAddress;
 
         static unsigned int getAddressSize( uint8_t prefix );
 
@@ -1062,7 +1062,7 @@ namespace dns
         static const int IPv6 = 2;
 
         ClientSubnetOption( uint16_t fam, uint8_t source, uint8_t scope, const std::string &addr )
-            : family( fam ), source_prefix( source ), scope_prefix( scope ), address( addr )
+            : mFamily( fam ), mSourcePrefix( source ), mScopePrefix( scope ), mAddress( addr )
         {
         }
 
@@ -1074,7 +1074,7 @@ namespace dns
         }
 	virtual ClientSubnetOption *clone() const
 	{
-	    return new ClientSubnetOption( family, source_prefix, scope_prefix, address );
+	    return new ClientSubnetOption( mFamily, mSourcePrefix, mScopePrefix, mAddress );
 	}
         virtual uint16_t size() const;
 

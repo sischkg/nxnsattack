@@ -1995,9 +1995,9 @@ namespace dns
     void NSIDOption::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( OPT_NSID );
-        message.pushUInt16HtoN( nsid.size() );
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( nsid.c_str() ),
-                            reinterpret_cast<const uint8_t *>( nsid.c_str() ) + nsid.size() );
+        message.pushUInt16HtoN( mNSID.size() );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( mNSID.c_str() ),
+                            reinterpret_cast<const uint8_t *>( mNSID.c_str() ) + mNSID.size() );
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
@@ -2015,31 +2015,31 @@ namespace dns
     {
         message.pushUInt16HtoN( OPT_CLIENT_SUBNET );
         message.pushUInt16HtoN( size() );
-        message.pushUInt16HtoN( family );
-        message.pushUInt8( source_prefix );
-        message.pushUInt8( scope_prefix );
+        message.pushUInt16HtoN( mFamily );
+        message.pushUInt8( mSourcePrefix );
+        message.pushUInt8( mScopePrefix );
 
-        if ( family == IPv4 ) {
+        if ( mFamily == IPv4 ) {
             uint8_t addr_buf[ 4 ];
-            inet_pton( AF_INET, address.c_str(), addr_buf );
-            message.pushBuffer( addr_buf, addr_buf + getAddressSize( source_prefix ) );
+            inet_pton( AF_INET, mAddress.c_str(), addr_buf );
+            message.pushBuffer( addr_buf, addr_buf + getAddressSize( mSourcePrefix ) );
         } else {
             uint8_t addr_buf[ 16 ];
-            inet_pton( AF_INET6, address.c_str(), addr_buf );
-            message.pushBuffer( addr_buf, addr_buf + getAddressSize( source_prefix ) );
+            inet_pton( AF_INET6, mAddress.c_str(), addr_buf );
+            message.pushBuffer( addr_buf, addr_buf + getAddressSize( mSourcePrefix ) );
         }
     }
 
     uint16_t ClientSubnetOption::size() const
     {
-        return 2 + 1 + 1 + getAddressSize( source_prefix ) + 4;
+        return 2 + 1 + 1 + getAddressSize( mSourcePrefix ) + 4;
     }
 
     std::string ClientSubnetOption::toString() const
     {
         std::ostringstream os;
         os << "EDNSClientSubnet: "
-           << "source:  " << (int)source_prefix << "scope:   " << (int)scope_prefix << "address: " << address;
+           << "source:  " << (int)mSourcePrefix << "scope:   " << (int)mScopePrefix << "address: " << mAddress;
         return os.str();
     }
 
