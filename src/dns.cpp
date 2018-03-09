@@ -1515,13 +1515,13 @@ namespace dns
 
     void NSECBitmapField::Window::add( Type t )
     {
-	types.push_back( t );
+	mTypes.push_back( t );
     }
 
     uint8_t NSECBitmapField::Window::getWindowSize() const
     {
 	uint8_t max_bytes = 0;
-	for ( Type t : types ) {
+	for ( Type t : mTypes ) {
 	    max_bytes = std::max<uint8_t>( max_bytes, typeToBitmapIndex( t ) / 8 + 1 );
 	}
 	return max_bytes;
@@ -1535,14 +1535,14 @@ namespace dns
     void NSECBitmapField::Window::outputWireFormat( WireFormat &message ) const
     {
         uint8_t window_size = getWindowSize();
-	message.pushUInt8( index );
+	message.pushUInt8( mIndex );
 	message.pushUInt8( window_size );
 
 	std::vector<uint8_t> bitmaps;
 	bitmaps.resize( window_size );
 	for ( uint8_t &v : bitmaps )
 	    v = 0;
-	for ( Type t : types ) {
+	for ( Type t : mTypes ) {
 	    uint8_t index = 7 - ( typeToBitmapIndex( t ) % 8 );
 	    uint8_t flag  = 1 << index;
             bitmaps.at( typeToBitmapIndex( t ) / 8 ) |= flag;
@@ -1553,7 +1553,7 @@ namespace dns
     std::string NSECBitmapField::Window::toString() const
     {
 	std::ostringstream os;
-	for ( Type t : types ) {
+	for ( Type t : mTypes ) {
 	    os << typeCodeToString( t ) << ",";
 	}
 
@@ -1588,20 +1588,20 @@ namespace dns
     void NSECBitmapField::add( Type t )
     {
 	uint8_t window_index = typeToWindowIndex( t );
-	auto window = windows.find( window_index );
-	if ( window == windows.end() ) {
-	    windows.insert( std::make_pair( window_index, Window( window_index ) ) );
+	auto window = mWindows.find( window_index );
+	if ( window == mWindows.end() ) {
+	    mWindows.insert( std::make_pair( window_index, Window( window_index ) ) );
 	}
-	window = windows.find( window_index );
+	window = mWindows.find( window_index );
 	window->second.add( t );
     }
 
     void NSECBitmapField::addWindow( const NSECBitmapField::Window &win )
     {
 	uint8_t window_index = win.getIndex();
-	auto window = windows.find( window_index );
-	if ( window == windows.end() ) {
-	    windows.insert( std::make_pair( window_index, win ) );
+	auto window = mWindows.find( window_index );
+	if ( window == mWindows.end() ) {
+	    mWindows.insert( std::make_pair( window_index, win ) );
 	}
 	else {
 	    std::ostringstream os;
@@ -1613,7 +1613,7 @@ namespace dns
     std::vector<Type> NSECBitmapField::getTypes() const
     {
         std::vector<Type> types;
-        for ( auto bitmap : windows ) {
+        for ( auto bitmap : mWindows ) {
             types.insert( types.end(), bitmap.second.getTypes().begin(), bitmap.second.getTypes().end() );
         }
         return types;
@@ -1622,7 +1622,7 @@ namespace dns
     std::string NSECBitmapField::toString() const
     {
 	std::ostringstream os;
-	for ( auto win : windows )
+	for ( auto win : mWindows )
 	    os << win.second.toString() << " ";
 	std::string result( os.str() );
 	result.pop_back();
@@ -1632,7 +1632,7 @@ namespace dns
     uint16_t NSECBitmapField::size() const
     {
 	uint16_t s = 0;
-	for ( auto win : windows ) {
+	for ( auto win : mWindows ) {
 	    s += win.second.size();
         }
 	return s;
@@ -1640,7 +1640,7 @@ namespace dns
 
     void NSECBitmapField::outputWireFormat( WireFormat &message ) const
     {
-	for ( auto win : windows )
+	for ( auto win : mWindows )
 	    win.second.outputWireFormat( message );
     }
 
@@ -1661,10 +1661,10 @@ namespace dns
     }
 
     RecordNSEC::RecordNSEC( const Domainname &next, const std::vector<Type> &types )
-	: next_domainname( next )
+	: mNextDomainname( next )
     {
         for ( auto t : types ) {
-            bitmaps.add( t );
+            mBitmaps.add( t );
         } 
     }
 
@@ -1675,13 +1675,13 @@ namespace dns
 
     std::string RecordNSEC::toString() const
     {
-	return next_domainname.toString() + " " + bitmaps.toString();
+	return mNextDomainname.toString() + " " + mBitmaps.toString();
     }
 
     void RecordNSEC::outputWireFormat( WireFormat &message ) const
     {
-	next_domainname.outputCanonicalWireFormat( message );
-	bitmaps.outputWireFormat( message );
+	mNextDomainname.outputCanonicalWireFormat( message );
+	mBitmaps.outputWireFormat( message );
     }
 
     void RecordNSEC::outputCanonicalWireFormat( WireFormat &message ) const
@@ -1691,7 +1691,7 @@ namespace dns
 
     uint16_t RecordNSEC::size() const
     {
-	return next_domainname.size() + bitmaps.size();
+	return mNextDomainname.size() + mBitmaps.size();
     }
 
     RDATAPtr RecordNSEC::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )

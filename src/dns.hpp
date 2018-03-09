@@ -724,23 +724,23 @@ namespace dns
 	{
 	public:
 	    explicit Window( uint8_t i = 0 )
-		: index( i )
+		: mIndex( i )
 	    {}
 
-	    void        setIndex( uint8_t i ) { index = i; }
+	    void        setIndex( uint8_t i ) { mIndex = i; }
 	    void        add( Type );
 	    uint16_t    size() const;
 	    void        outputWireFormat( WireFormat &message ) const;
 	    std::string toString() const;
-	    uint16_t    getIndex() const { return index; }
+	    uint16_t    getIndex() const { return mIndex; }
             uint8_t     getWindowSize() const;
-            const std::vector<Type> &getTypes() const {  return types; }
+            const std::vector<Type> &getTypes() const {  return mTypes; }
 
 	    static const uint8_t *parse( Window &ref_windown, const uint8_t *packet_begin, const uint8_t *bitmap_begin, const uint8_t *bitmap_end );
 
 	private:
-	    uint16_t          index;
-	    std::vector<Type> types;
+	    uint16_t          mIndex;
+	    std::vector<Type> mTypes;
 
 	    static uint8_t typeToBitmapIndex( Type );
 	};
@@ -757,25 +757,24 @@ namespace dns
                                      const uint8_t *packet_begin, const uint8_t *packet_end,
                                      const uint8_t *rdata_begin, const uint8_t *rdata_end );
     private:
-	std::map<uint8_t, Window> windows;
+	std::map<uint8_t, Window> mWindows;
 
 	static uint8_t typeToWindowIndex( Type );
-        //        static NSECBitmapField parse( const uint8_t *packet, const uint8_t *begin, const uint8_t *end );
     };
 
     class RecordNSEC : public RDATA
     {
     private:
-        Domainname      next_domainname;
-        NSECBitmapField bitmaps;
+        Domainname      mNextDomainname;
+        NSECBitmapField mBitmaps;
 
     public:
 	RecordNSEC( const Domainname &next, const NSECBitmapField &b )
-	    : next_domainname( next ), bitmaps( b )
+	    : mNextDomainname( next ), mBitmaps( b )
 	{}
 	RecordNSEC( const Domainname &next, const std::vector<Type> &types );
-        const Domainname &getNextDomainname() const { return next_domainname; }
-        std::vector<Type> getTypes() const { return bitmaps.getTypes(); }
+        const Domainname &getNextDomainname() const { return mNextDomainname; }
+        std::vector<Type> getTypes() const { return mBitmaps.getTypes(); }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -789,7 +788,7 @@ namespace dns
         }
 	virtual RecordNSEC *clone() const
 	{
-	    return new RecordNSEC( next_domainname, bitmaps );
+	    return new RecordNSEC( mNextDomainname, mBitmaps );
 	}
 	
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
