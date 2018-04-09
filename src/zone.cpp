@@ -76,43 +76,43 @@ namespace dns
 
     PacketInfo Zone::getAnswer( const PacketInfo &query ) const
     {
-        if ( query.question_section.size() != 1 ) {
+        if ( query.mQuestionSection.size() != 1 ) {
             throw std::logic_error( "one qname must be exist" );
         }
 	
-        Domainname qname  = query.question_section[0].mDomainname;
-        Type       qtype  = query.question_section[0].mType;
-        Class      qclass = query.question_section[0].mClass;
+        Domainname qname  = query.mQuestionSection[0].mDomainname;
+        Type       qtype  = query.mQuestionSection[0].mType;
+        Class      qclass = query.mQuestionSection[0].mClass;
 
         PacketInfo response;
 
-        response.id                   = query.id;
-        response.opcode               = query.opcode;
-        response.query_response       = 1;
-        response.authoritative_answer = 1;
-        response.truncation           = 0;
-        response.recursion_desired    = query.recursion_desired;
-        response.recursion_available  = 0;
-        response.zero_field           = 0;
-        response.authentic_data       = 1;
-        response.checking_disabled    = query.checking_disabled;
+        response.mID                  = query.mID;
+        response.mOpcode              = query.mOpcode;
+        response.mQueryResponse       = 1;
+        response.mAuthoritativeAnswer = 1;
+        response.mTruncation          = 0;
+        response.mRecursionDesired    = query.mRecursionDesired;
+        response.mRecursionAvailable  = 0;
+        response.mZeroField           = 0;
+        response.mAuthenticData       = 1;
+        response.mCheckingDisabled    = query.mCheckingDisabled;
 
-	if ( query.edns0 ) {
+	if ( query.isEDNS0() ) {
 	    OptPseudoRecord opt;
-	    opt.mPayloadSize = std::min<uint16_t>( 1280, query.opt_pseudo_rr.mPayloadSize );
-	    opt.mDOBit = query.opt_pseudo_rr.mDOBit;
-	    response.edns0 = true;
-	    response.opt_pseudo_rr = opt;
+	    opt.mPayloadSize = std::min<uint16_t>( 1280, query.mOptPseudoRR.mPayloadSize );
+	    opt.mDOBit = query.mOptPseudoRR.mDOBit;
+	    response.mIsEDNS0 = true;
+	    response.mOptPseudoRR = opt;
 	}
 
         QuestionSectionEntry q;
         q.mDomainname = qname;
         q.mType       = qtype;
         q.mClass      = qclass;
-        response.question_section.push_back( q );
+        response.mQuestionSection.push_back( q );
 
         if ( ! apex.isSubDomain( qname ) ) {
-            response.response_code = REFUSED;
+            response.mResponseCode = REFUSED;
             return response;
         }
 
@@ -127,7 +127,7 @@ namespace dns
 		}
 		else {
 		    // NoData ( found empty non-terminal )
-		    response.response_code = NO_ERROR;
+		    response.mResponseCode = NO_ERROR;
 		    addSOAToAuthoritySection( response );
 		}
 		return response;
@@ -138,20 +138,20 @@ namespace dns
 		addRRSetToAnswerSection( response, *rrset );
                 if ( response.isDNSSECOK() ) {
                     if ( auto rrsigs = node->find( TYPE_RRSIG ) ) {
-                        addRRSIG( response.answer_section, *rrsigs, qtype );
+                        addRRSIG( response.mAnswerSection, *rrsigs, qtype );
                     }
                 }
                 return response;
             }
             else {
                 // NoData ( found empty non-terminal or other type )
-                response.response_code = NO_ERROR;
+                response.mResponseCode = NO_ERROR;
                 if ( response.isDNSSECOK() ) {
                     auto nsec  = node->find( TYPE_NSEC );
                     auto rrsig = node->find( TYPE_RRSIG );
                     if ( nsec && rrsig ) {
-			addRRSet( response.authority_section, *nsec );
-                        addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
+			addRRSet( response.mAuthoritySection, *nsec );
+                        addRRSIG( response.mAuthoritySection, *rrsig, TYPE_NSEC );
                     }
                 }
                 addSOAToAuthoritySection( response );
@@ -160,7 +160,7 @@ namespace dns
         }
         
         // NXDOMAIN
-        response.response_code = NXDOMAIN;
+        response.mResponseCode = NXDOMAIN;
         addNSECAndRRSIG( response, qname );
 
         Domainname wildcard = apex;
@@ -202,12 +202,12 @@ namespace dns
         for ( auto data_itr = soa->begin() ; data_itr != soa->end() ; data_itr++ ) {
             r.mRData = *data_itr;
         }
-        response.authority_section.push_back( r );
+        response.mAuthoritySection.push_back( r );
 
         if ( response.isDNSSECOK() ) {
             auto apex_node = findNode( apex );
             if ( auto rrsigs = apex_node->find( TYPE_RRSIG ) ) {
-                addRRSIG( response.authority_section, *rrsigs, TYPE_SOA );
+                addRRSIG( response.mAuthoritySection, *rrsigs, TYPE_SOA );
             }
         }
 
@@ -228,7 +228,7 @@ namespace dns
 
     void Zone::addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const
     {
-        addRRSet( response.answer_section, rrset );
+        addRRSet( response.mAnswerSection, rrset );
     }
 
     void Zone::verify() const
@@ -277,8 +277,8 @@ namespace dns
 		     nsec->getOwner() < name &&
 		     name < std::dynamic_pointer_cast<const RecordNSEC>( (*nsec)[0] )->getNextDomainname() ) {
                     if( nsec && rrsig ) {
-                        addRRSet( response.authority_section, *nsec );
-                        addRRSIG( response.authority_section, *rrsig, TYPE_NSEC );
+                        addRRSet( response.mAuthoritySection, *nsec );
+                        addRRSIG( response.mAuthoritySection, *rrsig, TYPE_NSEC );
                     }
                 }
             }

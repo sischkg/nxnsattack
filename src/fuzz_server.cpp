@@ -4,7 +4,8 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
-
+#include <algorithm>
+#include <random>
 
 namespace dns
 {
@@ -12,8 +13,9 @@ namespace dns
     {
     public:
 	FuzzServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::UnsignedAuthServer( addr, port, debug )
-	{}
+	    : dns::UnsignedAuthServer( addr, port, debug ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
+	{
+        }
 
         std::vector<ResourceRecord> newRRs( const RRSet &rrset ) const
         {
@@ -56,7 +58,7 @@ namespace dns
             if ( ! getRandom( 32 ) )
                 modified_response.clearAuthoritySection();
             if ( ! getRandom( 32 ) )
-                modified_response.clearAdditionalInfomationSection();
+                modified_response.clearAdditionalSection();
 
             // appand new rrsets
             unsigned int rrsets_count = getRandom( 8 );
@@ -82,7 +84,7 @@ namespace dns
                     {
                         auto new_rrs = newRRs( rrset );
                         for ( auto rr : new_rrs )
-                            modified_response.pushAdditionalInfomationSection( rr );
+                            modified_response.pushAdditionalSection( rr );
                     }
                     break;
                 default:
@@ -90,13 +92,13 @@ namespace dns
                 }
             }
 
-            replaceClass( modified_response.answer_section );
-            replaceClass( modified_response.authority_section );
-            replaceClass( modified_response.additional_infomation_section );
+            replaceClass( modified_response.mAnswerSection );
+            replaceClass( modified_response.mAuthoritySection );
+            replaceClass( modified_response.mAdditionalSection );
 
-            signSection( modified_response.answer_section );
-            signSection( modified_response.authority_section );
-            signSection( modified_response.additional_infomation_section );
+            signSection( modified_response.mAnswerSection );
+            signSection( modified_response.mAuthoritySection );
+            signSection( modified_response.mAdditionalSection );
 
 	    OptionGenerator option_generator;
 	    unsigned int option_count = getRandom( 8 );
@@ -104,17 +106,17 @@ namespace dns
 		option_generator.generate( modified_response );
 
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.mPayloadSize = getRandom( 1100 );
+                modified_response.mOptPseudoRR.mPayloadSize = getRandom( 1100 );
             }
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.mRCode = getRandom( 16);
+                modified_response.mOptPseudoRR.mRCode = getRandom( 16);
             }
             if ( ! getRandom( 7 ) ) {
-                modified_response.opt_pseudo_rr.mDOBit = getRandom( 1 );
+                modified_response.mOptPseudoRR.mDOBit = getRandom( 1 );
             }
 	    
             if ( ! getRandom( 5 ) ) {
-                ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.opt_pseudo_rr );
+                ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.mOptPseudoRR );
                 RRSet rrset( opt_pseudo_rr.mDomainname,
                              opt_pseudo_rr.mClass,
                              opt_pseudo_rr.mType,
@@ -126,21 +128,36 @@ namespace dns
                 rrsig_rr.mClass      = rrsig->getClass();
                 rrsig_rr.mType       = rrsig->getType();
                 rrsig_rr.mRData      = (*rrsig)[0];
-                modified_response.pushAdditionalInfomationSection( rrsig_rr );
+                modified_response.pushAdditionalSection( rrsig_rr );
             }
 
             if ( ! getRandom( 16 ) ) {
-                modified_response.response_code = getRandom( 16 );
+                modified_response.mResponseCode = getRandom( 16 );
             }
+
+            if ( ! getRandom( 5 ) )
+                shuffle_rr( modified_response.mAnswerSection );
+
+            if ( ! getRandom( 5 ) )
+                shuffle_rr( modified_response.mAuthoritySection );
+
+            if ( ! getRandom( 5 ) )
+                shuffle_rr( modified_response.mAdditionalSection );
+
             return modified_response;
         }
 
 	void modifyMessage( WireFormat &message )
 	{
 	    WireFormat src = message;
-	    shuffle( src, message );
+            dns::shuffle( src, message );
 	}
 	
+        void shuffle_rr( std::vector<ResourceRecord> &rrs ) const
+        {
+            std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
+        }
+
         void replaceClass( std::vector<ResourceRecord> &section ) const
         {
             if ( getRandom( 5 ) )
@@ -194,8 +211,13 @@ namespace dns
 
             return rrsets;
         }
+
+    private:
+        mutable std::random_device mSeedGenerator;
+        mutable std::mt19937 mRandomEngine;
     };
- 
+
+
 }
 
 int main( int argc, char **argv )

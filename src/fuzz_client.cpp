@@ -70,12 +70,12 @@ int main( int argc, char **argv )
             dns::PacketInfo packet_info;
 
             if ( dns::getRandom( 5 ) ) {
-                packet_info.opt_pseudo_rr.mDomainname  = ".";
-                packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 0xffff );
-                packet_info.opt_pseudo_rr.mRCode       = dns::getRandom( 0xff );
-                packet_info.opt_pseudo_rr.mVersion     = 0;
-                packet_info.opt_pseudo_rr.mDOBit       = 1;
-                packet_info.edns0 = true;
+                packet_info.mOptPseudoRR.mDomainname  = ".";
+                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
+                packet_info.mOptPseudoRR.mRCode       = dns::getRandom( 0xff );
+                packet_info.mOptPseudoRR.mVersion     = 0;
+                packet_info.mOptPseudoRR.mDOBit       = 1;
+                packet_info.mIsEDNS0 = true;
 
                 unsigned int count = dns::getRandom( 8 );
                 for ( unsigned int i = 0 ; i < count ; i++ ) {
@@ -83,18 +83,18 @@ int main( int argc, char **argv )
                 }
 
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 11000 );
+                    packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 11000 );
                 }
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.mRCode = dns::getRandom( 16);
+                    packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16);
                 }
                 if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.opt_pseudo_rr.mDOBit = dns::getRandom( 1 );
+                    packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
                 }
             }
 
             dns::Domainname qname = basename;
-            switch ( dns::getRandom( 7 ) ) {
+            switch ( dns::getRandom( 12 ) ) {
             case 0:
                 qname.addSubdomain( "www" );
                 break;
@@ -114,13 +114,16 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "ns01" );
                     break;
                 case 3:
+                    qname.addSubdomain( "child" );
+                    break;
+                case 4:
                     qname.addSubdomain( "*" );
                     break;
                 }
                 break;
             case 3:
                 qname.addSubdomain( "zzz" );
-                switch ( dns::getRandom( 4 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -129,6 +132,9 @@ int main( int argc, char **argv )
                     break;
                 case 2:
                     qname.addSubdomain( "*" );
+                    break;
+                case 3:
+                    qname.addSubdomain( "child" );
                     break;
                 }
                 break;
@@ -148,7 +154,7 @@ int main( int argc, char **argv )
                 break;
             case 5:
                 qname.addSubdomain( "*" );
-                switch ( dns::getRandom( 4 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -156,12 +162,38 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "ns01" );
                     break;
                 case 2:
+                    qname.addSubdomain( "child" );
+                    break;
+                case 3:
                     qname.addSubdomain( "*" );
                     break;
                 }
                 break;
             case 6:
                 qname.addSubdomain( "xxxxxxxxxx" );
+                break;
+            default:
+                qname.addSubdomain( "child" );
+                switch ( dns::getRandom( 6 ) ) {
+                case 0:
+                    qname.addSubdomain( "vvv" );
+                    break;
+                case 1:
+                    qname.addSubdomain( "www" );
+                    break;
+                case 2:
+                    qname.addSubdomain( "zzz" );
+                    break;
+                case 3:
+                    qname.addSubdomain( "ns01" );
+                    break;
+                case 4:
+                    qname.addSubdomain( "child" );
+                    break;
+                case 5:
+                    qname.addSubdomain( "*" );
+                    break;
+                }
                 break;
             }
 
@@ -176,7 +208,7 @@ int main( int argc, char **argv )
             q.mDomainname = qname;
             q.mType       = qtype;
             q.mClass      = qclass;
-            packet_info.question_section.push_back( q );
+            packet_info.mQuestionSection.push_back( q );
 
             // appand new rrsets
             unsigned int rrsets_count = dns::getRandom( 4 );
@@ -202,7 +234,7 @@ int main( int argc, char **argv )
                     {
                         auto new_rrs = newRRs( rrset );
                         for ( auto rr : new_rrs )
-                            packet_info.pushAdditionalInfomationSection( rr );
+                            packet_info.pushAdditionalSection( rr );
                     }
                     break;
                 default:
@@ -215,26 +247,26 @@ int main( int argc, char **argv )
                 option_generator.generate( packet_info );
 
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.mPayloadSize = dns::getRandom( 1100 );
+                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 1100 );
             }
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.mRCode = dns::getRandom( 16 );
+                packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16 );
             }
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.opt_pseudo_rr.mDOBit = dns::getRandom( 1 );
+                packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
             }
 
-            packet_info.id                   = 1234;
-            packet_info.opcode               = 0;
-            packet_info.query_response       = 0;
-            packet_info.authoritative_answer = 0;
-            packet_info.truncation           = 0;
-            packet_info.recursion_desired    = 1;
-            packet_info.recursion_available  = 0;
-            packet_info.zero_field           = 0;
-            packet_info.authentic_data       = 0;
-            packet_info.checking_disabled    = 1;
-            packet_info.response_code        = 0;
+            packet_info.mID                  = 1234;
+            packet_info.mOpcode              = 0;
+            packet_info.mQueryResponse       = 0;
+            packet_info.mAuthoritativeAnswer = 0;
+            packet_info.mTruncation          = 0;
+            packet_info.mRecursionDesired    = 1;
+            packet_info.mRecursionAvailable  = 0;
+            packet_info.mZeroField           = 0;
+            packet_info.mAuthenticData       = 0;
+            packet_info.mCheckingDisabled    = 1;
+            packet_info.mResponseCode        = 0;
 	
             WireFormat message;
             packet_info.generateMessage( message );

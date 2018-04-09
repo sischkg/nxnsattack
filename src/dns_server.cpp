@@ -21,24 +21,24 @@ namespace dns
 
     ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end )
     {
-        auto tsig_key = mNameToKey.find( query.tsig_rr.mKeyName.toString() );
+        auto tsig_key = mNameToKey.find( query.mTSIGRR.mKeyName.toString() );
         if ( tsig_key == mNameToKey.end() )
             return BADKEY;
 
         TSIGInfo tsig_info;
-        tsig_info.mName       = query.tsig_rr.mKeyName.toString();
+        tsig_info.mName       = query.mTSIGRR.mKeyName.toString();
         tsig_info.mKey        = tsig_key->second.key;
         tsig_info.mAlgorithm  = tsig_key->second.algorithm;
-        tsig_info.mSignedTime = query.tsig_rr.mSignedTime;
-        tsig_info.mFudge      = query.tsig_rr.mFudge;
-        tsig_info.mMAC        = query.tsig_rr.mMAC;
-        tsig_info.mOriginalID = query.tsig_rr.mOriginalID;
-        tsig_info.mError      = query.tsig_rr.mError;
-        tsig_info.mOther      = query.tsig_rr.mOther;
+        tsig_info.mSignedTime = query.mTSIGRR.mSignedTime;
+        tsig_info.mFudge      = query.mTSIGRR.mFudge;
+        tsig_info.mMAC        = query.mTSIGRR.mMAC;
+        tsig_info.mOriginalID = query.mTSIGRR.mOriginalID;
+        tsig_info.mError      = query.mTSIGRR.mError;
+        tsig_info.mOther      = query.mTSIGRR.mOther;
 
         time_t now = time( NULL );
-        if ( query.tsig_rr.mSignedTime > now - query.tsig_rr.mFudge &&
-             query.tsig_rr.mSignedTime < now + query.tsig_rr.mFudge ) {
+        if ( query.mTSIGRR.mSignedTime > now - query.mTSIGRR.mFudge &&
+             query.mTSIGRR.mSignedTime < now + query.mTSIGRR.mFudge ) {
             return BADTIME;
         }
 
@@ -73,7 +73,7 @@ namespace dns
                     if ( isDebug() )
                         std::cerr << "Query:" << query << std::endl; 
 
-                    if ( query.tsig ) {
+                    if ( query.mIsTSIG ) {
                         ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
                         if ( rcode != NO_ERROR ) {
                             PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
@@ -88,10 +88,10 @@ namespace dns
 		    if ( mTruncation ) {
 			uint32_t requested_max_payload_size = 512;
 			if ( query.isEDNS0() &&
-			     query.opt_pseudo_rr.mPayloadSize > 512 ) {
-			    requested_max_payload_size = query.opt_pseudo_rr.mPayloadSize;
-			    if ( query.opt_pseudo_rr.mPayloadSize > 4096 )
-				query.opt_pseudo_rr.mPayloadSize = 4096;
+			     query.mOptPseudoRR.mPayloadSize > 512 ) {
+			    requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
+			    if ( query.mOptPseudoRR.mPayloadSize > 4096 )
+				query.mOptPseudoRR.mPayloadSize = 4096;
 			}
 
                         if ( isDebug() )
@@ -99,11 +99,11 @@ namespace dns
 			if ( response_info.getMessageSize() > requested_max_payload_size ) {
                             if ( isDebug() )
                                 std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
-			    response_info.truncation = 1;
+			    response_info.mTruncation = 1;
                             
 			    response_info.clearAnswerSection();
 			    response_info.clearAuthoritySection();
-			    response_info.clearAdditionalInfomationSection();
+			    response_info.clearAdditionalSection();
 			}
 		    }
 		    
@@ -153,8 +153,8 @@ namespace dns
 
                     PacketData recv_data = connection->receive( size );
                     PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
-                    if ( query.question_section[ 0 ].mType == dns::TYPE_AXFR ||
-                         query.question_section[ 0 ].mType == dns::TYPE_IXFR ) {
+                    if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
+                         query.mQuestionSection[ 0 ].mType == dns::TYPE_IXFR ) {
                         boost::thread axfr_thread( &DNSServer::sendZone, this, query, connection );
                         axfr_thread.detach();
                     } else {
@@ -166,10 +166,10 @@ namespace dns
 
                         if ( response_info.getMessageSize() > 0xffff ) {
                             std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;
-                            response_info.response_code = SERVER_ERROR;
+                            response_info.mResponseCode = SERVER_ERROR;
                             response_info.clearAnswerSection();
                             response_info.clearAuthoritySection();
-                            response_info.clearAdditionalInfomationSection();
+                            response_info.clearAdditionalSection();
                         }
 
 			response_info.generateMessage( response_stream );

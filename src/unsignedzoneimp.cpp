@@ -46,43 +46,43 @@ namespace dns
 
     PacketInfo UnsignedZoneImp::getAnswer( const PacketInfo &query ) const
     {
-        if ( query.question_section.size() != 1 ) {
+        if ( query.mQuestionSection.size() != 1 ) {
             throw std::logic_error( "one qname must be exist" );
         }
 	
-        Domainname qname  = query.question_section[0].mDomainname;
-        Type       qtype  = query.question_section[0].mType;
-        Class      qclass = query.question_section[0].mClass;
+        Domainname qname  = query.mQuestionSection[0].mDomainname;
+        Type       qtype  = query.mQuestionSection[0].mType;
+        Class      qclass = query.mQuestionSection[0].mClass;
 
         PacketInfo response;
 
-        response.id                   = query.id;
-        response.opcode               = query.opcode;
-        response.query_response       = 1;
-        response.authoritative_answer = 1;
-        response.truncation           = 0;
-        response.recursion_desired    = query.recursion_desired;
-        response.recursion_available  = 0;
-        response.zero_field           = 0;
-        response.authentic_data       = 1;
-        response.checking_disabled    = query.checking_disabled;
+        response.mID                  = query.mID;
+        response.mOpcode              = query.mOpcode;
+        response.mQueryResponse       = 1;
+        response.mAuthoritativeAnswer = 1;
+        response.mTruncation          = 0;
+        response.mRecursionDesired    = query.mRecursionDesired;
+        response.mRecursionAvailable  = 0;
+        response.mZeroField           = 0;
+        response.mAuthenticData       = 1;
+        response.mCheckingDisabled    = query.mCheckingDisabled;
 
-	if ( query.edns0 ) {
+	if ( query.isEDNS0() ) {
 	    OptPseudoRecord opt;
-	    opt.mPayloadSize = std::min<uint16_t>( 1280, query.opt_pseudo_rr.mPayloadSize );
-	    opt.mDOBit = query.opt_pseudo_rr.mDOBit;
-	    response.edns0 = true;
-	    response.opt_pseudo_rr = opt;
+	    opt.mPayloadSize = std::min<uint16_t>( 1280, query.mOptPseudoRR.mPayloadSize );
+	    opt.mDOBit = query.mOptPseudoRR.mDOBit;
+	    response.mIsEDNS0 = true;
+	    response.mOptPseudoRR = opt;
 	}
 
         QuestionSectionEntry q;
         q.mDomainname = qname;
         q.mType       = qtype;
         q.mClass      = qclass;
-        response.question_section.push_back( q );
+        response.mQuestionSection.push_back( q );
 
         if ( ! mApex.isSubDomain( qname ) ) {
-            response.response_code = REFUSED;
+            response.mResponseCode = REFUSED;
             return response;
         }
 
@@ -93,7 +93,7 @@ namespace dns
 	    for ( auto k : keys ) {
 		dnskey_rrset->add( k );
 	    }
-            addRRSet( response.answer_section, *dnskey_rrset );
+            addRRSet( response.mAnswerSection, *dnskey_rrset );
 	    return response;
 	}
 
@@ -104,37 +104,37 @@ namespace dns
                     for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
                         auto rrset = *(rrset_itr->second);
                         std::shared_ptr<RRSet> rrsig = mSigner.signRRSet( rrset );
-                        addRRSet( response.answer_section, *rrsig );
+                        addRRSet( response.mAnswerSection, *rrsig );
                     }
                 }
                 else {
                     // NoData ( found empty non-terminal or other type )
-                    response.response_code = NO_ERROR;
+                    response.mResponseCode = NO_ERROR;
                     addSOAToAuthoritySection( response );
                     if ( response.isDNSSECOK() ) {
                         RRSetPtr nsec = generateNSECRRSet( qname );
-                        addRRSet( response.authority_section, *nsec );
+                        addRRSet( response.mAuthoritySection, *nsec );
 
                         Domainname wildcard = mApex;
                         wildcard.addSubdomain( "*" );
                         RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-                        addRRSet( response.authority_section, *wildcard_nsec );
+                        addRRSet( response.mAuthoritySection, *wildcard_nsec );
                     }
 		}
 		return response;
             }
             else {
                 // NXDOMAIN
-                response.response_code = NXDOMAIN;
+                response.mResponseCode = NXDOMAIN;
                 addSOAToAuthoritySection( response );
                 if ( response.isDNSSECOK() ) {
                     RRSetPtr nsec = generateNSECRRSet( qname );
-                    addRRSet( response.authority_section, *nsec );
+                    addRRSet( response.mAuthoritySection, *nsec );
 
                     Domainname wildcard = mApex;
                     wildcard.addSubdomain( "*" );
                     RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-                    addRRSet( response.authority_section, *wildcard_nsec );
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
                 }
                 return response;
             }
@@ -146,8 +146,8 @@ namespace dns
             if ( dname_rrset ) {
                 if ( dname_rrset->count() != 1 )
                     throw std::logic_error( "multiple DNAME records exist " + parent_name.toString() );
-                response.response_code = NO_ERROR;
-                addRRSet( response.answer_section, *dname_rrset );
+                response.mResponseCode = NO_ERROR;
+                addRRSet( response.mAnswerSection, *dname_rrset );
 
                 auto dname_rdata    = std::dynamic_pointer_cast<RecordDNAME>( (*dname_rrset)[0] );
                 auto relative_name  = parent_name.getRelativeDomainname( qname );
@@ -156,13 +156,13 @@ namespace dns
                 RRSet cname_rrset( canonical_name, dname_rrset->getClass(), TYPE_CNAME, dname_rrset->getTTL() );
                 cname_rrset.add( cname_rdata );
 
-                addRRSet( response.answer_section, cname_rrset );
+                addRRSet( response.mAnswerSection, cname_rrset );
 
                 auto canonical_node  = findNode( canonical_name );
                 if ( canonical_node ) {
                     auto canonical_rrset = canonical_node->find( qtype );
                     if ( canonical_rrset ) {
-                        addRRSet( response.answer_section, *canonical_rrset );
+                        addRRSet( response.mAnswerSection, *canonical_rrset );
                     }
                 }
                 return response;
@@ -176,12 +176,12 @@ namespace dns
 		if ( node->exist() ) {
 		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
                         auto rrset = *(rrset_itr->second);
-                        addRRSet( response.answer_section, rrset );
+                        addRRSet( response.mAnswerSection, rrset );
 		    }
 		}
 		else {
 		    // NoData ( found empty non-terminal )
-		    response.response_code = NO_ERROR;
+		    response.mResponseCode = NO_ERROR;
 		    addSOAToAuthoritySection( response );
 		}
 		return response;
@@ -193,15 +193,15 @@ namespace dns
                 }
                 
                 // found 
-                response.response_code = NO_ERROR;
-                addRRSet( response.answer_section, *cname_rrset );
+                response.mResponseCode = NO_ERROR;
+                addRRSet( response.mAnswerSection, *cname_rrset );
                 std::shared_ptr<RecordCNAME> cname = std::dynamic_pointer_cast<RecordCNAME>( (*cname_rrset)[0] );
                 auto canonical_name = cname->getCanonicalName();
                 if (mApex.isSubDomain( canonical_name ) ) {
                     auto canonical_node  = findNode( canonical_name );
                     auto canonical_rrset = canonical_node->find( qtype );
                     if ( canonical_rrset ) {
-                        addRRSet( response.answer_section, *canonical_rrset );
+                        addRRSet( response.mAnswerSection, *canonical_rrset );
                     }
                 }
                 return response;
@@ -210,38 +210,61 @@ namespace dns
             auto rrset = node->find( qtype );
             if ( rrset ) {
                 // found 
-                response.response_code = NO_ERROR;
-                addRRSet( response.answer_section, *rrset );
+                response.mResponseCode = NO_ERROR;
+                addRRSet( response.mAnswerSection, *rrset );
                 return response;
             }
             else {
                 // NoData ( found empty non-terminal or other type )
-                response.response_code = NO_ERROR;
+                response.mResponseCode = NO_ERROR;
                 addSOAToAuthoritySection( response );
                 if ( response.isDNSSECOK() ) {
                     RRSetPtr nsec = generateNSECRRSet( qname );
-                    addRRSet( response.authority_section, *nsec );
+                    addRRSet( response.mAuthoritySection, *nsec );
 
                     Domainname wildcard = mApex;
                     wildcard.addSubdomain( "*" );
                     RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-                    addRRSet( response.authority_section, *wildcard_nsec );
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
 		}
 		return response;
             }
         }
+
+        for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
+            auto node = findNode( parent );
+            if ( node ) {
+                std::cerr << "found parent node" << std::endl;
+                auto ns_rrset = node->find( TYPE_NS );
+                if ( ns_rrset ) {
+                    std::cerr << "found ns records" << std::endl;
+                    response.mResponseCode = NO_ERROR;
+                    addRRSet( response.mAuthoritySection, *ns_rrset );
+                    for ( auto ns : *ns_rrset ) {
+                        auto glue_node = findNode( dynamic_cast<const RecordNS &>( *ns ).getNameServer() );
+                        if ( glue_node ) {
+                            if ( auto glue_a_rrset = glue_node->find( TYPE_A ) )
+                                addRRSet( response.mAdditionalSection, *glue_a_rrset );
+                            if ( auto glue_aaaa_rrset = glue_node->find( TYPE_AAAA ) )
+                                addRRSet( response.mAdditionalSection, *glue_aaaa_rrset );
+                        }
+                    } 
+                    return response;
+                }
+            }
+        }
         
         // NXDOMAIN
-        response.response_code = NXDOMAIN;
+        response.mResponseCode = NXDOMAIN;
         addSOAToAuthoritySection( response );
         if ( response.isDNSSECOK() ) {
             RRSetPtr nsec = generateNSECRRSet( qname );
-            addRRSet( response.authority_section, *nsec );
+            addRRSet( response.mAuthoritySection, *nsec );
 
             Domainname wildcard = mApex;
             wildcard.addSubdomain( "*" );
             RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-            addRRSet( response.authority_section, *wildcard_nsec );
+            addRRSet( response.mAuthoritySection, *wildcard_nsec );
         }
 
         return response;
@@ -274,9 +297,9 @@ namespace dns
         if ( ! mSOA || mSOA->count() != 1 )
             throw std::logic_error( "SOA record must be exist in zone" );
 
-        addRRSet( response.authority_section, *mSOA );
+        addRRSet( response.mAuthoritySection, *mSOA );
         if ( response.isDNSSECOK() ) {
-	    addRRSIG( response.authority_section, *mSOA );
+	    addRRSIG( response.mAuthoritySection, *mSOA );
         }
 
     }

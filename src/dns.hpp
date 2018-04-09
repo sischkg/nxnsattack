@@ -1416,62 +1416,75 @@ namespace dns
     };
 
     struct PacketInfo {
-        uint16_t id;
+        uint16_t mID;
 
-        uint8_t query_response;
-        uint8_t opcode;
-        bool    authoritative_answer;
-        bool    truncation;
-        bool    recursion_desired;
+        uint8_t mQueryResponse;
+        uint8_t mOpcode;
+        bool    mAuthoritativeAnswer;
+        bool    mTruncation;
+        bool    mRecursionDesired;
 
-        bool    recursion_available;
-        bool    checking_disabled;
-        bool    zero_field;
-        bool    authentic_data;
-        uint8_t response_code;
+        bool    mRecursionAvailable;
+        bool    mCheckingDisabled;
+        bool    mZeroField;
+        bool    mAuthenticData;
+        uint8_t mResponseCode;
 
-        bool edns0;
-        bool tsig;
+        bool mIsEDNS0;
+        bool mIsTSIG;
 
-	OptPseudoRecord opt_pseudo_rr;
-        RecordTSIGData  tsig_rr;
+	OptPseudoRecord mOptPseudoRR;
+        RecordTSIGData  mTSIGRR;
 
-        std::vector<QuestionSectionEntry> question_section;
-        std::vector<ResourceRecord> answer_section;
-        std::vector<ResourceRecord> authority_section;
-        std::vector<ResourceRecord> additional_infomation_section;
+        std::vector<QuestionSectionEntry> mQuestionSection;
+        std::vector<ResourceRecord>       mAnswerSection;
+        std::vector<ResourceRecord>       mAuthoritySection;
+        std::vector<ResourceRecord>       mAdditionalSection;
 
         PacketInfo()
-            : id( 0 ), query_response( 0 ), opcode( 0 ), authoritative_answer( 0 ), truncation( false ),
-              recursion_desired( false ), recursion_available( false ), checking_disabled( false ), zero_field( 0 ),
-              authentic_data( false ), response_code( 0 ), edns0( false ), tsig( false )
-        {
-        }
+            : mID( 0 ),
+              mQueryResponse( 0 ),
+              mOpcode( 0 ),
+              mAuthoritativeAnswer( 0 ),
+              mTruncation( false ),
+              mRecursionDesired( false ),
+              mRecursionAvailable( false ),
+              mCheckingDisabled( false ),
+              mZeroField( 0 ),
+              mAuthenticData( false ),
+              mResponseCode( 0 ),
+              mIsEDNS0( false ),
+              mIsTSIG( false )
+        {}
 
 	bool isEDNS0() const
 	{
-	    return edns0;
+	    return mIsEDNS0;
 	}
 
 	bool isDNSSECOK() const
 	{
-	    return opt_pseudo_rr.mDOBit;
+            if ( mIsEDNS0 )
+                return mOptPseudoRR.mDOBit;
+            else
+                return false;
+
 	}
 
-        const std::vector<QuestionSectionEntry> &getQuestionSection() const { return question_section; }
-        const std::vector<ResourceRecord> &getAnswerSection() const { return answer_section; }
-        const std::vector<ResourceRecord> &getAuthoritySection() const { return authority_section; }
-        const std::vector<ResourceRecord> &getAdditionalInfomationSection() const { return additional_infomation_section; }
+        const std::vector<QuestionSectionEntry> &getQuestionSection() const { return mQuestionSection; }
+        const std::vector<ResourceRecord>       &getAnswerSection() const { return mAnswerSection; }
+        const std::vector<ResourceRecord>       &getAuthoritySection() const { return mAuthoritySection; }
+        const std::vector<ResourceRecord>       &getAdditionalSection() const { return mAdditionalSection; }
 
-        void pushQuestionSection( const QuestionSectionEntry &e ) { return question_section.push_back( e ); }
-        void pushAnswerSection( const ResourceRecord &e ) { return answer_section.push_back( e ); }
-        void pushAuthoritySection( const ResourceRecord &e ) { return authority_section.push_back( e ); }
-        void pushAdditionalInfomationSection( const ResourceRecord &e ) { return additional_infomation_section.push_back( e ); }
+        void pushQuestionSection( const QuestionSectionEntry &e ) { return mQuestionSection.push_back( e ); }
+        void pushAnswerSection( const ResourceRecord &e )         { return mAnswerSection.push_back( e ); }
+        void pushAuthoritySection( const ResourceRecord &e )      { return mAuthoritySection.push_back( e ); }
+        void pushAdditionalSection( const ResourceRecord &e )     { return mAdditionalSection.push_back( e ); }
 
-        void clearQuestionSection() { return question_section.clear(); }
-        void clearAnswerSection() { return answer_section.clear(); }
-        void clearAuthoritySection() { return authority_section.clear(); }
-        void clearAdditionalInfomationSection() { return additional_infomation_section.clear(); }
+        void clearQuestionSection()   { return mQuestionSection.clear(); }
+        void clearAnswerSection()     { return mAnswerSection.clear(); }
+        void clearAuthoritySection()  { return mAuthoritySection.clear(); }
+        void clearAdditionalSection() { return mAdditionalSection.clear(); }
 
         void generateMessage( WireFormat & ) const;
         uint32_t getMessageSize() const;

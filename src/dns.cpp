@@ -72,43 +72,43 @@ namespace dns
     void PacketInfo::generateMessage( WireFormat &message ) const
     {
         PacketHeaderField header;
-        header.id                   = htons( this->id );
-        header.opcode               = this->opcode;
-        header.query_response       = this->query_response;
-        header.authoritative_answer = this->authoritative_answer;
-        header.truncation           = this->truncation;
-        header.recursion_desired    = this->recursion_desired;
-        header.recursion_available  = this->recursion_available;
+        header.id                   = htons( mID );
+        header.opcode               = mOpcode;
+        header.query_response       = mQueryResponse;
+        header.authoritative_answer = mAuthoritativeAnswer;
+        header.truncation           = mTruncation;
+        header.recursion_desired    = mRecursionDesired;
+        header.recursion_available  = mRecursionAvailable;
         header.zero_field           = 0;
-        header.authentic_data       = this->authentic_data;
-        header.checking_disabled    = this->checking_disabled;
-        header.response_code        = this->response_code;
+        header.authentic_data       = mAuthenticData;
+        header.checking_disabled    = mCheckingDisabled;
+        header.response_code        = mResponseCode;
 
-        std::vector<ResourceRecord> additional = this->additional_infomation_section;
+        std::vector<ResourceRecord> additional = mAdditionalSection;
 
-        if ( this->edns0 ) {
-            additional.push_back( generateOptPseudoRecord( this->opt_pseudo_rr ) );
+        if ( isEDNS0() ) {
+            additional.push_back( generateOptPseudoRecord( mOptPseudoRR ) );
         }
 
-        header.question_count              = htons( this->question_section.size() );
-        header.answer_count                = htons( this->answer_section.size() );
-        header.authority_count             = htons( this->authority_section.size() );
-        header.additional_infomation_count = htons( additional.size() );
+        header.question_count              = htons( mQuestionSection.size() );
+        header.answer_count                = htons( mAnswerSection.size() );
+        header.authority_count             = htons( mAuthoritySection.size() );
+        header.additional_infomation_count = htons( mAdditionalSection.size() );
 
         message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
                             reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
 
-        for ( auto q = this->question_section.begin(); q != this->question_section.end(); ++q ) {
-            generate_question_section( *q, message );
+        for ( auto q : mQuestionSection ) {
+            generate_question_section( q, message );
         }
-        for ( auto q = this->answer_section.begin(); q != this->answer_section.end(); ++q ) {
-            generate_response_section( *q, message );
+        for ( auto q : mAnswerSection ) {
+            generate_response_section( q, message );
         }
-        for ( auto q = this->authority_section.begin(); q != this->authority_section.end(); ++q ) {
-            generate_response_section( *q, message );
+        for ( auto q : mAuthoritySection ) {
+            generate_response_section( q, message );
         }
-        for ( auto q = additional.begin(); q != additional.end(); ++q ) {
-            generate_response_section( *q, message );
+        for ( auto q : mAdditionalSection ) {
+            generate_response_section( q, message );
         }
     }
 
@@ -116,22 +116,22 @@ namespace dns
     {
         uint32_t message_size = sizeof(PacketHeaderField);
 
-        if ( edns0 ) {
-	    ResourceRecord rr = generateOptPseudoRecord( opt_pseudo_rr );
+        if ( isEDNS0() ) {
+	    ResourceRecord rr = generateOptPseudoRecord( mOptPseudoRR );
 	    message_size += rr.size();
         }
 
-        for ( auto q = question_section.begin(); q != question_section.end(); ++q ) {
-            message_size += q->size();
+        for ( auto q : mQuestionSection ) {
+            message_size += q.size();
         }
-        for ( auto q = answer_section.begin(); q != answer_section.end(); ++q ) {
-            message_size += q->size();
+        for ( auto q : mAnswerSection ) {
+            message_size += q.size();
         }
-        for ( auto q = authority_section.begin(); q != authority_section.end(); ++q ) {
-            message_size += q->size();
+        for ( auto q : mAuthoritySection ) {
+            message_size += q.size();
         }
-        for ( auto q = additional_infomation_section.begin(); q != additional_infomation_section.end(); ++q ) {
-            message_size += q->size();
+        for ( auto q : mAdditionalSection ) {
+            message_size += q.size();
         }
 
         return message_size;
@@ -149,16 +149,16 @@ namespace dns
         PacketInfo               packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
 
-        packet_info.id                   = ntohs( header->id );
-        packet_info.query_response       = header->query_response;
-        packet_info.opcode               = header->opcode;
-        packet_info.authoritative_answer = header->authoritative_answer;
-        packet_info.truncation           = header->truncation;
-        packet_info.recursion_available  = header->recursion_available;
-        packet_info.recursion_desired    = header->recursion_desired;
-        packet_info.checking_disabled    = header->checking_disabled;
-        packet_info.authentic_data       = header->authentic_data;
-        packet_info.response_code        = header->response_code;
+        packet_info.mID                  = ntohs( header->id );
+        packet_info.mQueryResponse       = header->query_response;
+        packet_info.mOpcode              = header->opcode;
+        packet_info.mAuthoritativeAnswer = header->authoritative_answer;
+        packet_info.mTruncation          = header->truncation;
+        packet_info.mRecursionAvailable  = header->recursion_available;
+        packet_info.mRecursionDesired    = header->recursion_desired;
+        packet_info.mCheckingDisabled    = header->checking_disabled;
+        packet_info.mAuthenticData       = header->authentic_data;
+        packet_info.mResponseCode        = header->response_code;
 
         int question_count              = ntohs( header->question_count );
         int answer_count                = ntohs( header->answer_count );
@@ -168,36 +168,36 @@ namespace dns
         packet += sizeof( PacketHeaderField );
         for ( int i = 0; i < question_count; i++ ) {
             QuestionSectionEntryPair pair = parse_question_section( begin, end, packet );
-            packet_info.question_section.push_back( pair.first );
+            packet_info.mQuestionSection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < answer_count; i++ ) {
             ResourceRecordPair pair = parse_response_section( begin, end, packet );
-            packet_info.answer_section.push_back( pair.first );
+            packet_info.mAnswerSection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < authority_count; i++ ) {
             ResourceRecordPair pair = parse_response_section( begin, end, packet );
-            packet_info.authority_section.push_back( pair.first );
+            packet_info.mAuthoritySection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
             ResourceRecordPair pair = parse_response_section( begin, end, packet );
             if ( pair.first.mType == TYPE_OPT ) {
-                packet_info.edns0 = true;
-		packet_info.opt_pseudo_rr.mDomainname  = pair.first.mDomainname;
-		packet_info.opt_pseudo_rr.mPayloadSize = pair.first.mClass;
-		packet_info.opt_pseudo_rr.mRCode       = ( 0xff000000 & pair.first.mTTL ) >> 24;
-		packet_info.opt_pseudo_rr.mVersion     = ( 0x00ff0000 & pair.first.mTTL ) >> 16;
-		packet_info.opt_pseudo_rr.mDOBit       = ( 0x00008000 & pair.first.mTTL ) ? true : false;
-		packet_info.opt_pseudo_rr.mOptions     = pair.first.mRData;
+                packet_info.mIsEDNS0 = true;
+		packet_info.mOptPseudoRR.mDomainname  = pair.first.mDomainname;
+		packet_info.mOptPseudoRR.mPayloadSize = pair.first.mClass;
+		packet_info.mOptPseudoRR.mRCode       = ( 0xff000000 & pair.first.mTTL ) >> 24;
+		packet_info.mOptPseudoRR.mVersion     = ( 0x00ff0000 & pair.first.mTTL ) >> 16;
+		packet_info.mOptPseudoRR.mDOBit       = ( 0x00008000 & pair.first.mTTL ) ? true : false;
+		packet_info.mOptPseudoRR.mOptions     = pair.first.mRData;
 		
             }
             if ( pair.first.mType == TYPE_TSIG && pair.first.mClass == CLASS_IN ) {
-                packet_info.tsig    = true;
-                packet_info.tsig_rr = dynamic_cast<const RecordTSIGData &>( *( pair.first.mRData ) );
+                packet_info.mIsTSIG = true;
+                packet_info.mTSIGRR = dynamic_cast<const RecordTSIGData &>( *( pair.first.mRData ) );
             }
-            packet_info.additional_infomation_section.push_back( pair.first );
+            packet_info.mAdditionalSection.push_back( pair.first );
             packet = pair.second;
         }
 
@@ -390,15 +390,15 @@ namespace dns
 
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet )
     {
-        os << "ID: "                  << packet.id << std::endl
-           << "Query/Response: "      << ( packet.query_response == 0 ? "Query" : "Response" ) << std::endl
-           << "OpCode:"               << packet.opcode << std::endl
-           << "Authoritative Answer:" << packet.authoritative_answer << std::endl
-           << "Truncation: "          << packet.truncation << std::endl
-           << "Recursion Desired: "   << packet.recursion_desired << std::endl
-           << "Recursion Available: " << packet.recursion_available << std::endl
-           << "Checking Disabled: "   << packet.checking_disabled << std::endl
-           << "Response Code: "       << responseCodeToString( packet.response_code ) << std::endl;
+        os << "ID: "                  << packet.mID << std::endl
+           << "Query/Response: "      << ( packet.mQueryResponse == 0 ? "Query" : "Response" ) << std::endl
+           << "OpCode:"               << packet.mOpcode << std::endl
+           << "Authoritative Answer:" << packet.mAuthoritativeAnswer << std::endl
+           << "Truncation: "          << packet.mTruncation << std::endl
+           << "Recursion Desired: "   << packet.mRecursionDesired << std::endl
+           << "Recursion Available: " << packet.mRecursionAvailable << std::endl
+           << "Checking Disabled: "   << packet.mCheckingDisabled << std::endl
+           << "Response Code: "       << responseCodeToString( packet.mResponseCode ) << std::endl;
 
         return os;
     }
@@ -569,25 +569,25 @@ namespace dns
 
     std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
     {
-        os << "ID: "                   << res.id << std::endl
-           << "Query/Response: "       << ( res.query_response ? "Response" : "Query" ) << std::endl
-           << "OpCode:"                << res.opcode  << std::endl
-           << "Authoritative Answer: " << res.authoritative_answer << std::endl
-           << "Truncation: "           << res.truncation << std::endl
-           << "Recursion Desired: "    << res.recursion_desired << std::endl
-           << "Recursion Available: "  << res.recursion_available << std::endl
-           << "Checking Disabled: "    << res.checking_disabled << std::endl
-           << "Response Code: "        << responseCodeToString( res.response_code ) << std::endl;
+        os << "ID: "                   << res.mID << std::endl
+           << "Query/Response: "       << ( res.mQueryResponse ? "Response" : "Query" ) << std::endl
+           << "OpCode:"                << res.mOpcode  << std::endl
+           << "Authoritative Answer: " << res.mAuthoritativeAnswer << std::endl
+           << "Truncation: "           << res.mTruncation << std::endl
+           << "Recursion Desired: "    << res.mRecursionDesired << std::endl
+           << "Recursion Available: "  << res.mRecursionAvailable << std::endl
+           << "Checking Disabled: "    << res.mCheckingDisabled << std::endl
+           << "Response Code: "        << responseCodeToString( res.mResponseCode ) << std::endl;
 
-        for ( auto q : res.question_section )
+        for ( auto q : res.mQuestionSection )
             os << "Query: " << q.mDomainname << " " << typeCodeToString( q.mType ) << "  ?" << std::endl;
-        for ( auto a : res.answer_section )
+        for ( auto a : res.mAnswerSection )
             std::cout << "Answer: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
                       << " " << a.mRData->toString() << std::endl;
-        for ( auto a : res.authority_section )
+        for ( auto a : res.mAuthoritySection )
             std::cout << "Authority: " << a.mDomainname << a.mTTL << " " << typeCodeToString( a.mType ) << " "
                       << a.mRData->toString() << std::endl;
-        for ( auto a : res.additional_infomation_section )
+        for ( auto a : res.mAdditionalSection )
             std::cout << "Additional: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
                       << " " << a.mRData->toString() << std::endl;
 
@@ -2461,33 +2461,33 @@ namespace dns
         pos += sizeof( PacketHeaderField );
 
         // skip question section
-        for ( uint16_t i = 0; i < packet_info.question_section.size(); i++ )
+        for ( auto q : packet_info.mQuestionSection )
             pos = parse_question_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip answer section
-        for ( uint16_t i = 0; i < packet_info.answer_section.size(); i++ )
+        for ( auto r : packet_info.mAnswerSection )
             pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip authority section
-        for ( uint16_t i = 0; i < packet_info.authority_section.size(); i++ )
+        for ( auto r : packet_info.mAuthoritySection )
             pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
-
-        // skip non TSIG Record in additional section
+        // SKIP NON TSIG RECORD IN ADDITIONAL SECTION
         bool is_found_tsig = false;
-        for ( uint16_t i = 0; i < packet_info.additional_infomation_section.size(); i++ ) {
+        for ( auto r : packet_info.mAdditionalSection ) {
             ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos );
             if ( parsed_rr_pair.first.mType == TYPE_TSIG ) {
                 is_found_tsig = true;
                 break;
-            } else {
+            }
+            else {
                 pos = parsed_rr_pair.second;
             }
         }
 
         if ( !is_found_tsig ) {
-            throw FormatError( "not found tsig record" );
+            throw FormatError( "not found TSIG RR" );
         }
-        // remove TSIG RR( TSIG must be final RR in message )
+        // REMOVE TSIG RR( TSIG MUST BE FINAL RR IN MESSAGE )
         hash_data.resize( pos - &hash_data[ 0 ] );
 
         PacketData mac = getTSIGMAC( tsig_info, hash_data, PacketData() );

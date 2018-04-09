@@ -160,7 +160,7 @@ namespace dns
         for ( auto rr : hint.getAuthoritySection() ) {
             names.push_back( rr.mDomainname );
         }
-        for ( auto rr : hint.getAdditionalInfomationSection() ) {
+        for ( auto rr : hint.getAdditionalSection() ) {
             names.push_back( rr.mDomainname );
         }
 
@@ -179,7 +179,7 @@ namespace dns
         uint32_t qdcount = hint.getQuestionSection().size();
         uint32_t ancount = hint.getAnswerSection().size();
         uint32_t nscount = hint.getAuthoritySection().size();
-        uint32_t adcount = hint.getAdditionalInfomationSection().size();
+        uint32_t adcount = hint.getAdditionalSection().size();
 
         uint32_t index = getRandom( qdcount + ancount + nscount + adcount );
         if ( index < qdcount ) {
@@ -192,7 +192,7 @@ namespace dns
             hint_name = hint.getAuthoritySection()[index - qdcount - ancount].mDomainname;
         }
         else if ( index < qdcount + ancount + nscount + adcount ) {
-            hint_name = hint.getAdditionalInfomationSection()[index - qdcount - ancount - nscount].mDomainname;
+            hint_name = hint.getAdditionalSection()[index - qdcount - ancount - nscount].mDomainname;
         }
         else {
             throw std::logic_error( "invalid index of XNameGenerator::generate( hint )" );
@@ -222,7 +222,7 @@ namespace dns
         std::vector<uint8_t> data;
         for ( uint16_t i = 0 ; i < size ; i++ )
             data.push_back( getRandom( 0xff ) );
-        return std::shared_ptr<RDATA>( new RecordRaw( getRandom( 0xff ), data ) );
+        return std::shared_ptr<RDATA>( new RecordRaw( getRandom( 0x3ff ), data ) );
     }
 
     /**********************************************************
@@ -241,7 +241,7 @@ namespace dns
                 record_a_list.push_back( rr.mRData );
             }
         }
-        for ( auto rr : hint.getAdditionalInfomationSection() ) {
+        for ( auto rr : hint.getAdditionalSection() ) {
             if ( rr.mType == TYPE_A ) {
                 record_a_list.push_back( rr.mRData );
             }
@@ -303,7 +303,7 @@ namespace dns
                 record_a_list.push_back( rr.mRData );
             }
         }
-        for ( auto rr : hint.getAdditionalInfomationSection() ) {
+        for ( auto rr : hint.getAdditionalSection() ) {
             if ( rr.mType == TYPE_AAAA ) {
                 record_a_list.push_back( rr.mRData );
             }
@@ -846,7 +846,7 @@ namespace dns
 	    return;
 
         std::shared_ptr<OptPseudoRROption> option = mGenerators[ getRandom( mGenerators.size() )]->generate( packet );
-	std::dynamic_pointer_cast<RecordOptionsData>( packet.opt_pseudo_rr.mOptions )->add( option );
+	std::dynamic_pointer_cast<RecordOptionsData>( packet.mOptPseudoRR.mOptions )->add( option );
     }
 
 }
