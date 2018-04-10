@@ -439,7 +439,19 @@ namespace dns
                 base64_string += *begin;
                 begin++;
             }
-
+	    switch ( base64_string.size() % 4 ) {
+	    case 0:
+		break;
+	    case 1:
+		throw std::runtime_error( "invalid base64 string length" );
+	    case 2:
+		base64_string += "==";
+		break;
+	    case 3:
+		base64_string += "=";
+		break;
+	    }
+    
             std::vector<uint8_t> decoded_data;
             decodeFromBase64( base64_string, decoded_data );
             return decoded_data;

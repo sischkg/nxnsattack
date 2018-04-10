@@ -338,4 +338,18 @@ namespace dns
 	}
     }
 
+
+    uint16_t OffsetDB::findDomainname( const Domainname &name ) const
+    {
+        OffsetContainerIterator offset = mOffsets.find( name );
+        if ( offset == mOffsets.end() )
+            return NOT_FOUND;
+        else
+            return offset->second;
+    }
+
+    void OffsetDB::add( const Domainname &name, uint16_t offset )
+    {
+    }
+
 }

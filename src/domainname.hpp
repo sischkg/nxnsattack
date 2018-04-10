@@ -3,11 +3,14 @@
 
 #include "wireformat.hpp"
 #include <deque>
+#include <map>
 #include <iostream>
 #include <stdexcept>
 
 namespace dns
 {
+    class OffsetDB;
+
     typedef uint16_t Offset;
     const Offset     NO_COMPRESSION = 0xffff;
 
@@ -33,6 +36,7 @@ namespace dns
         {
         }
     };
+
 
 
     class Domainname
@@ -97,6 +101,22 @@ namespace dns
     bool operator==( const Domainname &lhs, const Domainname &rhs );
     bool operator!=( const Domainname &lhs, const Domainname &rhs );
     bool operator<( const Domainname &lhs, const Domainname &rhs );
+
+    class OffsetDB
+    {
+    private:
+        typedef std::map<Domainname,uint16_t>   OffsetContainer;
+        typedef OffsetContainer::const_iterator OffsetContainerIterator;
+
+        OffsetContainer mOffsets;
+    public:
+        const uint16_t NOT_FOUND = 0xffff;
+
+        uint16_t findDomainname( const Domainname &name ) const;
+        void add( const Domainname &name, uint16_t offset );
+    };
+
+
 }
 
 #endif
