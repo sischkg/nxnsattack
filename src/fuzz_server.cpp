@@ -248,13 +248,17 @@ int main( int argc, char **argv )
         return 1;
     }
 
+    if ( apex.back() != '.' )
+	apex.push_back( '.' );
+
     try {
 	dns::FuzzServer server( bind_address, bind_port, debug );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename );
         std::vector<std::shared_ptr<dns::RecordDS>> rrset_ds = server.getDSRecords();
+	std::cout << "DS records" << std::endl;
         for ( auto ds : rrset_ds ){
-            std::cout << ds->toZone() << std::endl;
+            std::cout << apex << "   IN DS " << ds->toZone() << std::endl;
         }
 	server.start();
     }
