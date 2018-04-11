@@ -31,16 +31,6 @@ namespace dns
                 r.mRData      = rr;
                 rrs.push_back( r );
             }
-            for( auto rrsig : rrsigs->getRRSet() ) {
-                ResourceRecord r;
-                r.mDomainname = rrsigs->getOwner();
-                r.mType       = rrsigs->getType();
-                r.mClass      = rrsigs->getClass();
-                r.mTTL        = rrsigs->getTTL();
-                r.mRData      = rrsig;
-                rrs.push_back( r );
-            }
-
             return rrs;
         }
 
@@ -96,9 +86,16 @@ namespace dns
             replaceClass( modified_response.mAuthoritySection );
             replaceClass( modified_response.mAdditionalSection );
 
-            signSection( modified_response.mAnswerSection );
-            signSection( modified_response.mAuthoritySection );
-            signSection( modified_response.mAdditionalSection );
+	    int sign_count;
+	    sign_count= getRandom( 2 );
+	    for ( int i = 0 ; i < sign_count ; i++ )
+		signSection( modified_response.mAnswerSection );
+	    sign_count= getRandom( 2 );
+	    for ( int i = 0 ; i < sign_count ; i++ )
+		signSection( modified_response.mAuthoritySection );
+	    sign_count= getRandom( 2 );
+	    for ( int i = 0 ; i < sign_count ; i++ )
+		signSection( modified_response.mAdditionalSection );
 
 	    OptionGenerator option_generator;
 	    unsigned int option_count = getRandom( 8 );
