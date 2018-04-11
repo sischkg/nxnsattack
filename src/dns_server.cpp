@@ -165,7 +165,8 @@ namespace dns
                             std::cerr << "response size(TCP): " << response_info.getMessageSize() << std::endl;
 
                         if ( response_info.getMessageSize() > 0xffff ) {
-                            std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;
+			    if ( isDebug() )
+				std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;
                             response_info.mResponseCode = SERVER_ERROR;
                             response_info.clearAnswerSection();
                             response_info.clearAuthoritySection();
