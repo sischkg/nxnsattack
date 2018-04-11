@@ -731,7 +731,7 @@ namespace dns
         RRSet rrset( owner,
                      class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ],
                      resource_data->type(),
-                     getRandom( 60 ) );
+                     getRandom( 0xffffffff ) );
         rrset.add( resource_data );
 
         return rrset;
