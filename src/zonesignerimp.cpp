@@ -18,6 +18,8 @@ namespace dns
     {
 	if ( str == "RSASHA1" )
 	    return DNSSEC_RSASHA1;
+	else if ( str == "RSASHA256" )
+	    return DNSSEC_RSASHA256;
 	else if ( str == "ECDSAP256SHA256" )
 	    return DNSSEC_ECDSAP256SHA256;
 	else if ( str == "ECDSAP256SHA384" )
@@ -45,6 +47,8 @@ namespace dns
         switch ( algo ) {
         case DNSSEC_RSASHA1:
             return EVP_sha1();
+        case DNSSEC_RSASHA256:
+            return EVP_sha256();
         case DNSSEC_ECDSAP256SHA256:
             return EVP_sha256();
         case DNSSEC_ECDSAP384SHA384:
@@ -151,7 +155,16 @@ namespace dns
                                                                                       private_key,
                                                                                       not_before,
                                                                                       not_after,
-                                                                                      domain ) ) );
+                                                                                      domain,
+                                                                                      NID_sha1 ) ) );
+                break;
+            case DNSSEC_RSASHA256:
+                keys.push_back( std::shared_ptr<PrivateKeyImp>( new RSAPrivateKeyImp( key_type,
+                                                                                      private_key,
+                                                                                      not_before,
+                                                                                      not_after,
+                                                                                      domain,
+                                                                                      NID_sha1 ) ) );
                 break;
             case DNSSEC_ECDSAP256SHA256:
                 keys.push_back( std::shared_ptr<PrivateKeyImp>( new ECDSAP256SHA256PrivateKeyImp( key_type,
@@ -236,14 +249,13 @@ namespace dns
 	RSA* rsa = EVP_PKEY_get0_RSA( getPrivateKey() );
 	unsigned int signature_length = RSA_size( rsa );
 	signature.resize( signature_length );
-	int result = RSA_sign( NID_sha1, &digest[0], digest_length, &signature[0], &signature_length, rsa );
+	int result = RSA_sign( mHashAlgorithm, &digest[0], digest_length, &signature[0], &signature_length, rsa );
 
 	if ( result != 1 ) {
 	    throwException( "RSA_sign failed" );
 	}
 	signature.resize( signature_length );
     }
-
 
     /*******************************************************************************************
      * ECDSAPrivateKeyImp

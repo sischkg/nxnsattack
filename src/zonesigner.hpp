@@ -22,11 +22,12 @@ namespace dns
     enum HashAlgorithm : uint8_t {
 	DNSSEC_SHA1   = 1,
 	DNSSEC_SHA256 = 2,
-	DNSSEC_SHA384 = 4,
+	DNSSEC_SHA384 = 3,
     };
 
     enum SignAlgorithm : uint8_t {
 	DNSSEC_RSASHA1         = 5,
+	DNSSEC_RSASHA256       = 8,
 	DNSSEC_ECDSAP256SHA256 = 13,
 	DNSSEC_ECDSAP384SHA384 = 14,
     };

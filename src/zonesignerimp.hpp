@@ -76,27 +76,33 @@ namespace dns
 
     };
 
+
     /*******************************************************************************************
-     * RSAPrivateKeyImp
+     * RSAAPrivateKeyImp
      *******************************************************************************************/
     class RSAPrivateKeyImp : public PrivateKeyImp 
     {
     public:
 	RSAPrivateKeyImp( KeyType key_type,
-			  EVP_PKEY *key,
-			  uint32_t not_before,
-			  uint32_t not_after,
-			  const Domainname &domain )
+                          EVP_PKEY *key,
+                          uint32_t not_before,
+                          uint32_t not_after,
+                          const Domainname &domain,
+                          int hash_algo )
             : PrivateKeyImp( key_type,
 			     DNSSEC_RSASHA1,
 			     key,
 			     not_before,
 			     not_after,
-			     domain )
+			     domain ),
+              mHashAlgorithm( hash_algo )
         {}
 
     	virtual std::shared_ptr<PublicKey> getPublicKey() const;
 	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+
+    private:
+        int mHashAlgorithm;
     };
 
 
@@ -108,13 +114,12 @@ namespace dns
     {
     public:
 	ECDSAPrivateKeyImp( KeyType           key_type,
-                            //                            SignAlgorithm     alog,
                             EVP_PKEY         *key,
                             uint32_t          not_before,
                             uint32_t          not_after,
                             const Domainname &domain )
             : PrivateKeyImp( key_type,
-                             static_cast<SignAlgorithm>(SIGN_ALGO),//			     algo,
+                             static_cast<SignAlgorithm>(SIGN_ALGO),
 			     key,
 			     not_before,
 			     not_after,
