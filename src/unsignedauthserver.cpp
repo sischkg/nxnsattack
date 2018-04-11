@@ -15,7 +15,6 @@ namespace dns
 	    config += line;
 	    config += "\n";
 	}
-	std::cerr << config << std::endl;
 
         UnsignedZone::initialize();
         zone.reset( new UnsignedZone( apex, ksk_config, zsk_config ) );
