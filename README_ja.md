@@ -39,9 +39,11 @@ $ make
 
 ドメインexample.comのゾーンファイルとKSK, ZSKを用意します。
 
+```
 $ named-checkzone -s full -o example.com.zone.full example.com example.com.zone
 zone example.com/IN: loaded serial 20170531
 OK
+```
 
 ファジングサーバを開始します。
 
@@ -53,7 +55,7 @@ OK
 
 ```
 ./fuzz_client -s <full_resolver_ip_address> -b example.com
-````
+```
 
 ## 必要なソフトウェア
 
@@ -138,6 +140,8 @@ fuzz_serverは一般的な形式(RFC1035)のゾーンファイルを利用でき
 
 #### ゾーンファイル作成例
 
+RFC1035形式のゾーンファイル
+
 ```
 $ cat example.com.zone
 
@@ -158,10 +162,19 @@ ns02    86400 IN A      192.168.33.12
 www     3600  IN A      192.168.33.101
 www     3600  IN A      192.168.33.102
 mail    3600  IN A      192.168.33.111
+```
 
+形式の変換
+
+```
 $ named-checkzone  -s full -o example.com.zone.full example.com example.com.zone
 zone example.com/IN: loaded serial 20170531
 OK
+```
+
+変換後のゾーンファイル
+
+```
 $ cat example.com.zone.full
 example.com.                                  3600 IN SOA       ns01.example.co. hostmaster.example.com. 20170531 3600 1800 8640000 3600
 example.com.                                  3600 IN NS        ns01.example.com.
@@ -172,7 +185,6 @@ ns01.example.com.                             86400 IN A        192.168.33.11
 ns02.example.com.                             86400 IN A        192.168.33.12
 www.example.com.                              3600 IN A         192.168.33.101
 www.example.com.                              3600 IN A         192.168.33.102
-
 ```
 
 ### KSK, ZSK設定ファイルの形式
