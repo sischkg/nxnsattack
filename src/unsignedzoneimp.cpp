@@ -234,10 +234,8 @@ namespace dns
         for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
             auto node = findNode( parent );
             if ( node ) {
-                std::cerr << "found parent node" << std::endl;
                 auto ns_rrset = node->find( TYPE_NS );
                 if ( ns_rrset ) {
-                    std::cerr << "found ns records" << std::endl;
                     response.mResponseCode = NO_ERROR;
                     addRRSet( response.mAuthoritySection, *ns_rrset );
                     for ( auto ns : *ns_rrset ) {

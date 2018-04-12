@@ -7,7 +7,7 @@ dns-fuzz-serverはDNS権威サーバとして振る舞い、フルリゾルバ�
 フルリゾルバの異常終了(assert failure, segmentation fault, kill by OOM)を発生させます。
 
 
-### Quick Start
+## Quick Start
 
 Centos 7.4をインストールします。
 
@@ -31,16 +31,16 @@ Centos 7.4をインストールします。
 dns-fuzz-serverをコンパイルします。
 
 ```
-$ tar xzf dns-fuzz-server-x.x.x.tar.gz
+$ tar xzf /path/to/dns-fuzz-server-x.x.x.tar.gz
 $ cd dns-fuzz-server
 $ OPENSSL_ROOT_DIR=/usr/local/ssl cmake .
 $ make
 ```
 
-ドメインexample.comのゾーンファイルとKSK, ZSKを用意します。
+ドメイン`example.com`のゾーンファイルとKSK, ZSKを用意します。
 
 ```
-$ named-checkzone -s full -o example.com.zone.full example.com example.com.zone
+$ named-checkzone -s full -o data/example.com.zone.full example.com data/example.com.zone
 zone example.com/IN: loaded serial 20170531
 OK
 ```
@@ -54,7 +54,7 @@ OK
 フルリゾルバへクエリを送信します。
 
 ```
-$ ./fuzz_client -s <full_resolver_ip_address> -b example.com
+$ ./bin/fuzz_client -s <full_resolver_ip_address> -b example.com
 ```
 
 ## 必要なソフトウェア
