@@ -9,9 +9,9 @@ dns-fuzz-serverはDNS権威サーバとして振る舞い、フルリゾルバ�
 
 ### Quick Start
 
-1. Centos 7.4をインストールします。
+Centos 7.4をインストールします。
 
-2. コンパイルに必要なソフトウェアをインストールします。
+コンパイルに必要なソフトウェアをインストールします。
 
 ```
 # yum install epel-release
