@@ -106,7 +106,7 @@ $ make
 
 * ./bin/fuzz_server: ファジング用権威サーバ
 * ./bin/fuzz_client: フルリゾルバへ再起問い合わせを送信するDNSクライアント
-* ./data/keygen.sh: KSK, ZSKの鍵を生成する簡易スクリプト
+* ./data/keygen.sh: KSK, ZSKを生成する簡易スクリプト
 
 ## fuzz_serverの使用方法
 
@@ -248,7 +248,7 @@ KSK,ZSK設定ファイルは次のようなYAML形式になります。これら
 
 ### 秘密鍵の作成
 
-KSK/ZSKの秘密鍵はopensslにて作成します。
+KSK/ZSKはopensslにて作成します。
 
 コマンド例
 
@@ -298,6 +298,6 @@ keygen.sh <domain> <algorithm>
 ### 実行例
 
 ```
-./fuzz_client -s 192.168.33.102 -b example.com
+$ ./keygen.sh example.com RSASHA256
 ```
 
