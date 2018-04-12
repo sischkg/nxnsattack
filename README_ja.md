@@ -48,13 +48,13 @@ OK
 ファジングサーバを開始します。
 
 ```
- ./bin/fuzz_server -z example.com -f data/example.com.zone.full -K data/example.com.ksk.yaml -Z data/example.com.zsk.yaml
+# ./bin/fuzz_server -z example.com -f data/example.com.zone.full -K data/example.com.ksk.yaml -Z data/example.com.zsk.yaml
 ```
 
 フルリゾルバへクエリを送信します。
 
 ```
-./fuzz_client -s <full_resolver_ip_address> -b example.com
+$ ./fuzz_client -s <full_resolver_ip_address> -b example.com
 ```
 
 ## 必要なソフトウェア
