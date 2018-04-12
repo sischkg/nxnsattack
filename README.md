@@ -178,7 +178,7 @@ KSK, ZSK configration files are following format. These files can be generated b
 * <domain_n>: KSK, ZSK domainname.
 * <ksk_or_zsk_N>: `ksk` or `zsk`
 * <algorithm_N>: `RSASHA1` or `RSASHA256` or `ECDSAP256SHA256`
-* <not_before_epoch>: epoch time.
+* <not_before_epoch_N>: epoch time.
 * <not_after_epoch_N>: epoch time.
 * <path_to_private_key_N>: path to private key.
 
