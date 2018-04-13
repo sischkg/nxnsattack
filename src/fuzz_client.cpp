@@ -62,6 +62,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
+    dns::DomainnameGenerator label_generator;
     dns::ResourceRecordGenerator rr_generator;
     dns::OptionGenerator option_generator;
 
@@ -117,7 +118,7 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "child" );
                     break;
                 case 4:
-                    qname.addSubdomain( "*" );
+                    qname.addSubdomain( label_generator.generateLabel() );
                     break;
                 }
                 break;
@@ -148,7 +149,7 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "ns01" );
                     break;
                 case 2:
-                    qname.addSubdomain( "*" );
+                    qname.addSubdomain( label_generator.generateLabel() );
                     break;
                 }
                 break;
@@ -165,7 +166,7 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "child" );
                     break;
                 case 3:
-                    qname.addSubdomain( "*" );
+                    qname.addSubdomain( label_generator.generateLabel() );
                     break;
                 }
                 break;
@@ -191,7 +192,7 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "child" );
                     break;
                 case 5:
-                    qname.addSubdomain( "*" );
+                    qname.addSubdomain( label_generator.generateLabel() );
                     break;
                 }
                 break;

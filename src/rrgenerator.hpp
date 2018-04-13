@@ -45,7 +45,6 @@ namespace dns
     public:
         Domainname generate( const Domainname &hint );
         Domainname generate();
-    private:
         std::string generateLabel();
     };
 
