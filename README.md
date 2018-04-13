@@ -12,17 +12,19 @@ Install packages for compiling dns-fuzz-server.
 
 ```
 # yum install epel-release
-# yum install gcc-c++ boost-devel wget perl yaml-cpp-devel bind-utils bind
+# yum install gcc-c++ boost-devel gtest-devel wget perl yaml-cpp-devel bind-utils bind
 
 # wget https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh
 # sh cmake-3.10.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
-# wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
 
+# wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
 # tar xzf openssl-1.1.0g.tar.gz
 # cd openssl-1.1.0g
 # ./config
-# maket
+# make
 # make install
+# echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf
+# ldconfig
 ```
 
 Compile dns-fuzz-server.
@@ -30,7 +32,7 @@ Compile dns-fuzz-server.
 ```
 $ tar xzf /path/to/dns-fuzz-server-x.x.x.tar.gz
 $ cd dns-fuzz-server
-$ OPENSSL_ROOT_DIR=/usr/local/ssl cmake .
+$ cmake .
 $ make
 ```
 
@@ -38,17 +40,7 @@ Create zonefile, KSK, ZSK for the domain `example.com`.
 
 ```
 $ named-checkzone -s full -o data/example.com.zone.full example.com data/example.com.zone
-zone example.com/IN: loaded serial 20170531
-OK
 $ (cd data && ./keygen.sh example.com RSASHA256 )
-Generating RSA private key, 2048 bit long modulus
-.............................+++
-...............................+++
-e is 65537 (0x010001)
-Generating RSA private key, 1024 bit long modulus
-................++++++
-..................................++++++
-e is 65537 (0x010001)
 ```
 
 Start `fuzz_server`, then `fuzz_server` outputs DS records to stdout. 
