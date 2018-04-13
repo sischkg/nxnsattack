@@ -130,7 +130,7 @@ www     3600  IN A      192.168.33.102
 mail    3600  IN A      192.168.33.111
 ```
 
-Convert from RFC1035 zone file by `named-checkconf`.
+Convert from RFC1035 zone file by `named-checkzone`.
 
 ```
 $ named-checkzone  -s full -o example.com.zone.full example.com example.com.zone
