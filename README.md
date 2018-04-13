@@ -219,6 +219,7 @@ The QNAMEs of DNS Queries is specified `-b` option argument, The QTYPE and QCLAS
 
 If `fuzz_client` contains `-b example.com` option, QNAMEs of DNS Queries is following, 
  `-b example.com`を指定すると、以下のようにQNAMEを生成します。
+
 * example.com
 * www.example.com
 * yyy.example.com
