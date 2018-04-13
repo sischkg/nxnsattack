@@ -15,17 +15,19 @@ Centos 7.4をインストールします。
 
 ```
 # yum install epel-release
-# yum install gcc-c++ boost-devel wget perl yaml-cpp-devel bind-utils bind
+# yum install gcc-c++ boost-devel gtest-devel wget perl yaml-cpp-devel bind-utils bind
 
 # wget https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh
 # sh cmake-3.10.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
-# wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
 
+# wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
 # tar xzf openssl-1.1.0g.tar.gz
 # cd openssl-1.1.0g
 # ./config
-# maket
+# make
 # make install
+# echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf
+# ldconfig
 ```
 
 dns-fuzz-serverをコンパイルします。
@@ -33,7 +35,7 @@ dns-fuzz-serverをコンパイルします。
 ```
 $ tar xzf /path/to/dns-fuzz-server-x.x.x.tar.gz
 $ cd dns-fuzz-server
-$ OPENSSL_ROOT_DIR=/usr/local/ssl cmake .
+$ cmake .
 $ make
 ```
 
@@ -41,8 +43,7 @@ $ make
 
 ```
 $ named-checkzone -s full -o data/example.com.zone.full example.com data/example.com.zone
-zone example.com/IN: loaded serial 20170531
-OK
+$ (cd data && ./keygen.sh example.com RSASHA256 )
 ```
 
 ファジングサーバを開始します。
@@ -65,42 +66,6 @@ $ ./bin/fuzz_client -s <full_resolver_ip_address> -b example.com
 * yaml-cpp 6 (https://github.com/jbeder/yaml-cpp )
 * cmake >= 3.8
 
-## コンパイル手順(CentOS 7.4)
-
-コンパイルに必要なパッケージをインストールします。
-
-```
-# yum install epel-release
-# yum install gcc-c++ boost-devel wget perl yaml-cpp-devel bind-utils bind
-```
-
-cmakeをインストールします。
-
-```
-# wget https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh
-# sh cmake-3.10.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
-```
-
-OpenSSLをインストールします。
-
-```
-# wget https://www.openssl.org/source/openssl-1.1.0g.tar.gz
-# tar xzf openssl-1.1.0g.tar.gz
-# cd openssl-1.1.0g
-# ./config
-# maket
-# make install
-```
-
-dns-fuzz-serverをコンパイルします。
-
-```
-$ tar xzf dns-fuzz-server-x.x.x.tar.gz
-$ cd dns-fuzz-server
-$ OPENSSL_ROOT_DIR=/usr/local/ssl cmake .
-$ make
-```
-
 
 ## 利用可能な実行ファイル
 
@@ -110,7 +75,7 @@ $ make
 
 ## fuzz_serverの使用方法
 
-dns-fuzz-serverはDNS権威サーバとして振る舞い、フルリゾルバへ特殊な応答を返す。
+dns-fuzz-serverはDNS権威サーバとして振る舞い、フルリゾルバへ特殊な応答を返します。
 
 ### コマンドの引数
 
@@ -135,8 +100,8 @@ fuzz server [ -b <address> ] [ -p <port> ] -z <zone> -f <zone.file> -K <ksk.yaml
 
 ### ゾーンファイル形式
 
-fuzz_serverは一般的な形式(RFC1035)のゾーンファイルを利用できない。RFC1035形式のゾーンファイルを
-コマンド`named-checkzone -s full`にてファイル形式を変更してから利用します。
+fuzz_serverは一般的な形式(RFC1035)のゾーンファイルを利用できません。RFC1035形式のゾーンファイルを
+コマンド`named-checkzone -s full`で変換してから利用します。
 
 #### ゾーンファイル作成例
 
@@ -199,18 +164,6 @@ KSK,ZSK設定ファイルは次のようなYAML形式になります。これら
   not_before: <not_before_epoch_0>
   not_after: <not_after_epoch_0>
   key_file: <path_to_private_key_0>
-- domain: <domain_1>
-  type: <ksk_or_zsk_1>
-  algorithm: <algorithm_1>
-  not_before: <not_before_epoch_1>
-  not_after: <not_after_epoch_1>
-  key_file: <path_to_private_key_1>
-- domain: <domain_2>
-  type: <ksk_or_zsk_2>
-  algorithm: <algorithm_2>
-  not_before: <not_before_epoch_2>
-  not_after: <not_after_epoch_2>
-  key_file: <path_to_private_key_2>
 ```
 
 * <domain_n>: KSK, ZSKのドメイン名

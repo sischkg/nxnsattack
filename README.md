@@ -134,8 +134,6 @@ Convert from RFC1035 zone file by `named-checkconf`.
 
 ```
 $ named-checkzone  -s full -o example.com.zone.full example.com example.com.zone
-zone example.com/IN: loaded serial 20170531
-OK
 ```
 
 Converted zone file.
