@@ -9,7 +9,6 @@ add_library( libdns dns.cpp domainname.cpp rrgenerator.cpp )
 add_library( libdnsserver dns_server.cpp )
 add_library( libzone
              signedauthserver.cpp
-             craftedsignedauthserver.cpp
              unsignedauthserver.cpp
              auth_server.cpp
 	     shufflebytes.cpp
