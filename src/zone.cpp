@@ -28,33 +28,33 @@ namespace dns
 
     Node::RRSetPtr Node::find( Type t ) const
     {
-        auto rrset_itr = rrsets.find( t );
-        if ( rrset_itr == rrsets.end() )
+        auto rrset_itr = mRRSets.find( t );
+        if ( rrset_itr == mRRSets.end() )
             return RRSetPtr();
         return rrset_itr->second;
     }
 
 
     Zone::Zone( const Domainname &zone_name )
-        : apex( zone_name )
+        : mApex( zone_name )
     {
-	owner_to_node.insert( OwnerToNodePair( apex, NodePtr( new Node ) ) );
+	mOwnerToNode.insert( OwnerToNodePair( mApex, NodePtr( new Node ) ) );
     }
 
     void Zone::addEmptyNode( const Domainname &domainname )
     {
-        owner_to_node.insert( OwnerToNodePair( domainname, NodePtr( new Node ) ) );
+        mOwnerToNode.insert( OwnerToNodePair( domainname, NodePtr( new Node ) ) );
     }
 
     void Zone::add( RRSetPtr rrset )
     {
         Domainname owner = rrset->getOwner();
-        if ( ! apex.isSubDomain( owner ) ) {
-            throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + apex.toString() );
+        if ( ! mApex.isSubDomain( owner ) ) {
+            throw std::runtime_error( "owner " + owner.toString() + "is not contained in " + mApex.toString() );
         }
 
-	Domainname relative_name = apex.getRelativeDomainname( owner );
-	Domainname node_name     = apex;
+	Domainname relative_name = mApex.getRelativeDomainname( owner );
+	Domainname node_name     = mApex;
 	for ( auto r = relative_name.getCanonicalLabels().rbegin() ; r != relative_name.getCanonicalLabels().rend() ; ++r ) {
 	    node_name.addSubdomain( *r );
 	    if ( ! findNode( node_name ) )
@@ -65,24 +65,24 @@ namespace dns
 	    throw std::logic_error( "node must be exist" );
 	node->add( rrset );
 
-	if ( rrset->getType() == TYPE_SOA && rrset->getOwner() == apex ) {
-	    soa = rrset;
+	if ( rrset->getType() == TYPE_SOA && rrset->getOwner() == mApex ) {
+	    mSOA = rrset;
 	}
-	if ( rrset->getType() == TYPE_NS && rrset->getOwner() == apex ) {
-	    name_servers = rrset;
+	if ( rrset->getType() == TYPE_NS && rrset->getOwner() == mApex ) {
+	    mNameServers = rrset;
 	}
 	
     }
 
     PacketInfo Zone::getAnswer( const PacketInfo &query ) const
     {
-        if ( query.mQuestionSection.size() != 1 ) {
+        if ( query.getQuestionSection().size() != 1 ) {
             throw std::logic_error( "one qname must be exist" );
         }
 	
-        Domainname qname  = query.mQuestionSection[0].mDomainname;
-        Type       qtype  = query.mQuestionSection[0].mType;
-        Class      qclass = query.mQuestionSection[0].mClass;
+        Domainname qname  = query.getQuestionSection()[0].mDomainname;
+        Type       qtype  = query.getQuestionSection()[0].mType;
+        Class      qclass = query.getQuestionSection()[0].mClass;
 
         PacketInfo response;
 
@@ -109,9 +109,9 @@ namespace dns
         q.mDomainname = qname;
         q.mType       = qtype;
         q.mClass      = qclass;
-        response.mQuestionSection.push_back( q );
+        response.pushQuestionSection( q );
 
-        if ( ! apex.isSubDomain( qname ) ) {
+        if ( ! mApex.isSubDomain( qname ) ) {
             response.mResponseCode = REFUSED;
             return response;
         }
@@ -163,7 +163,7 @@ namespace dns
         response.mResponseCode = NXDOMAIN;
         addNSECAndRRSIG( response, qname );
 
-        Domainname wildcard = apex;
+        Domainname wildcard = mApex;
         wildcard.addSubdomain( "*" );
         addNSECAndRRSIG( response, wildcard );
         addSOAToAuthoritySection( response );
@@ -182,8 +182,8 @@ namespace dns
 
     Zone::NodePtr Zone::findNode( const Domainname &name ) const
     {
-        auto node = owner_to_node.find( name );
-        if ( node != owner_to_node.end() ) {
+        auto node = mOwnerToNode.find( name );
+        if ( node != mOwnerToNode.end() ) {
             return node->second;
         }
         return NodePtr();
@@ -191,21 +191,21 @@ namespace dns
 
     void Zone::addSOAToAuthoritySection( PacketInfo &response ) const
     {
-        if ( ! soa || soa->count() != 1 )
+        if ( ! mSOA || mSOA->count() != 1 )
             throw std::logic_error( "SOA record must be exist in zone" );
 
         ResourceRecord r;
-        r.mDomainname = soa->getOwner();
-        r.mType       = soa->getType();
-        r.mClass      = soa->getClass();
-        r.mTTL        = soa->getTTL();
-        for ( auto data_itr = soa->begin() ; data_itr != soa->end() ; data_itr++ ) {
+        r.mDomainname = mSOA->getOwner();
+        r.mType       = mSOA->getType();
+        r.mClass      = mSOA->getClass();
+        r.mTTL        = mSOA->getTTL();
+        for ( auto data_itr = mSOA->begin() ; data_itr != mSOA->end() ; data_itr++ ) {
             r.mRData = *data_itr;
         }
-        response.mAuthoritySection.push_back( r );
+        response.pushAuthoritySection( r );
 
         if ( response.isDNSSECOK() ) {
-            auto apex_node = findNode( apex );
+            auto apex_node = findNode( mApex );
             if ( auto rrsigs = apex_node->find( TYPE_RRSIG ) ) {
                 addRRSIG( response.mAuthoritySection, *rrsigs, TYPE_SOA );
             }
@@ -233,10 +233,10 @@ namespace dns
 
     void Zone::verify() const
     {
-        if ( soa.get() == nullptr )
+        if ( mSOA.get() == nullptr )
             throw ZoneError( "No SOA record" );
 
-        if ( name_servers.get() == nullptr )
+        if ( mNameServers.get() == nullptr )
             throw ZoneError( "No NS records" );
     }
 
@@ -262,10 +262,10 @@ namespace dns
     {
         if ( ! response.isDNSSECOK() )
             return;
-        if ( owner_to_node.empty() )
+        if ( mOwnerToNode.empty() )
             throw std::logic_error( "zone is emptry" );
 
-        for ( auto node = owner_to_node.begin() ; node != owner_to_node.end() ; node++ ) {
+        for ( auto node = mOwnerToNode.begin() ; node != mOwnerToNode.end() ; node++ ) {
 	    auto nsec  = node->second->find( TYPE_NSEC );
 	    auto rrsig = node->second->find( TYPE_RRSIG );
 	    if ( nsec ) {

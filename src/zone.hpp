@@ -61,22 +61,22 @@ namespace dns
         typedef std::pair<Type, RRSetPtr> RRSetPair;
 
     private:
-        RRSetContainer rrsets;
+        RRSetContainer mRRSets;
 
     public:
-        RRSetContainer::iterator begin() { return rrsets.begin(); }
-        RRSetContainer::iterator end()   { return rrsets.end(); }
+        RRSetContainer::iterator begin() { return mRRSets.begin(); }
+        RRSetContainer::iterator end()   { return mRRSets.end(); }
         RRSetPtr find( Type t ) const;
 
-        RRSetContainer::const_iterator begin() const { return rrsets.begin(); }
-        RRSetContainer::const_iterator end()   const { return rrsets.end(); }
+        RRSetContainer::const_iterator begin() const { return mRRSets.begin(); }
+        RRSetContainer::const_iterator end()   const { return mRRSets.end(); }
 
         bool empty( Type t ) const { return ! find( t ); }
         bool exist( Type t ) const { return ! empty( t ); } 
-        bool empty() const { return   rrsets.empty(); }
-        bool exist() const { return ! rrsets.empty(); }
+        bool empty() const { return   mRRSets.empty(); }
+        bool exist() const { return ! mRRSets.empty(); }
 
-        void add( std::shared_ptr<RRSet> rrset ) { rrsets.insert( RRSetPair( rrset->getType(), rrset ) ); }
+        void add( std::shared_ptr<RRSet> rrset ) { mRRSets.insert( RRSetPair( rrset->getType(), rrset ) ); }
     };
 
     class AbstractZone
@@ -101,19 +101,17 @@ namespace dns
 	typedef std::map<Domainname,   NodePtr> OwnerToNodeContainer;
 	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
 
-        OwnerToNodeContainer owner_to_node;
-        Domainname           apex;
+        OwnerToNodeContainer mOwnerToNode;
+        Domainname           mApex;
 
-        RRSetPtr soa;
-        RRSetPtr name_servers;
+        RRSetPtr mSOA;
+        RRSetPtr mNameServers;
 
         void addSOAToAuthoritySection( PacketInfo &res ) const;
         void addEmptyNode( const Domainname & );
 	void addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const;
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
         void addRRSIG( std::vector<ResourceRecord> &, const RRSet &rrsig, Type covered_type ) const;
-	//    	void generateFoundAnswer( PacketInfo &response ) const;
-	//	void generateNoDataAnswer( PacketInfo &response ) const;
         void addNSECAndRRSIG( PacketInfo &response, const Domainname & ) const;
 
     public:
@@ -128,11 +126,11 @@ namespace dns
 
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
         NodePtr  findNode( const Domainname &domainname ) const;
-        OwnerToNodeContainer::const_iterator begin() const { return owner_to_node.begin(); }
-        OwnerToNodeContainer::const_iterator end() const   { return owner_to_node.end(); }
+        OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
+        OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
 
-	RRSetPtr getSOA() const { return soa; }
-	RRSetPtr getNameServer() const { return name_servers; }
+	RRSetPtr getSOA() const { return mSOA; }
+	RRSetPtr getNameServer() const { return mNameServers; }
 
         void verify() const;
     };
