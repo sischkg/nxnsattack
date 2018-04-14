@@ -1518,14 +1518,6 @@ namespace dns
         uint16_t additional_infomation_count;
     };
 
-    struct SOAField {
-        uint32_t serial;
-        uint32_t refresh;
-        uint32_t retry;
-        uint32_t expire;
-        uint32_t minimum;
-    };
-
     ResourceRecord generateOptPseudoRecord( const OptPseudoRecord & );
 
     void
