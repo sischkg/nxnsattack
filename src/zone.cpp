@@ -13,7 +13,7 @@ namespace dns
            << getTTL() << " "
            << typeCodeToString( getType() ) << std::endl;
 
-        for ( auto rr : resource_data )
+        for ( auto rr : mResourceData )
             os << "  " << rr->toString() << std::endl;
 
         return os.str();

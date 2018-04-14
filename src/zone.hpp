@@ -21,34 +21,34 @@ namespace dns
         typedef std::vector<RDATAPtr> RDATAContainer;
   
     private:
-        Domainname owner;
-        Class      klass;
-        Type       type;
-        TTL        ttl;
-        RDATAContainer resource_data;
+        Domainname mOwner;
+        Class      mClass;
+        Type       mType;
+        TTL        mTTL;
+        RDATAContainer mResourceData;
 
     public:
         RRSet( const Domainname &name, Class c, Type t, TTL tt )
-            : owner( name ), klass( c ), type( t ), ttl( tt )
+            : mOwner( name ), mClass( c ), mType( t ), mTTL( tt )
         {}
 
-        const Domainname &getOwner() const { return owner; }
-        Domainname getCanonicalOwer() const { return owner.getCanonicalDomainname(); }
+        const Domainname &getOwner() const { return mOwner; }
+        Domainname getCanonicalOwer() const { return mOwner.getCanonicalDomainname(); }
 
-        Class getClass() const { return klass; }
-        Type  getType()  const { return type; }
-        TTL   getTTL()   const { return ttl; } 
-        uint16_t count() const { return resource_data.size(); }
+        Class getClass() const { return mClass; }
+        Type  getType()  const { return mType; }
+        TTL   getTTL()   const { return mTTL; } 
+        uint16_t count() const { return mResourceData.size(); }
         std::string toString() const;
 
-        RDATAContainer::const_iterator begin() const { return resource_data.begin(); }
-        RDATAContainer::const_iterator end()   const { return resource_data.end(); }
+        RDATAContainer::const_iterator begin() const { return mResourceData.begin(); }
+        RDATAContainer::const_iterator end()   const { return mResourceData.end(); }
 
-	RDATAPtr operator[]( int index ) { return resource_data[index]; }
-	ConstRDATAPtr operator[]( int index ) const { return resource_data[index]; }
-	const RDATAContainer &getRRSet() const { return resource_data; }
+	RDATAPtr operator[]( int index ) { return mResourceData[index]; }
+	ConstRDATAPtr operator[]( int index ) const { return mResourceData[index]; }
+	const RDATAContainer &getRRSet() const { return mResourceData; }
 
-        void add( RDATAPtr data ) { resource_data.push_back( data ); }
+        void add( RDATAPtr data ) { mResourceData.push_back( data ); }
     };
 
     std::ostream &operator<<( std::ostream &os, const RRSet &rrset );
