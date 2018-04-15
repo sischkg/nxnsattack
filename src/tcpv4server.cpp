@@ -88,12 +88,12 @@ namespace tcpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( parameters.bind_address );
-        socket_address.sin_port   = htons( parameters.bind_port );
+        socket_address.sin_addr   = convertAddressStringToBinary( parameters.mAddress );
+        socket_address.sin_port   = htons( parameters.mPort );
         if ( bind( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             close( tcp_socket );
             tcp_socket = -1;
-            throw SocketError( getErrorMessage( "cannot bind to " + parameters.bind_address, errno ) );
+            throw SocketError( getErrorMessage( "cannot bind to " + parameters.mAddress, errno ) );
         }
 
         if ( listen( tcp_socket, 10 ) < 0 ) {

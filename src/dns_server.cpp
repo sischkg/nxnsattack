@@ -134,8 +134,8 @@ namespace dns
     {
         try {
             tcpv4::ServerParameters params;
-            params.bind_address = mBindAddress;
-            params.bind_port    = mBindPort;
+            params.mAddress = mBindAddress;
+            params.mPort    = mBindPort;
 
             tcpv4::Server dns_receiver( params );
 
