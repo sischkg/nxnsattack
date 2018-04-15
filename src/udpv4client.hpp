@@ -58,14 +58,16 @@ namespace udpv4
     class Client
     {
     private:
-        ClientParameters parameters;
-        int              udp_socket;
+        ClientParameters mParameters;
+        int              mUDPSocket;
 
         void openSocket();
         void closeSocket();
+	bool isEnableSocket() const;
 
     public:
-        Client( const ClientParameters &param ) : parameters( param ), udp_socket( -1 )
+        Client( const ClientParameters &param )
+	    : mParameters( param ), mUDPSocket( -1 )
         {
         }
 

@@ -21,46 +21,51 @@ namespace udpv4
         closeSocket();
     }
 
+    bool Client::isEnableSocket() const
+    {
+	return mUDPSocket > 0;
+    }
+    
     void Client::openSocket()
     {
-        if ( udp_socket > 0 ) {
+        if ( isEnableSocket() ) {
             closeSocket();
         }
 
-        udp_socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-        if ( udp_socket < 0 ) {
+        mUDPSocket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+        if ( mUDPSocket < 0 ) {
             std::string msg = getErrorMessage( "cannot create socket", errno );
             throw SocketError( msg );
         }
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( parameters.mAddress );
-        socket_address.sin_port   = htons( parameters.mPort );
-        if ( connect( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
+        socket_address.sin_addr   = convertAddressStringToBinary( mParameters.mAddress );
+        socket_address.sin_port   = htons( mParameters.mPort );
+        if ( connect( mUDPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
             closeSocket();
-            std::string msg = getErrorMessage( "cannot connect to " + parameters.mAddress, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
     }
 
     void Client::closeSocket()
     {
-        if ( udp_socket > 0 ) {
-            close( udp_socket );
-            udp_socket = -1;
+        if ( isEnableSocket() ) {
+            close( mUDPSocket );
+            mUDPSocket = -1;
         }
     }
 
     uint16_t Client::sendPacket( const uint8_t *data, uint16_t size )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
-        int sent_size = send( udp_socket, data, size, 0 );
+        int sent_size = send( mUDPSocket, data, size, 0 );
         if ( sent_size < 0 ) {
-            std::string msg = getErrorMessage( "cannot connect to " + parameters.mAddress, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -68,17 +73,17 @@ namespace udpv4
 
     uint16_t Client::sendPacket( const WireFormat &data )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
-        return data.send( udp_socket, NULL, 0 );
+        return data.send( mUDPSocket, NULL, 0 );
     }
 
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     PacketInfo Client::receivePacket( bool is_nonblocking )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
         int flags = 0;
@@ -88,7 +93,7 @@ namespace udpv4
         sockaddr_in          peer_address;
         socklen_t            peer_address_size = sizeof( peer_address );
         std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
-        int                  recv_size = recvfrom( udp_socket,
+        int                  recv_size = recvfrom( mUDPSocket,
 						   receive_buffer.data(),
 						   UDP_RECEIVE_BUFFER_SIZE,
 						   flags,
