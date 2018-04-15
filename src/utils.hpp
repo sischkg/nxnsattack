@@ -53,8 +53,6 @@ public:
 
 std::string getErrorMessage( const std::string &msg, int error_number );
 
-uint16_t compute_checksum( const uint8_t *data, size_t length );
-
 in_addr convertAddressStringToBinary( const std::string &str, int address_family = AF_INET );
 std::string convertAddressBinaryToString( in_addr bin, int address_family = AF_INET );
 
@@ -73,8 +71,6 @@ uint32_t decodeFromBase64Size( const char *begin, const char *end );
 
 void encodeToHex( const std::vector<uint8_t> &src, std::string &dst );
 void decodeFromHex( const std::string &src, std::vector<uint8_t> &dst );
-
-void md5( const uint8_t *d, uint32_t size, uint8_t result[ 16 ] );
 
 std::string printPacketData( const PacketData &p );
 
