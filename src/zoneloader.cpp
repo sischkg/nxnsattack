@@ -588,31 +588,5 @@ namespace dns
             }
         }
 
-        std::string dump( const Zone &zone )
-        {
-            std::ostringstream zonefile;
-            for ( auto node_itr = zone.begin() ; node_itr != zone.end() ; node_itr++ ) {
-                for ( auto rrset_itr = node_itr->second->begin() ;
-                      rrset_itr != node_itr->second->end() ;
-                      rrset_itr++ ) {
-                    Domainname owner = rrset_itr->second->getOwner();
-                    Type       type  = rrset_itr->second->getType();
-                    TTL        ttl   = rrset_itr->second->getTTL();
-
-                    for ( auto data_ptr = rrset_itr->second->begin() ;
-                          data_ptr != rrset_itr->second->end() ;
-                          data_ptr++ ) {
-
-                        zonefile << owner.toString()         << "\t"
-                                 << ttl                      << "\t"
-                                 << "IN"                     << "\t"
-                                 << typeCodeToString( type ) << "\t"
-                                 << (*data_ptr)->toZone()    << std::endl;
-                        
-                    }
-                }
-            }
-            return zonefile.str();
-        }
     }
 }

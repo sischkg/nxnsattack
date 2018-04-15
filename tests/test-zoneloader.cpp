@@ -1,4 +1,5 @@
 #include "dns.hpp"
+#include "unsignedzone.hpp"
 #include "zoneloader.hpp"
 #include "gtest/gtest.h"
 #include <cstring>
@@ -87,7 +88,7 @@ const char *ZONE_CONFIG_YAML_SOA =
 
 TEST_F( ZoneLoaderTest, Load_SOA )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_SOA );
@@ -102,7 +103,7 @@ TEST_F( ZoneLoaderTest, Load_SOA )
     auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
-    auto rrset = node->find( dns::TYPE_SOA );
+    auto rrset = zone.findRRSet( "example.com", dns::TYPE_SOA );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
     EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
     
@@ -141,7 +142,7 @@ const char *ZONE_CONFIG_YAML_A =
 
 TEST_F( ZoneLoaderTest, Load_A )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_A );
@@ -156,7 +157,7 @@ TEST_F( ZoneLoaderTest, Load_A )
     auto node = zone.findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from YAML";
 
-    auto rrset = node->find( dns::TYPE_A );
+    auto rrset = zone.findRRSet( "www.example.com", dns::TYPE_A );
     ASSERT_FALSE( rrset.get() == nullptr ) <<  "A records are loaded from YAML";
     ASSERT_EQ( 2, rrset->count() ) <<  "2 A records are loaded from YAML";
     
@@ -193,7 +194,7 @@ const char *ZONE_CONFIG_YAML_NS =
 
 TEST_F( ZoneLoaderTest, Load_NS )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::yamlloader::load( zone, "example.com", ZONE_CONFIG_YAML_NS );
@@ -208,7 +209,7 @@ TEST_F( ZoneLoaderTest, Load_NS )
     auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "example.com is loaded";
 
-    auto rrset = node->find( dns::TYPE_NS );
+    auto rrset = zone.findRRSet( "examplecom", dns::TYPE_NS );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "a record is loaded";
 
     ASSERT_EQ( 2, rrset->count() ) << "2 NS records";
@@ -229,7 +230,7 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
 {
     const char *ZONE_CONFIG_FULL_SOA =  "example.com.  3600 IN SOA ns01.example.com. hostmaster.example.com. 2017050101 3600 1800 8640000 300";
 
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_SOA );
@@ -244,9 +245,9 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
     auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
-    auto rrset = node->find( dns::TYPE_SOA );
+    auto rrset = zone.findRRSet( "example.com", dns::TYPE_SOA );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
-    EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
+    EXPECT_EQ( 1, rrset->count() ) << "one soa record is loaded";
     
     std::shared_ptr<const dns::RecordSOA> soa;
     ASSERT_NO_THROW( {
@@ -261,42 +262,6 @@ TEST_F( ZoneLoaderTest, Load_Full_SOA )
     EXPECT_EQ( 300,        soa->getMinimum() );
 }
 
-TEST_F( ZoneLoaderTest, Load_Full_SOA2 )
-{
-    const char *ZONE_CONFIG_FULL_SOA =  "siskrn.co.				      3600 IN SOA	siskrn.co. hostmaster.siskrn.co. 1500338838 86400 3600 604800 10800";
-
-    dns::Zone zone( "siskrn.co" );
-    ASSERT_NO_THROW( {
-            try {
-                dns::full::load( zone, "siskrn.co", ZONE_CONFIG_FULL_SOA );
-            }
-            catch ( std::runtime_error &e ) {
-                std::cerr << e.what() << std::endl;
-                throw;
-            }
-        } )
-        << "can load zone" + std::string( ZONE_CONFIG_FULL_SOA );
- 
-    auto node = zone.findNode( "siskrn.co" );
-    EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
-
-    auto rrset = node->find( dns::TYPE_SOA );
-    EXPECT_FALSE( rrset.get() == nullptr ) <<  "soa record is loaded";
-    EXPECT_EQ( rrset->count(), 1 ) << "one soa record is loaded";
-    
-    std::shared_ptr<const dns::RecordSOA> soa;
-    ASSERT_NO_THROW( {
-	    soa = std::dynamic_pointer_cast<const dns::RecordSOA>( (*rrset)[0] );
-	} );
-    EXPECT_STREQ( "siskrn.co.", soa->getMName().c_str() );
-    EXPECT_STREQ( "hostmaster.siskrn.co.", soa->getRName().c_str() );
-    EXPECT_EQ( 1500338838, soa->getSerial() );
-    EXPECT_EQ( 86400,      soa->getRefresh() );
-    EXPECT_EQ( 3600,       soa->getRetry() );
-    EXPECT_EQ( 604800,     soa->getExpire() );
-    EXPECT_EQ( 10800,      soa->getMinimum() );
-}
-
 
 const char *ZONE_CONFIG_FULL_A = \
     "www.example.com.  3600 IN A  192.168.0.101\n"
@@ -304,7 +269,7 @@ const char *ZONE_CONFIG_FULL_A = \
 
 TEST_F( ZoneLoaderTest, Load_Full_A )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_A );
@@ -319,7 +284,7 @@ TEST_F( ZoneLoaderTest, Load_Full_A )
     auto node = zone.findNode( "www.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "www.example.com is loaded from FULL";
 
-    auto rrset = node->find( dns::TYPE_A );
+    auto rrset = zone.findRRSet( "www.example.com", dns::TYPE_A );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "a records are loaded from FULL";
     EXPECT_EQ( 2, rrset->count() ) << "2 A records are loaded from FULL";
  
@@ -340,7 +305,7 @@ const char *ZONE_CONFIG_FULL_NSEC = "ns01.example.com. 3600 IN NSEC  ns02.exampl
 
 TEST_F( ZoneLoaderTest, Load_Full_NSEC )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_NSEC );
@@ -355,7 +320,7 @@ TEST_F( ZoneLoaderTest, Load_Full_NSEC )
     auto node = zone.findNode( "ns01.example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "ns01.example.com is loaded from FULL";
 
-    auto rrset = node->find( dns::TYPE_NSEC );
+    auto rrset = zone.findRRSet( "ns01.example.com", dns::TYPE_NSEC );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "NSEC records are loaded from FULL";
     EXPECT_EQ( 1, rrset->count() ) << "NSEC records is loaded from FULL";
  
@@ -375,7 +340,7 @@ const char *ZONE_CONFIG_FULL_TXT =  "example.com.  3600 IN TXT \"text-1\" \"text
 
 TEST_F( ZoneLoaderTest, Load_Full_TXT )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
     ASSERT_NO_THROW( {
             try {
                 dns::full::load( zone, "example.com", ZONE_CONFIG_FULL_TXT );
@@ -390,7 +355,7 @@ TEST_F( ZoneLoaderTest, Load_Full_TXT )
     auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "zone apex is loaded";
 
-    auto rrset = node->find( dns::TYPE_TXT );
+    auto rrset = zone.findRRSet( "example.com", dns::TYPE_TXT );
     EXPECT_FALSE( rrset.get() == nullptr ) <<  "txt record is loaded";
     EXPECT_EQ( rrset->count(), 1 ) << "one txt record is loaded";
     
@@ -404,48 +369,6 @@ TEST_F( ZoneLoaderTest, Load_Full_TXT )
 }
 
 
-TEST_F( ZoneLoaderTest, dump )
-{
-    dns::Zone zone( "example.com" );
-
-    dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
-    rrset_soa->add( dns::RDATAPtr( new dns::RecordSOA( "ns01.example.com",
-                                                       "hostmaster.example.com",
-                                                       1,
-                                                       86400,
-                                                       3600,
-                                                       16800,
-                                                       300 ) ) );
-
-    dns::Node::RRSetPtr rrset_a( new dns::RRSet( "www.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) );
-    rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.2" ) ) );
-
-    dns::Node::RRSetPtr rrset_ns( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_NS, 86400 ) );
-    rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns01.example.com" ) ) );
-    rrset_ns->add( dns::RDATAPtr( new dns::RecordNS( "ns02.example.com" ) ) );
-
-    dns::Node::RRSetPtr rrset_ns01( new dns::RRSet( "ns01.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    rrset_ns01->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.101" ) ) );
-    dns::Node::RRSetPtr rrset_ns02( new dns::RRSet( "ns02.example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
-    rrset_ns02->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.102" ) ) );
-
-    zone.add( rrset_soa );
-    zone.add( rrset_a );
-    zone.add( rrset_ns );
-    zone.add( rrset_ns01 );
-    zone.add( rrset_ns02 );
-
-    std::string zonefile = dns::full::dump( zone );
-
-    EXPECT_FALSE( zonefile.find( "example.com.\t3600\tIN\tSOA\tns01.example.com. hostmaster.example.com. 1 86400 3600 16800 300" ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "www.example.com.\t3600\tIN\tA\t192.168.0.1" ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "www.example.com.\t3600\tIN\tA\t192.168.0.2" ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "example.com.\t86400\tIN\tNS\tns01.example.com." ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "example.com.\t86400\tIN\tNS\tns02.example.com." ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "ns01.example.com.\t3600\tIN\tA\t192.168.0.101" ) == std::string::npos );
-    EXPECT_FALSE( zonefile.find( "ns02.example.com.\t3600\tIN\tA\t192.168.0.102" ) == std::string::npos );
-}
 
 
 int main( int argc, char **argv )

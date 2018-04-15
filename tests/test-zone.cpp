@@ -1,4 +1,4 @@
-#include "zone.hpp"
+#include "unsignedzone.hpp"
 #include "gtest/gtest.h"
 #include <cstring>
 #include <iostream>
@@ -84,7 +84,7 @@ public:
 
 TEST_F( ZoneTest, AddSet )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
     EXPECT_NO_THROW( { rrset_soa->add( dns::RDATAPtr( new dns::RecordSOA( "ns01.example.com",
@@ -124,7 +124,7 @@ TEST_F( ZoneTest, AddSet )
 
 TEST_F( ZoneTest, NoSOAError )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_a( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_A, 3600 ) );
     EXPECT_NO_THROW( { rrset_a->add( dns::RDATAPtr( new dns::RecordA( "192.168.0.1" ) ) ); } );
@@ -142,7 +142,7 @@ TEST_F( ZoneTest, NoSOAError )
 
 TEST_F( ZoneTest, NoNSError )
 {
-    dns::Zone zone( "example.com" );
+    dns::UnsignedZone zone( "example.com" );
 
     dns::Node::RRSetPtr rrset_soa( new dns::RRSet( "example.com", dns::CLASS_IN, dns::TYPE_SOA, 3600 ) );
     EXPECT_NO_THROW( { rrset_soa->add( dns::RDATAPtr( new dns::RecordSOA( "ns01.example.com",

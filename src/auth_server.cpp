@@ -1,4 +1,5 @@
 #include "auth_server.hpp"
+#include "unsignedzone.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -14,7 +15,7 @@ namespace dns
 	    config += line;
 	    config += "\n";
 	}
-        zone.reset( new Zone( apex ) );
+        zone.reset( new UnsignedZone( apex, "", "" ) );
 	dns::full::load( *zone, apex, config );
     }
 

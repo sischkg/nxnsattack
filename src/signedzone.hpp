@@ -14,6 +14,7 @@ namespace dns
 
         void add( std::shared_ptr<RRSet> rrset );
         PacketInfo getAnswer( const PacketInfo &query ) const;
+        NodePtr  findNode( const Domainname &domainname ) const;
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
 	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const; 
         void verify() const;

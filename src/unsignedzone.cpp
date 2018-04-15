@@ -17,6 +17,11 @@ namespace dns
 	return mImp->getAnswer( query );
     }
 
+    UnsignedZone::NodePtr UnsignedZone::findNode( const Domainname &domainname ) const
+    {
+        return mImp->findNode( domainname );
+    }
+
     UnsignedZone::RRSetPtr UnsignedZone::findRRSet( const Domainname &domainname, Type type ) const
     {
         return mImp->findRRSet( domainname, type );
@@ -32,6 +37,16 @@ namespace dns
 	mImp->verify();
     }
 
+    UnsignedZone::RRSetPtr UnsignedZone::getSOA() const
+    {
+	return mImp->getSOA();
+    }
+
+    UnsignedZone::RRSetPtr UnsignedZone::getNameServer() const
+    {
+	return mImp->getNameServer();
+    }
+    
     std::shared_ptr<RRSet> UnsignedZone::signRRSet( const RRSet &rrset )
     {
         return mImp->signRRSet( rrset );

@@ -82,12 +82,14 @@ namespace dns
     class AbstractZone
     {
     public:
+        typedef std::shared_ptr<Node>  NodePtr;
         typedef std::shared_ptr<RRSet> RRSetPtr;
 
         virtual ~AbstractZone() {}
  
         virtual void add( std::shared_ptr<RRSet> rrset ) = 0;
         virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;
+        virtual NodePtr  findNode( const Domainname &domainname ) const = 0;
         virtual RRSetPtr findRRSet( const Domainname &domainname, Type type ) const = 0;
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
         virtual void verify() const = 0;
@@ -113,26 +115,24 @@ namespace dns
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
         void addRRSIG( std::vector<ResourceRecord> &, const RRSet &rrsig, Type covered_type ) const;
         void addNSECAndRRSIG( PacketInfo &response, const Domainname & ) const;
-
     public:
-        Zone( const Domainname &zone_name );
-
-        void add( std::shared_ptr<RRSet> rrest );
-        PacketInfo getAnswer( const PacketInfo &query ) const;
+	Zone( const Domainname &zone_name );
+	
+        virtual void add( std::shared_ptr<RRSet> rrest ) = 0;
+        virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const
         {
             return std::vector<std::shared_ptr<RecordDS> >();
         }
 
-        RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
-        NodePtr  findNode( const Domainname &domainname ) const;
-        OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
-        OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
+        virtual RRSetPtr findRRSet( const Domainname &domainname, Type type ) const = 0;
+        virtual NodePtr  findNode( const Domainname &domainname ) const = 0;
+        virtual OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
+        virtual OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
+	virtual RRSetPtr getSOA() const { return mSOA; }
+	virtual RRSetPtr getNameServer() const { return mNameServers; }
 
-	RRSetPtr getSOA() const { return mSOA; }
-	RRSetPtr getNameServer() const { return mNameServers; }
-
-        void verify() const;
+        virtual void verify() const;
     };
 
 }

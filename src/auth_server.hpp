@@ -21,7 +21,7 @@ namespace dns
 					   bool vir_tcp ) const;
 
     private:
-	std::shared_ptr<Zone> zone;
+	std::shared_ptr<AbstractZone> zone;
     };
 }
 

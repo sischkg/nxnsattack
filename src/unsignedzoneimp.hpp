@@ -38,6 +38,8 @@ namespace dns
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
         OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
         OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
+	RRSetPtr getSOA() const;
+	RRSetPtr getNameServer() const;
 
         void verify() const;
 	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;

@@ -400,6 +400,16 @@ namespace dns
         return mSigner.signRRSet( rrset );
     }
 
+    UnsignedZoneImp::RRSetPtr UnsignedZoneImp::getSOA() const
+    {
+	return mSOA;
+    }
+
+    UnsignedZoneImp::RRSetPtr UnsignedZoneImp::getNameServer() const
+    {
+	return mNameServers;
+    }
+    
     void UnsignedZoneImp::initialize()
     {
         ZoneSigner::initialize();
