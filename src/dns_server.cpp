@@ -61,8 +61,8 @@ namespace dns
     {
         try {
             udpv4::ServerParameters params;
-            params.bind_address = mBindAddress;
-            params.bind_port    = mBindPort;
+            params.mAddress = mBindAddress;
+            params.mPort    = mBindPort;
             udpv4::Server dns_receiver( params );
 
             while ( true ) {

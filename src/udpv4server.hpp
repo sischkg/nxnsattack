@@ -11,8 +11,8 @@ namespace udpv4
 {
 
     struct ServerParameters {
-        std::string bind_address;
-        uint16_t    bind_port;
+        std::string mAddress;
+        uint16_t    mPort;
     };
 
     class Server
