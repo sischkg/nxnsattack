@@ -1,7 +1,6 @@
 #ifndef UDPV4CLIENT_HPP
 #define UDPV4CLIENT_HPP
 
-#include "udpv4.hpp"
 #include "wireformat.hpp"
 #include <boost/cstdint.hpp>
 #include <string>
@@ -13,6 +12,47 @@ namespace udpv4
     struct ClientParameters {
         std::string destination_address;
         uint16_t    destination_port;
+    };
+
+    struct PacketInfo {
+        std::string          source_address;
+        std::string          destination_address;
+        uint16_t             source_port;
+        uint16_t             destination_port;
+        std::vector<uint8_t> payload;
+
+        /*!
+         * @return payload length of UDP packet(bytes)
+         */
+        uint16_t getPayloadLength() const
+        {
+            return payload.size();
+        }
+
+        const uint8_t *getData() const
+        {
+            return payload.data();
+        }
+
+        const uint8_t *begin() const
+        {
+            return getData();
+        }
+
+        const uint8_t *end() const
+        {
+            return begin() + payload.size();
+        }
+
+	uint8_t operator[]( unsigned int index ) const
+	{
+	    return payload[index];
+	}
+
+    	uint8_t &operator[]( unsigned int index )
+	{
+	    return payload[index];
+	}
     };
 
     class Client
@@ -43,65 +83,6 @@ namespace udpv4
         uint16_t sendPacket( const WireFormat & );
 
         PacketInfo receivePacket( bool is_nonblocking = false );
-        bool isReadable();
-    };
-
-    class Sender
-    {
-    public:
-        typedef boost::shared_ptr<ChecksumCalculatable> ChecksumPtr;
-
-    private:
-        int         raw_socket;
-        ChecksumPtr udp_checksum;
-
-        void openSocket();
-        void closeSocket();
-
-    public:
-        Sender( ChecksumPtr checksum = ChecksumPtr( new StandardChecksumCalculator() ) )
-            : raw_socket( -1 ), udp_checksum( checksum )
-        {
-            openSocket();
-        }
-
-        ~Sender()
-        {
-            closeSocket();
-        }
-
-        uint16_t sendPacket( const PacketInfo & );
-    };
-
-    class Receiver
-    {
-    private:
-        int         udp_socket;
-        std::string bind_address;
-        uint16_t    bind_port;
-
-        void openSocket();
-        void closeSocket();
-
-    public:
-        Receiver( uint16_t port ) : udp_socket( -1 ), bind_address( "0.0.0.0" ), bind_port( port )
-        {
-            openSocket();
-        }
-
-        Receiver( const std::string &bind_addr, uint16_t port )
-            : udp_socket( -1 ), bind_address( bind_addr ), bind_port( port )
-        {
-            openSocket();
-        }
-
-        ~Receiver()
-        {
-            closeSocket();
-        }
-
-        PacketInfo receivePacket();
-
         bool isReadable();
     };
 }

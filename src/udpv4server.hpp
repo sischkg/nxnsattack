@@ -1,7 +1,6 @@
 #ifndef UDPV4SERVER_HPP
 #define UDPV4SERVER_HPP
 
-#include "udpv4.hpp"
 #include "udpv4client.hpp"
 #include "wireformat.hpp"
 #include <boost/cstdint.hpp>

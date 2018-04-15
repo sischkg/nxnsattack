@@ -3,7 +3,7 @@ add_library(
   utils.cpp
   wireformat.cpp
   readbuffer.cpp
-  ipv4.cpp udpv4.cpp udpv4client.cpp udpv4server.cpp
+  ipv4.cpp udpv4client.cpp udpv4server.cpp
   tcpv4.cpp tcpv4client.cpp tcpv4server.cpp )
 add_library( libdns dns.cpp domainname.cpp rrgenerator.cpp )
 add_library( libdnsserver dns_server.cpp )
