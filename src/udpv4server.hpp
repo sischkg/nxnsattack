@@ -18,14 +18,16 @@ namespace udpv4
     class Server
     {
     private:
-        ServerParameters parameters;
-        int              udp_socket;
+        ServerParameters mParameters;
+        int              mUDPSocket;
 
         void openSocket();
         void closeSocket();
+	bool isEnableSocket() const;
 
     public:
-        Server( const ServerParameters &param ) : parameters( param ), udp_socket( -1 )
+        Server( const ServerParameters &param )
+	    : mParameters( param ), mUDPSocket( -1 )
         {
         }
 

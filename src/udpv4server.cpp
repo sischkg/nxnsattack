@@ -23,20 +23,25 @@ namespace udpv4
         closeSocket();
     }
 
+    bool Server::isEnableSocket() const
+    {
+	return mUDPSocket > 0;
+    }
+    
     void Server::openSocket()
     {
-        if ( udp_socket > 0 ) {
+        if ( isEnableSocket() ) {
             closeSocket();
         }
 
-        udp_socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-        if ( udp_socket < 0 ) {
+        mUDPSocket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+        if ( mUDPSocket < 0 ) {
             std::string msg = getErrorMessage( "cannot create socket", errno );
             throw SocketError( msg );
         }
 
         int one = 1;
-        int err = setsockopt( udp_socket, IPPROTO_IP, IP_PKTINFO, &one, sizeof( one ) );
+        int err = setsockopt( mUDPSocket, IPPROTO_IP, IP_PKTINFO, &one, sizeof( one ) );
         if ( err ) {
             std::string msg = getErrorMessage( "cannot setsocketopt", errno );
             throw SocketError( msg );
@@ -45,12 +50,12 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( parameters.mAddress );
-        socket_address.sin_port   = htons( parameters.mPort );
-        if ( bind( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
+        socket_address.sin_addr   = convertAddressStringToBinary( mParameters.mAddress );
+        socket_address.sin_port   = htons( mParameters.mPort );
+        if ( bind( mUDPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             closeSocket();
             std::ostringstream str;
-            str << "cannot bind to " << parameters.mAddress << ":" << parameters.mPort << ".";
+            str << "cannot bind to " << mParameters.mAddress << ":" << mParameters.mPort << ".";
             std::string msg = getErrorMessage( str.str(), errno );
             throw SocketError( msg );
         }
@@ -58,15 +63,15 @@ namespace udpv4
 
     void Server::closeSocket()
     {
-        if ( udp_socket > 0 ) {
-            close( udp_socket );
-            udp_socket = -1;
+        if ( isEnableSocket() ) {
+            close( mUDPSocket );
+            mUDPSocket = -1;
         }
     }
 
     uint16_t Server::sendPacket( const ClientParameters &dest, const uint8_t *data, uint16_t size )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
         sockaddr_in socket_address;
@@ -74,7 +79,7 @@ namespace udpv4
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convertAddressStringToBinary( dest.mAddress );
         socket_address.sin_port   = htons( dest.mPort );
-        int sent_size             = sendto( udp_socket,
+        int sent_size             = sendto( mUDPSocket,
                                 data,
                                 size,
                                 0,
@@ -91,7 +96,7 @@ namespace udpv4
 
     uint16_t Server::sendPacket( const ClientParameters &dest, const WireFormat &data )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
         sockaddr_in socket_address;
@@ -99,14 +104,14 @@ namespace udpv4
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convertAddressStringToBinary( dest.mAddress );
         socket_address.sin_port   = htons( dest.mPort );
-        return data.send( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) );
+        return data.send( mUDPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) );
     }
 
     const int RECEIVE_BUFFER_SIZE = 0xffff;
 
     PacketInfo Server::receivePacket( bool is_nonblocking )
     {
-        if ( udp_socket < 0 )
+        if ( ! isEnableSocket() )
             openSocket();
 
         int flags = 0;
@@ -133,7 +138,7 @@ namespace udpv4
         msg.msg_control    = cbuf;
         msg.msg_controllen = sizeof( cbuf );
 
-        int recv_size = recvmsg( udp_socket, &msg, 0 );
+        int recv_size = recvmsg( mUDPSocket, &msg, 0 );
         if ( recv_size < 0 ) {
             std::string msg = getErrorMessage( "cannot recvmsg", errno );
             throw SocketError( msg );
