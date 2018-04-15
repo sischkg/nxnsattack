@@ -281,8 +281,8 @@ int main( int argc, char **argv )
             }
             else {
                 tcpv4::ClientParameters tcp_param;
-                tcp_param.destination_address = target_server;
-                tcp_param.destination_port    = target_port;
+                tcp_param.mAddress = target_server;
+                tcp_param.mPort    = target_port;
                 tcpv4::Client tcp( tcp_param );
 
                 uint16_t query_size_data2 = htons( message.size() );

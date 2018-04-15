@@ -40,12 +40,12 @@ namespace tcpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( mParameters.destination_address );
-        socket_address.sin_port   = htons( mParameters.destination_port );
+        socket_address.sin_addr   = convertAddressStringToBinary( mParameters.mAddress );
+        socket_address.sin_port   = htons( mParameters.mPort );
         if ( connect( mTCPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
             closeSocket();
-            std::string msg = getErrorMessage( "cannot connect to " + mParameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
     }
@@ -79,7 +79,7 @@ namespace tcpv4
     {
         int sent_size = write( mTCPSocket, data, size );
         if ( sent_size < 0 ) {
-            std::string msg = getErrorMessage( "cannot connect to " + mParameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
         return sent_size;

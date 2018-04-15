@@ -40,8 +40,8 @@ namespace tcpv4
     };
 
     struct ClientParameters {
-        std::string destination_address;
-        uint16_t    destination_port;
+        std::string mAddress;
+        uint16_t    mPort;
     };
 
     class Client
