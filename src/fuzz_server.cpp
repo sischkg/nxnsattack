@@ -9,11 +9,11 @@
 
 namespace dns
 {
-    class FuzzServer : public UnsignedAuthServer
+    class FuzzServer : public PostSignedAuthServer
     {
     public:
 	FuzzServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::UnsignedAuthServer( addr, port, debug ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
+	    : dns::PostSignedAuthServer( addr, port, debug ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
 	{
         }
 

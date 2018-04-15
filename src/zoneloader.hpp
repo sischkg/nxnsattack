@@ -96,6 +96,9 @@ namespace dns
 
         void load( Zone &zone, const Domainname &apex, const std::string &config );
     }
+
+    uint32_t convertTimestampToEpoch( const std::string &timestamp );
+    std::vector<std::string> parseTXT( const std::string &s );
 }
 
 #endif

@@ -4,7 +4,7 @@
 
 namespace dns
 {
-    void UnsignedAuthServer::load( const std::string &apex, const std::string &filename,
+    void PostSignedAuthServer::load( const std::string &apex, const std::string &filename,
                                    const std::string &ksk_config, const std::string &zsk_config )
     {
 	std::ifstream fin( filename );
@@ -16,30 +16,30 @@ namespace dns
 	    config += "\n";
 	}
 
-        UnsignedZone::initialize();
-        zone.reset( new UnsignedZone( apex, ksk_config, zsk_config ) );
+        PostSignedZone::initialize();
+        zone.reset( new PostSignedZone( apex, ksk_config, zsk_config ) );
 	dns::full::load( *zone, apex, config );
     }
 
-    std::vector<std::shared_ptr<RecordDS>> UnsignedAuthServer::getDSRecords() const
+    std::vector<std::shared_ptr<RecordDS>> PostSignedAuthServer::getDSRecords() const
     {
         return zone->getDSRecords();
     }
 
-    PacketInfo UnsignedAuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
+    PacketInfo PostSignedAuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
     {
 	dns::PacketInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );
     }
 
-    PacketInfo UnsignedAuthServer::modifyResponse( const dns::PacketInfo &query,
+    PacketInfo PostSignedAuthServer::modifyResponse( const dns::PacketInfo &query,
                                                    const dns::PacketInfo &original_response,
                                                    bool via_tcp ) const
     {
 	return original_response;
     }
 
-    bool UnsignedAuthServer::replace( std::vector<ResourceRecord> &section,
+    bool PostSignedAuthServer::replace( std::vector<ResourceRecord> &section,
                                       const Condition &condition,
                                       const Replacement &replace ) const
     {
@@ -65,7 +65,7 @@ namespace dns
         return is_replace;
     }
 
-    bool UnsignedAuthServer::erase( std::vector<ResourceRecord> &section,
+    bool PostSignedAuthServer::erase( std::vector<ResourceRecord> &section,
                                     const Condition &condition ) const
     {
         bool is_erase = false;
@@ -85,7 +85,7 @@ namespace dns
     }
 
 
-    std::shared_ptr<RRSet> UnsignedAuthServer::signRRSet( const RRSet &rrset ) const
+    std::shared_ptr<RRSet> PostSignedAuthServer::signRRSet( const RRSet &rrset ) const
     {
 	return zone->signRRSet( rrset );
     }

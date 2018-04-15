@@ -3,14 +3,14 @@
 
 #include "dns_server.hpp"
 #include "zoneloader.hpp"
-#include "unsignedzone.hpp"
+#include "postsignedzone.hpp"
 
 namespace dns
 {
-    class UnsignedAuthServer : public dns::DNSServer
+    class PostSignedAuthServer : public dns::DNSServer
     {
     public:
-	UnsignedAuthServer( const std::string &addr, uint16_t port, bool debug )
+	PostSignedAuthServer( const std::string &addr, uint16_t port, bool debug )
 	    : dns::DNSServer( addr, port, true, debug )
 	{}
 
@@ -53,7 +53,7 @@ namespace dns
         
         std::shared_ptr<RRSet> signRRSet( const RRSet &rrset ) const;
     private:
-	std::shared_ptr<UnsignedZone> zone;
+	std::shared_ptr<PostSignedZone> zone;
     };
 }
 

@@ -16,6 +16,8 @@ add_library( libzone
              signedzoneimp.cpp
              unsignedzone.cpp
              unsignedzoneimp.cpp
+             postsignedzone.cpp
+             postsignedzoneimp.cpp
              zonesignerimp.cpp
              zonesigner.cpp
              zoneloader.cpp

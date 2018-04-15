@@ -25,7 +25,7 @@ TEST_F( TimestampTest, timestamp_to_epoch )
     // $ date +%s --date="2017/07/01 02:30:40 UTC"
     // 1498876240
     // 
-    EXPECT_EQ( 1498876240, dns::timestamp_to_epoch( "20170701023040" ) );
+    EXPECT_EQ( 1498876240, dns::convertTimestampToEpoch( "20170701023040" ) );
 }
 
 class ParseTxtTest : public ::testing::Test
@@ -45,7 +45,7 @@ public:
 TEST_F( ParseTxtTest, parse_character_string )
 {
     const char *TXT = "\"text\"";
-    std::vector<std::string> txt = dns::parse_txt( TXT );
+    std::vector<std::string> txt = dns::parseTXT( TXT );
     EXPECT_EQ( 1, txt.size() );
     EXPECT_STREQ( "text", txt[0].c_str() );
 }
@@ -53,7 +53,7 @@ TEST_F( ParseTxtTest, parse_character_string )
 TEST_F( ParseTxtTest, parse_character_strings )
 {
     const char *TXT = "\"text-1\" \"text-2\"";
-    std::vector<std::string> txt = dns::parse_txt( TXT );
+    std::vector<std::string> txt = dns::parseTXT( TXT );
     EXPECT_EQ( 2, txt.size() );
     EXPECT_STREQ( "text-1", txt[0].c_str() );
     EXPECT_STREQ( "text-2", txt[1].c_str() );

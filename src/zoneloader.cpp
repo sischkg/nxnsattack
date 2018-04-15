@@ -6,7 +6,7 @@
 
 namespace dns
 {
-    static uint32_t convertTimestampToEpoch( const std::string &timestamp )
+    uint32_t convertTimestampToEpoch( const std::string &timestamp )
     {
         if ( timestamp.size() != 14 ) {
             throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
@@ -34,7 +34,7 @@ namespace dns
         return timegm( &tm );
     }
 
-    static std::vector<std::string> parseTXT( const std::string &s )
+    std::vector<std::string> parseTXT( const std::string &s )
     {
 	std::vector<std::string> txt;
 	std::string t  = "";
