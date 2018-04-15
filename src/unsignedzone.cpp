@@ -3,8 +3,8 @@
 
 namespace dns
 {
-    UnsignedZone::UnsignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-	: mImp( new UnsignedZoneImp( zone_name, ksk_config, zsk_config ) )
+    UnsignedZone::UnsignedZone( const Domainname &zone_name )
+	: mImp( new UnsignedZoneImp( zone_name ) )
     {}
 
     void UnsignedZone::add( std::shared_ptr<RRSet> rrset )

@@ -10,7 +10,7 @@ namespace dns
     class UnsignedZone : public Zone
     {
     public:
-        UnsignedZone( const Domainname &zone_name, const std::string &ksk_config = "", const std::string &zsk_config = "" );
+        UnsignedZone( const Domainname &zone_name );
 
         void add( std::shared_ptr<RRSet> rrset );
         PacketInfo getAnswer( const PacketInfo &query ) const;

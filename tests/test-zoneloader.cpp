@@ -209,8 +209,8 @@ TEST_F( ZoneLoaderTest, Load_NS )
     auto node = zone.findNode( "example.com" );
     EXPECT_FALSE( node.get() == nullptr ) <<  "example.com is loaded";
 
-    auto rrset = zone.findRRSet( "examplecom", dns::TYPE_NS );
-    EXPECT_FALSE( rrset.get() == nullptr ) <<  "a record is loaded";
+    auto rrset = zone.findRRSet( "example.com", dns::TYPE_NS );
+    EXPECT_FALSE( rrset.get() == nullptr ) <<  "ns record is loaded";
 
     ASSERT_EQ( 2, rrset->count() ) << "2 NS records";
     std::shared_ptr<const dns::RecordNS> ns01;

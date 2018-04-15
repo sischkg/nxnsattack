@@ -16,19 +16,15 @@ namespace dns
 
         OwnerToNodeContainer mOwnerToNode;
         Domainname           mApex;
-	ZoneSigner           mSigner;
 
         RRSetPtr mSOA;
         RRSetPtr mNameServers;
 
         void addEmptyNode( const Domainname & );
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
         void addSOAToAuthoritySection( PacketInfo &res ) const;
-
-	RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
     public:
-        UnsignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );
+        UnsignedZoneImp( const Domainname &zone_name );
 
         void add( RRSetPtr rrest );
         PacketInfo getAnswer( const PacketInfo &query ) const;
