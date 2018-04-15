@@ -8,20 +8,20 @@ namespace tcpv4
 
     Connection::~Connection()
     {
-        if ( tcp_socket > 0 )
-            close( tcp_socket );
+        if ( mTCPSocket > 0 )
+            close( mTCPSocket );
     }
 
     void Connection::shutdownReceive()
     {
-        if ( tcp_socket > 0 )
-            shutdown( tcp_socket, SHUT_RD );
+        if ( mTCPSocket > 0 )
+            shutdown( mTCPSocket, SHUT_RD );
     }
 
     void Connection::shutdownSend()
     {
-        if ( tcp_socket > 0 )
-            shutdown( tcp_socket, SHUT_WR );
+        if ( mTCPSocket > 0 )
+            shutdown( mTCPSocket, SHUT_WR );
     }
 
     PacketData Connection::receive( int size )
@@ -30,13 +30,13 @@ namespace tcpv4
         recv_buffer.resize( size );
 
     retry:
-        int recv_size = read( tcp_socket, &recv_buffer[ 0 ], size );
+        int recv_size = read( mTCPSocket, &recv_buffer[ 0 ], size );
         if ( recv_size < 0 ) {
             if ( errno == EINTR || errno == EAGAIN )
                 goto retry;
             else {
-                close( tcp_socket );
-                tcp_socket = 0;
+                close( mTCPSocket );
+                mTCPSocket = 0;
                 throw SocketError( getErrorMessage( "cannot read data from peer", errno ) );
             }
         }
@@ -58,7 +58,7 @@ namespace tcpv4
     ssize_t Connection::send( const uint8_t *data, int size )
     {
     retry:
-        int sent_size = write( tcp_socket, data, size );
+        int sent_size = write( mTCPSocket, data, size );
         if ( sent_size < 0 ) {
             if ( errno == EINTR || errno == EAGAIN )
                 goto retry;
@@ -72,40 +72,40 @@ namespace tcpv4
 
     ssize_t Connection::send( const WireFormat &message )
     {
-        return message.send( tcp_socket, nullptr, 0 );
+        return message.send( mTCPSocket, nullptr, 0 );
     }
 
     Server::Server( const ServerParameters &parameters )
     {
-        tcp_socket = socket( AF_INET, SOCK_STREAM, 0 );
-        if ( tcp_socket < 0 ) {
+        mTCPSocket = socket( AF_INET, SOCK_STREAM, 0 );
+        if ( mTCPSocket < 0 ) {
             SocketError( getErrorMessage( "cannot create socket", errno ) );
         }
 
         const int one = 1;
-        setsockopt( tcp_socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one) );
+        setsockopt( mTCPSocket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one) );
 
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr   = convertAddressStringToBinary( parameters.mAddress );
         socket_address.sin_port   = htons( parameters.mPort );
-        if ( bind( tcp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
-            close( tcp_socket );
-            tcp_socket = -1;
+        if ( bind( mTCPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
+            close( mTCPSocket );
+            mTCPSocket = -1;
             throw SocketError( getErrorMessage( "cannot bind to " + parameters.mAddress, errno ) );
         }
 
-        if ( listen( tcp_socket, 10 ) < 0 ) {
-            close( tcp_socket );
-            tcp_socket = -1;
+        if ( listen( mTCPSocket, 10 ) < 0 ) {
+            close( mTCPSocket );
+            mTCPSocket = -1;
             throw SocketError( getErrorMessage( "cannot listen", errno ) );
         }
     }
 
     Server::~Server()
     {
-        close( tcp_socket );
+        close( mTCPSocket );
     }
 
     ConnectionPtr Server::acceptConnection()
@@ -115,7 +115,7 @@ namespace tcpv4
 
     retry:
         int new_connection =
-            accept( tcp_socket, reinterpret_cast<sockaddr *>( &socket_address ), &socket_address_size );
+            accept( mTCPSocket, reinterpret_cast<sockaddr *>( &socket_address ), &socket_address_size );
         if ( new_connection < 0 ) {
             if ( errno == EAGAIN || errno == EINTR )
                 goto retry;

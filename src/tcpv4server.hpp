@@ -15,10 +15,11 @@ namespace tcpv4
     class Connection : boost::noncopyable
     {
     private:
-        int tcp_socket;
+        int mTCPSocket;
 
     public:
-        Connection( int s ) : tcp_socket( s )
+        Connection( int s )
+	    : mTCPSocket( s )
         {
         }
         ~Connection();
@@ -39,7 +40,7 @@ namespace tcpv4
     class Server
     {
     private:
-        int tcp_socket;
+        int mTCPSocket;
 
     public:
         Server( const ServerParameters &p );
