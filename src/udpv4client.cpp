@@ -1,5 +1,4 @@
 #include "udpv4client.hpp"
-#include "ipv4.hpp"
 #include "utils.hpp"
 #include <arpa/inet.h>
 #include <boost/scoped_array.hpp>
@@ -36,12 +35,12 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( parameters.destination_address );
-        socket_address.sin_port   = htons( parameters.destination_port );
+        socket_address.sin_addr   = convertAddressStringToBinary( parameters.mAddress );
+        socket_address.sin_port   = htons( parameters.mPort );
         if ( connect( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) <
              0 ) {
             closeSocket();
-            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.mAddress, errno );
             throw SocketError( msg );
         }
     }
@@ -61,7 +60,7 @@ namespace udpv4
 
         int sent_size = send( udp_socket, data, size, 0 );
         if ( sent_size < 0 ) {
-            std::string msg = getErrorMessage( "cannot connect to " + parameters.destination_address, errno );
+            std::string msg = getErrorMessage( "cannot connect to " + parameters.mAddress, errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -90,11 +89,11 @@ namespace udpv4
         socklen_t            peer_address_size = sizeof( peer_address );
         std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
         int                  recv_size = recvfrom( udp_socket,
-                                  receive_buffer.data(),
-                                  UDP_RECEIVE_BUFFER_SIZE,
-                                  flags,
-                                  reinterpret_cast<sockaddr *>( &peer_address ),
-                                  &peer_address_size );
+						   receive_buffer.data(),
+						   UDP_RECEIVE_BUFFER_SIZE,
+						   flags,
+						   reinterpret_cast<sockaddr *>( &peer_address ),
+						   &peer_address_size );
         if ( recv_size < 0 ) {
             int error_num = errno;
             if ( error_num == EAGAIN ) {

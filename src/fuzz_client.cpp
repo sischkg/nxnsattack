@@ -274,8 +274,8 @@ int main( int argc, char **argv )
 
             if ( message.size() < 1500 ) {
                 udpv4::ClientParameters udp_param;
-                udp_param.destination_address = target_server;
-                udp_param.destination_port    = target_port;
+                udp_param.mAddress = target_server;
+                udp_param.mPort    = target_port;
                 udpv4::Client udp( udp_param );
                 udp.sendPacket( message );
             }

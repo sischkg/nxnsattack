@@ -113,8 +113,8 @@ namespace dns
 		    modifyMessage( response_packet );
 		    
                     udpv4::ClientParameters client;
-                    client.destination_address = recv_data.source_address;
-                    client.destination_port    = recv_data.source_port;
+                    client.mAddress = recv_data.source_address;
+                    client.mPort    = recv_data.source_port;
                     dns_receiver.sendPacket( client, response_packet );
                 } catch ( std::runtime_error &e ) {
                     std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;

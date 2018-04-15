@@ -1,5 +1,4 @@
 #include "utils.hpp"
-#include "ipv4.hpp"
 #include <boost/scoped_array.hpp>
 #include <cstdio>
 #include <cstring>

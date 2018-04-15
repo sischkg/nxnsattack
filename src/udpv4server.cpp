@@ -72,8 +72,8 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( dest.destination_address );
-        socket_address.sin_port   = htons( dest.destination_port );
+        socket_address.sin_addr   = convertAddressStringToBinary( dest.mAddress );
+        socket_address.sin_port   = htons( dest.mPort );
         int sent_size             = sendto( udp_socket,
                                 data,
                                 size,
@@ -82,7 +82,7 @@ namespace udpv4
                                 sizeof( socket_address ) );
         if ( sent_size < 0 ) {
             std::ostringstream s;
-            s << "cannot send to " << dest.destination_address << ":" << dest.destination_port << ".";
+            s << "cannot send to " << dest.mAddress << ":" << dest.mPort << ".";
             std::string msg = getErrorMessage( s.str(), errno );
             throw SocketError( msg );
         }
@@ -97,8 +97,8 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( dest.destination_address );
-        socket_address.sin_port   = htons( dest.destination_port );
+        socket_address.sin_addr   = convertAddressStringToBinary( dest.mAddress );
+        socket_address.sin_port   = htons( dest.mPort );
         return data.send( udp_socket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) );
     }
 
