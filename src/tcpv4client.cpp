@@ -116,7 +116,7 @@ namespace tcpv4
         receive_buffer.resize( recv_size );
 
         ConnectionInfo info;
-        info.stream = receive_buffer;
+        info.mStream = receive_buffer;
         return info;
     }
 
@@ -139,7 +139,7 @@ namespace tcpv4
         receive_buffer.resize( recv_size );
 
         ConnectionInfo info;
-        info.stream = receive_buffer;
+        info.mStream = receive_buffer;
         return info;
     }
 

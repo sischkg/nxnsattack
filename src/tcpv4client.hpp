@@ -9,28 +9,28 @@
 namespace tcpv4
 {
     struct ConnectionInfo {
-        std::string          source_address;
-        std::string          destination_address;
-        uint16_t             source_port;
-        uint16_t             destination_port;
-        std::vector<uint8_t> stream;
+        std::string          mSourceAddress;
+        std::string          mDestinationAddress;
+        uint16_t             mSourcePort;
+        uint16_t             mDestinationPort;
+        std::vector<uint8_t> mStream;
 
         /*!
          * @return TCP Stream length(bytes)
          */
         uint16_t getLength() const
         {
-            return stream.size();
+            return mStream.size();
         }
 
         const uint8_t *getData() const
         {
-            return stream.data();
+            return mStream.data();
         }
 
         const uint8_t *begin() const
         {
-            return stream.data();
+            return mStream.data();
         }
 
         const uint8_t *end() const
