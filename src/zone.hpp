@@ -79,13 +79,13 @@ namespace dns
         void add( std::shared_ptr<RRSet> rrset ) { mRRSets.insert( RRSetPair( rrset->getType(), rrset ) ); }
     };
 
-    class AbstractZone
+    class Zone
     {
     public:
         typedef std::shared_ptr<Node>  NodePtr;
         typedef std::shared_ptr<RRSet> RRSetPtr;
 
-        virtual ~AbstractZone() {}
+        virtual ~Zone() {}
  
         virtual void add( std::shared_ptr<RRSet> rrset ) = 0;
         virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;

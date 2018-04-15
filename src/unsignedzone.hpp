@@ -7,7 +7,7 @@ namespace dns
 {
     class UnsignedZoneImp;
     
-    class UnsignedZone : public AbstractZone
+    class UnsignedZone : public Zone
     {
     public:
         UnsignedZone( const Domainname &zone_name, const std::string &ksk_config = "", const std::string &zsk_config = "" );

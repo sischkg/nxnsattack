@@ -6,8 +6,7 @@
 
 namespace dns
 {
-      
-    uint32_t timestamp_to_epoch( const std::string &timestamp )
+    static uint32_t convertTimestampToEpoch( const std::string &timestamp )
     {
         if ( timestamp.size() != 14 ) {
             throw std::runtime_error( "timestamp " + timestamp + " is invalid" );
@@ -35,7 +34,7 @@ namespace dns
         return timegm( &tm );
     }
 
-    std::vector<std::string> parse_txt( const std::string &s )
+    static std::vector<std::string> parseTXT( const std::string &s )
     {
 	std::vector<std::string> txt;
 	std::string t  = "";
@@ -291,7 +290,7 @@ namespace dns
         }
 
 
-        void load( AbstractZone &zone, const Domainname &apex, const std::string &config )
+        void load( Zone &zone, const Domainname &apex, const std::string &config )
         {
             YAML::Node top;
             try {
@@ -524,14 +523,14 @@ namespace dns
             for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
             auto signature = decodeFromBase64Strings( signature_data, data.end() );
             
-            return RDATAPtr( new RecordRRSIG( stringToTypeCode( data[0] ),           // type covered
+            return RDATAPtr( new RecordRRSIG( stringToTypeCode( data[0] ),               // type covered
                                               boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
                                               boost::lexical_cast<uint16_t>( data[2] ),  // label count
                                               boost::lexical_cast<uint32_t>( data[3] ),  // original ttl
-                                              timestamp_to_epoch( data[4] ),            // expiration
-                                              timestamp_to_epoch( data[5] ),            // inception
-                                              boost::lexical_cast<uint16_t>( data[6] ), // key tag
-                                              data[7],                                  // signer
+                                              convertTimestampToEpoch( data[4] ),        // expiration
+                                              convertTimestampToEpoch( data[5] ),        // inception
+                                              boost::lexical_cast<uint16_t>( data[6] ),  // key tag
+                                              data[7],                                   // signer
                                               signature ) );
         }
 
@@ -542,8 +541,8 @@ namespace dns
             auto digest = decodeFromBase64Strings( digest_data, data.end() );
 
             return RDATAPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
-                                           boost::lexical_cast<uint16_t>( data[1] ),  // algorithm
-                                           boost::lexical_cast<uint16_t>( data[2] ),  // digest type
+                                           boost::lexical_cast<uint16_t>( data[1] ), // algorithm
+                                           boost::lexical_cast<uint16_t>( data[2] ), // digest type
                                            digest ) );
         }
 
@@ -567,7 +566,7 @@ namespace dns
             return RDATAPtr( new RecordNSEC( data[0], types ) );
         }
 
-        void load( AbstractZone &zone, const Domainname &apex, const std::string &config )
+        void load( Zone &zone, const Domainname &apex, const std::string &config )
         {
 	    boost::char_separator<char> sep( "\r\n" );
             boost::tokenizer<boost::char_separator<char>> tokens( config, sep );

@@ -7,7 +7,7 @@ namespace dns
 {
     class SignedZoneImp;
     
-    class SignedZone : public AbstractZone
+    class SignedZone : public Zone
     {
     public:
         SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );

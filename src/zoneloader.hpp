@@ -72,7 +72,7 @@ namespace dns
     
         std::shared_ptr<RRSet> parseRRSet( const YAML::Node &node );
 
-        void load( AbstractZone &zone, const Domainname &apex, const std::string &config );
+        void load( Zone &zone, const Domainname &apex, const std::string &config );
     }
 
     namespace full
@@ -94,11 +94,8 @@ namespace dns
     
         std::shared_ptr<RRSet> parseRRSet( const std::vector<std::string> & );
 
-        void load( AbstractZone &zone, const Domainname &apex, const std::string &config );
+        void load( Zone &zone, const Domainname &apex, const std::string &config );
     }
-
-    uint32_t timestamp_to_epoch( const std::string &timestamp );
-    std::vector<std::string> parse_txt( const std::string &s );
 }
 
 #endif
