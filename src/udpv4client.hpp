@@ -15,23 +15,23 @@ namespace udpv4
     };
 
     struct PacketInfo {
-        std::string          source_address;
-        std::string          destination_address;
-        uint16_t             source_port;
-        uint16_t             destination_port;
-        std::vector<uint8_t> payload;
+        std::string          mSourceAddress;
+        std::string          mDestinationAddress;
+        uint16_t             mSourcePort;
+        uint16_t             mDestinationPort;
+        std::vector<uint8_t> mPayload;
 
         /*!
          * @return payload length of UDP packet(bytes)
          */
         uint16_t getPayloadLength() const
         {
-            return payload.size();
+            return mPayload.size();
         }
 
         const uint8_t *getData() const
         {
-            return payload.data();
+            return mPayload.data();
         }
 
         const uint8_t *begin() const
@@ -41,17 +41,17 @@ namespace udpv4
 
         const uint8_t *end() const
         {
-            return begin() + payload.size();
+            return begin() + mPayload.size();
         }
 
 	uint8_t operator[]( unsigned int index ) const
 	{
-	    return payload[index];
+	    return mPayload[index];
 	}
 
     	uint8_t &operator[]( unsigned int index )
 	{
-	    return payload[index];
+	    return mPayload[index];
 	}
     };
 

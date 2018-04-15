@@ -105,9 +105,9 @@ namespace udpv4
         }
 
         PacketInfo info;
-        info.source_address = convertAddressBinaryToString( peer_address.sin_addr );
-        info.source_port    = ntohs( peer_address.sin_port );
-        info.payload        = receive_buffer;
+        info.mSourceAddress = convertAddressBinaryToString( peer_address.sin_addr );
+        info.mSourcePort    = ntohs( peer_address.sin_port );
+        info.mPayload       = receive_buffer;
         return info;
     }
 

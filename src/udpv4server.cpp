@@ -152,10 +152,10 @@ namespace udpv4
         }
 
         PacketInfo info;
-        info.source_address      = convertAddressBinaryToString( sin.sin_addr );
-        info.source_port         = ntohs( sin.sin_port );
-        info.destination_address = convertAddressBinaryToString( pktinfo->ipi_addr );
-        info.payload.insert( info.payload.end(), receive_buffer.begin(), receive_buffer.begin() + recv_size );
+        info.mSourceAddress      = convertAddressBinaryToString( sin.sin_addr );
+        info.mSourcePort         = ntohs( sin.sin_port );
+        info.mDestinationAddress = convertAddressBinaryToString( pktinfo->ipi_addr );
+        info.mPayload.insert( info.mPayload.end(), receive_buffer.begin(), receive_buffer.begin() + recv_size );
 
         return info;
     }
