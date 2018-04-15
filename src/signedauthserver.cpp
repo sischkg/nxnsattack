@@ -40,52 +40,6 @@ namespace dns
 	return original_response;
     }
 
-    bool SignedAuthServer::replace( std::vector<ResourceRecord> &section,
-                                    const Condition &condition,
-                                    const Replacement &replace ) const
-    {
-        bool is_replace = false;
-        for ( auto &entry : section ) {
-            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry.mDomainname == condition.owner ) &&
-                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry.mType       == condition.type  ) &&
-                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry.mClass      == condition.klass ) &&
-                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry.mTTL        == condition.ttl   ) ) {
-                is_replace = true;
-                if ( replace.flags & MATCH_OWNER )
-                    entry.mDomainname = replace.owner;
-                if ( replace.flags & MATCH_TYPE )
-                    entry.mType = replace.type;
-                if ( replace.flags & MATCH_CLASS )
-                    entry.mClass = replace.klass;
-                if ( replace.flags & MATCH_TTL )
-                    entry.mTTL = replace.ttl;
-                if ( replace.flags & MATCH_DATA )
-                    entry.mRData = RDATAPtr( replace.resource_data->clone() );
-            }
-        }
-        return is_replace;
-    }
-
-    bool SignedAuthServer::erase( std::vector<ResourceRecord> &section,
-                                  const Condition &condition ) const
-    {
-        bool is_erase = false;
-        for ( auto entry = section.begin() ; entry != section.end() ; ) {
-            if ( ( ( ! ( condition.flags & MATCH_OWNER ) ) || entry->mDomainname == condition.owner ) &&
-                 ( ( ! ( condition.flags & MATCH_TYPE  ) ) || entry->mType       == condition.type  ) &&
-                 ( ( ! ( condition.flags & MATCH_CLASS ) ) || entry->mClass      == condition.klass ) &&
-                 ( ( ! ( condition.flags & MATCH_TTL   ) ) || entry->mTTL        == condition.ttl   ) ) {
-                is_erase = true;
-                entry = section.erase( entry );
-            }
-            else {
-                entry++;
-            }
-        }
-        return is_erase;
-    }
-
-
     std::shared_ptr<RRSet> SignedAuthServer::signRRSet( const RRSet &rrset ) const
     {
 	return zone->signRRSet( rrset );
