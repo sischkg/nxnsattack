@@ -94,47 +94,6 @@ namespace dns
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
         virtual void verify() const = 0;
     };
-
-
-    class Zone : public AbstractZone
-    {
-    private:
-        typedef std::shared_ptr<Node>  NodePtr;
-	typedef std::map<Domainname,   NodePtr> OwnerToNodeContainer;
-	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
-
-        OwnerToNodeContainer mOwnerToNode;
-        Domainname           mApex;
-
-        RRSetPtr mSOA;
-        RRSetPtr mNameServers;
-
-        void addSOAToAuthoritySection( PacketInfo &res ) const;
-        void addEmptyNode( const Domainname & );
-	void addRRSetToAnswerSection( PacketInfo &response, const RRSet &rrset ) const;
-        void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &rrsig, Type covered_type ) const;
-        void addNSECAndRRSIG( PacketInfo &response, const Domainname & ) const;
-    public:
-	Zone( const Domainname &zone_name );
-	
-        virtual void add( std::shared_ptr<RRSet> rrest ) = 0;
-        virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;
-	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const
-        {
-            return std::vector<std::shared_ptr<RecordDS> >();
-        }
-
-        virtual RRSetPtr findRRSet( const Domainname &domainname, Type type ) const = 0;
-        virtual NodePtr  findNode( const Domainname &domainname ) const = 0;
-        virtual OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
-        virtual OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
-	virtual RRSetPtr getSOA() const { return mSOA; }
-	virtual RRSetPtr getNameServer() const { return mNameServers; }
-
-        virtual void verify() const;
-    };
-
 }
 
 #endif
