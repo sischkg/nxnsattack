@@ -47,12 +47,13 @@ namespace tcpv4
     class Client
     {
     private:
-        ClientParameters parameters;
-        int              tcp_socket;
+        ClientParameters mParameters;
+        int              mTCPSocket;
         void             shutdown( int );
 
     public:
-        Client( const ClientParameters &param ) : parameters( param ), tcp_socket( -1 )
+        Client( const ClientParameters &param )
+	    : mParameters( param ), mTCPSocket( -1 )
         {
         }
 
@@ -62,6 +63,7 @@ namespace tcpv4
         void closeSocket();
         void shutdown_read();
         void shutdown_write();
+	bool isEnableSocket() const;
 
         uint16_t send( const uint8_t *data, uint16_t size );
         uint16_t send( const uint8_t *begin, const uint8_t *end )
