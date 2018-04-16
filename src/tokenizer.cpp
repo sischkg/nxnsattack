@@ -121,27 +121,27 @@ public:
 		QuoteState next_q  = NOT_QUOTED_STATE,
 		EscapeState next_e = NOT_ESCAPED_STATE,
 		boost::shared_ptr<Action> a = boost::shared_ptr<Action>() )
-	: next_token_state( next_t ),
-	  next_quote_state( next_q ),
-	  next_escape_state( next_e ),
-	  action( a )
+	: mNextTokenState( next_t ),
+	  mNextQuoteState( next_q ),
+	  mNextEscapeState( next_e ),
+	  mAction( a )
     {}
     
-    TokenState getNextTokenState() const   { return next_token_state; }
-    QuoteState getNextQuoteState() const   { return next_quote_state; }
-    EscapeState getNextEscapeState() const { return next_escape_state; }
+    TokenState getNextTokenState() const   { return mNextTokenState; }
+    QuoteState getNextQuoteState() const   { return mNextQuoteState; }
+    EscapeState getNextEscapeState() const { return mNextEscapeState; }
 
     void doChar( std::vector<std::string> &tokens, std::string &tmp_token, char c ) const
     {
-	if ( action )
-	    action->doChar( tokens, tmp_token, c );
+	if ( mAction )
+	    mAction->doChar( tokens, tmp_token, c );
     }
     
 private:
-    TokenState next_token_state;
-    QuoteState next_quote_state;
-    EscapeState next_escape_state;
-    boost::shared_ptr<Action> action;
+    TokenState mNextTokenState;
+    QuoteState mNextQuoteState;
+    EscapeState mNextEscapeState;
+    boost::shared_ptr<Action> mAction;
 };
 
 
