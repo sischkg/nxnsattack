@@ -350,6 +350,30 @@ namespace dns
 
     void OffsetDB::add( const Domainname &name, uint16_t offset )
     {
+        if ( NOT_FOUND == findDomainname( name ) ) 
+            mOffsets.insert( std::make_pair( name, offset ) );
     }
 
+    void OffsetDB::outputWireFormat( const Domainname &original, WireFormat &message )
+    {
+        uint16_t pos = message.size();
+        
+        for ( Domainname name = original ; name.getLabelCount() > 0 ; ) {
+            uint16_t offset = findDomainname( name );
+            if ( offset != NOT_FOUND ) {
+                message.pushUInt8( 0xC0 | ( ( offset >> 8 ) & 0xff ) );
+                message.pushUInt8( 0xff & offset );
+                return;
+            }
+            else {
+                add( name, pos );
+                std::string label = name.getLabels().front();
+                message.pushUInt8( label.size() );
+                message.pushBuffer( label );
+                pos += ( 1 + label.size() );
+                name.popSubdomain();
+            }
+        }
+        message.pushUInt8( 0 );
+    }
 }

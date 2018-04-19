@@ -75,6 +75,10 @@ namespace dns
         {
             return canonical_labels;
         }
+        const uint32_t getLabelCount() const
+        {
+            return labels.size();
+        }
 
         Domainname  operator+( const Domainname & ) const;
         Domainname &operator+=( const Domainname & );
@@ -109,11 +113,13 @@ namespace dns
         typedef OffsetContainer::const_iterator OffsetContainerIterator;
 
         OffsetContainer mOffsets;
-    public:
-        const uint16_t NOT_FOUND = 0xffff;
 
         uint16_t findDomainname( const Domainname &name ) const;
         void add( const Domainname &name, uint16_t offset );
+    public:
+        const uint16_t NOT_FOUND = 0xffff;
+
+        void outputWireFormat( const Domainname &, WireFormat & );
     };
 
 
