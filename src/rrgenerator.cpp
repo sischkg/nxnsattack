@@ -605,15 +605,17 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 
-	std::vector<uint8_t> signature = getRandomStream( 16 );
+	std::vector<uint8_t> signature = getRandomStream( 0xffff );
+	std::vector<uint8_t> other     = getRandomStream( 0xffff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname( getDomainname( hint ) ).toString(), // domain
 						  algo,                                                   // algorithm
 						  getRandom(),         // inception
 						  getRandom(),         // expiration
-						  0,
-						  0,
-						  signature ) );
+						  getRandom( 0xff ),
+						  getRandom( 0xff ),
+						  signature,
+                                                  other) );
         return p;
     }
 
@@ -624,14 +626,15 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 
-	std::vector<uint8_t> signature = getRandomStream( 16 );
+	std::vector<uint8_t> signature = getRandomStream( 0xffff );
+	std::vector<uint8_t> other     = getRandomStream( 0xffff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname().toString(), // domain
 						  algo,                            // algorithm
 						  getRandom(),         // inception
 						  getRandom(),         // expiration
-						  0,
-						  0,
+						  getRandom(),
+						  getRandom(),
 						  signature ) );
         return p;
     }
@@ -649,7 +652,7 @@ namespace dns
 	std::vector<uint8_t> signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
-	std::vector<uint8_t> other = getRandomStream( getRandom( 0xff00 ) );
+	std::vector<uint8_t> other = getRandomStream( getRandom( 0xffff ) );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint ) ).toString(), // domain
                                                            algo,                                                   // algorithm
@@ -671,7 +674,7 @@ namespace dns
 	std::vector<uint8_t> signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
-	std::vector<uint8_t> other = getRandomStream( getRandom( 0xff00 ) );
+	std::vector<uint8_t> other = getRandomStream( getRandom( 0xffff ) );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname().toString(), // domain
                                                            algo,                            // algorithm
