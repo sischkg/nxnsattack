@@ -199,7 +199,7 @@ namespace dns
     {
         std::shared_ptr<RecordDNSKEY> dnskey = getDNSKEYRecord();
         WireFormat message;
-        dnskey->outputWireFormat( message );
+        dnskey->outputCanonicalWireFormat( message );
 
         // From RFC4034
         uint32_t ac = 0;
@@ -448,7 +448,7 @@ namespace dns
         WireFormat hash_target;
         ksk.getDomainname().outputCanonicalWireFormat( hash_target );
         std::shared_ptr<RecordDNSKEY> dnskey = ksk.getDNSKEYRecord();
-        dnskey->outputWireFormat( hash_target );
+        dnskey->outputCanonicalWireFormat( hash_target );
         std::vector<uint8_t> hash_target_data = hash_target.get();
 
         unsigned int digest_length = EVP_MAX_MD_SIZE;

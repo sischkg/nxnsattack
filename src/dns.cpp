@@ -27,9 +27,8 @@ namespace dns
                                                                                  const uint8_t *domainame,
                                                                                  int recur = 0 );
 
-    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message );
-    void generate_response_section( const ResourceRecord &r, WireFormat &message );
-    
+    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
+    void generate_response_section( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
     QuestionSectionEntryPair parse_question_section( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
@@ -71,6 +70,8 @@ namespace dns
 
     void PacketInfo::generateMessage( WireFormat &message ) const
     {
+        OffsetDB offset_db;
+
         PacketHeaderField header;
         header.id                   = htons( mID );
         header.opcode               = mOpcode;
@@ -99,16 +100,16 @@ namespace dns
                             reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
 
         for ( auto q : mQuestionSection ) {
-            generate_question_section( q, message );
+            generate_question_section( q, message, offset_db );
         }
         for ( auto q : mAnswerSection ) {
-            generate_response_section( q, message );
+            generate_response_section( q, message, offset_db );
         }
         for ( auto q : mAuthoritySection ) {
-            generate_response_section( q, message );
+            generate_response_section( q, message, offset_db );
         }
         for ( auto q : mAdditionalSection ) {
-            generate_response_section( q, message );
+            generate_response_section( q, message, offset_db );
         }
     }
 
@@ -279,9 +280,9 @@ namespace dns
         return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
-    void generate_question_section( const QuestionSectionEntry &question, WireFormat &message )
+    void generate_question_section( const QuestionSectionEntry &question, WireFormat &message, OffsetDB &offset_db )
     {
-        question.mDomainname.outputWireFormat( message );
+        offset_db.outputWireFormat( question.mDomainname, message );
         message.pushUInt16HtoN( question.mType );
         message.pushUInt16HtoN( question.mClass );
     }
@@ -297,15 +298,18 @@ namespace dns
         return QuestionSectionEntryPair( question, pos );
     }
 
-    void generate_response_section( const ResourceRecord &response, WireFormat &message )
+    void generate_response_section( const ResourceRecord &response, WireFormat &message, OffsetDB &offset_db, bool compression )
     {
-        response.mDomainname.outputWireFormat( message );
+        if ( compression )
+            offset_db.outputWireFormat( response.mDomainname, message );
+        else
+            response.mDomainname.outputWireFormat( message );
         message.pushUInt16HtoN( response.mType );
         message.pushUInt16HtoN( response.mClass );
         message.pushUInt32HtoN( response.mTTL );
         if ( response.mRData ) {
             message.pushUInt16HtoN( response.mRData->size() );
-            response.mRData->outputWireFormat( message );
+            response.mRData->outputWireFormat( message, offset_db );
         } else {
             message.pushUInt16HtoN( 0 );
         }
@@ -611,14 +615,14 @@ namespace dns
         return os.str();
     }
 
-    void RecordRaw::outputWireFormat( WireFormat &message ) const
+    void RecordRaw::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
         message.pushBuffer( mData );
     }
 
     void RecordRaw::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        outputWireFormat( message );
+        message.pushBuffer( mData );
     }
 
     RecordA::RecordA( uint32_t addr ) : mSinAddr( addr )
@@ -649,17 +653,17 @@ namespace dns
         return std::string( buf );
     }
 
-    void RecordA::outputWireFormat( WireFormat &message ) const
+    void RecordA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordA::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.push_back( ( mSinAddr >> 0 ) & 0xff );
         message.push_back( ( mSinAddr >> 8 ) & 0xff );
         message.push_back( ( mSinAddr >> 16 ) & 0xff );
         message.push_back( ( mSinAddr >> 24 ) & 0xff );
-    }
-
-    void RecordA::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     std::string RecordA::getAddress() const
@@ -700,15 +704,15 @@ namespace dns
         return buff.str();
     }
 
-    void RecordAAAA::outputWireFormat( WireFormat &message ) const
+    void RecordAAAA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        message.pushBuffer( reinterpret_cast<const uint8_t *>( &mSinAddr ),
-                            reinterpret_cast<const uint8_t *>( &mSinAddr ) + sizeof( mSinAddr ) );
+        outputCanonicalWireFormat( message );
     }
 
     void RecordAAAA::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        outputWireFormat( message );
+        message.pushBuffer( reinterpret_cast<const uint8_t *>( &mSinAddr ),
+                            reinterpret_cast<const uint8_t *>( &mSinAddr ) + sizeof( mSinAddr ) );
     }
 
     std::string RecordAAAA::getAddress() const
@@ -753,7 +757,12 @@ namespace dns
         return os.str();
     }
 
-    void RecordWKS::outputWireFormat( WireFormat &message ) const
+    void RecordWKS::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordWKS::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.push_back( ( mSinAddr >> 0 ) & 0xff );
         message.push_back( ( mSinAddr >> 8 ) & 0xff );
@@ -774,11 +783,6 @@ namespace dns
         buf.resize( max_byte_index + 1 );
 
         message.pushBuffer( buf );
-    }
-
-    void RecordWKS::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     std::string RecordWKS::getAddress() const
@@ -819,9 +823,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    void RecordNS::outputWireFormat( WireFormat &message ) const
+    void RecordNS::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        mDomainname.outputWireFormat( message );
+        offset_db.outputWireFormat( mDomainname, message );
     }
 
     void RecordNS::outputCanonicalWireFormat( WireFormat &message ) const
@@ -853,10 +857,10 @@ namespace dns
         return os.str();
     }
 
-    void RecordMX::outputWireFormat( WireFormat &message ) const
+    void RecordMX::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
         message.pushUInt16HtoN( mPriority );
-        mDomainname.outputWireFormat( message );
+        offset_db.outputWireFormat( mDomainname, message );
     }
     
     void RecordMX::outputCanonicalWireFormat( WireFormat &message ) const
@@ -903,18 +907,18 @@ namespace dns
         return os.str();
     }
 
-    void RecordTXT::outputWireFormat( WireFormat &message ) const
+    void RecordTXT::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordTXT::outputCanonicalWireFormat( WireFormat &message ) const
     {
         for ( unsigned int i = 0; i < mData.size(); i++ ) {
             message.push_back( mData[ i ].size() & 0xff );
             for ( unsigned int j = 0; j < mData[ i ].size(); j++ )
                 message.push_back( mData[ i ][ j ] );
         }
-    }
-
-    void RecordTXT::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
 
@@ -969,7 +973,12 @@ namespace dns
         return os.str();
     }
 
-    void RecordSPF::outputWireFormat( WireFormat &message ) const
+    void RecordSPF::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordSPF::outputCanonicalWireFormat( WireFormat &message ) const
     {
         for ( unsigned int i = 0; i < data.size(); i++ ) {
             message.push_back( data[ i ].size() & 0xff );
@@ -977,12 +986,6 @@ namespace dns
                 message.push_back( data[ i ][ j ] );
         }
     }
-
-    void RecordSPF::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
-    }
-
 
     uint16_t RecordSPF::size() const
     {
@@ -1025,9 +1028,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    void RecordCNAME::outputWireFormat( WireFormat &message ) const
+    void RecordCNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        mDomainname.outputWireFormat( message );
+        offset_db.outputWireFormat( mDomainname, message );
     }
 
     void RecordCNAME::outputCanonicalWireFormat( WireFormat &message ) const
@@ -1073,7 +1076,12 @@ namespace dns
         return os.str();
     }
 
-    void RecordNAPTR::outputWireFormat( WireFormat &message ) const
+    void RecordNAPTR::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordNAPTR::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( mOrder );
         message.pushUInt16HtoN( mPreference );
@@ -1082,11 +1090,6 @@ namespace dns
         message.pushUInt8( mRegexp.size() );
         message.pushBuffer( mRegexp );
         mReplacement.outputWireFormat( message );
-    }
-
-    void RecordNAPTR::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordNAPTR::size() const
@@ -1130,9 +1133,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    void RecordDNAME::outputWireFormat( WireFormat &message ) const
+    void RecordDNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        mDomainname.outputWireFormat( message );
+        offset_db.outputWireFormat( mDomainname, message );
     }
 
     void RecordDNAME::outputCanonicalWireFormat( WireFormat &message ) const
@@ -1172,7 +1175,7 @@ namespace dns
         return soa_str.str();
     }
 
-    void RecordSOA::outputWireFormat( WireFormat &message ) const
+    void RecordSOA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
         mMName.outputWireFormat( message );
         mRName.outputWireFormat( message );
@@ -1234,7 +1237,12 @@ namespace dns
         return result;
     }
 
-    void RecordAPL::outputWireFormat( WireFormat &message ) const
+    void RecordAPL::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordAPL::outputCanonicalWireFormat( WireFormat &message ) const
     {
         for ( auto i = mAPLEntries.begin(); i != mAPLEntries.end(); i++ ) {
             message.pushUInt16HtoN( i->mAddressFamily );
@@ -1242,11 +1250,6 @@ namespace dns
             message.pushUInt8( ( i->mNegation ? ( 1 << 7 ) : 0 ) | i->mAFD.size() );
             message.pushBuffer( i->mAFD );
         }
-    }
-
-    void RecordAPL::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordAPL::size() const
@@ -1299,17 +1302,17 @@ namespace dns
         return os.str();
     }
 
-    void RecordCAA::outputWireFormat( WireFormat &message ) const
+    void RecordCAA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordCAA::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt8( mFlag );
         message.pushUInt8( mTag.size() );
         message.pushBuffer( mTag );
         message.pushBuffer( mValue );
-    }
-
-    void RecordCAA::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordCAA::size() const
@@ -1385,7 +1388,12 @@ namespace dns
         return os.str();
     }
 
-    void RecordRRSIG::outputWireFormat( WireFormat &message ) const
+    void RecordRRSIG::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordRRSIG::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( mTypeCovered );
         message.pushUInt8( mAlgorithm );
@@ -1396,11 +1404,6 @@ namespace dns
         message.pushUInt16HtoN( mKeyTag );
         mSigner.outputCanonicalWireFormat( message );
         message.pushBuffer( mSignature );
-    }
-
-    void RecordRRSIG::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     std::string RecordDNSKEY::toZone() const
@@ -1430,17 +1433,17 @@ namespace dns
         return os.str();
     }
 
-    void RecordDNSKEY::outputWireFormat( WireFormat &message ) const
+    void RecordDNSKEY::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordDNSKEY::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( mFlag );
         message.pushUInt8( 3 );
         message.pushUInt8( mAlgorithm );
         message.pushBuffer( mPublicKey );
-    }
-
-    void RecordDNSKEY::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     RDATAPtr RecordDNSKEY::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -1481,17 +1484,17 @@ namespace dns
         return os.str();
     }
 
-    void RecordDS::outputWireFormat( WireFormat &message ) const
+    void RecordDS::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordDS::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( mKeyTag );
         message.pushUInt8( mAlgorithm );
         message.pushUInt8( mDigestType );
         message.pushBuffer( mDigest );
-    }
-
-    void RecordDS::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     RDATAPtr RecordDS::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -1676,15 +1679,15 @@ namespace dns
 	return mNextDomainname.toString() + " " + mBitmaps.toString();
     }
 
-    void RecordNSEC::outputWireFormat( WireFormat &message ) const
+    void RecordNSEC::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-	mNextDomainname.outputCanonicalWireFormat( message );
-	mBitmaps.outputWireFormat( message );
+        outputCanonicalWireFormat( message );
     }
 
     void RecordNSEC::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        outputWireFormat( message );
+	mNextDomainname.outputCanonicalWireFormat( message );
+	mBitmaps.outputWireFormat( message );
     }
 
     uint16_t RecordNSEC::size() const
@@ -1742,7 +1745,12 @@ namespace dns
 	return os.str();
     }
 
-    void RecordNSEC3::outputWireFormat( WireFormat &message ) const
+    void RecordNSEC3::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordNSEC3::outputCanonicalWireFormat( WireFormat &message ) const
     {
 	message.pushUInt8( mHashAlgorithm );
 	message.pushUInt8( mFlag );
@@ -1752,11 +1760,6 @@ namespace dns
 	message.pushUInt8( mNextHash.size() );
 	message.pushBuffer( mNextHash );
 	mBitmaps.outputWireFormat( message );
-    }
-
-    void RecordNSEC3::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordNSEC3::size() const
@@ -1833,18 +1836,18 @@ namespace dns
 	return os.str();
     }
 
-    void RecordNSEC3PARAM::outputWireFormat( WireFormat &message ) const
+    void RecordNSEC3PARAM::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordNSEC3PARAM::outputCanonicalWireFormat( WireFormat &message ) const
     {
 	message.pushUInt8( mHashAlgorithm );
 	message.pushUInt8( mFlag );
 	message.pushUInt16HtoN( mIteration );
 	message.pushUInt8( mSalt.size() );
 	message.pushBuffer( mSalt );
-    }
-
-    void RecordNSEC3PARAM::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordNSEC3PARAM::size() const
@@ -1898,16 +1901,16 @@ namespace dns
         return rr_size;
     }
 
-    void RecordOptionsData::outputWireFormat( WireFormat &message ) const
+    void RecordOptionsData::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        for ( auto option : mOptions ) {
-            option->outputWireFormat( message );
-        }
+        outputCanonicalWireFormat( message );
     }
 
     void RecordOptionsData::outputCanonicalWireFormat( WireFormat &message ) const
     {
-        outputWireFormat( message );
+        for ( auto option : mOptions ) {
+            option->outputWireFormat( message );
+        }
     }
 
     RDATAPtr RecordOptionsData::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
@@ -2194,7 +2197,12 @@ namespace dns
             mOtherData.size();
     }
 
-    void RecordTKEY::outputWireFormat( WireFormat &message ) const
+    void RecordTKEY::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordTKEY::outputCanonicalWireFormat( WireFormat &message ) const
     {
         mAlgorithm.outputCanonicalWireFormat( message );
         message.pushUInt32HtoN( mInception );
@@ -2205,11 +2213,6 @@ namespace dns
         message.pushBuffer( mKey );
         message.pushUInt16HtoN( mOtherData.size() );
         message.pushBuffer( mOtherData );
-    }
-
-    void RecordTKEY::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     uint16_t RecordTSIGData::size() const
@@ -2225,7 +2228,12 @@ namespace dns
             mOther.size();      // OTHER
     }
 
-    void RecordTSIGData::outputWireFormat( WireFormat &message ) const
+    void RecordTSIGData::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordTSIGData::outputCanonicalWireFormat( WireFormat &message ) const
     {
         uint32_t time_high = mSignedTime >> 16;
         uint32_t time_low  = ( ( 0xffff & mSignedTime ) << 16 ) + mFudge;
@@ -2239,11 +2247,6 @@ namespace dns
         message.pushUInt16HtoN( mError );
         message.pushUInt16HtoN( mOther.size() );
         message.pushBuffer( mOther );
-    }
-
-    void RecordTSIGData::outputCanonicalWireFormat( WireFormat &message ) const
-    {
-        outputWireFormat( message );
     }
 
     std::string RecordTSIGData::toZone() const
@@ -2416,7 +2419,7 @@ namespace dns
         return mac;
     }
 
-    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac )
+    void addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac, OffsetDB &offset_db )
     {
         PacketData mac = getTSIGMAC( tsig_info, message.get(), query_mac );
 
@@ -2442,7 +2445,7 @@ namespace dns
 
 	message.clear();
 	message.pushBuffer( packet );
-        generate_response_section( entry, message );
+        generate_response_section( entry, message, offset_db, false );
     }
 
     bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message )

@@ -30,7 +30,8 @@ namespace dns
         std::string  label;
         for ( unsigned int i = 0; i < name_length; i++ ) {
             if ( name[ i ] == '.' ) {
-                labels.push_back( label );
+                if ( label.size() > 0 )
+                    labels.push_back( label );
                 label = "";
             } else {
                 label.push_back( name[ i ] );

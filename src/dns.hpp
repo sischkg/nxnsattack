@@ -95,13 +95,13 @@ namespace dns
         {
         }
 
-        virtual std::string toZone() const                                  = 0;
-        virtual std::string toString() const                                = 0;
-        virtual void outputWireFormat( WireFormat &message ) const          = 0;
-        virtual void outputCanonicalWireFormat( WireFormat &message ) const = 0;
-        virtual Type     type() const                                       = 0;
-        virtual uint16_t size() const                                       = 0;
-	virtual RDATA *clone() const                                 = 0;
+        virtual std::string toZone() const   = 0;
+        virtual std::string toString() const = 0;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB & offset ) const = 0;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const            = 0;
+        virtual Type     type() const = 0;
+        virtual uint16_t size() const = 0;
+	virtual RDATA *clone() const  = 0;
 	
         std::ostream &operator<<( std::ostream &os ) const
         {
@@ -124,7 +124,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
@@ -148,7 +148,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
@@ -175,7 +175,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
@@ -205,7 +205,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual Type type() const
         {
@@ -235,7 +235,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -262,7 +262,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -288,7 +288,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -312,7 +312,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -334,7 +334,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -371,7 +371,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -393,7 +393,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -432,7 +432,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -493,7 +493,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -523,7 +523,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -588,7 +588,7 @@ namespace dns
  
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
@@ -652,7 +652,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
 
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
@@ -693,7 +693,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const
         {
@@ -779,7 +779,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
 
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const;
         virtual uint16_t type() const
@@ -837,7 +837,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
 
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const;
         virtual uint16_t type() const
@@ -877,7 +877,7 @@ namespace dns
         virtual std::string toZone() const;
         virtual std::string toString() const;
 
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t size() const;
         virtual uint16_t type() const
@@ -1163,7 +1163,7 @@ namespace dns
 	void add( OptPseudoRROptPtr opt ) { mOptions.push_back( opt ); }
         virtual std::string toZone() const { return ""; }
         virtual std::string toString() const;
-        virtual void outputWireFormat( WireFormat &message ) const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t type() const
         {
@@ -1259,7 +1259,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual void        outputWireFormat( WireFormat &, OffsetDB & ) const;
         virtual void        outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t    type() const
         {
@@ -1338,7 +1338,7 @@ namespace dns
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
-        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual void        outputWireFormat( WireFormat &, OffsetDB & ) const;
         virtual void        outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint16_t    type() const
         {
