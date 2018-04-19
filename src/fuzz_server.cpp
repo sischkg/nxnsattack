@@ -103,10 +103,10 @@ namespace dns
 		option_generator.generate( modified_response );
 
             if ( ! getRandom( 7 ) ) {
-                modified_response.mOptPseudoRR.mPayloadSize = getRandom( 1100 );
+                modified_response.mOptPseudoRR.mPayloadSize = getRandom( 0xffff  );
             }
             if ( ! getRandom( 7 ) ) {
-                modified_response.mOptPseudoRR.mRCode = getRandom( 16);
+                modified_response.mOptPseudoRR.mRCode = getRandom( 16 );
             }
             if ( ! getRandom( 7 ) ) {
                 modified_response.mOptPseudoRR.mDOBit = getRandom( 1 );
