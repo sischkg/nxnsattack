@@ -248,7 +248,7 @@ int main( int argc, char **argv )
                 option_generator.generate( packet_info );
 
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 1100 );
+                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
             }
             if ( ! dns::getRandom( 7 ) ) {
                 packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16 );
@@ -257,7 +257,7 @@ int main( int argc, char **argv )
                 packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
             }
 
-            packet_info.mID                  = 1234;
+            packet_info.mID                  = dns::getRandom( 0xffff );
             packet_info.mOpcode              = 0;
             packet_info.mQueryResponse       = 0;
             packet_info.mAuthoritativeAnswer = 0;
