@@ -265,7 +265,8 @@ TEST_F( RecordNSECTest, WriteFormatNSECRFC4034 )
 
     dns::RecordNSEC nsec( "host.example.com", types );
     WireFormat message;
-    nsec.outputWireFormat( message );
+    dns::OffsetDB offset_db;
+    nsec.outputWireFormat( message, offset_db );
     ASSERT_EQ( 55, message.size() );
 
     EXPECT_EQ( 0x04, (uint32_t)message[0] );
