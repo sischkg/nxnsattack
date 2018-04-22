@@ -23,7 +23,7 @@ namespace dns
 
         void addEmptyNode( const Domainname & );
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
+        void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
         void addSOAToAuthoritySection( PacketInfo &res ) const;
 
 	RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
@@ -41,6 +41,12 @@ namespace dns
 
         void verify() const;
 	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
+
+	virtual void responseDNSKEY( PacketInfo &response ) const;
+	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const;
+
+	void responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard_nsec ) const;
+	void responseNXDomain( const Domainname &qname, PacketInfo &response ) const;
 
         static void initialize();
     };
