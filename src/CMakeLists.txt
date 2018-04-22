@@ -22,12 +22,13 @@ add_library( libzone
              zonesigner.cpp
              zoneloader.cpp
              zone.cpp
-             tokenizer )
+	     nsecdb.cpp
+             nsec3db.cpp )
 add_library( libtokenizer tokenizer.cpp )
 
 set( CLIENT_LIBRARY boost_program_options boost_thread boost_system libdns libipv4 ${OPENSSL_CRYPTO_LIBRARY} )
 set( SERVER_LIBRARY libdnsserver ${CLIENT_LIBRARY} )
-set( ZONE_SERVER_LIBRARY libzone ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
+set( ZONE_SERVER_LIBRARY libzone libtokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 
 add_executable( zone_server       zone_server.cpp )
 add_executable( dnssec_server     dnssec_server.cpp )

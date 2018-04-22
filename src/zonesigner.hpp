@@ -31,7 +31,7 @@ namespace dns
 	DNSSEC_ECDSAP256SHA256 = 13,
 	DNSSEC_ECDSAP384SHA384 = 14,
     };
-    
+
     class PublicKey {
     public:
         virtual ~PublicKey() {}

@@ -85,6 +85,8 @@ namespace dns
 
         void addSubdomain( const std::string & );
         void addSuffix( const std::string & );
+        void pushSubdomain( const std::string &label ) { addSubdomain( label ); }
+        void pushSuffix( const std::string &label ) { addSuffix( label ); }
 	bool isSubDomain( const Domainname &child ) const;	
         Domainname getRelativeDomainname( const Domainname &child ) const;
 

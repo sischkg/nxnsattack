@@ -14,7 +14,7 @@
 
 namespace dns
 {
-    static SignAlgorithm stringToSignAlgorithm( const std::string &str )
+    SignAlgorithm stringToSignAlgorithm( const std::string &str )
     {
 	if ( str == "RSASHA1" )
 	    return DNSSEC_RSASHA1;
@@ -28,21 +28,7 @@ namespace dns
 	throw std::runtime_error( "unknown algorithm \"" + str + "\"" );
     }
 
-    static const EVP_MD *enumToDigestMD( HashAlgorithm algo )
-    {
-        switch ( algo ) {
-        case DNSSEC_SHA1:
-            return EVP_sha1();
-        case DNSSEC_SHA256:
-            return EVP_sha256();
-        case DNSSEC_SHA384:
-            return EVP_sha384();
-        default:
-            throw std::runtime_error( "unknown hash algorighm for DS" );
-        }
-    }
-
-    static const EVP_MD *enumToSignMD( SignAlgorithm algo )
+    const EVP_MD *enumToSignMD( SignAlgorithm algo )
     {
         switch ( algo ) {
         case DNSSEC_RSASHA1:
@@ -58,7 +44,21 @@ namespace dns
         }
     }
 
-    static void throwException( const char *message, const char *other = nullptr )
+    const EVP_MD *enumToDigestMD( HashAlgorithm algo )
+    {
+        switch ( algo ) {
+        case DNSSEC_SHA1:
+            return EVP_sha1();
+        case DNSSEC_SHA256:
+            return EVP_sha256();
+        case DNSSEC_SHA384:
+            return EVP_sha384();
+        default:
+            throw std::runtime_error( "unknown hash algorighm for DS" );
+        }
+    }
+
+    void throwException( const char *message, const char *other )
     {
         unsigned int code = ERR_get_error();
         char openssl_error[1024];
@@ -74,6 +74,10 @@ namespace dns
         std::runtime_error( err.str() );
     }
 
+    void throwException( const std::string &message, const char *other )
+    {
+	throwException( message.c_str(), other );
+    }
 
     /*******************************************************************************************
      * PrivateKeyImp

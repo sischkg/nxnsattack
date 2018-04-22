@@ -10,6 +10,11 @@
 
 namespace dns
 {
+    SignAlgorithm stringToSignAlgorithm( const std::string &str );
+    const EVP_MD *enumToSignMD( SignAlgorithm algo );
+    const EVP_MD *enumToDigestMD( HashAlgorithm algo );
+    void throwException( const char *message, const char *other = nullptr );
+    void throwException( const std::string &message, const char *other = nullptr );
 
     /*******************************************************************************************
      * PrivateKeyImp
