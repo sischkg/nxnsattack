@@ -7,7 +7,7 @@ namespace dns
 {
 
     SignedZoneImp::SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-        : mApex( zone_name ), mSigner( zone_name, ksk_config, zsk_config )
+        : mApex( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( mApex )
     {
 	mOwnerToNode.insert( OwnerToNodePair( mApex, NodePtr( new Node ) ) );
     }
@@ -120,12 +120,6 @@ namespace dns
             response.mResponseCode = REFUSED;
             return response;
         }
-
-	// QTYPE == DNSKEY, return RRSet from ZoneSigner
-	if ( qtype == TYPE_DNSKEY && qname == mSOA->getOwner() ) {
-	    responseDNSKEY( response );
-	    return response;
-	}
 
         if ( qtype == TYPE_RRSIG ) {
 	    responseRRSIG( qname, response );
@@ -272,15 +266,29 @@ namespace dns
 	}
     }
 
-    void SignedZoneImp::verify() const
+    void SignedZoneImp::verify()
     {
         if ( mSOA.get() == nullptr )
             throw ZoneError( "No SOA record" );
 
         if ( mNameServers.get() == nullptr )
             throw ZoneError( "No NS records" );
+
+	mOwnerToNode[mApex]->add( getDNSKEYRRSet() ); 
+	for ( auto node : mOwnerToNode ) {
+	    mNSECDB.addNode( node.first, *(node.second) );
+	}
     }
 
+    SignedZoneImp::RRSetPtr SignedZoneImp::getDNSKEYRRSet() const
+    {
+	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
+	RRSetPtr dnskey_rrset( new RRSet( mSOA->getOwner(), mSOA->getClass(), TYPE_DNSKEY, mSOA->getTTL() ) );
+	for ( auto k : keys ) {
+	    dnskey_rrset->add( k );
+	}
+	return dnskey_rrset;
+    }
 
     void SignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {
@@ -339,57 +347,11 @@ namespace dns
     
     SignedZoneImp::RRSetPtr SignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {
-        OwnerToNodeContainer owner_to_node;
-        for ( auto node : mOwnerToNode ) {
-            if ( node.second->exist() )
-                owner_to_node.insert( node );
-        }
+	ResourceRecord nsec_rr = mNSECDB.findNSEC( domainname, mSOA->getTTL() );
+	RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
+	rrset->add( nsec_rr.mRData );
 
-        OwnerToNodeContainer::const_iterator nsec_node = owner_to_node.end();
-        Domainname next_domainname;
-
-        auto node_itr = owner_to_node.find( domainname );
-        if ( node_itr == owner_to_node.end() ) { // NXDOMAIN or NODATA by empty non-terminal
-            for ( auto node_itr = owner_to_node.begin() ; node_itr != owner_to_node.end() ; node_itr++ ) {
-                auto next_node_itr = std::next( node_itr );
-                if ( next_node_itr != owner_to_node.end() ) {
-                    if ( node_itr->first < domainname &&
-                         domainname < next_node_itr->first ) {
-                             nsec_node = node_itr;
-                            next_domainname = next_node_itr->first;
-                        }
-                }
-                else {
-                    if ( domainname < owner_to_node.begin()->first || prev( owner_to_node.end() )->first < domainname ) {
-                        nsec_node = prev( owner_to_node.end() );
-                        next_domainname = owner_to_node.begin()->first;
-                    }
-                }
-            }
-            if ( nsec_node == owner_to_node.end() ) {
-                throw std::logic_error( "not found nsec node for NXDOMAIN" );
-            }
-        }
-        else { // NODATA
-            nsec_node = node_itr;
-            auto next_node_itr = std::next( nsec_node );
-            if ( next_node_itr == owner_to_node.end() ) {
-                next_domainname = owner_to_node.begin()->first;
-            }
-            else {
-                next_domainname = next_node_itr->first;
-            }
-        }
-
-        std::vector<Type> types;
-        for ( auto rrset_itr = nsec_node->second->begin() ; rrset_itr != nsec_node->second->end() ; rrset_itr++ ) {
-            types.push_back( rrset_itr->second->getType() );
-        }
-        std::shared_ptr<const RecordSOA> soa = std::dynamic_pointer_cast<const RecordSOA>( (*mSOA)[0] );
-        std::shared_ptr<RRSet> nsec( new RRSet( nsec_node->first, mSOA->getClass(), TYPE_NSEC, soa->getMinimum() ) );
-        nsec->add( std::shared_ptr<RecordNSEC>( new RecordNSEC( next_domainname, types ) ) );
-
-        return nsec;
+	return rrset;
     }
 
     std::shared_ptr<RRSet> SignedZoneImp::signRRSet( const RRSet &rrset ) const

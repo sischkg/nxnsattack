@@ -15,6 +15,7 @@ add_executable( test-tokenizer    test-tokenizer.cpp )
 add_executable( test-domainname   test-domainname.cpp )
 add_executable( test-compression  test-compression.cpp )
 add_executable( test-nsec         test-nsec.cpp )
+add_executable( test-nsecdb       test-nsecdb.cpp )
 add_executable( test-zone         test-zone.cpp )
 add_executable( test-zoneloader   test-zoneloader.cpp )
 add_executable( test-dnskey       test-dnskey.cpp )
@@ -28,6 +29,7 @@ target_link_libraries(test-hmac-md5    ${UTIL_LIBRARY} )
 target_link_libraries(test-domainname  ${DNS_LIBRARY} )
 target_link_libraries(test-compression ${DNS_LIBRARY} )
 target_link_libraries(test-nsec        ${DNS_LIBRARY} )
+target_link_libraries(test-nsecdb      ${ZONE_LIBRARY} )
 target_link_libraries(test-zone        ${ZONE_LIBRARY} )
 target_link_libraries(test-zoneloader  ${ZONE_LIBRARY} )
 target_link_libraries(test-dnskey      ${ZONE_LIBRARY} )
@@ -85,6 +87,11 @@ add_test(
 add_test(
   NAME nsec
   COMMAND test-nsec
+)
+
+add_test(
+  NAME nsecdb
+  COMMAND test-nsecdb
 )
 
 add_test(

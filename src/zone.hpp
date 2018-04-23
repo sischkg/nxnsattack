@@ -48,7 +48,7 @@ namespace dns
 	ConstRDATAPtr operator[]( int index ) const { return mResourceData[index]; }
 	const RDATAContainer &getRRSet() const { return mResourceData; }
 
-        void add( RDATAPtr data ) { mResourceData.push_back( data ); }
+        RRSet &add( RDATAPtr data ) { mResourceData.push_back( data ); return *this; }
     };
 
     std::ostream &operator<<( std::ostream &os, const RRSet &rrset );
@@ -76,7 +76,7 @@ namespace dns
         bool empty() const { return   mRRSets.empty(); }
         bool exist() const { return ! mRRSets.empty(); }
 
-        void add( std::shared_ptr<RRSet> rrset ) { mRRSets.insert( RRSetPair( rrset->getType(), rrset ) ); }
+        Node &add( std::shared_ptr<RRSet> rrset ) { mRRSets.insert( RRSetPair( rrset->getType(), rrset ) ); return *this; }
     };
 
     class Zone
