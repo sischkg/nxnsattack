@@ -20,6 +20,7 @@ namespace dns
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
 	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const;
+	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const;
         virtual void responseDNSKEY( PacketInfo &response ) const;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
 	virtual RRSetPtr getDNSKEYRRSet() const;

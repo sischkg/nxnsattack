@@ -91,6 +91,11 @@ namespace dns
 	    return response;
         }
 
+        if ( qtype == TYPE_NSEC ) {
+	    responseNSEC( qname, response );
+	    return response;
+        }
+
         // find DNAME
         for ( auto parent_name = qname ; parent_name != mApex ; parent_name.popSubdomain() ) {
             auto dname_rrset = findRRSet( parent_name, TYPE_DNAME );

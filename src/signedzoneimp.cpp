@@ -44,6 +44,28 @@ namespace dns
 	    responseNXDomain( qname, response );
 	}
     }
+
+    void SignedZoneImp::responseNSEC( const Domainname &qname, PacketInfo &response ) const
+    {
+	auto node = findNode( qname );
+	if ( node ) {
+	    if ( node->exist() ) {
+                ResourceRecord nsec_rr = mNSECDB.findNSEC( qname, getSOA().getTTL() );
+                RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
+                rrset->add( nsec_rr.mRData );
+
+                addRRSet( response.mAnswerSection, *rrset );
+                addRRSIG( response, response.mAnswerSection, *rrset );
+	    }
+	    else {
+		responseNoData( qname, response, true );
+	    }
+	}
+	else {
+	    // NXDOMAIN
+	    responseNXDomain( qname, response );
+	}
+    }
     
 
     std::vector<std::shared_ptr<RecordDS>> SignedZoneImp::getDSRecords() const
