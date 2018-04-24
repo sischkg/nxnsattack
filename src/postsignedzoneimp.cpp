@@ -7,7 +7,7 @@ namespace dns
 {
 
     PostSignedZoneImp::PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-        : mApex( zone_name ), mSigner( zone_name, ksk_config, zsk_config )
+        : mApex( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( zone_name )
     {
 	mOwnerToNode.insert( OwnerToNodePair( mApex, NodePtr( new Node ) ) );
     }
@@ -315,13 +315,28 @@ namespace dns
 	}
     }
 
-    void PostSignedZoneImp::verify() const
+    void PostSignedZoneImp::verify()
     {
         if ( mSOA.get() == nullptr )
             throw ZoneError( "No SOA record" );
 
         if ( mNameServers.get() == nullptr )
             throw ZoneError( "No NS records" );
+
+        mOwnerToNode[mApex]->add( getDNSKEYRRSet() ); 
+	for ( auto node : mOwnerToNode ) {
+	    mNSECDB.addNode( node.first, *(node.second) );
+	}
+    }
+
+    PostSignedZoneImp::RRSetPtr PostSignedZoneImp::getDNSKEYRRSet() const
+    {
+	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
+	RRSetPtr dnskey_rrset( new RRSet( mSOA->getOwner(), mSOA->getClass(), TYPE_DNSKEY, mSOA->getTTL() ) );
+	for ( auto k : keys ) {
+	    dnskey_rrset->add( k );
+	}
+	return dnskey_rrset;
     }
 
 

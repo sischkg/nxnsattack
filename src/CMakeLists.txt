@@ -12,6 +12,7 @@ add_library( libzone
              unsignedauthserver.cpp
              auth_server.cpp
 	     shufflebytes.cpp
+             abstractzoneimp.cpp
              signedzone.cpp
              signedzoneimp.cpp
              unsignedzone.cpp

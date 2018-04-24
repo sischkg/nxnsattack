@@ -29,12 +29,12 @@ namespace dns
 	digest.resize( digest_size );
     }
 
-    static void calculateNSEC3Hash( const Domainname &original,
-				    const std::vector<uint8_t> &salt,
-				    uint16_t iterate,
-				    HashAlgorithm algorithm,
-				    Domainname &nsec3_owner,
-				    std::vector<uint8_t> &hash )
+    void calculateNSEC3Hash( const Domainname &original,
+                             const std::vector<uint8_t> &salt,
+                             uint16_t iterate,
+                             HashAlgorithm algorithm,
+                             Domainname &nsec3_owner,
+                             std::vector<uint8_t> &hash )
     {
 	std::vector<uint8_t> hash_target;
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();

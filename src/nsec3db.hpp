@@ -7,6 +7,13 @@
 
 namespace dns
 {
+    void calculateNSEC3Hash( const Domainname &original,
+                             const std::vector<uint8_t> &salt,
+                             uint16_t iterate,
+                             HashAlgorithm algorithm,
+                             Domainname &nsec3_owner,
+                             std::vector<uint8_t> &hash );
+
     class NSEC3Entry
     {
     public:
@@ -15,11 +22,11 @@ namespace dns
 		    const std::vector<uint8_t> &hash,
 		    const std::vector<Type> &types,
 		    bool is_temp )
-	: mOwner( owner ),
-	  mOriginal( original ),
-	  mHash( hash ),
-	  mTypes( types ),
-	  mIsTemp( is_temp )
+            : mOwner( owner ),
+              mOriginal( original ),
+              mHash( hash ),
+              mTypes( types ),
+              mIsTemp( is_temp )
         {}
 
 	void addTypes( const std::vector<Type> &types );
