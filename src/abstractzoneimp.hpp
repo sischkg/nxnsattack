@@ -9,18 +9,20 @@ namespace dns
 {
     class AbstractZoneImp
     {
-    private:
+    public:
         typedef std::shared_ptr<RRSet> RRSetPtr;
         typedef std::shared_ptr<Node>  NodePtr;
 	typedef std::map<Domainname,   NodePtr> OwnerToNodeContainer;
 	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
 
+    private:
         OwnerToNodeContainer mOwnerToNode;
         Domainname           mApex;
 
         RRSetPtr mSOA;
         RRSetPtr mNameServers;
 
+    protected:
         void addEmptyNode( const Domainname & );
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
         void addSOAToAuthoritySection( PacketInfo &res ) const;
@@ -31,9 +33,12 @@ namespace dns
     public:
         AbstractZoneImp( const Domainname &zone_name );
 
+        const Domainname &getApex() const { return mApex; }
+        const RRSet &getSOA() const { return *mSOA; }
+        const RRSet &getNameServers() const { return *mNameServers; }
+
         void add( RRSetPtr rrest );
         PacketInfo getAnswer( const PacketInfo &query ) const;
-	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
 	
         NodePtr  findNode( const Domainname &domainname ) const;
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
@@ -44,6 +49,7 @@ namespace dns
 
         virtual void setup() = 0;
 
+	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
 	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const = 0;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const = 0;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const = 0;

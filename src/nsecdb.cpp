@@ -11,6 +11,7 @@ namespace dns
 	    types.push_back( rrset->second->getType() );
 	}
 	types.push_back( TYPE_NSEC );
+	types.push_back( TYPE_RRSIG );
 
 	auto nsec_entry = mNSECEntries.find( owner );
 	if ( nsec_entry == mNSECEntries.end() ) {
@@ -27,9 +28,13 @@ namespace dns
 
     ResourceRecord NSECDB::findNSEC( const Domainname &name, TTL ttl ) const
     {
+        if ( mNSECEntries.empty() )
+            throw std::logic_error( "nsec must not be empty" );
+
 	Domainname owner, next_name;
 	std::vector<Type> types;
 	auto nsec_entry = mNSECEntries.lower_bound( name );
+
         if ( nsec_entry == mNSECEntries.end() ) {
             nsec_entry--;
 	    owner = nsec_entry->first.getCanonicalDomainname();

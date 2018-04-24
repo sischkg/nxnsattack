@@ -32,6 +32,11 @@ namespace dns
 	mImp->verify();
     }
 
+    void SignedZone::setup()
+    {
+	mImp->setup();
+    }
+
     SignedZone::NodePtr SignedZone::findNode( const Domainname &domainname ) const
     {
         return mImp->findNode( domainname );

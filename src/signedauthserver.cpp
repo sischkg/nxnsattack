@@ -20,6 +20,7 @@ namespace dns
         SignedZone::initialize();
         zone.reset( new SignedZone( apex, ksk_config, zsk_config ) );
 	dns::full::load( *zone, apex, config );
+        zone->setup();
 	zone->verify();
     }
 
