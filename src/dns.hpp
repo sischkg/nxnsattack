@@ -100,9 +100,9 @@ namespace dns
         virtual void outputWireFormat( WireFormat &message, OffsetDB & offset ) const = 0;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const            = 0;
         virtual Type     type() const = 0;
-        virtual uint16_t size() const = 0;
-	virtual RDATA *clone() const  = 0;
-	
+        virtual uint32_t size() const = 0;
+        virtual uint32_t size( const OffsetDB & ) const = 0;
+	virtual RDATA *clone() const = 0;
         std::ostream &operator<<( std::ostream &os ) const
         {
             os << toString();
@@ -130,9 +130,13 @@ namespace dns
         {
             return mRRType;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return mData.size();
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 	virtual RecordRaw *clone() const { return new RecordRaw( mRRType, mData ); }
     };
@@ -154,9 +158,13 @@ namespace dns
         {
             return TYPE_A;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof( mSinAddr );
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 	virtual RecordA *clone() const { return new RecordA( mSinAddr ); }
 
@@ -181,9 +189,13 @@ namespace dns
         {
             return TYPE_AAAA;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof( mSinAddr );
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 	virtual RecordAAAA *clone() const { return new RecordAAAA( mSinAddr ); }
 
@@ -211,9 +223,13 @@ namespace dns
         {
             return TYPE_WKS;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof( mSinAddr );
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 	virtual RecordWKS *clone() const { return new RecordWKS( mSinAddr, mProtocol, mBitmap ); }
 
@@ -241,10 +257,11 @@ namespace dns
         {
             return TYPE_NS;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return mDomainname.size();
         }
+        virtual uint32_t size( const OffsetDB &offset_db ) const;
 	virtual RecordNS *clone() const { return new RecordNS( mDomainname ); }
 	const Domainname &getNameServer() const { return mDomainname; }
 
@@ -268,10 +285,11 @@ namespace dns
         {
             return TYPE_MX;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof( mPriority ) + mDomainname.size();
         }
+        virtual uint32_t size( const OffsetDB &offset_db ) const;
 	virtual RecordMX *clone() const { return new RecordMX( mPriority, mDomainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -294,7 +312,11 @@ namespace dns
         {
             return TYPE_TXT;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordTXT *clone() const { return new RecordTXT( mData ); }
 	const std::vector<std::string> &getTexts() const { return mData; }
 
@@ -318,7 +340,11 @@ namespace dns
         {
             return TYPE_SPF;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordSPF *clone() const { return new RecordSPF( data ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -340,10 +366,11 @@ namespace dns
         {
             return TYPE_CNAME;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return mDomainname.size();
         }
+        virtual uint32_t size( const OffsetDB &offset_db ) const;
 	virtual RecordCNAME *clone() const { return new RecordCNAME( mDomainname ); }
 
         const Domainname &getCanonicalName() const { return mDomainname; }
@@ -377,7 +404,11 @@ namespace dns
         {
             return TYPE_NAPTR;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordNAPTR *clone() const { return new RecordNAPTR( mOrder, mPreference, mFlags, mServices, mRegexp, mReplacement ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -399,10 +430,11 @@ namespace dns
         {
             return TYPE_DNAME;
         }
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return mDomainname.size();
         }
+        virtual uint32_t size( const OffsetDB &offset_db ) const;
         const Domainname &getCanonicalName() const { return mDomainname; }
 
 	virtual RecordDNAME *clone() const { return new RecordDNAME( mDomainname ); }
@@ -438,7 +470,8 @@ namespace dns
         {
             return TYPE_SOA;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const;
 
         const std::string getMName() const
         {
@@ -499,7 +532,11 @@ namespace dns
         {
             return TYPE_APL;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordAPL *clone() const { return new RecordAPL( mAPLEntries ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -529,7 +566,11 @@ namespace dns
         {
             return TYPE_CAA;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordCAA *clone() const { return new RecordCAA( *this ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -590,7 +631,7 @@ namespace dns
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return 2 +  // type_covered(uint16_t)
                 1 +  // algorithm
@@ -601,6 +642,10 @@ namespace dns
                 2 +  // key tag
                 mSigner.size() +
                 mSignature.size();
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 
         virtual uint16_t type() const
@@ -654,9 +699,13 @@ namespace dns
 
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof(mFlag) + sizeof(mAlgorithm) + 1 + mPublicKey.size();
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 
         virtual uint16_t type() const
@@ -695,9 +744,13 @@ namespace dns
         virtual std::string toString() const;
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const
+        virtual uint32_t size() const
         {
             return sizeof(mKeyTag) + sizeof(mAlgorithm) + sizeof(mDigestType) + mDigest.size();
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 
         virtual uint16_t type() const
@@ -729,7 +782,7 @@ namespace dns
 
 	    void        setIndex( uint8_t i ) { mIndex = i; }
 	    void        add( Type );
-	    uint16_t    size() const;
+	    uint32_t    size() const;
 	    void        outputWireFormat( WireFormat &message ) const;
 	    std::string toString() const;
 	    uint16_t    getIndex() const { return mIndex; }
@@ -750,7 +803,7 @@ namespace dns
         std::vector<Type> getTypes() const;
 
 	std::string toString() const;
-	uint16_t    size() const;
+	uint32_t    size() const;
 	void        outputWireFormat( WireFormat &message ) const;
 
 	static const uint8_t *parse( NSECBitmapField &ref_bitmaps,
@@ -781,7 +834,11 @@ namespace dns
 
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
         virtual uint16_t type() const
         {
             return TYPE_NSEC;
@@ -839,10 +896,14 @@ namespace dns
 
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
         virtual uint16_t type() const
         {
             return TYPE_NSEC3;
+        }
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
         }
 	virtual RecordNSEC3 *clone() const
 	{
@@ -879,7 +940,11 @@ namespace dns
 
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
         virtual uint16_t type() const
         {
             return TYPE_NSEC3PARAM;
@@ -1169,7 +1234,11 @@ namespace dns
         {
             return TYPE_OPT;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordOptionsData *clone() const
 	{
 	    return new RecordOptionsData( mOptions );
@@ -1265,7 +1334,11 @@ namespace dns
         {
             return TYPE_TKEY;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordTKEY *clone() const
 	{
 	    return new RecordTKEY( mDomain.toString(),
@@ -1344,7 +1417,11 @@ namespace dns
         {
             return TYPE_TSIG;
         }
-        virtual uint16_t size() const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( const OffsetDB &offset_db ) const
+        {
+            return size();
+        }
 	virtual RecordTSIGData *clone() const
 	{
 	    return new RecordTSIGData( mKeyName.toString(),
@@ -1388,8 +1465,8 @@ namespace dns
         {
         }
 
-    	uint16_t size() const;
-
+    	uint32_t size() const;
+        
 	ResourceRecord( const ResourceRecord &entry )
 	    : mDomainname( entry.mDomainname ),
 	      mType( entry.mType ),

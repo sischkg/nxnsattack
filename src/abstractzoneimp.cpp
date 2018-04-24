@@ -136,8 +136,11 @@ namespace dns
 		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
                         auto rrset = *(rrset_itr->second);
                         addRRSet( response.mAnswerSection, rrset );
-			addRRSIG( response, response.mAuthoritySection, rrset );
-		    }
+			addRRSIG( response, response.mAnswerSection, rrset );
+                    }
+                    RRSetPtr nsec = generateNSECRRSet( qname );
+                    addRRSet( response.mAnswerSection, *nsec );
+                    addRRSIG( response, response.mAnswerSection, *nsec );
 		}
 		else {
 		    // NoData ( found empty non-terminal )

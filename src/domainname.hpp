@@ -121,7 +121,8 @@ namespace dns
     public:
         const uint16_t NOT_FOUND = 0xffff;
 
-        void outputWireFormat( const Domainname &, WireFormat & );
+        uint16_t outputWireFormat( const Domainname &, WireFormat & );
+        uint16_t getOutputWireFormatSize( const Domainname & ) const;
     };
 
 

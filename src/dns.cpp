@@ -60,7 +60,7 @@ namespace dns
         return mDomainname.size() + sizeof(mType) + sizeof(mClass);
     }
 
-    uint16_t ResourceRecord::size() const
+    uint32_t ResourceRecord::size() const
     {
         return mDomainname.size() + sizeof(mType) + sizeof(mClass) + sizeof(mTTL) +
 	    sizeof(uint16_t) +       // size of resource data size
@@ -308,7 +308,12 @@ namespace dns
         message.pushUInt16HtoN( response.mClass );
         message.pushUInt32HtoN( response.mTTL );
         if ( response.mRData ) {
-            message.pushUInt16HtoN( response.mRData->size() );
+            uint32_t rdata_size = 0;
+            if ( compression )
+                rdata_size = response.mRData->size( offset_db );
+            else
+                rdata_size = response.mRData->size();
+            message.pushUInt16HtoN( rdata_size );
             response.mRData->outputWireFormat( message, offset_db );
         } else {
             message.pushUInt16HtoN( 0 );
@@ -823,6 +828,11 @@ namespace dns
         return mDomainname.toString();
     }
 
+    uint32_t RecordNS::size( const OffsetDB &offset_db ) const
+    {
+        return offset_db.getOutputWireFormatSize( mDomainname );
+    }
+
     void RecordNS::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
         offset_db.outputWireFormat( mDomainname, message );
@@ -855,6 +865,11 @@ namespace dns
         std::ostringstream os;
         os << mPriority << " " << mDomainname.toString();
         return os.str();
+    }
+
+    uint32_t RecordMX::size( const OffsetDB &offset_db ) const
+    {
+        return sizeof(uint16_t) + offset_db.getOutputWireFormatSize( mDomainname );
     }
 
     void RecordMX::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -922,7 +937,7 @@ namespace dns
     }
 
 
-    uint16_t RecordTXT::size() const
+    uint32_t RecordTXT::size() const
     {
         uint16_t s = 0;
         for ( auto i = mData.begin(); i != mData.end(); i++ ) {
@@ -987,7 +1002,7 @@ namespace dns
         }
     }
 
-    uint16_t RecordSPF::size() const
+    uint32_t RecordSPF::size() const
     {
         uint16_t s = 0;
         for ( auto i = data.begin(); i != data.end(); i++ ) {
@@ -1026,6 +1041,11 @@ namespace dns
     std::string RecordCNAME::toString() const
     {
         return mDomainname.toString();
+    }
+
+    uint32_t RecordCNAME::size( const OffsetDB &offset_db ) const
+    {
+        return offset_db.getOutputWireFormatSize( mDomainname );
     }
 
     void RecordCNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -1092,7 +1112,7 @@ namespace dns
         mReplacement.outputWireFormat( message );
     }
 
-    uint16_t RecordNAPTR::size() const
+    uint32_t RecordNAPTR::size() const
     {
         return sizeof( mOrder ) + sizeof( mPreference ) + 1 + mFlags.size() + 1 + mRegexp.size() +
             mReplacement.size();
@@ -1131,6 +1151,11 @@ namespace dns
     std::string RecordDNAME::toString() const
     {
         return mDomainname.toString();
+    }
+
+    uint32_t RecordDNAME::size( const OffsetDB &offset_db ) const
+    {
+        return offset_db.getOutputWireFormatSize( mDomainname );
     }
 
     void RecordDNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -1175,10 +1200,19 @@ namespace dns
         return soa_str.str();
     }
 
+    uint32_t RecordSOA::size( const OffsetDB &offset_db ) const
+    {
+        return
+            offset_db.getOutputWireFormatSize( mMName ) +
+            offset_db.getOutputWireFormatSize( mRName ) +
+            sizeof( mSerial ) + sizeof( mRefresh ) +
+            sizeof( mRetry ) + sizeof( mExpire ) + sizeof( mMinimum );            ;
+    }
+
     void RecordSOA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
     {
-        mMName.outputWireFormat( message );
-        mRName.outputWireFormat( message );
+        offset_db.outputWireFormat( mMName, message );
+        offset_db.outputWireFormat( mRName, message );
         message.pushUInt32HtoN( mSerial );
         message.pushUInt32HtoN( mRefresh );
         message.pushUInt32HtoN( mRetry );
@@ -1197,7 +1231,7 @@ namespace dns
         message.pushUInt32HtoN( mMinimum );
     }
 
-    uint16_t RecordSOA::size() const
+    uint32_t RecordSOA::size() const
     {
         return mMName.size() + mRName.size() + sizeof( mSerial ) + sizeof( mRefresh ) +
             sizeof( mRetry ) + sizeof( mExpire ) + sizeof( mMinimum );
@@ -1252,9 +1286,9 @@ namespace dns
         }
     }
 
-    uint16_t RecordAPL::size() const
+    uint32_t RecordAPL::size() const
     {
-        uint16_t s = 0;
+        uint32_t s = 0;
         for ( auto i = mAPLEntries.begin(); i != mAPLEntries.end(); i++ ) {
             s += ( 2 + 1 + 1 + i->mAFD.size() );
         }
@@ -1315,7 +1349,7 @@ namespace dns
         message.pushBuffer( mValue );
     }
 
-    uint16_t RecordCAA::size() const
+    uint32_t RecordCAA::size() const
     {
         return 1 + 1 + mTag.size() + mValue.size();
     }
@@ -1528,7 +1562,7 @@ namespace dns
 	return max_bytes;
     }
 
-    uint16_t NSECBitmapField::Window::size() const
+    uint32_t NSECBitmapField::Window::size() const
     {
         return getWindowSize() + 2;
     }
@@ -1630,9 +1664,9 @@ namespace dns
 	return result;
     }
 
-    uint16_t NSECBitmapField::size() const
+    uint32_t NSECBitmapField::size() const
     {
-	uint16_t s = 0;
+	uint32_t s = 0;
 	for ( auto win : mWindows ) {
 	    s += win.second.size();
         }
@@ -1690,7 +1724,7 @@ namespace dns
 	mBitmaps.outputWireFormat( message );
     }
 
-    uint16_t RecordNSEC::size() const
+    uint32_t RecordNSEC::size() const
     {
 	return mNextDomainname.size() + mBitmaps.size();
     }
@@ -1762,7 +1796,7 @@ namespace dns
 	mBitmaps.outputWireFormat( message );
     }
 
-    uint16_t RecordNSEC3::size() const
+    uint32_t RecordNSEC3::size() const
     {
 	return
 	    + 1                 // Hash Algorithm
@@ -1850,7 +1884,7 @@ namespace dns
 	message.pushBuffer( mSalt );
     }
 
-    uint16_t RecordNSEC3PARAM::size() const
+    uint32_t RecordNSEC3PARAM::size() const
     {
 	return
 	    + 1                 // Hash Algorithm
@@ -1892,9 +1926,9 @@ namespace dns
     }
 
 
-    uint16_t RecordOptionsData::size() const
+    uint32_t RecordOptionsData::size() const
     {
-        uint16_t rr_size = 0;
+        uint32_t rr_size = 0;
         for ( auto option : mOptions ) {
             rr_size += option->size();
         }
@@ -2184,7 +2218,7 @@ namespace dns
         return "";
     }
 
-    uint16_t RecordTKEY::size() const
+    uint32_t RecordTKEY::size() const
     {
         return mAlgorithm.size() + //
             4 +                // inception
@@ -2215,7 +2249,7 @@ namespace dns
         message.pushBuffer( mOtherData );
     }
 
-    uint16_t RecordTSIGData::size() const
+    uint32_t RecordTSIGData::size() const
     {
         return mAlgorithm.size() + // ALGORITHM
             6 +                // signed time
@@ -2353,10 +2387,10 @@ namespace dns
         PacketData other;
 
 	void outputWireFormat( WireFormat &message ) const;
-        uint16_t   size() const;
+        uint32_t   size() const;
     };
 
-    uint16_t TSIGHash::size() const
+    uint32_t TSIGHash::size() const
     {
         return name.size() + 2 + 4 + algorithm.size() + 6 + 2 + 2 + 2 + other.size();
     }

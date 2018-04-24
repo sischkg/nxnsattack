@@ -355,16 +355,18 @@ namespace dns
             mOffsets.insert( std::make_pair( name, offset ) );
     }
 
-    void OffsetDB::outputWireFormat( const Domainname &original, WireFormat &message )
+    uint16_t OffsetDB::outputWireFormat( const Domainname &original, WireFormat &message )
     {
         uint16_t pos = message.size();
+        uint16_t wrote_size = 0;
         
         for ( Domainname name = original ; name.getLabelCount() > 0 ; ) {
             uint16_t offset = findDomainname( name );
             if ( offset != NOT_FOUND ) {
                 message.pushUInt8( 0xC0 | ( ( offset >> 8 ) & 0xff ) );
                 message.pushUInt8( 0xff & offset );
-                return;
+                wrote_size += 2;
+                return wrote_size;
             }
             else {
                 add( name, pos );
@@ -372,9 +374,34 @@ namespace dns
                 message.pushUInt8( label.size() );
                 message.pushBuffer( label );
                 pos += ( 1 + label.size() );
+                wrote_size += ( 1 + label.size() );
                 name.popSubdomain();
             }
         }
         message.pushUInt8( 0 );
+        wrote_size++;
+
+        return wrote_size;
+    }
+
+    uint16_t OffsetDB::getOutputWireFormatSize( const Domainname &original ) const
+    {
+        uint16_t wrote_size = 0;
+        
+        for ( Domainname name = original ; name.getLabelCount() > 0 ; ) {
+            uint16_t offset = findDomainname( name );
+            if ( offset != NOT_FOUND ) {
+                wrote_size += 2;
+                return wrote_size;
+            }
+            else {
+                std::string label = name.getLabels().front();
+                wrote_size += ( 1 + label.size() );
+                name.popSubdomain();
+            }
+        }
+        wrote_size++;
+
+        return wrote_size;
     }
 }
