@@ -37,6 +37,7 @@ namespace dns
 	mImp->verify();
     }
 
+    /*
     UnsignedZone::RRSetPtr UnsignedZone::getSOA() const
     {
 	return mImp->getSOA();
@@ -46,7 +47,7 @@ namespace dns
     {
 	return mImp->getNameServer();
     }
-    
+    */
     std::shared_ptr<RRSet> UnsignedZone::signRRSet( const RRSet &rrset )
     {
         return mImp->signRRSet( rrset );

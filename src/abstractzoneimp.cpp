@@ -139,8 +139,10 @@ namespace dns
 			addRRSIG( response, response.mAnswerSection, rrset );
                     }
                     RRSetPtr nsec = generateNSECRRSet( qname );
-                    addRRSet( response.mAnswerSection, *nsec );
-                    addRRSIG( response, response.mAnswerSection, *nsec );
+                    if ( nsec ) {
+                        addRRSet( response.mAnswerSection, *nsec );
+                        addRRSIG( response, response.mAnswerSection, *nsec );
+                    }
 		}
 		else {
 		    // NoData ( found empty non-terminal )
@@ -255,15 +257,19 @@ namespace dns
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
 	    RRSetPtr nsec = generateNSECRRSet( qname );
-	    addRRSet( response.mAuthoritySection, *nsec );
-	    addRRSIG( response, response.mAuthoritySection, *nsec );
+            if ( nsec ) {
+                addRRSet( response.mAuthoritySection, *nsec );
+                addRRSIG( response, response.mAuthoritySection, *nsec );
+            }
 
 	    if ( need_wildcard ) {
 		Domainname wildcard = mApex;
 		wildcard.addSubdomain( "*" );
 		RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-		addRRSet( response.mAuthoritySection, *wildcard_nsec );
-		addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+                if ( wildcard_nsec ) {
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+                }
 	    }
 	}
     }
@@ -275,14 +281,18 @@ namespace dns
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
 	    RRSetPtr nsec = generateNSECRRSet( qname );
-	    addRRSet( response.mAuthoritySection, *nsec );
-	    addRRSIG( response, response.mAuthoritySection, *nsec );
+            if ( nsec ) {
+                addRRSet( response.mAuthoritySection, *nsec );
+                addRRSIG( response, response.mAuthoritySection, *nsec );
+            }
 
 	    Domainname wildcard = mApex;
 	    wildcard.addSubdomain( "*" );
 	    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-	    addRRSet( response.mAuthoritySection, *wildcard_nsec );
-	    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+            if ( wildcard_nsec ) {
+                addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+            }
 	}
     }
     
