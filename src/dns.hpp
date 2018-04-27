@@ -113,11 +113,11 @@ namespace dns
     class RecordRaw : public RDATA
     {
     private:
-        uint16_t             mRRType;
-        std::vector<uint8_t> mData;
+        uint16_t   mRRType;
+        PacketData mData;
 
     public:
-        RecordRaw( uint8_t t, const std::vector<uint8_t> &d )
+        RecordRaw( uint8_t t, const PacketData &d )
 	    : mRRType( t ), mData( d )
         {
         }
@@ -587,7 +587,7 @@ namespace dns
         uint32_t   mInception;
         uint16_t   mKeyTag;
         Domainname mSigner;
-        std::vector<uint8_t> mSignature;
+        PacketData mSignature;
 
     public:
         static const uint16_t SIGNED_KEY = 1 << 7;
@@ -596,15 +596,15 @@ namespace dns
         static const uint8_t  RSASHA256  = 8;
         static const uint8_t  RSASHA512  = 10;
 
-        RecordRRSIG( Type                       t,
-                     uint8_t                    algo,
-                     uint8_t                    label,
-                     uint32_t                   ttl,
-                     uint32_t                   expire,
-                     uint32_t                   incept,
-                     uint16_t                   tag,
-                     const Domainname           &sign,
-                     const std::vector<uint8_t> &sig )
+        RecordRRSIG( Type              t,
+                     uint8_t           algo,
+                     uint8_t           label,
+                     uint32_t          ttl,
+                     uint32_t          expire,
+                     uint32_t          incept,
+                     uint16_t          tag,
+                     const Domainname &sign,
+                     const PacketData &sig )
             : mTypeCovered( t ),
               mAlgorithm( algo ),
               mLabelCount( label ),
@@ -624,8 +624,8 @@ namespace dns
         uint32_t getExpiration() const { return mExpiration; }
         uint32_t getInception() const { return mInception; }
         uint8_t  getKeyTag() const { return mKeyTag; }
-        const Domainname           &getSigner() const { return mSigner; }
-        const std::vector<uint8_t> &getSignature() const { return mSignature; }
+        const Domainname &getSigner() const { return mSigner; }
+        const PacketData &getSignature() const { return mSignature; }
  
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -672,9 +672,9 @@ namespace dns
     class RecordDNSKEY : public RDATA
     {
     private:
-        uint16_t             mFlag;
-        uint8_t              mAlgorithm;
-        std::vector<uint8_t> mPublicKey;
+        uint16_t   mFlag;
+        uint8_t    mAlgorithm;
+        PacketData mPublicKey;
 
     public:
         static const uint16_t SIGNED_KEY = 1 << 7;
@@ -686,13 +686,13 @@ namespace dns
         static const uint16_t KSK = 1 << 8;
         static const uint16_t ZSK = 0;
 
-        RecordDNSKEY( uint16_t f, uint8_t algo, const std::vector<uint8_t> &key )
+        RecordDNSKEY( uint16_t f, uint8_t algo, const PacketData &key )
             : mFlag( f ), mAlgorithm( algo ), mPublicKey( key )
         {}
         
         uint16_t getFlag() const { return mFlag; }
         uint8_t  getAlgorithm() const { return mAlgorithm; }
-        const std::vector<uint8_t> getPublicKey() const { return mPublicKey; }
+        const PacketData getPublicKey() const { return mPublicKey; }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -725,20 +725,20 @@ namespace dns
     class RecordDS : public RDATA
     {
     private:
-        uint16_t             mKeyTag;
-        uint8_t              mAlgorithm;
-        uint8_t              mDigestType;
-        std::vector<uint8_t> mDigest;
+        uint16_t   mKeyTag;
+        uint8_t    mAlgorithm;
+        uint8_t    mDigestType;
+        PacketData mDigest;
 
     public:
-        RecordDS( uint16_t tag, uint8_t alg, uint8_t dtype, const std::vector<uint8_t> &d )
+        RecordDS( uint16_t tag, uint8_t alg, uint8_t dtype, const PacketData &d )
             : mKeyTag( tag ), mAlgorithm( alg ), mDigestType( dtype ), mDigest( d )
         {}
 
         uint16_t getKeyTag()    const { return mKeyTag; }
         uint8_t  getAlgorighm() const { return mAlgorithm; }
         uint8_t  getDigesType() const { return mDigestType; }
-        std::vector<uint8_t> getDigest() const { return mDigest; }
+        PacketData getDigest() const { return mDigest; }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -856,26 +856,26 @@ namespace dns
     public:
 	typedef uint8_t HashAlgorithm;
     private:
-	HashAlgorithm        mHashAlgorithm;
-	uint8_t              mFlag;
-	uint16_t             mIteration;
-	std::vector<uint8_t> mSalt;
-	std::vector<uint8_t> mNextHash;
-        NSECBitmapField      mBitmaps;
+	HashAlgorithm   mHashAlgorithm;
+	uint8_t         mFlag;
+	uint16_t        mIteration;
+	PacketData      mSalt;
+	PacketData      mNextHash;
+        NSECBitmapField mBitmaps;
 
     public:
-	RecordNSEC3( HashAlgorithm              algo,
-		     uint8_t                    flag,
-		     uint16_t                   iteration,
-		     const std::vector<uint8_t> &salt,
-		     const std::vector<uint8_t> &next_hash,
-		     const std::vector<Type>    &bitmaps );
-	RecordNSEC3( HashAlgorithm               algo,
-		     uint8_t                     flag,
-		     uint16_t                    iteration,
-		     const std::vector<uint8_t> &salt,
-		     const std::vector<uint8_t> &next_hash,
-		     const NSECBitmapField      &bitmaps )
+	RecordNSEC3( HashAlgorithm            algo,
+		     uint8_t                  flag,
+		     uint16_t                 iteration,
+		     const PacketData        &salt,
+		     const PacketData        &next_hash,
+		     const std::vector<Type> &bitmaps );
+	RecordNSEC3( HashAlgorithm            algo,
+		     uint8_t                  flag,
+		     uint16_t                 iteration,
+		     const PacketData        &salt,
+		     const PacketData        &next_hash,
+		     const NSECBitmapField   &bitmaps )
 	    : mHashAlgorithm( algo ),
 	      mFlag( flag ),
 	      mIteration( iteration ),
@@ -884,12 +884,12 @@ namespace dns
 	      mBitmaps( bitmaps )
 	{}
 	
-	HashAlgorithm        getHashAlgoritm() const { return mHashAlgorithm; }
-	uint8_t              getFlag() const { return mFlag; }
-	uint16_t             getIteration() const { return mIteration; }
-	std::vector<uint8_t> getSalt() const { return mSalt; }
-	std::vector<uint8_t> getNextHash() const { return mNextHash; }
-        std::vector<Type>    getTypes() const { return mBitmaps.getTypes(); }
+	HashAlgorithm     getHashAlgoritm() const { return mHashAlgorithm; }
+	uint8_t           getFlag() const { return mFlag; }
+	uint16_t          getIteration() const { return mIteration; }
+	PacketData        getSalt() const { return mSalt; }
+	PacketData        getNextHash() const { return mNextHash; }
+        std::vector<Type> getTypes() const { return mBitmaps.getTypes(); }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -919,21 +919,21 @@ namespace dns
     public:
 	typedef uint8_t HashAlgorithm;
     private:
-	HashAlgorithm        mHashAlgorithm;
-	uint8_t              mFlag;
-	uint16_t             mIteration;
-	std::vector<uint8_t> mSalt;
+	HashAlgorithm mHashAlgorithm;
+	uint8_t       mFlag;
+	uint16_t      mIteration;
+	PacketData    mSalt;
 
     public:
-	RecordNSEC3PARAM( HashAlgorithm              algo,
-                          uint8_t                    flag,
-                          uint16_t                   iteration,
-                          const std::vector<uint8_t> &salt );
+	RecordNSEC3PARAM( HashAlgorithm     algo,
+                          uint8_t           flag,
+                          uint16_t          iteration,
+                          const PacketData &salt );
 	
-	HashAlgorithm        getHashAlgoritm() const { return mHashAlgorithm; }
-	uint8_t              getFlag() const { return mFlag; }
-	uint16_t             getIteration() const { return mIteration; }
-	std::vector<uint8_t> getSalt() const { return mSalt; }
+	HashAlgorithm getHashAlgoritm() const { return mHashAlgorithm; }
+	uint8_t       getFlag() const { return mFlag; }
+	uint16_t      getIteration() const { return mIteration; }
+	PacketData    getSalt() const { return mSalt; }
 
         virtual std::string toZone() const;
         virtual std::string toString() const;
@@ -968,7 +968,7 @@ namespace dns
     class RecordKEY : public RecordDNSKEY
     {
     public:
-	RecordKEY( uint16_t f, uint8_t a, const std::vector<uint8_t> &p )
+	RecordKEY( uint16_t f, uint8_t a, const PacketData &p )
 	    : RecordDNSKEY( f, a, p )
 	{}
 
@@ -987,15 +987,15 @@ namespace dns
     class RecordSIG : public RecordRRSIG
     {
     public:
-        RecordSIG( Type                       t,
-                   uint8_t                    algo,
-                   uint8_t                    label,
-                   uint32_t                   ttl,
-                   uint32_t                   expire,
-                   uint32_t                   incept,
-                   uint16_t                   tag,
-                   const Domainname           &sign,
-                   const std::vector<uint8_t> &sig )
+        RecordSIG( Type             t,
+                   uint8_t          algo,
+                   uint8_t          label,
+                   uint32_t         ttl,
+                   uint32_t         expire,
+                   uint32_t         incept,
+                   uint16_t         tag,
+                   const Domainname &sign,
+                   const PacketData &sig )
             : RecordRRSIG( t, algo, label, ttl, expire, incept, tag, sign, sig )
         {}
 
@@ -1056,11 +1056,11 @@ namespace dns
     class RAWOption : public OptPseudoRROption
     {
     private:
-        uint16_t             mCode;
-        std::vector<uint8_t> mData;
+        uint16_t   mCode;
+        PacketData mData;
 
     public:
-        RAWOption( uint16_t in_code, const std::vector<uint8_t> &in_data )
+        RAWOption( uint16_t in_code, const PacketData &in_data )
             : mCode( in_code ), mData( in_data )
         {
         }
@@ -1149,11 +1149,11 @@ namespace dns
     class CookieOption : public OptPseudoRROption
     {
     private:
-        std::vector<uint8_t> mClientCookie;
-        std::vector<uint8_t> mServerCookie;
+        PacketData mClientCookie;
+        PacketData mServerCookie;
 
     public:
-        CookieOption( const std::vector<uint8_t> &client, const std::vector<uint8_t> &server = std::vector<uint8_t>() )
+        CookieOption( const PacketData &client, const PacketData &server = PacketData() )
             : mClientCookie( client ), mServerCookie( server )
         {
         }
@@ -1398,14 +1398,14 @@ namespace dns
                         uint16_t           in_original_id  = 0,
                         uint16_t           in_error        = 0,
                         const PacketData & in_other        = PacketData() )
-	: mKeyName( in_key_name ),
-          mAlgorithm( in_algo ),
-          mSignedTime( in_signed_time ),
-          mFudge( in_fudge ),
-          mMAC( in_mac ),
-          mOriginalID( in_original_id ),
-          mError( in_error ),
-          mOther( in_other )
+            : mKeyName( in_key_name ),
+              mAlgorithm( in_algo ),
+              mSignedTime( in_signed_time ),
+              mFudge( in_fudge ),
+              mMAC( in_mac ),
+              mOriginalID( in_original_id ),
+              mError( in_error ),
+              mOther( in_other )
         {
         }
 

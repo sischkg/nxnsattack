@@ -6,7 +6,7 @@ WireFormat::WireFormat( uint16_t buffer_size ) : mBufferSize( buffer_size ), mEn
 {
 }
 
-WireFormat::WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size ) : mBufferSize( buffer_size ), mEnd( 0 )
+WireFormat::WireFormat( const PacketData &data, uint16_t buffer_size ) : mBufferSize( buffer_size ), mEnd( 0 )
 {
     for ( auto i = data.begin(); i != data.end(); i++ ) {
         push_back( *i );
@@ -82,9 +82,9 @@ retry:
     return sent_size;
 }
 
-std::vector<uint8_t> WireFormat::get() const
+PacketData WireFormat::get() const
 {
-    std::vector<uint8_t> ret;
+    PacketData ret;
     ret.resize( size() );
 
     for ( unsigned int i = 0; i < mEnd; i++ ) {

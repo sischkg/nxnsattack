@@ -29,7 +29,7 @@ private:
 
 public:
     WireFormat( uint16_t buffer_size = 512 );
-    WireFormat( const std::vector<uint8_t> &data, uint16_t buffer_size = 512 );
+    WireFormat( const PacketData &data, uint16_t buffer_size = 512 );
     WireFormat( const uint8_t *begin, const uint8_t *end, uint16_t buffer_size = 512 );
     WireFormat( const WireFormat & );
     WireFormat &operator=( const WireFormat &rhs );
@@ -162,7 +162,7 @@ public:
     }
 
     uint16_t send( int fd, const sockaddr *dest, socklen_t dest_length, int flags = 0 ) const;
-    std::vector<uint8_t> get() const;
+    PacketData get() const;
 
     struct MessageHeader {
         msghdr header;

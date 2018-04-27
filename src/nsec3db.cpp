@@ -9,10 +9,10 @@
 namespace dns
 {
 
-    static void calculateDigest( const std::vector<uint8_t> &src,
+    static void calculateDigest( const PacketData &src,
 				 EVP_MD_CTX *ctx,				 
 				 HashAlgorithm algo,
-				 std::vector<uint8_t> &digest )
+				 PacketData &digest )
     {
 	unsigned int digest_size = EVP_MAX_MD_SIZE;
 	const EVP_MD *digest_algo  = enumToDigestMD( algo );
@@ -30,13 +30,13 @@ namespace dns
     }
 
     void calculateNSEC3Hash( const Domainname &original,
-                             const std::vector<uint8_t> &salt,
+                             const PacketData &salt,
                              uint16_t iterate,
                              HashAlgorithm algorithm,
                              Domainname &nsec3_owner,
-                             std::vector<uint8_t> &hash )
+                             PacketData &hash )
     {
-	std::vector<uint8_t> hash_target;
+	PacketData hash_target;
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
 	original.outputCanonicalWireFormat( hash_target );
@@ -75,8 +75,8 @@ namespace dns
 
     void NSEC3DB::addNodeToContainer( NSEC3DB::Container &container, const Domainname &original, const std::vector<Type> &types )
     {
-	std::vector<uint8_t> hash;
-	std::vector<uint8_t> wildcard_hash;
+	PacketData hash;
+	PacketData wildcard_hash;
 	Domainname owner;
 	Domainname wildcard_owner;
 	Domainname wildcard_original;
@@ -164,7 +164,7 @@ namespace dns
     ResourceRecord NSEC3DB::findNSEC3( const Domainname &name, TTL ttl ) const
     {
 	Domainname owner;
-	std::vector<uint8_t> next_hash;
+	PacketData next_hash;
 	std::vector<Type> types;
 	auto nsec3_entry = mNSEC3Entries.lower_bound( name );
 	auto next_entry  = mNSEC3Entries.upper_bound( name );

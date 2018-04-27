@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <endian.h>
 
-ReadBuffer::ReadBuffer( const std::vector<uint8_t> &buf )
+ReadBuffer::ReadBuffer( const PacketData &buf )
     : mBuffer( buf ), mPosition( 0 )
 {}
 
@@ -43,7 +43,7 @@ uint64_t ReadBuffer::readUInt64NtoH()
 #endif
 }
 
-unsigned int ReadBuffer::readBuffer( std::vector<uint8_t> &buf, unsigned int req_size )
+unsigned int ReadBuffer::readBuffer( PacketData &buf, unsigned int req_size )
 {
     unsigned int read_size;
     if ( mPosition >= mBuffer.size() )

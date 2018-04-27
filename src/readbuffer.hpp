@@ -4,11 +4,12 @@
 #include <vector>
 #include <memory>
 #include <arpa/inet.h>
+#include "utils.hpp"
 
 class ReadBuffer
 {
 private:
-    std::vector<uint8_t> mBuffer;
+    PacketData mBuffer;
     unsigned int mPosition;
 
     template <typename Type>
@@ -24,7 +25,7 @@ private:
 
 
 public:
-    ReadBuffer( const std::vector<uint8_t> &buf = std::vector<uint8_t>() );
+    ReadBuffer( const PacketData &buf = PacketData() );
     ReadBuffer( const uint8_t *begin, const uint8_t *end );
     ReadBuffer( const uint8_t *begin, unsigned int size );
     
@@ -37,7 +38,7 @@ public:
     uint32_t readUInt32NtoH();
     uint64_t readUInt64NtoH();
     
-    unsigned int readBuffer( std::vector<uint8_t> &, unsigned int );
+    unsigned int readBuffer( PacketData &, unsigned int );
 
     unsigned int getRemainedSize() const;
 };

@@ -24,18 +24,18 @@ namespace dns
 	return std::rand() % base;
     }
 
-    std::vector<uint8_t> RandomGenerator::randStream( unsigned int size )
+    PacketData RandomGenerator::randStream( unsigned int size )
     {
-        std::vector<uint8_t> stream;
+        PacketData stream;
         for ( unsigned int i = 0 ; i < size ; i++ )
             stream.push_back( this->rand( 0xff ) );
 	return stream;
     }
 
-    std::vector<uint8_t> RandomGenerator::randSizeStream( unsigned int max_size )
+    PacketData RandomGenerator::randSizeStream( unsigned int max_size )
     {
         unsigned int size = rand( max_size );
-        std::vector<uint8_t> stream;
+        PacketData stream;
         for ( unsigned int i = 0 ; i < size ; i++ )
             stream.push_back( this->rand( 0xff ) );
 	return stream;
@@ -219,7 +219,7 @@ namespace dns
     std::shared_ptr<RDATA> RawGenerator::generate()
     {
         uint16_t size = getRandom( 0xffff );
-        std::vector<uint8_t> data;
+        PacketData data;
         for ( uint16_t i = 0 ; i < size ; i++ )
             data.push_back( getRandom( 0xff ) );
         return std::shared_ptr<RDATA>( new RecordRaw( getRandom( 0x3ff ), data ) );
@@ -318,7 +318,7 @@ namespace dns
 
     std::shared_ptr<RDATA> AAAAGenerator::generate()
     {
-        std::vector<uint8_t> sin_addr = getRandomStream( 16 );
+        PacketData sin_addr = getRandomStream( 16 );
         return std::shared_ptr<RDATA>( new RecordAAAA( &sin_addr[0] ) );
     }
 
@@ -353,7 +353,7 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> RRSIGGenerator::generate( const PacketInfo &hint )
     {
-        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
+        PacketData signature = getRandomSizeStream( 256 );
 
 	std::shared_ptr<RDATA> p( new RecordRRSIG( getRandom( 0xffff ), // type covered
 						   getRandom( 0xff ),   // algorithm
@@ -369,7 +369,7 @@ namespace dns
 
     std::shared_ptr<RDATA> RRSIGGenerator::generate()
     {
-        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
+        PacketData signature = getRandomSizeStream( 256 );
 	return std::shared_ptr<RDATA>( new RecordRRSIG( getRandom( 0xffff ), // type covered
 							getRandom( 0xff ),   // algorithm
 							getRandom( 0xff ),   // label
@@ -386,7 +386,7 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> DNSKEYGenerator::generate( const PacketInfo &hint )
     {
-        std::vector<uint8_t> public_key = getRandomStream( 132 );
+        PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordDNSKEY( getRandom() % 2 ? RecordDNSKEY::KSK : RecordDNSKEY::ZSK,
 							 RecordDNSKEY::RSASHA1,
 							 public_key ) );
@@ -394,7 +394,7 @@ namespace dns
 
     std::shared_ptr<RDATA> DNSKEYGenerator::generate()
     {
-        std::vector<uint8_t> public_key = getRandomStream( 132 );
+        PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordDNSKEY( getRandom() % 2 ? RecordDNSKEY::KSK : RecordDNSKEY::ZSK,
 							 RecordDNSKEY::RSASHA1,
 							 public_key ) );
@@ -407,14 +407,14 @@ namespace dns
     std::shared_ptr<RDATA> DSGenerator::generate( const PacketInfo &hint )
     {
         if ( getRandom( 2 ) ) {
-            std::vector<uint8_t> hash = getRandomStream( 20 );
+            PacketData hash = getRandomStream( 20 );
             return std::shared_ptr<RDATA>( new RecordDS( getRandom( 0xffff ),
 							 5,
 							 1,
 							 hash ) );
         }
         else {
-            std::vector<uint8_t> hash = getRandomStream( 32 );
+            PacketData hash = getRandomStream( 32 );
             return std::shared_ptr<RDATA>( new RecordDS( getRandom( 0xffff ),
 							 5,
 							 2,
@@ -425,14 +425,14 @@ namespace dns
     std::shared_ptr<RDATA> DSGenerator::generate()
     {
         if ( getRandom( 2 ) ) {
-            std::vector<uint8_t> hash = getRandomStream( 40 );
+            PacketData hash = getRandomStream( 40 );
             return std::shared_ptr<RDATA>( new RecordDS( getRandom( 0xffff ),
 							 5,
 							 1,
 							 hash ) );
         }
         else {
-            std::vector<uint8_t> hash = getRandomStream( 64 );
+            PacketData hash = getRandomStream( 64 );
             return std::shared_ptr<RDATA>( new RecordDS( getRandom( 0xffff ),
 							 5,
 							 2,
@@ -522,7 +522,7 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> SIGGenerator::generate( const PacketInfo &hint )
     {
-        std::vector<uint8_t> signature = getRandomStream( 256 );
+        PacketData signature = getRandomStream( 256 );
 
 	std::shared_ptr<RDATA> p( new RecordSIG( getRandom( 0xffff ), // type covered
 						 getRandom( 0xff ),   // algorithm
@@ -538,7 +538,7 @@ namespace dns
 
     std::shared_ptr<RDATA> SIGGenerator::generate()
     {
-        std::vector<uint8_t> signature = getRandomSizeStream( 256 );
+        PacketData signature = getRandomSizeStream( 256 );
 	return std::shared_ptr<RDATA>( new RecordSIG( getRandom( 0xffff ), // type covered
 						      getRandom( 0xff ),   // algorithm
 						      getRandom( 0xff ),   // label
@@ -555,7 +555,7 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> KEYGenerator::generate( const PacketInfo &hint )
     {
-        std::vector<uint8_t> public_key = getRandomStream( 132 );
+        PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordKEY( 0xffff,
 						      RecordDNSKEY::RSASHA1,
 						      public_key ) );
@@ -563,7 +563,7 @@ namespace dns
 
     std::shared_ptr<RDATA> KEYGenerator::generate()
     {
-        std::vector<uint8_t> public_key = getRandomStream( 132 );
+        PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordKEY( getRandom( 0xffff ),
 						      RecordDNSKEY::RSASHA1,
 						      public_key ) );
@@ -605,8 +605,8 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 
-	std::vector<uint8_t> signature = getRandomStream( 0xffff );
-	std::vector<uint8_t> other     = getRandomStream( 0xffff );
+	PacketData signature = getRandomStream( 0xffff );
+	PacketData other     = getRandomStream( 0xffff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname( getDomainname( hint ) ).toString(), // domain
 						  algo,                                                   // algorithm
@@ -626,8 +626,8 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 
-	std::vector<uint8_t> signature = getRandomStream( 0xffff );
-	std::vector<uint8_t> other     = getRandomStream( 0xffff );
+	PacketData signature = getRandomStream( 0xffff );
+	PacketData other     = getRandomStream( 0xffff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname().toString(), // domain
 						  algo,                            // algorithm
@@ -649,10 +649,10 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 	
-	std::vector<uint8_t> signature = getRandomStream( 16 );
+	PacketData signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
-	std::vector<uint8_t> other = getRandomStream( getRandom( 0xffff ) );
+	PacketData other = getRandomStream( getRandom( 0xffff ) );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint ) ).toString(), // domain
                                                            algo,                                                   // algorithm
@@ -671,10 +671,10 @@ namespace dns
 	    algo = generateDomainname().toString();
 	}
 	
-	std::vector<uint8_t> signature = getRandomStream( 16 );
+	PacketData signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
-	std::vector<uint8_t> other = getRandomStream( getRandom( 0xffff ) );
+	PacketData other = getRandomStream( getRandom( 0xffff ) );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname().toString(), // domain
                                                            algo,                            // algorithm
@@ -748,7 +748,7 @@ namespace dns
     std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate()
     {
 	ssize_t length = getRandom( 0xffff );
-	std::vector<uint8_t> data;
+	PacketData data;
 	for ( ssize_t i = 0 ; i < length ; i++ )
 	    data.push_back( getRandom( 0xff ) );
 	return std::shared_ptr<OptPseudoRROption>( new RAWOption( getRandom( 0x0f ), data ) );
@@ -803,7 +803,7 @@ namespace dns
 
     std::shared_ptr<OptPseudoRROption> CookieGenerator::generate()
     {
-        std::vector<uint8_t> client, server;
+        PacketData client, server;
         unsigned int client_length = getRandom( 64 );
         unsigned int server_length = getRandom( 64 );
         

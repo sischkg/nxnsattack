@@ -36,18 +36,18 @@ namespace dns
     public:
         virtual ~PublicKey() {}
         virtual std::string toString() const = 0;
-        virtual std::vector<uint8_t> getDNSKEYFormat() const = 0;
+        virtual PacketData getDNSKEYFormat() const = 0;
     };
     
     class RSAPublicKey : public PublicKey
     {
     public:
-        RSAPublicKey( const std::vector<uint8_t> &exp, const std::vector<uint8_t> &mod );
+        RSAPublicKey( const PacketData &exp, const PacketData &mod );
 	
         virtual std::string toString() const;
-        const std::vector<uint8_t> &getExponent() const;
-        const std::vector<uint8_t> &getModulus() const;
-        virtual std::vector<uint8_t> getDNSKEYFormat() const;
+        const PacketData &getExponent() const;
+        const PacketData &getModulus() const;
+        virtual PacketData getDNSKEYFormat() const;
     private:
 	std::shared_ptr<RSAPublicKeyImp> mImp;
     };
@@ -55,11 +55,11 @@ namespace dns
     class ECDSAPublicKey : public PublicKey
     {
     public:
-        ECDSAPublicKey( const std::vector<uint8_t> &k );
+        ECDSAPublicKey( const PacketData &k );
         ECDSAPublicKey( const uint8_t *p, ssize_t size );
 	
         virtual std::string toString() const;
-        virtual std::vector<uint8_t> getDNSKEYFormat() const;
+        virtual PacketData getDNSKEYFormat() const;
     private:
 	std::shared_ptr<ECDSAPublicKeyImp> mImp;
     };

@@ -98,8 +98,8 @@ namespace tcpv4
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
 
-        std::vector<uint8_t> receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
-        int                  recv_size = read( mTCPSocket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
+        PacketData receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
+        int        recv_size = read( mTCPSocket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
 
         if ( recv_size < 0 ) {
             int error_num = errno;
@@ -118,8 +118,8 @@ namespace tcpv4
 
     ConnectionInfo Client::receive_data( int size )
     {
-        std::vector<uint8_t> receive_buffer( size );
-        int                  recv_size = read( mTCPSocket, receive_buffer.data(), size );
+        PacketData receive_buffer( size );
+        int        recv_size = read( mTCPSocket, receive_buffer.data(), size );
 
         if ( recv_size < 0 ) {
             int error_num = errno;

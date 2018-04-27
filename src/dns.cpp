@@ -675,7 +675,7 @@ namespace dns
         message.push_back( ( mSinAddr >> 24 ) & 0xff );
         message.push_back( mProtocol );
 
-        std::vector<uint8_t> buf( 256*256/8 );
+        PacketData buf( 256*256/8 );
         std::memset( &buf[0], 0, buf.size() );
         unsigned int max_byte_index = 0;
         for ( unsigned int i = 0 ; i < mBitmap.size() ; i++ ) {
@@ -1385,8 +1385,8 @@ namespace dns
         const uint8_t *pos = rdata_begin;
         uint16_t       f   = ntohs( get_bytes<uint16_t>( &pos ) );
         get_bytes<uint8_t>( &pos );             // skip unsed protocol field
-        uint8_t              algo  = get_bytes<uint8_t>( &pos );
-        std::vector<uint8_t> key;
+        uint8_t      algo  = get_bytes<uint8_t>( &pos );
+        PacketData   key;
         key.insert( key.end(), pos, rdata_end );
 
         return RDATAPtr( new RecordDNSKEY( f, algo, key ) );
@@ -1441,7 +1441,7 @@ namespace dns
         uint8_t        algo  = get_bytes<uint8_t>( &pos );
         uint8_t        dtype = get_bytes<uint8_t>( &pos );
 
-        std::vector<uint8_t> d;
+        PacketData d;
         d.insert( d.end(), pos, rdata_end );
 
         return RDATAPtr( new RecordDS( tag, algo, dtype, d ) );
@@ -1473,7 +1473,7 @@ namespace dns
 	message.pushUInt8( mIndex );
 	message.pushUInt8( window_size );
 
-	std::vector<uint8_t> bitmaps;
+	PacketData bitmaps;
 	bitmaps.resize( window_size );
 	for ( uint8_t &v : bitmaps )
 	    v = 0;
@@ -1639,12 +1639,12 @@ namespace dns
     }
 
 
-    RecordNSEC3::RecordNSEC3( HashAlgorithm               algo,
-			      uint8_t                     flag,
-			      uint16_t                    iteration,
-			      const std::vector<uint8_t> &salt,
-			      const std::vector<uint8_t> &next_hash,
-			      const std::vector<Type>    &types )
+    RecordNSEC3::RecordNSEC3( HashAlgorithm           algo,
+			      uint8_t                 flag,
+			      uint16_t                iteration,
+			      const PacketData        &salt,
+			      const PacketData        &next_hash,
+			      const std::vector<Type> &types )
 	: mHashAlgorithm( algo ),
 	  mFlag( flag ),
 	  mIteration( iteration ),
@@ -1725,7 +1725,7 @@ namespace dns
 	if ( rdata_end - pos < salt_size + 1 + 1 + 3 ) {
 	    throw FormatError( "too few size for salt,hash,bitmaps of NSEC3" );
 	}
-	std::vector<uint8_t> salt;
+	PacketData salt;
 	salt.insert( salt.end(), pos, pos + salt_size );
 	pos += salt_size;
 
@@ -1733,7 +1733,7 @@ namespace dns
 	if ( rdata_end - pos < next_hash_size + 3 ) {
 	    throw FormatError( "too few size for hash,bitmaps of NSEC3" );
 	}
-	std::vector<uint8_t> next_hash;
+	PacketData next_hash;
 	next_hash.insert( next_hash.end(), pos, pos + next_hash_size );
 	pos += next_hash_size;
 
@@ -1742,10 +1742,10 @@ namespace dns
 	return RDATAPtr( new RecordNSEC3( algo, flag, iteration, salt, next_hash, bitmaps ) );
     }
 
-    RecordNSEC3PARAM::RecordNSEC3PARAM( HashAlgorithm              algo,
-                                        uint8_t                    flag,
-                                        uint16_t                   iteration,
-                                        const std::vector<uint8_t> &salt )
+    RecordNSEC3PARAM::RecordNSEC3PARAM( HashAlgorithm     algo,
+                                        uint8_t           flag,
+                                        uint16_t          iteration,
+                                        const PacketData &salt )
         : mHashAlgorithm( algo ),
           mFlag( flag ),
           mIteration( iteration ),
@@ -1809,7 +1809,7 @@ namespace dns
 	if ( rdata_end - pos < salt_size ) {
 	    throw FormatError( "too few size for salt" );
 	}
-	std::vector<uint8_t> salt;
+	PacketData salt;
 	salt.insert( salt.end(), pos, pos + salt_size );
 	pos += salt_size;
 	return RDATAPtr( new RecordNSEC3PARAM( algo, flag, iteration, salt ) );
@@ -2064,11 +2064,11 @@ namespace dns
             os << "DNS Cookie length " << size << " is too short"; 
             std::cerr << os.str() << std::endl;
             //throw FormatError( os.str());
-            return OptPseudoRROptPtr( new CookieOption( std::vector<uint8_t>(), std::vector<uint8_t>() ) );        
+            return OptPseudoRROptPtr( new CookieOption( PacketData(), PacketData() ) );        
         }
 
-        std::vector<uint8_t> client( begin, begin + 8 );
-        std::vector<uint8_t> server( begin + 8, end );
+        PacketData client( begin, begin + 8 );
+        PacketData server( begin + 8, end );
 
         return OptPseudoRROptPtr( new CookieOption( client, server ) );        
     }

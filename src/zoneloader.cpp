@@ -161,7 +161,7 @@ namespace dns
                  node["key_tag"]  &&
                  node["signer"]  &&
                  node["signature"] ) {
-                std::vector<uint8_t> signature;
+                PacketData signature;
                 decodeFromBase64( node["signature"].as<std::string>(), signature );
 
                 return std::shared_ptr<RDATA>( new RecordRRSIG( node["type_covered"].as<uint16_t>(),
@@ -187,7 +187,7 @@ namespace dns
             if ( node["flag"] &&
                  node["algorithm"] &&
                  node["public_key"] ) {
-                std::vector<uint8_t> public_key;
+                PacketData public_key;
                 decodeFromBase64( node["public_key"].as<std::string>(), public_key );
                 return std::shared_ptr<RDATA>( new RecordDNSKEY( node["flag"].as<uint16_t>(),
                                                                  node["algorithm"].as<uint16_t>(),
@@ -202,7 +202,7 @@ namespace dns
                  node["algorithm"] &&
                  node["digest_type"] &&
                  node["digest"] ) {
-                std::vector<uint8_t> digest;
+                PacketData digest;
                 decodeFromHex( node["digest"].as<std::string>(), digest );
                 return std::shared_ptr<RDATA>( new RecordDS( node["key_tag"].as<uint16_t>(),
                                                              node["algorithm"].as<uint16_t>(),
@@ -430,8 +430,8 @@ namespace dns
 	    }		
         }
 
-        std::vector<uint8_t> decodeFromBase64Strings( std::vector<std::string>::const_iterator begin,
-						      std::vector<std::string>::const_iterator end )
+        PacketData decodeFromBase64Strings( std::vector<std::string>::const_iterator begin,
+                                            std::vector<std::string>::const_iterator end )
         {
             std::string base64_string;
             while ( begin != end ) {
@@ -451,7 +451,7 @@ namespace dns
 		break;
 	    }
     
-            std::vector<uint8_t> decoded_data;
+            PacketData decoded_data;
             decodeFromBase64( base64_string, decoded_data );
             return decoded_data;
         }

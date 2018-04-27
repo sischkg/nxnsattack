@@ -56,7 +56,7 @@ namespace dns
         std::shared_ptr<RecordDNSKEY> getDNSKEYRecord() const;
         
 	virtual std::shared_ptr<PublicKey> getPublicKey() const = 0;
-	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const = 0;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, PacketData &signature ) const = 0;
 
 	static std::vector<std::shared_ptr<PrivateKeyImp> > load( const std::string &config );
         static std::vector<std::shared_ptr<PrivateKeyImp> > loadConfig( const std::string &config_file );
@@ -104,7 +104,7 @@ namespace dns
         {}
 
     	virtual std::shared_ptr<PublicKey> getPublicKey() const;
-	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, PacketData &signature ) const;
 
     private:
         int mHashAlgorithm;
@@ -132,7 +132,7 @@ namespace dns
         {}
 
 	virtual std::shared_ptr<PublicKey> getPublicKey() const;
-	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, std::vector<uint8_t> &signature ) const;
+	virtual void sign( EVP_MD_CTX *mMDContext, const WireFormat &message, PacketData &signature ) const;
     };
 
     typedef ECDSAPrivateKeyImp<DNSSEC_ECDSAP256SHA256> ECDSAP256SHA256PrivateKeyImp;
@@ -162,7 +162,7 @@ namespace dns
         ~ZoneSignerImp();
 
 	void sign( const WireFormat &message,
-		   std::vector<uint8_t> &signature,
+		   PacketData &signature,
 		   const PrivateKeyImp &key ) const;
 
 	std::vector<std::shared_ptr<PublicKey>> getKSKPublicKeys() const;
@@ -187,15 +187,15 @@ namespace dns
     class RSAPublicKeyImp
     {
     public:
-        RSAPublicKeyImp( const std::vector<uint8_t> &exp, const std::vector<uint8_t> &mod );
+        RSAPublicKeyImp( const PacketData &exp, const PacketData &mod );
 
         std::string toString() const;
-        const std::vector<uint8_t> &getExponent() const { return exponent; } 
-        const std::vector<uint8_t> &getModulus() const  { return modulus; }  
-        std::vector<uint8_t> getDNSKEYFormat() const;
+        const PacketData &getExponent() const { return exponent; } 
+        const PacketData &getModulus() const  { return modulus; }  
+        PacketData getDNSKEYFormat() const;
     private:
-	std::vector<uint8_t> exponent;
-	std::vector<uint8_t> modulus;
+	PacketData exponent;
+	PacketData modulus;
     };
 
     /*******************************************************************************************
@@ -207,13 +207,13 @@ namespace dns
     class ECDSAPublicKeyImp
     {
     public:
-        ECDSAPublicKeyImp( const std::vector<uint8_t> &public_key );
+        ECDSAPublicKeyImp( const PacketData &public_key );
         ECDSAPublicKeyImp( const uint8_t *p, ssize_t size );
 
         std::string toString() const;
-        std::vector<uint8_t> getDNSKEYFormat() const;
+        PacketData getDNSKEYFormat() const;
     private:
-	std::vector<uint8_t> mQ;
+	PacketData mQ;
     };
 
 }

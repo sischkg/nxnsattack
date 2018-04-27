@@ -224,8 +224,8 @@ namespace dns
 	const BIGNUM *modulus, *public_exponent, *private_exponent;
 
 	RSA_get0_key( r, &modulus, &public_exponent, &private_exponent );
-	std::vector<uint8_t> public_exponent_buf( BN_num_bytes( public_exponent ) );
-	std::vector<uint8_t> modulus_buf( BN_num_bytes( modulus ) );
+	PacketData public_exponent_buf( BN_num_bytes( public_exponent ) );
+	PacketData modulus_buf( BN_num_bytes( modulus ) );
 
 	BN_bn2bin( public_exponent, &public_exponent_buf[0] );
 	BN_bn2bin( modulus,         &modulus_buf[0] );
@@ -233,18 +233,18 @@ namespace dns
 	return std::shared_ptr<RSAPublicKey>( new RSAPublicKey( public_exponent_buf, modulus_buf ) );
     }
 
-    void RSAPrivateKeyImp::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, std::vector<uint8_t> &signature ) const
+    void RSAPrivateKeyImp::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, PacketData &signature ) const
     {
 	unsigned int digest_length = EVP_MAX_MD_SIZE;
 	const EVP_MD *sign_algo = enumToSignMD( getAlgorithm() );
 
 	EVP_DigestInit_ex( md_ctx, sign_algo, NULL);
 
-	std::vector<uint8_t> digest_target = message.get();
+	PacketData digest_target = message.get();
 	int res = EVP_DigestUpdate( md_ctx, &digest_target[0], digest_target.size() );
         if ( 0 == res )
             throwException( "EVP_DigestUpdata failed" );
-	std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	PacketData digest( EVP_MAX_MD_SIZE );
 	res = EVP_DigestFinal_ex( md_ctx, &digest[0], &digest_length );
         if ( 0 == res )
             throwException( "EVP_DigestFinal failed" );
@@ -269,7 +269,7 @@ namespace dns
     {
 	EC_KEY* ec = EVP_PKEY_get1_EC_KEY( getPrivateKey() );
 	unsigned int public_key_size = i2o_ECPublicKey( ec, nullptr );
-	std::vector<uint8_t> buf( public_key_size );
+	PacketData buf( public_key_size );
 	uint8_t *p = &buf[0];
 	if ( ! i2o_ECPublicKey( ec, &p ) )
 	    throw std::runtime_error( "cannot get public key from private key" );
@@ -277,19 +277,19 @@ namespace dns
     }
     
     template <uint8_t SIGN_ALGO>
-    void ECDSAPrivateKeyImp<SIGN_ALGO>::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, std::vector<uint8_t> &signature ) const
+    void ECDSAPrivateKeyImp<SIGN_ALGO>::sign( EVP_MD_CTX *md_ctx, const WireFormat &message, PacketData &signature ) const
     {
 	unsigned int digest_length = EVP_MAX_MD_SIZE;
 	const EVP_MD *sign_algo = enumToSignMD( getAlgorithm() );
 
 	EVP_DigestInit_ex( md_ctx, sign_algo, NULL);
 
-	std::vector<uint8_t> digest_target = message.get();
+	PacketData digest_target = message.get();
 	int res = EVP_DigestUpdate( md_ctx, &digest_target[0], digest_target.size() );
         if ( res != 1 ) {
 	    throwException( "EVP_DigestUpdate failed" );
         }
-	std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+	PacketData digest( EVP_MAX_MD_SIZE );
 	EVP_DigestFinal_ex( md_ctx, &digest[0], &digest_length );
 	digest.resize( digest_length );
 
@@ -301,8 +301,8 @@ namespace dns
 
         const BIGNUM *r, *s;
         ECDSA_SIG_get0( ecdsa_sig, &r, &s );
-        std::vector<uint8_t> r_buf( BN_num_bytes(r) );
-        std::vector<uint8_t> s_buf( BN_num_bytes(s) );
+        PacketData r_buf( BN_num_bytes(r) );
+        PacketData s_buf( BN_num_bytes(s) );
 
         BN_bn2bin( r, &r_buf[0] );
         BN_bn2bin( s, &s_buf[0] );
@@ -343,7 +343,7 @@ namespace dns
     }
 
     void ZoneSignerImp::sign( const WireFormat &message,
-			      std::vector<uint8_t> &signature,
+			      PacketData &signature,
 			      const PrivateKeyImp &key ) const
     {
         key.sign( mMDContext, message, signature );
@@ -389,7 +389,7 @@ namespace dns
     {
 	WireFormat sign_target;
 	generateSignData( rrset, key, sign_target );
-	std::vector<uint8_t> signature;
+	PacketData signature;
 	sign( sign_target, signature, key );
 
         return std::shared_ptr<RecordRRSIG>( new RecordRRSIG( rrset.getType(),
@@ -453,12 +453,12 @@ namespace dns
         ksk.getDomainname().outputCanonicalWireFormat( hash_target );
         std::shared_ptr<RecordDNSKEY> dnskey = ksk.getDNSKEYRecord();
         dnskey->outputCanonicalWireFormat( hash_target );
-        std::vector<uint8_t> hash_target_data = hash_target.get();
+        PacketData hash_target_data = hash_target.get();
 
         unsigned int digest_length = EVP_MAX_MD_SIZE;
         EVP_DigestInit_ex( mMDContext, enumToDigestMD( algo ), NULL);
         EVP_DigestUpdate( mMDContext, &hash_target_data[0], hash_target_data.size() );
-        std::vector<uint8_t> digest( EVP_MAX_MD_SIZE );
+        PacketData digest( EVP_MAX_MD_SIZE );
         EVP_DigestFinal_ex( mMDContext, &digest[0], &digest_length );
         digest.resize( digest_length );
 
@@ -504,7 +504,7 @@ namespace dns
      * RSAPublicKeyImp
      *******************************************************************************************/
 
-    RSAPublicKeyImp::RSAPublicKeyImp( const std::vector<uint8_t> &exp, const std::vector<uint8_t> &mod )
+    RSAPublicKeyImp::RSAPublicKeyImp( const PacketData &exp, const PacketData &mod )
 	: exponent( exp ), modulus( mod )
     {}
 
@@ -521,8 +521,8 @@ namespace dns
 	return os.str();
     }
 
-    static void copyFactor( const std::vector<uint8_t> &src,
-			    std::vector<uint8_t> &dst )
+    static void copyFactor( const PacketData &src,
+			    PacketData &dst )
     {
 	dst.clear();
 	auto i = src.begin();
@@ -531,10 +531,10 @@ namespace dns
 	    dst.push_back( *i );
     }
 
-    std::vector<uint8_t> RSAPublicKeyImp::getDNSKEYFormat() const
+    PacketData RSAPublicKeyImp::getDNSKEYFormat() const
     {
-	std::vector<uint8_t> result;
-	std::vector<uint8_t> exponent_tmp, modulus_tmp;
+	PacketData result;
+	PacketData exponent_tmp, modulus_tmp;
 
 	copyFactor( exponent, exponent_tmp );
 	copyFactor( modulus,  modulus_tmp );
@@ -559,7 +559,7 @@ namespace dns
      * ECDSAPublicKeyImp
      *******************************************************************************************/
 
-    ECDSAPublicKeyImp::ECDSAPublicKeyImp( const std::vector<uint8_t> &q )
+    ECDSAPublicKeyImp::ECDSAPublicKeyImp( const PacketData &q )
 	: mQ( q )
     {}
 
@@ -579,7 +579,7 @@ namespace dns
 	return os.str();
     }
 
-    std::vector<uint8_t> ECDSAPublicKeyImp::getDNSKEYFormat() const
+    PacketData ECDSAPublicKeyImp::getDNSKEYFormat() const
     {
 	return mQ;
     }

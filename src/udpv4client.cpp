@@ -90,15 +90,15 @@ namespace udpv4
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
 
-        sockaddr_in          peer_address;
-        socklen_t            peer_address_size = sizeof( peer_address );
-        std::vector<uint8_t> receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
-        int                  recv_size = recvfrom( mUDPSocket,
-						   receive_buffer.data(),
-						   UDP_RECEIVE_BUFFER_SIZE,
-						   flags,
-						   reinterpret_cast<sockaddr *>( &peer_address ),
-						   &peer_address_size );
+        sockaddr_in peer_address;
+        socklen_t   peer_address_size = sizeof( peer_address );
+        PacketData  receive_buffer( UDP_RECEIVE_BUFFER_SIZE );
+        int         recv_size = recvfrom( mUDPSocket,
+                                          receive_buffer.data(),
+                                          UDP_RECEIVE_BUFFER_SIZE,
+                                          flags,
+                                          reinterpret_cast<sockaddr *>( &peer_address ),
+                                          &peer_address_size );
         if ( recv_size < 0 ) {
             int error_num = errno;
             if ( error_num == EAGAIN ) {
