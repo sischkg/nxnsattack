@@ -27,14 +27,13 @@ namespace dns
                                                                                  const uint8_t *domainame,
                                                                                  int recur = 0 );
 
-    void generate_question_section( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
-    void generate_response_section( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
+    void generateQuestion( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
+    void generateResourceRecord( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
-    QuestionSectionEntryPair parse_question_section( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
-    ResourceRecordPair parse_response_section( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
-
-    OptPseudoRecord      parse_opt_pseudo_record( const ResourceRecord & );
+    QuestionSectionEntryPair parseQuestion( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
+    ResourceRecordPair parseResourceRecord( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
+    OptPseudoRecord parseOPTPseudoRecord( const ResourceRecord & );
 
     static const uint8_t *
     parseCharacterString( const uint8_t *begin, const uint8_t *packet_end, std::string &ref_output )
@@ -100,42 +99,24 @@ namespace dns
                             reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
 
         for ( auto q : mQuestionSection ) {
-            generate_question_section( q, message, offset_db );
+            generateQuestion( q, message, offset_db );
         }
         for ( auto q : mAnswerSection ) {
-            generate_response_section( q, message, offset_db );
+            generateResourceRecord( q, message, offset_db );
         }
         for ( auto q : mAuthoritySection ) {
-            generate_response_section( q, message, offset_db );
+            generateResourceRecord( q, message, offset_db );
         }
         for ( auto q : mAdditionalSection ) {
-            generate_response_section( q, message, offset_db );
+            generateResourceRecord( q, message, offset_db );
         }
     }
 
     uint32_t PacketInfo::getMessageSize() const
     {
-        uint32_t message_size = sizeof(PacketHeaderField);
-
-        if ( isEDNS0() ) {
-	    ResourceRecord rr = generateOptPseudoRecord( mOptPseudoRR );
-	    message_size += rr.size();
-        }
-
-        for ( auto q : mQuestionSection ) {
-            message_size += q.size();
-        }
-        for ( auto q : mAnswerSection ) {
-            message_size += q.size();
-        }
-        for ( auto q : mAuthoritySection ) {
-            message_size += q.size();
-        }
-        for ( auto q : mAdditionalSection ) {
-            message_size += q.size();
-        }
-
-        return message_size;
+        WireFormat output;
+        generateMessage( output );
+        return output.size();
     }
 
 
@@ -168,22 +149,22 @@ namespace dns
 
         packet += sizeof( PacketHeaderField );
         for ( int i = 0; i < question_count; i++ ) {
-            QuestionSectionEntryPair pair = parse_question_section( begin, end, packet );
+            QuestionSectionEntryPair pair = parseQuestion( begin, end, packet );
             packet_info.mQuestionSection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < answer_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, end, packet );
+            ResourceRecordPair pair = parseResourceRecord( begin, end, packet );
             packet_info.mAnswerSection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < authority_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, end, packet );
+            ResourceRecordPair pair = parseResourceRecord( begin, end, packet );
             packet_info.mAuthoritySection.push_back( pair.first );
             packet = pair.second;
         }
         for ( int i = 0; i < additional_infomation_count; i++ ) {
-            ResourceRecordPair pair = parse_response_section( begin, end, packet );
+            ResourceRecordPair pair = parseResourceRecord( begin, end, packet );
             if ( pair.first.mType == TYPE_OPT ) {
                 packet_info.mIsEDNS0 = true;
 		packet_info.mOptPseudoRR.mDomainname  = pair.first.mDomainname;
@@ -280,14 +261,14 @@ namespace dns
         return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
-    void generate_question_section( const QuestionSectionEntry &question, WireFormat &message, OffsetDB &offset_db )
+    void generateQuestion( const QuestionSectionEntry &question, WireFormat &message, OffsetDB &offset_db )
     {
         offset_db.outputWireFormat( question.mDomainname, message );
         message.pushUInt16HtoN( question.mType );
         message.pushUInt16HtoN( question.mClass );
     }
 
-    QuestionSectionEntryPair parse_question_section( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *p )
+    QuestionSectionEntryPair parseQuestion( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *p )
     {
         QuestionSectionEntry question;
         const uint8_t *      pos = Domainname::parsePacket( question.mDomainname, packet_begin, packet_end, p );
@@ -298,7 +279,7 @@ namespace dns
         return QuestionSectionEntryPair( question, pos );
     }
 
-    void generate_response_section( const ResourceRecord &response, WireFormat &message, OffsetDB &offset_db, bool compression )
+    void generateResourceRecord( const ResourceRecord &response, WireFormat &message, OffsetDB &offset_db, bool compression )
     {
         if ( compression )
             offset_db.outputWireFormat( response.mDomainname, message );
@@ -320,7 +301,7 @@ namespace dns
         }
     }
 
-    ResourceRecordPair parse_response_section( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *section_begin )
+    ResourceRecordPair parseResourceRecord( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *section_begin )
     {
         ResourceRecord sec;
 
@@ -2000,7 +1981,7 @@ namespace dns
         return entry;
     }
 
-    OptPseudoRecord parse_opt_pseudo_record( const ResourceRecord &record )
+    OptPseudoRecord parseOPTPseudoRecord( const ResourceRecord &record )
     {
         OptPseudoRecord opt;
         opt.mDomainname  = record.mDomainname;
@@ -2479,7 +2460,7 @@ namespace dns
 
 	message.clear();
 	message.pushBuffer( packet );
-        generate_response_section( entry, message, offset_db, false );
+        generateResourceRecord( entry, message, offset_db, false );
     }
 
     bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message )
@@ -2499,19 +2480,19 @@ namespace dns
 
         // skip question section
         for ( auto q : packet_info.mQuestionSection )
-            pos = parse_question_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
+            pos = parseQuestion( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip answer section
         for ( auto r : packet_info.mAnswerSection )
-            pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
+            pos = parseResourceRecord( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
 
         // skip authority section
         for ( auto r : packet_info.mAuthoritySection )
-            pos = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
+            pos = parseResourceRecord( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos ).second;
         // SKIP NON TSIG RECORD IN ADDITIONAL SECTION
         bool is_found_tsig = false;
         for ( auto r : packet_info.mAdditionalSection ) {
-            ResourceRecordPair parsed_rr_pair = parse_response_section( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos );
+            ResourceRecordPair parsed_rr_pair = parseResourceRecord( &hash_data[ 0 ], &hash_data[0] + hash_data.size(), pos );
             if ( parsed_rr_pair.first.mType == TYPE_TSIG ) {
                 is_found_tsig = true;
                 break;
