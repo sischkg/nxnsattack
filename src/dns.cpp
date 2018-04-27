@@ -21,12 +21,6 @@
 
 namespace dns
 {
-    std::vector<uint8_t> convert_domainname_string_to_binary( const std::string &domainname,
-                                                              uint32_t           compress_offset = NO_COMPRESSION );
-    std::pair<std::string, const uint8_t *> convert_domainname_binary_to_string( const uint8_t *packet,
-                                                                                 const uint8_t *domainame,
-                                                                                 int recur = 0 );
-
     void generateQuestion( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
     void generateResourceRecord( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
@@ -184,81 +178,6 @@ namespace dns
         }
 
         return packet_info;
-    }
-
-    PacketData convert_domainname_string_to_binary( const std::string &domainname, uint32_t compress_offset )
-    {
-        PacketData bin;
-        PacketData label;
-
-        if ( domainname == "." || domainname == "" ) {
-            if ( compress_offset == NO_COMPRESSION ) {
-                bin.push_back( 0 );
-                return bin;
-            } else {
-                bin.push_back( 0xC0 | ( uint8_t )( compress_offset >> 8 ) );
-                bin.push_back( 0xff & (uint8_t)compress_offset );
-            }
-        }
-
-        for ( auto i = domainname.begin(); i != domainname.end(); ++i ) {
-            if ( *i == '.' ) {
-                if ( label.size() != 0 ) {
-                    bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
-                    bin.insert( bin.end(), label.begin(), label.end() );
-                    label.clear();
-                }
-            } else {
-                label.push_back( boost::numeric_cast<uint8_t>( *i ) );
-            }
-        }
-        if ( !label.empty() ) {
-            bin.push_back( boost::numeric_cast<uint8_t>( label.size() ) );
-            bin.insert( bin.end(), label.begin(), label.end() );
-            if ( compress_offset != NO_COMPRESSION ) {
-                bin.push_back( 0xC0 | ( compress_offset >> 8 ) );
-                bin.push_back( 0xff & compress_offset );
-            } else {
-                bin.push_back( 0 );
-            }
-        }
-
-        return bin;
-    }
-
-    std::pair<std::string, const uint8_t *>
-    convert_domainname_binary_to_string( const uint8_t *packet, const uint8_t *begin, int recur )
-    {
-        if ( recur > 100 ) {
-            throw FormatError( "detected domainname decompress loop" );
-        }
-        std::string    domainname;
-        const uint8_t *p = begin;
-        while ( *p != 0 ) {
-            // メッセージ圧縮を行っている場合
-            if ( *p & 0xC0 ) {
-                int offset = ntohs( *( reinterpret_cast<const uint16_t *>( p ) ) ) & 0x0bff;
-                if ( packet + offset > begin - 2 ) {
-                    throw FormatError( "detected forword reference of domainname decompress" );
-                }
-
-                std::pair<std::string, const uint8_t *> pair =
-                    convert_domainname_binary_to_string( packet, packet + offset, recur + 1 );
-                return std::pair<std::string, const uint8_t *>( domainname + pair.first, p + 2 );
-            }
-
-            uint8_t label_length = *p;
-            p++;
-            for ( uint8_t i = 0; i < label_length; i++, p++ ) {
-                domainname.push_back( *p );
-            }
-            domainname.push_back( '.' );
-        }
-        if ( domainname != "" )
-            domainname.resize( domainname.size() - 1 );
-
-        p++;
-        return std::pair<std::string, const uint8_t *>( domainname, p );
     }
 
     void generateQuestion( const QuestionSectionEntry &question, WireFormat &message, OffsetDB &offset_db )
