@@ -1,52 +1,30 @@
-#ifndef POSTSIGNED_ZONE_IMP_HPP
-#define POSTSIGNED_ZONE_IMP_HPP
+#ifndef POST_SIGNED_ZONE_IMP_HPP
+#define POST_SIGNED_ZONE_IMP_HPP
 
-#include "zone.hpp"
-#include "zonesigner.hpp"
+#include "abstractzoneimp.hpp"
 #include "nsecdb.hpp"
 
 namespace dns
 {
-    class PostSignedZoneImp
+    class PostSignedZoneImp : public AbstractZoneImp
     {
     private:
-        typedef std::shared_ptr<RRSet> RRSetPtr;
-        typedef std::shared_ptr<Node>  NodePtr;
-	typedef std::map<Domainname,   NodePtr> OwnerToNodeContainer;
-	typedef std::pair<Domainname,  NodePtr> OwnerToNodePair;
+	ZoneSigner mSigner;
+	NSECDBPtr  mNSECDB;
 
-        OwnerToNodeContainer mOwnerToNode;
-        Domainname           mApex;
-	ZoneSigner           mSigner;
-
-        RRSetPtr mSOA;
-        RRSetPtr mNameServers;
-
-        NSECDB mNSECDB;
-
-        void addEmptyNode( const Domainname & );
-        void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
-        void addRRSIG( std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
-        void addSOAToAuthoritySection( PacketInfo &res ) const;
-
-        RRSetPtr getDNSKEYRRSet() const;
-	RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
     public:
         PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );
 
-        void add( RRSetPtr rrest );
-        PacketInfo getAnswer( const PacketInfo &query ) const;
-	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
-	
-        NodePtr  findNode( const Domainname &domainname ) const;
-        RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
-        OwnerToNodeContainer::const_iterator begin() const { return mOwnerToNode.begin(); }
-        OwnerToNodeContainer::const_iterator end() const   { return mOwnerToNode.end(); }
-	RRSetPtr getSOA() const;
-	RRSetPtr getNameServer() const;
+        virtual void setup();
 
-        void verify();
-	std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
+	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
+	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const;
+	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const;
+	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const;
+        virtual void responseDNSKEY( PacketInfo &response ) const;
+        virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
+	virtual RRSetPtr getDNSKEYRRSet() const;
+	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
 
         static void initialize();
     };

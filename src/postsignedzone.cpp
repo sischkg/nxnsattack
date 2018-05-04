@@ -37,16 +37,11 @@ namespace dns
 	mImp->verify();
     }
 
-    PostSignedZone::RRSetPtr PostSignedZone::getSOA() const
+    void PostSignedZone::setup()
     {
-	return mImp->getSOA();
+	mImp->setup();
     }
 
-    PostSignedZone::RRSetPtr PostSignedZone::getNameServer() const
-    {
-	return mImp->getNameServer();
-    }
-    
     std::shared_ptr<RRSet> PostSignedZone::signRRSet( const RRSet &rrset )
     {
         return mImp->signRRSet( rrset );

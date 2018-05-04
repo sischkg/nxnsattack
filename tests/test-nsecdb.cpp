@@ -47,9 +47,9 @@ public:
 
 };
 
-TEST_F( NSECDBTest, findNSEC )
+TEST_F( NSECDBTest, find )
 {
-    auto nsec_rr = mNSECDB.findNSEC( "wwww.example.com", 300 );
+    auto nsec_rr = mNSECDB.find( "wwww.example.com", 300 );
     EXPECT_EQ( "www.example.com", nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,     nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC,    nsec_rr.mType );
@@ -57,15 +57,16 @@ TEST_F( NSECDBTest, findNSEC )
 
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
-    EXPECT_EQ( "example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 2,              nsec_rd->getTypes().size() );   // A and NSEC
-    EXPECT_EQ( dns::TYPE_A,    nsec_rd->getTypes()[0] );
-    EXPECT_EQ( dns::TYPE_NSEC, nsec_rd->getTypes()[1] );
+    EXPECT_EQ( "example.com",   nsec_rd->getNextDomainname() );
+    EXPECT_EQ( 3,               nsec_rd->getTypes().size() );   // A, NSEC, RRSIG
+    EXPECT_EQ( dns::TYPE_A,     nsec_rd->getTypes()[0] );
+    EXPECT_EQ( dns::TYPE_NSEC,  nsec_rd->getTypes()[1] );
+    EXPECT_EQ( dns::TYPE_RRSIG, nsec_rd->getTypes()[2] );
 }
 
-TEST_F( NSECDBTest, findNSEC_for_2 )
+TEST_F( NSECDBTest, find_for_2 )
 {
-    auto nsec_rr = mNSECDB.findNSEC( "ww.example.com", 300 );
+    auto nsec_rr = mNSECDB.find( "ww.example.com", 300 );
     EXPECT_EQ( "mail.example.com", nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,     nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC,    nsec_rr.mType );
@@ -73,15 +74,16 @@ TEST_F( NSECDBTest, findNSEC_for_2 )
 
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
-    EXPECT_EQ( "www.example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 2,                  nsec_rd->getTypes().size() );
-    EXPECT_EQ( dns::TYPE_A,        nsec_rd->getTypes()[0] );
-    EXPECT_EQ( dns::TYPE_NSEC,     nsec_rd->getTypes()[1] );
+    EXPECT_EQ( "www.example.com", nsec_rd->getNextDomainname() );
+    EXPECT_EQ( 3,                 nsec_rd->getTypes().size() );
+    EXPECT_EQ( dns::TYPE_A,       nsec_rd->getTypes()[0] );
+    EXPECT_EQ( dns::TYPE_NSEC,    nsec_rd->getTypes()[1] );
+    EXPECT_EQ( dns::TYPE_RRSIG,   nsec_rd->getTypes()[2] );
 }
 
-TEST_F( NSECDBTest, findNSEC_for_wildcard )
+TEST_F( NSECDBTest, find_for_wildcard )
 {
-    auto nsec_rr = mNSECDB.findNSEC( "*.example.com", 300 );
+    auto nsec_rr = mNSECDB.find( "*.example.com", 300 );
     EXPECT_EQ( "example.com",  nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,  nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC, nsec_rr.mType );
@@ -90,12 +92,12 @@ TEST_F( NSECDBTest, findNSEC_for_wildcard )
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
     EXPECT_EQ( "mail.example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 4,                   nsec_rd->getTypes().size() ); // SOA + NS + MX + NSEC
+    EXPECT_EQ( 5,                   nsec_rd->getTypes().size() ); // SOA + NS + MX + NSEC + RRSIG
 }
 
-TEST_F( NSECDBTest, findNSEC_for_nodata )
+TEST_F( NSECDBTest, find_for_nodata )
 {
-    auto nsec_rr = mNSECDB.findNSEC( "mail.example.com", 300 );
+    auto nsec_rr = mNSECDB.find( "mail.example.com", 300 );
     EXPECT_EQ( "mail.example.com",  nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,       nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC,      nsec_rr.mType );
@@ -104,12 +106,12 @@ TEST_F( NSECDBTest, findNSEC_for_nodata )
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
     EXPECT_EQ( "www.example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 2,                  nsec_rd->getTypes().size() ); // SOA + A
+    EXPECT_EQ( 3,                  nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
 }
 
-TEST_F( NSECDBTest, findNSEC_for_nodata_last )
+TEST_F( NSECDBTest, find_for_nodata_last )
 {
-    auto nsec_rr = mNSECDB.findNSEC( "www.example.com", 300 );
+    auto nsec_rr = mNSECDB.find( "www.example.com", 300 );
     EXPECT_EQ( "www.example.com",  nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,      nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC,     nsec_rr.mType );
@@ -118,7 +120,7 @@ TEST_F( NSECDBTest, findNSEC_for_nodata_last )
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
     EXPECT_EQ( "example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 2,              nsec_rd->getTypes().size() ); // SOA + A
+    EXPECT_EQ( 3,              nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
 }
 
 

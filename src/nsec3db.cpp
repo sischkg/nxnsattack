@@ -161,7 +161,7 @@ namespace dns
 	mNSEC3Entries = new_nsec3_entries;
     }
 
-    ResourceRecord NSEC3DB::findNSEC3( const Domainname &name, TTL ttl ) const
+    ResourceRecord NSEC3DB::find( const Domainname &name, TTL ttl ) const
     {
 	Domainname owner;
 	PacketData next_hash;

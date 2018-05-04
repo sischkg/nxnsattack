@@ -10,7 +10,7 @@ namespace dns
     {
     private:
 	ZoneSigner mSigner;
-	NSECDB     mNSECDB;
+	NSECDBPtr  mNSECDB;
 
     public:
         SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );

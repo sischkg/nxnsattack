@@ -113,11 +113,11 @@ TEST_F( ZoneTest, AddSet )
     EXPECT_NO_THROW( { zone.verify(); } );
 
     auto soa = zone.getSOA();
-    EXPECT_STREQ( "example.com.", soa->getOwner().toString().c_str() );
-    EXPECT_EQ( dns::TYPE_SOA, soa->getType() );
-    auto name_servers = zone.getNameServer();
-    EXPECT_STREQ( "example.com.", name_servers->getOwner().toString().c_str() );
-    EXPECT_EQ( dns::TYPE_NS, name_servers->getType() );
+    EXPECT_STREQ( "example.com.", soa.getOwner().toString().c_str() );
+    EXPECT_EQ( dns::TYPE_SOA, soa.getType() );
+    auto name_servers = zone.getNameServers();
+    EXPECT_STREQ( "example.com.", name_servers.getOwner().toString().c_str() );
+    EXPECT_EQ( dns::TYPE_NS, name_servers.getType() );
 }
 
 

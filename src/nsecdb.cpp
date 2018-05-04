@@ -26,7 +26,7 @@ namespace dns
     }
 
 
-    ResourceRecord NSECDB::findNSEC( const Domainname &name, TTL ttl ) const
+    ResourceRecord NSECDB::find( const Domainname &name, TTL ttl ) const
     {
         if ( mNSECEntries.empty() )
             throw std::logic_error( "nsec must not be empty" );

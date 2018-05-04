@@ -36,8 +36,8 @@ namespace dns
     }
 
     PacketInfo SignedAuthServer::modifyResponse( const dns::PacketInfo &query,
-					   const dns::PacketInfo &original_response,
-					   bool via_tcp ) const
+                                                 const dns::PacketInfo &original_response,
+                                                 bool via_tcp ) const
     {
 	return original_response;
     }

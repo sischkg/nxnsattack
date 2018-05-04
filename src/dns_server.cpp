@@ -110,7 +110,7 @@ namespace dns
                     WireFormat response_packet;
                     response_info.generateMessage( response_packet );
 
-		    modifyMessage( response_packet );
+		    modifyMessage( query, response_packet );
 		    
                     udpv4::ClientParameters client;
                     client.mAddress = recv_data.mSourceAddress;
@@ -174,7 +174,7 @@ namespace dns
                         }
 
 			response_info.generateMessage( response_stream );
-			modifyMessage( response_stream );
+			modifyMessage( query, response_stream );
 			
                         uint16_t send_size = htons( response_stream.size() );
                         connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );

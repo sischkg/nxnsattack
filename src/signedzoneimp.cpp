@@ -7,7 +7,7 @@ namespace dns
 {
 
     SignedZoneImp::SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-        : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( zone_name )
+        : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( new NSECDB( zone_name ) )
     {}
 
     void SignedZoneImp::responseDNSKEY( PacketInfo &response ) const
@@ -50,7 +50,7 @@ namespace dns
 	auto node = findNode( qname );
 	if ( node ) {
 	    if ( node->exist() ) {
-                ResourceRecord nsec_rr = mNSECDB.findNSEC( qname, getSOA().getTTL() );
+                ResourceRecord nsec_rr = mNSECDB->find( qname, getSOA().getTTL() );
                 RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
                 rrset->add( nsec_rr.mRData );
 
@@ -77,7 +77,7 @@ namespace dns
     {
 	add( getDNSKEYRRSet() ); 
 	for ( auto node = begin() ; node != end() ; node++ ) {
-	    mNSECDB.addNode( node->first, *(node->second) );
+	    mNSECDB->addNode( node->first, *(node->second) );
 	}
     }
 
@@ -112,7 +112,7 @@ namespace dns
     
     SignedZoneImp::RRSetPtr SignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {
-	ResourceRecord nsec_rr = mNSECDB.findNSEC( domainname, getSOA().getTTL() );
+	ResourceRecord nsec_rr = mNSECDB->find( domainname, getSOA().getTTL() );
 	RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
 	rrset->add( nsec_rr.mRData );
 

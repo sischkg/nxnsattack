@@ -144,7 +144,7 @@ namespace dns
             return modified_response;
         }
 
-	void modifyMessage( WireFormat &message )
+	void modifyMessage( const PacketInfo &query, WireFormat &message )
 	{
 	    WireFormat src = message;
             dns::shuffle( src, message );
@@ -152,7 +152,7 @@ namespace dns
 	
         void shuffle_rr( std::vector<ResourceRecord> &rrs ) const
         {
-            std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
+	  std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
         }
 
         void replaceClass( std::vector<ResourceRecord> &section ) const

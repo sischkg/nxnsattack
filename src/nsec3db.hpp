@@ -3,6 +3,7 @@
 
 #include "dns.hpp"
 #include "zonesigner.hpp"
+#include "nsecdb.hpp"
 #include <map>
 
 namespace dns
@@ -46,7 +47,7 @@ namespace dns
     };
 
     
-    class NSEC3DB
+    class NSEC3DB : public NSECStorable
     {
 	typedef std::map<Domainname, NSEC3Entry> Container;
     public:
@@ -60,7 +61,7 @@ namespace dns
 	void addNode( const Domainname &name, const Node &node );
 	void addEmptyNonTerminals();
 	void deleteTemp();
-	ResourceRecord findNSEC3( const Domainname &name, TTL ttl ) const;
+	ResourceRecord find( const Domainname &name, TTL ttl ) const;
     private:
 	Domainname mApex;
 	std::vector<uint8_t> mSalt;

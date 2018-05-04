@@ -18,10 +18,8 @@ namespace dns
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
 	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const; 
         void verify() const;
+        void setup();
         std::shared_ptr<RRSet> signRRSet( const RRSet &rrset );
-
-	RRSetPtr getSOA() const;
-	RRSetPtr getNameServer() const;
 
         static void initialize();
 	

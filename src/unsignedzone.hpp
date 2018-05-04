@@ -19,10 +19,10 @@ namespace dns
 	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const; 
         void verify() const;
         std::shared_ptr<RRSet> signRRSet( const RRSet &rrset );
-        /*
-	RRSetPtr getSOA() const;
-	RRSetPtr getNameServer() const;
-        */
+
+	const RRSet &getSOA() const;
+	const RRSet &getNameServers() const;
+
         static void initialize();
 	
     private:

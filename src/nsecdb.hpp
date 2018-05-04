@@ -7,7 +7,17 @@
 
 namespace dns
 {
-    class NSECDB
+    class NSECStorable
+    {
+    public:
+        virtual ~NSECStorable() {}
+        virtual void addNode( const Domainname &name, const Node &node ) = 0;
+        virtual ResourceRecord find( const Domainname &name, TTL ttl ) const = 0;
+    };
+
+    typedef std::shared_ptr<NSECStorable> NSECDBPtr;
+    
+    class NSECDB : public NSECStorable
     {
 	typedef std::map<Domainname, std::vector<Type>> Container;
     public:
@@ -16,10 +26,10 @@ namespace dns
 	{}
 
 	void addNode( const Domainname &name, const Node &node );
-	ResourceRecord findNSEC( const Domainname &name, TTL ttl ) const;
+	ResourceRecord find( const Domainname &name, TTL ttl ) const;
     private:
 	Domainname mApex;
-	Container mNSECEntries;
+	Container  mNSECEntries;
     };
 
 }

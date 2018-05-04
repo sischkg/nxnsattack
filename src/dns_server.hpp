@@ -55,7 +55,7 @@ namespace dns
 
         virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
         virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
-	virtual void modifyMessage( WireFormat &messge ) {} 
+	virtual void modifyMessage( const PacketInfo &query, WireFormat &messge ) {} 
         void start();
 
         void addTSIGKey( const std::string &name, const TSIGKey &key );

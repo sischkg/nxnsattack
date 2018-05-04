@@ -61,8 +61,10 @@ namespace dns
 	return RRSetPtr();
     }
 
-    std::shared_ptr<RRSet> UnsignedZoneImp::signRRSet( const RRSet &rrset ) const
-    {}
+    UnsignedZoneImp::RRSetPtr UnsignedZoneImp::signRRSet( const RRSet &rrset ) const
+    {
+        return RRSetPtr();
+    }
 
     void UnsignedZoneImp::initialize()
     {}
