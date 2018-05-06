@@ -11,8 +11,64 @@ namespace dns
         : AbstractZoneImp( zone_name ),
           mSigner( zone_name, ksk_config, zsk_config ),
           mNSECDB( zone_name ),
-          mNSEC3DB( zone_name, salt, iterate, algo )
+          mNSEC3DB( zone_name, salt, iterate, algo ),
+          mEnableNSEC3( false )
     {}
+
+    void PostSignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
+    {
+	response.mResponseCode = NO_ERROR;
+	addSOAToAuthoritySection( response );
+	if ( response.isDNSSECOK() ) {
+            if ( mEnableNSEC3 ) {
+
+            }
+            else {
+                RRSetPtr nsec = generateNSECRRSet( qname );
+                if ( nsec ) {
+                    addRRSet( response.mAuthoritySection, *nsec );
+                    addRRSIG( response, response.mAuthoritySection, *nsec );
+                }
+
+                if ( need_wildcard ) {
+                    Domainname wildcard = getApex();
+                    wildcard.addSubdomain( "*" );
+                    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+                    if ( wildcard_nsec ) {
+                        addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                        addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+                    }
+                }
+            }
+	}
+    }
+
+
+    void PostSignedZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
+    {
+	response.mResponseCode = NXDOMAIN;
+	addSOAToAuthoritySection( response );
+	if ( response.isDNSSECOK() ) {
+            if ( mEnableNSEC3 ) {
+
+            }
+            else {
+                RRSetPtr nsec = generateNSECRRSet( qname );
+                if ( nsec ) {
+                    addRRSet( response.mAuthoritySection, *nsec );
+                    addRRSIG( response, response.mAuthoritySection, *nsec );
+                }
+
+                Domainname wildcard = getApex();
+                wildcard.addSubdomain( "*" );
+                RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+                if ( wildcard_nsec ) {
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+                }
+            }
+	}
+    }
 
     void PostSignedZoneImp::responseDNSKEY( PacketInfo &response ) const
     {
@@ -82,6 +138,7 @@ namespace dns
 	add( getDNSKEYRRSet() ); 
 	for ( auto node = begin() ; node != end() ; node++ ) {
 	    mNSECDB.addNode( node->first, *(node->second) );
+	    mNSEC3DB.addNode( node->first, *(node->second) );
 	}
     }
 

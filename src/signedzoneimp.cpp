@@ -10,6 +10,51 @@ namespace dns
         : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( new NSECDB( zone_name ) )
     {}
 
+    void SignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
+    {
+	response.mResponseCode = NO_ERROR;
+	addSOAToAuthoritySection( response );
+	if ( response.isDNSSECOK() ) {
+	    RRSetPtr nsec = generateNSECRRSet( qname );
+            if ( nsec ) {
+                addRRSet( response.mAuthoritySection, *nsec );
+                addRRSIG( response, response.mAuthoritySection, *nsec );
+            }
+
+	    if ( need_wildcard ) {
+		Domainname wildcard = getApex();
+		wildcard.addSubdomain( "*" );
+		RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+                if ( wildcard_nsec ) {
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+                }
+	    }
+	}
+    }
+
+
+    void SignedZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
+    {
+	response.mResponseCode = NXDOMAIN;
+	addSOAToAuthoritySection( response );
+	if ( response.isDNSSECOK() ) {
+	    RRSetPtr nsec = generateNSECRRSet( qname );
+            if ( nsec ) {
+                addRRSet( response.mAuthoritySection, *nsec );
+                addRRSIG( response, response.mAuthoritySection, *nsec );
+            }
+
+	    Domainname wildcard = getApex();
+	    wildcard.addSubdomain( "*" );
+	    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
+            if ( wildcard_nsec ) {
+                addRRSet( response.mAuthoritySection, *wildcard_nsec );
+                addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
+            }
+	}
+    }
+
     void SignedZoneImp::responseDNSKEY( PacketInfo &response ) const
     {
 	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();

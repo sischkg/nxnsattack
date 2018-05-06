@@ -27,9 +27,6 @@ namespace dns
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset ) const;
         void addSOAToAuthoritySection( PacketInfo &res ) const;
 
-	void responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard_nsec ) const;
-	void responseNXDomain( const Domainname &qname, PacketInfo &response ) const;
-
     public:
         AbstractZoneImp( const Domainname &zone_name );
 
@@ -51,6 +48,8 @@ namespace dns
 
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
 	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const = 0;
+	virtual void responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard_nsec ) const = 0;
+	virtual void responseNXDomain( const Domainname &qname, PacketInfo &response ) const = 0;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const = 0;
 	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const = 0;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const = 0;

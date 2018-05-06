@@ -10,6 +10,18 @@ namespace dns
         : AbstractZoneImp( zone_name )
     {}
 
+    void UnsignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
+    {
+	response.mResponseCode = NO_ERROR;
+	addSOAToAuthoritySection( response );
+    }
+
+    void UnsignedZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
+    {
+	response.mResponseCode = NXDOMAIN;
+	addSOAToAuthoritySection( response );
+    }
+
     void UnsignedZoneImp::responseDNSKEY( PacketInfo &response ) const
     {
         responseNoData( getSOA().getOwner(), response, true );

@@ -248,53 +248,6 @@ namespace dns
 
         if ( mNameServers.get() == nullptr )
             throw ZoneError( "No NS records" );
-    }
-
-
-    void AbstractZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
-    {
-	response.mResponseCode = NO_ERROR;
-	addSOAToAuthoritySection( response );
-	if ( response.isDNSSECOK() ) {
-	    RRSetPtr nsec = generateNSECRRSet( qname );
-            if ( nsec ) {
-                addRRSet( response.mAuthoritySection, *nsec );
-                addRRSIG( response, response.mAuthoritySection, *nsec );
-            }
-
-	    if ( need_wildcard ) {
-		Domainname wildcard = mApex;
-		wildcard.addSubdomain( "*" );
-		RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-                if ( wildcard_nsec ) {
-                    addRRSet( response.mAuthoritySection, *wildcard_nsec );
-                    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
-                }
-	    }
-	}
-    }
-
-
-    void AbstractZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
-    {
-	response.mResponseCode = NXDOMAIN;
-	addSOAToAuthoritySection( response );
-	if ( response.isDNSSECOK() ) {
-	    RRSetPtr nsec = generateNSECRRSet( qname );
-            if ( nsec ) {
-                addRRSet( response.mAuthoritySection, *nsec );
-                addRRSIG( response, response.mAuthoritySection, *nsec );
-            }
-
-	    Domainname wildcard = mApex;
-	    wildcard.addSubdomain( "*" );
-	    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
-            if ( wildcard_nsec ) {
-                addRRSet( response.mAuthoritySection, *wildcard_nsec );
-                addRRSIG( response, response.mAuthoritySection, *wildcard_nsec );
-            }
-	}
-    }
-    
+    }    
 }
 
