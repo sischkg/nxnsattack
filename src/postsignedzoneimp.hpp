@@ -11,7 +11,7 @@ namespace dns
     {
     private:
 	ZoneSigner mSigner;
-	NSECDBPtr  mNSECDB;
+	NSECDB     mNSECDB;
         NSEC3DB    mNSEC3DB;
 
     public:

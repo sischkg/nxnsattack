@@ -10,7 +10,7 @@ namespace dns
                                           const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo )
         : AbstractZoneImp( zone_name ),
           mSigner( zone_name, ksk_config, zsk_config ),
-          mNSECDB( new NSECDB( zone_name ) ),
+          mNSECDB( zone_name ),
           mNSEC3DB( zone_name, salt, iterate, algo )
     {}
 
@@ -54,7 +54,7 @@ namespace dns
 	auto node = findNode( qname );
 	if ( node ) {
 	    if ( node->exist() ) {
-                ResourceRecord nsec_rr = mNSECDB->find( qname, getSOA().getTTL() );
+                ResourceRecord nsec_rr = mNSECDB.find( qname, getSOA().getTTL() );
                 RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
                 rrset->add( nsec_rr.mRData );
 
@@ -81,7 +81,7 @@ namespace dns
     {
 	add( getDNSKEYRRSet() ); 
 	for ( auto node = begin() ; node != end() ; node++ ) {
-	    mNSECDB->addNode( node->first, *(node->second) );
+	    mNSECDB.addNode( node->first, *(node->second) );
 	}
     }
 
@@ -101,7 +101,7 @@ namespace dns
     
     PostSignedZoneImp::RRSetPtr PostSignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {
-	ResourceRecord nsec_rr = mNSECDB->find( domainname, getSOA().getTTL() );
+	ResourceRecord nsec_rr = mNSECDB.find( domainname, getSOA().getTTL() );
 	RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
 	rrset->add( nsec_rr.mRData );
 
