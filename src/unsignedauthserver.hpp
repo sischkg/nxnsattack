@@ -4,6 +4,7 @@
 #include "dns_server.hpp"
 #include "zoneloader.hpp"
 #include "postsignedzone.hpp"
+#include "zonesigner.hpp"
 
 namespace dns
 {
@@ -15,7 +16,8 @@ namespace dns
 	{}
 
 	void load( const std::string &apex, const std::string &zone_filename,
-                   const std::string &ksk_config_yaml, const std::string &zsk_config_yaml );
+                   const std::string &ksk_config_yaml, const std::string &zsk_config_yaml,
+                   const std::vector<uint8_t> &salt, uint16_t iteerate, HashAlgorithm algo );
 	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp );
 	virtual PacketInfo modifyResponse( const PacketInfo &query,
 					   const PacketInfo &original_response,

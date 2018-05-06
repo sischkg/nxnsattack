@@ -3,6 +3,7 @@
 
 #include "abstractzoneimp.hpp"
 #include "nsecdb.hpp"
+#include "nsec3db.hpp"
 
 namespace dns
 {
@@ -11,9 +12,11 @@ namespace dns
     private:
 	ZoneSigner mSigner;
 	NSECDBPtr  mNSECDB;
+        NSEC3DB    mNSEC3DB;
 
     public:
-        PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );
+        PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                           const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo );
 
         virtual void setup();
 

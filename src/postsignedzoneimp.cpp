@@ -6,8 +6,12 @@
 namespace dns
 {
 
-    PostSignedZoneImp::PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-        : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( new NSECDB( zone_name ) )
+    PostSignedZoneImp::PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                                          const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo )
+        : AbstractZoneImp( zone_name ),
+          mSigner( zone_name, ksk_config, zsk_config ),
+          mNSECDB( new NSECDB( zone_name ) ),
+          mNSEC3DB( zone_name, salt, iterate, algo )
     {}
 
     void PostSignedZoneImp::responseDNSKEY( PacketInfo &response ) const
