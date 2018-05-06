@@ -260,6 +260,8 @@ int main( int argc, char **argv )
     if ( apex.back() != '.' )
 	apex.push_back( '.' );
 
+    decodeFromHex( nsec3_salt_str, nsec3_salt );
+    
     try {
 	dns::FuzzServer server( bind_address, bind_port, debug );
 	server.load( apex, zone_filename,
