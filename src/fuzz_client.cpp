@@ -137,6 +137,9 @@ int main( int argc, char **argv )
                 case 3:
                     qname.addSubdomain( "child" );
                     break;
+                case 4:
+                    qname.addSubdomain( label_generator.generateLabel() );
+                    break;
                 }
                 break;
             case 4:
@@ -172,6 +175,26 @@ int main( int argc, char **argv )
                 break;
             case 6:
                 qname.addSubdomain( "xxxxxxxxxx" );
+                break;
+            case 7:
+                qname.addSubdomain( label_generator.generateLabel() );
+                break;
+            case 8:
+                qname.addSubdomain( label_generator.generateLabel() );
+                switch ( dns::getRandom( 5 ) ) {
+                case 0:
+                    qname.addSubdomain( "www" );
+                    break;
+                case 1:
+                    qname.addSubdomain( "ns01" );
+                    break;
+                case 2:
+                    qname.addSubdomain( "child" );
+                    break;
+                case 3:
+                    qname.addSubdomain( label_generator.generateLabel() );
+                    break;
+                }
                 break;
             default:
                 qname.addSubdomain( "child" );
