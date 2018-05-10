@@ -1,5 +1,8 @@
 #include "domainname.hpp"
+#include <iomanip>
 #include <cstring>
+#include <cctype>
+#include <sstream>
 
 namespace dns
 {
@@ -112,12 +115,32 @@ namespace dns
 
     std::string Domainname::toString() const
     {
-        std::string result;
-        for ( unsigned int i = 0; i < labels.size(); i++ ) {
-            result += labels[ i ];
-            result += ".";
+        std::stringstream result;
+        int length = 0;
+        for ( auto label : labels ) {
+            for ( auto c : label ) {
+                if ( c == '\\' ) {
+                    result << '\\';
+                    result << '\\';
+                }
+                else if ( c == '.' ) {
+                    result << '\\';
+                    result << '.';
+                }
+                else if ( std::isprint( c ) ) {
+                    result << c;
+                }
+                else {
+                    result << '\\';
+                    result << std::oct << std::setw( 3 ) << std::setfill( '0' ) << (uint16_t)c;
+                }
+                length++;
+            }
+            result << '.';
+            length ++;
         }
-        return result;
+
+        return result.str();
     }
 
     PacketData Domainname::getPacket( Offset offset ) const
@@ -155,7 +178,7 @@ namespace dns
     }
 
     
-    const uint8_t *Domainname::parsePacket( Domainname &   ref_domainname,
+    const uint8_t *Domainname::parsePacket( Domainname    &ref_domainname,
                                             const uint8_t *packet_begin,
                                             const uint8_t *packet_end,
                                             const uint8_t *begin,

@@ -312,6 +312,32 @@ namespace dns
         return os;
     }
 
+    std::string classCodeToString( Class c )
+    {
+        std::string res;
+        switch ( c ) {
+        case CLASS_IN:
+            res = "IN";
+            break;
+        case CLASS_CH:
+            res = "CH";
+            break;
+        case CLASS_HS:
+            res = "HS";
+            break;
+        case CLASS_NONE:
+            res = "NONE";
+            break;
+        case CLASS_ANY:
+            res = "ANY";
+            break;
+        default:
+            res = boost::lexical_cast<std::string>( c );
+        }
+
+        return res;
+    }
+
     std::string typeCodeToString( Type t )
     {
         std::string res;
@@ -489,15 +515,15 @@ namespace dns
            << "Response Code: "        << responseCodeToString( res.mResponseCode ) << std::endl;
 
         for ( auto q : res.mQuestionSection )
-            os << "Query: " << q.mDomainname << " " << typeCodeToString( q.mType ) << "  ?" << std::endl;
+            os << "Query: " << q.mDomainname << " " << classCodeToString( q.mClass ) << " " << typeCodeToString( q.mType ) << std::endl;
         for ( auto a : res.mAnswerSection )
-            std::cout << "Answer: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
+            std::cout << "Answer: " << a.mDomainname << " " << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType )
                       << " " << a.mRData->toString() << std::endl;
         for ( auto a : res.mAuthoritySection )
-            std::cout << "Authority: " << a.mDomainname << a.mTTL << " " << typeCodeToString( a.mType ) << " "
+            std::cout << "Authority: " << a.mDomainname << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType ) << " "
                       << a.mRData->toString() << std::endl;
         for ( auto a : res.mAdditionalSection )
-            std::cout << "Additional: " << a.mDomainname << " " << a.mTTL << " " << typeCodeToString( a.mType )
+            std::cout << "Additional: " << a.mDomainname << " " << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType )
                       << " " << a.mRData->toString() << std::endl;
 
         return os;
@@ -513,7 +539,9 @@ namespace dns
     std::string RecordRaw::toString() const
     {
         std::ostringstream os;
-        os << "type: " << mRRType << ", data: ";
+        os << "type: RAW(" << mRRType << "), data: ";
+        std::string data_str;
+ 
         for ( unsigned int i = 0; i < mData.size(); i++ ) {
             os << std::hex << (unsigned int)mData[ i ] << " ";
         }

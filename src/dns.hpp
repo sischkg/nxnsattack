@@ -1570,6 +1570,7 @@ namespace dns
     PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
+    std::string classCodeToString( Class );
     std::string typeCodeToString( Type t );
     std::string responseCodeToString( uint8_t rcode );
     Type stringToTypeCode( const std::string & );
