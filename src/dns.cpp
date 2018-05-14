@@ -1521,8 +1521,9 @@ namespace dns
 	}
 
 	std::string result( os.str() );
-	result.pop_back();
-	return result;
+        if ( ! result.empty() )
+            result.pop_back();
+        return result;
     }
 
     uint8_t NSECBitmapField::Window::typeToBitmapIndex( Type t )
