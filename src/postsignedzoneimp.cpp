@@ -12,7 +12,7 @@ namespace dns
           mSigner( zone_name, ksk_config, zsk_config ),
           mNSECDB( zone_name ),
           mNSEC3DB( zone_name, salt, iterate, algo ),
-          mEnableNSEC3( false )
+          mEnableNSEC3( true )
     {}
 
     void PostSignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
@@ -21,7 +21,15 @@ namespace dns
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
             if ( mEnableNSEC3 ) {
+                TTL ttl = dynamic_cast<const RecordSOA &>( *(getSOA()[0]) ).getMinimum();
 
+                std::vector<ResourceRecord> nsec3_rrs;
+                ResourceRecord nsec3_rr = mNSEC3DB.find( qname,  ttl );
+
+                RRSet rrset( nsec3_rr.mDomainname, nsec3_rr.mClass, nsec3_rr.mType, ttl );
+                rrset.add( nsec3_rr.mRData );
+                addRRSet( response.mAuthoritySection, rrset );
+                addRRSIG( response, response.mAuthoritySection, rrset );
             }
             else {
                 RRSetPtr nsec = generateNSECRRSet( qname );
@@ -50,7 +58,34 @@ namespace dns
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
             if ( mEnableNSEC3 ) {
+                Domainname closest = qname;
+                closest.popSubdomain();
+                Domainname next    = qname;
+                while ( true ) {
+                    std::cerr << "nsec3: " << qname << ", " << closest << ", " << next << std::endl;
+                    NodePtr closest_node = findNode( closest );
+                    if ( closest_node )
+                        break;
+                    closest.popSubdomain();
+                    next.popSubdomain();
+                }                
+                auto wildcard = closest;
+                wildcard.pushSubdomain( "*" );
 
+                TTL ttl = dynamic_cast<const RecordSOA &>( *(getSOA()[0]) ).getMinimum();
+
+                std::vector<ResourceRecord> nsec3_rrs;
+                nsec3_rrs.push_back( mNSEC3DB.find( closest,  ttl ) );
+                nsec3_rrs.push_back( mNSEC3DB.find( next,     ttl ) );
+                nsec3_rrs.push_back( mNSEC3DB.find( wildcard, ttl ) );
+
+                for ( auto nsec3_rr : nsec3_rrs ) {
+                    RRSet rrset( nsec3_rr.mDomainname, nsec3_rr.mClass, nsec3_rr.mType, ttl );
+                    rrset.add( nsec3_rr.mRData );
+                    std::cerr << "add: " << rrset << std::endl;
+                    addRRSet( response.mAuthoritySection, rrset );
+                    addRRSIG( response, response.mAuthoritySection, rrset );
+                }
             }
             else {
                 RRSetPtr nsec = generateNSECRRSet( qname );

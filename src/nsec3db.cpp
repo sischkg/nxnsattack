@@ -30,6 +30,7 @@ namespace dns
     }
 
     void calculateNSEC3Hash( const Domainname &original,
+                             const Domainname &apex,
                              const PacketData &salt,
                              uint16_t iterate,
                              HashAlgorithm algorithm,
@@ -53,7 +54,7 @@ namespace dns
 
 	std::string nsec3_label;
 	encodeToBase32Hex( hash, nsec3_label );
-	nsec3_owner = original;
+	nsec3_owner = apex;
 	nsec3_owner.addSubdomain( nsec3_label );
     }
     
@@ -82,8 +83,8 @@ namespace dns
 	Domainname wildcard_original;
 	wildcard_original.addSubdomain( "*" );
 
-	calculateNSEC3Hash( original, mSalt, mIterate, mHashAlgorithm, owner, hash );
-	calculateNSEC3Hash( wildcard_original, mSalt, mIterate, mHashAlgorithm, wildcard_owner, wildcard_hash );
+	calculateNSEC3Hash( original, mApex, mSalt, mIterate, mHashAlgorithm, owner, hash );
+	calculateNSEC3Hash( wildcard_original, mApex, mSalt, mIterate, mHashAlgorithm, wildcard_owner, wildcard_hash );
 
 	auto nsec3entry = container.find( owner );
 	if ( nsec3entry == container.end() ) {
