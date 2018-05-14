@@ -22,6 +22,13 @@ namespace dns
         return lower_label;
     }
 
+    static void throwInvalidDomainnameString( const char *name )
+    {
+        std::ostringstream os;
+        os << "invalid domainname string: \"" << name << "\"";
+        throw std::runtime_error( os.str() );
+    }
+
     static void stringToLabels( const char *name, std::deque<std::string> &labels )
     {
         labels.clear();
@@ -32,11 +39,43 @@ namespace dns
         unsigned int name_length = std::strlen( name );
         std::string  label;
         for ( unsigned int i = 0; i < name_length; i++ ) {
-            if ( name[ i ] == '.' ) {
+            if ( name[i] == '\\' ) {
+                if ( name_length <= i + 1 )
+                    throwInvalidDomainnameString( name );
+                if ( name[i+1] == '\\' ) {
+                    label.push_back( '\\' );
+                    i++;
+                }
+                else if ( name[i+1] == '.' ) {
+                    label.push_back( '.' );
+                    i++;
+                }
+                else if ( std::isdigit( name[i+1] ) ) {
+                    if ( name_length <= i + 3 ||
+                         name[i+1] < '0' || name[i+1] > '3' ||
+                         name[i+2] < '0' || name[i+2] > '7' ||
+                         name[i+3] < '0' || name[i+3] > '7' ) {
+                        throwInvalidDomainnameString( name );
+                    }
+                    else {
+                       char oct[4];
+                       oct[0] = name[i+1];
+                       oct[1] = name[i+2];
+                       oct[2] = name[i+3];
+                       oct[3] = 0;
+                       label.push_back( (uint8_t)strtol( oct, nullptr, 8 ) );
+                       i += 3;
+                    }
+                }
+                else
+                    throwInvalidDomainnameString( name );
+            }
+            else if ( name[ i ] == '.' ) {
                 if ( label.size() > 0 )
                     labels.push_back( label );
                 label = "";
-            } else {
+            }
+            else {
                 label.push_back( name[ i ] );
             }
         }
