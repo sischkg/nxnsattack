@@ -15,7 +15,7 @@ namespace dns
         mNameToKey.insert( std::pair<std::string, TSIGKey>( name, key ) );
     }
 
-    ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end )
+    ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const
     {
         auto tsig_key = mNameToKey.find( query.mTSIGRR.mKeyName.toString() );
         if ( tsig_key == mNameToKey.end() )
@@ -45,7 +45,7 @@ namespace dns
         return BADSIG;
     }
 
-    PacketInfo DNSServer::generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode )
+    PacketInfo DNSServer::generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const
     {
         PacketInfo response;
 

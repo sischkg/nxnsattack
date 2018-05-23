@@ -39,8 +39,8 @@ namespace dns
         void startUDPServer();
         void startTCPServer();
 
-        ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end );
-        PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode );
+        ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const;
+        PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const;
 
         void sendZone( const PacketInfo &info, tcpv4::ConnectionPtr connection );
         bool isDebug() const { return mDebug; }
@@ -52,9 +52,9 @@ namespace dns
         ~DNSServer()
         {}
 
-        virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) = 0;
-        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn ) {}
-	virtual void modifyMessage( const PacketInfo &query, WireFormat &messge ) {} 
+        virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const = 0;
+        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn ) const {}
+	virtual void modifyMessage( const PacketInfo &query, WireFormat &messge ) const {} 
         void start();
 
         void addTSIGKey( const std::string &name, const TSIGKey &key );

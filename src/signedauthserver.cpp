@@ -29,7 +29,7 @@ namespace dns
         return zone->getDSRecords();
     }
 
-    PacketInfo SignedAuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
+    PacketInfo SignedAuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp ) const
     {
 	dns::PacketInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );

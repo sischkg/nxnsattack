@@ -18,7 +18,7 @@ namespace dns
 	void load( const std::string &apex, const std::string &zone_filename,
                    const std::string &ksk_config_yaml, const std::string &zsk_config_yaml,
                    const std::vector<uint8_t> &salt, uint16_t iteerate, HashAlgorithm algo );
-	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp );
+	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const;
 	virtual PacketInfo modifyResponse( const PacketInfo &query,
 					   const PacketInfo &original_response,
 					   bool vir_tcp ) const;

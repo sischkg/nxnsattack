@@ -15,7 +15,7 @@ namespace dns
 	{}
 
 	void load( const std::string &apex, const std::string &filename );
-	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp );
+	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const;
 	virtual PacketInfo modifyResponse( const PacketInfo &query,
 					   const PacketInfo &original_response,
 					   bool vir_tcp ) const;

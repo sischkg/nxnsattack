@@ -20,7 +20,7 @@ namespace dns
     }
 
 
-    PacketInfo AuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp )
+    PacketInfo AuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp ) const
     {
 	dns::PacketInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );
