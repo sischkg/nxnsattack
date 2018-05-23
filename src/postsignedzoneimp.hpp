@@ -13,6 +13,7 @@ namespace dns
 	ZoneSigner mSigner;
 	NSECDB     mNSECDB;
         NSEC3DB    mNSEC3DB;
+        bool       mEnableNSEC;
         bool       mEnableNSEC3;
     public:
         PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,

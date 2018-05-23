@@ -4,6 +4,7 @@
 #include "dns.hpp"
 #include "zone.hpp"
 #include <boost/noncopyable.hpp>
+#include <boost/random.hpp>
 
 namespace dns
 {
@@ -13,7 +14,7 @@ namespace dns
     class RandomGenerator : private boost::noncopyable
     {
     public:
-	uint32_t rand( uint32_t = 0 );
+	uint32_t rand( uint32_t = 0xffffffff );
         std::vector<uint8_t> randStream( unsigned int );
         std::vector<uint8_t> randSizeStream( unsigned int );
 
@@ -24,7 +25,7 @@ namespace dns
     };
 
 
-    inline uint32_t getRandom( uint32_t base = 0 )
+    inline uint32_t getRandom( uint32_t base = 0xffffffff )
     {
         return RandomGenerator::getInstance().rand( base );
     }

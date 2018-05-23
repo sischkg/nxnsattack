@@ -14,14 +14,14 @@ namespace dns
     
     RandomGenerator::RandomGenerator()
     {
-	std::srand( getpid() * time( nullptr ) );
+        std::srand( getpid() * time( nullptr ) );
     }
 
     uint32_t RandomGenerator::rand( uint32_t base )
     {
-	if ( base == 0 )
-	    return std::rand();
-	return std::rand() % base;
+        if ( base == 0 )
+            return 0;
+        return std::rand() % base;
     }
 
     PacketData RandomGenerator::randStream( unsigned int size )
@@ -58,7 +58,7 @@ namespace dns
 	    return "*";
         unsigned int label_size = 1 + getRandom( 62 );
         for ( unsigned int i = 0 ; i < label_size ; i++ )
-            label.push_back( getRandom( 256 ) );
+            label.push_back( getRandom( 255 ) );
         return label;
     }
 
@@ -81,7 +81,7 @@ namespace dns
     Domainname DomainnameGenerator::generate( const Domainname &hint )
     {
         Domainname result = hint;
-        switch ( getRandom( 4 ) ) {
+        switch ( getRandom( 3 ) ) {
         case 0:
             return result;
         case 1: // erase labels;
@@ -93,7 +93,7 @@ namespace dns
 
                 return result; 
             }
-        case 2: // append labels as sudomain;
+        case 2: // append labels as subdomain;
             {
                 unsigned int label_count        = hint.getLabels().size();
                 unsigned int append_label_count = getRandom( 255 - hint.getLabels().size() );
@@ -164,8 +164,8 @@ namespace dns
             names.push_back( rr.mDomainname );
         }
 
-        unsigned int index = getRandom( names.size() );
-        return names[index];
+        unsigned int index = getRandom( names.size() - 1 );
+        return names.at( index );
     }
 
 
@@ -181,18 +181,18 @@ namespace dns
         uint32_t nscount = hint.getAuthoritySection().size();
         uint32_t adcount = hint.getAdditionalSection().size();
 
-        uint32_t index = getRandom( qdcount + ancount + nscount + adcount );
+        uint32_t index = getRandom( qdcount + ancount + nscount + adcount - 1 );
         if ( index < qdcount ) {
-            hint_name = hint.getQuestionSection()[index].mDomainname;
+            hint_name = hint.getQuestionSection().at( index ).mDomainname;
         }
         else if ( index < qdcount + ancount ) {
-            hint_name = hint.getAnswerSection()[index - qdcount].mDomainname;
+            hint_name = hint.getAnswerSection().at( index - qdcount ).mDomainname;
         }
         else if ( index < qdcount + ancount + nscount ) {
-            hint_name = hint.getAuthoritySection()[index - qdcount - ancount].mDomainname;
+            hint_name = hint.getAuthoritySection().at( index - qdcount - ancount ).mDomainname;
         }
         else if ( index < qdcount + ancount + nscount + adcount ) {
-            hint_name = hint.getAdditionalSection()[index - qdcount - ancount - nscount].mDomainname;
+            hint_name = hint.getAdditionalSection().at( index - qdcount - ancount - nscount ).mDomainname;
         }
         else {
             throw std::logic_error( "invalid index of XNameGenerator::generate( hint )" );
@@ -250,8 +250,8 @@ namespace dns
         if ( record_a_list.size() == 0 )
             return generate();
 
-        unsigned int index = getRandom( record_a_list.size() );
-	return std::shared_ptr<RDATA>( record_a_list[index]->clone() );
+        unsigned int index = getRandom( record_a_list.size() - 1 );
+	return std::shared_ptr<RDATA>( record_a_list.at( index )->clone() );
     }
 
     std::shared_ptr<RDATA> AGenerator::generate()
@@ -279,12 +279,12 @@ namespace dns
                 bitmap[i] = i;
         }
         else {
-            bitmap.resize( getRandom( 256 * 256 ) );
+            bitmap.resize( getRandom( 0xffff ) );
             for ( unsigned int i = 0 ; i < bitmap.size() ; i++ )
-                bitmap[i] = getRandom( 256 * 256 );
+                bitmap[i] = getRandom( 0xffff);
         }
             
-        return std::shared_ptr<RDATA>( new RecordWKS( getRandom(), getRandom( 256 ), bitmap ) );
+        return std::shared_ptr<RDATA>( new RecordWKS( getRandom(), getRandom( 255 ), bitmap ) );
     }
     
     /**********************************************************
@@ -312,8 +312,8 @@ namespace dns
         if ( record_a_list.size() == 0 )
             return generate();
 
-        unsigned int index = getRandom( record_a_list.size() );
-	return std::shared_ptr<RDATA>( record_a_list[index]->clone() );
+        unsigned int index = getRandom( record_a_list.size() - 1 );
+	return std::shared_ptr<RDATA>( record_a_list.at( index )->clone() );
     }
 
     std::shared_ptr<RDATA> AAAAGenerator::generate()
@@ -369,7 +369,7 @@ namespace dns
 
     std::shared_ptr<RDATA> RRSIGGenerator::generate()
     {
-        PacketData signature = getRandomSizeStream( 256 );
+        PacketData signature = getRandomSizeStream( 255 );
 	return std::shared_ptr<RDATA>( new RecordRRSIG( getRandom( 0xffff ), // type covered
 							getRandom( 0xff ),   // algorithm
 							getRandom( 0xff ),   // label
@@ -718,7 +718,7 @@ namespace dns
     {
         Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
 
-        std::shared_ptr<RDATA> resource_data = mGenerators[ getRandom( mGenerators.size() )]->generate( hint );
+        std::shared_ptr<RDATA> resource_data = mGenerators.at( getRandom( mGenerators.size() - 1 ) )->generate( hint );
 
         Domainname owner;
         if ( resource_data->type() == TYPE_NSEC3 ) {
@@ -731,8 +731,12 @@ namespace dns
             owner = getDomainname( hint );
         }
 
+        unsigned int index = getRandom( sizeof(class_table)/sizeof(Class) - 1 );
+        if ( index >= sizeof(class_table)/sizeof(Class) ) {
+            throw std::logic_error( "invalid class index" );
+        }
         RRSet rrset( owner,
-                     class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ],
+                     class_table[index],
                      resource_data->type(),
                      getRandom( 0xffffffff ) );
         rrset.add( resource_data );
@@ -848,7 +852,7 @@ namespace dns
 	if ( ! packet.isEDNS0() )
 	    return;
 
-        std::shared_ptr<OptPseudoRROption> option = mGenerators[ getRandom( mGenerators.size() )]->generate( packet );
+        std::shared_ptr<OptPseudoRROption> option = mGenerators.at( getRandom( mGenerators.size() - 1 ) )->generate( packet );
 	std::dynamic_pointer_cast<RecordOptionsData>( packet.mOptPseudoRR.mOptions )->add( option );
     }
 

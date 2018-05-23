@@ -33,7 +33,6 @@ namespace dns
     private:
         std::string mBindAddress;
         uint16_t    mBindPort;
-	bool        mTruncation;
         bool        mDebug;
         std::map<std::string, TSIGKey> mNameToKey;
 
@@ -47,7 +46,7 @@ namespace dns
         bool isDebug() const { return mDebug; }
     public:
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool truncation = true, bool debug = false )
-            : mBindAddress( address ), mBindPort( port ), mTruncation( truncation ), mDebug( debug )
+            : mBindAddress( address ), mBindPort( port ), mDebug( debug )
         {}
 
         ~DNSServer()

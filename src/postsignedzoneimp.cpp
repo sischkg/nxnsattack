@@ -12,8 +12,9 @@ namespace dns
           mSigner( zone_name, ksk_config, zsk_config ),
           mNSECDB( zone_name ),
           mNSEC3DB( zone_name, salt, iterate, algo ),
+          mEnableNSEC( true ),
           mEnableNSEC3( true )
-    {}
+   {}
 
     void PostSignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
     {
@@ -31,7 +32,7 @@ namespace dns
                 addRRSet( response.mAuthoritySection, rrset );
                 addRRSIG( response, response.mAuthoritySection, rrset );
             }
-            else {
+            if ( mEnableNSEC ) {
                 RRSetPtr nsec = generateNSECRRSet( qname );
                 if ( nsec ) {
                     addRRSet( response.mAuthoritySection, *nsec );
@@ -62,7 +63,6 @@ namespace dns
                 closest.popSubdomain();
                 Domainname next    = qname;
                 while ( true ) {
-                    std::cerr << "nsec3: " << qname << ", " << closest << ", " << next << std::endl;
                     NodePtr closest_node = findNode( closest );
                     if ( closest_node )
                         break;
@@ -82,12 +82,11 @@ namespace dns
                 for ( auto nsec3_rr : nsec3_rrs ) {
                     RRSet rrset( nsec3_rr.mDomainname, nsec3_rr.mClass, nsec3_rr.mType, ttl );
                     rrset.add( nsec3_rr.mRData );
-                    std::cerr << "add: " << rrset << std::endl;
                     addRRSet( response.mAuthoritySection, rrset );
                     addRRSIG( response, response.mAuthoritySection, rrset );
                 }
             }
-            else {
+            if ( mEnableNSEC ) {
                 RRSetPtr nsec = generateNSECRRSet( qname );
                 if ( nsec ) {
                     addRRSet( response.mAuthoritySection, *nsec );

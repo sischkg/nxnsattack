@@ -164,31 +164,40 @@ namespace dns
 
     ResourceRecord NSEC3DB::find( const Domainname &name, TTL ttl ) const
     {
+	PacketData hash;
 	Domainname owner;
-	PacketData next_hash;
-	std::vector<Type> types;
-	auto nsec3_entry = mNSEC3Entries.lower_bound( name );
-	auto next_entry  = mNSEC3Entries.upper_bound( name );
-	if ( nsec3_entry == mNSEC3Entries.end() ) {
-	    auto last = mNSEC3Entries.end();
-	    last--;
-	    owner = last->first.getCanonicalDomainname();
-	    types = last->second.getTypes();
-	    next_hash = mNSEC3Entries.begin()->second.getHash();
-	}
-	else if ( next_entry == mNSEC3Entries.end() ) {
-	    owner = nsec3_entry->first.getCanonicalDomainname();
-	    types = nsec3_entry->second.getTypes();
-	    next_hash = mNSEC3Entries.begin()->second.getHash();
-	}
-	else {
-	    owner = nsec3_entry->first.getCanonicalDomainname();
-	    types = nsec3_entry->second.getTypes();
-	    next_hash = next_entry->second.getHash();
-	}
+	calculateNSEC3Hash( name, mApex, mSalt, mIterate, mHashAlgorithm, owner, hash );
+
+        auto last  = mNSEC3Entries.end(); last--;
+        auto first = mNSEC3Entries.begin();
+        Domainname nsec3_owner;
+        PacketData next_hash;
+        std::vector<Type> types;
+
+        if ( owner < first->first ) {
+            nsec3_owner = last->first.getCanonicalDomainname();
+            types       = last->second.getTypes();
+            next_hash   = first->second.getHash();
+        }
+        else if ( owner >= last->first ) {
+            nsec3_owner = last->first.getCanonicalDomainname();
+            types       = last->second.getTypes();
+            next_hash   = first->second.getHash();
+        }
+        else {
+            for ( auto i = first ; i != last ; i++ ) {
+                auto next = i; next++;
+                if ( i->first <= owner && owner < next->first ) {
+                    nsec3_owner = i->first.getCanonicalDomainname();
+                    types       = i->second.getTypes();
+                    next_hash   = next->second.getHash();
+                    break;
+                }
+            }
+        }
 
 	ResourceRecord rr;
-	rr.mDomainname = owner;
+	rr.mDomainname = nsec3_owner;
 	rr.mClass      = CLASS_IN;
 	rr.mType       = TYPE_NSEC3;
 	rr.mTTL        = ttl;

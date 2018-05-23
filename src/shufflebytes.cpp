@@ -11,8 +11,8 @@ namespace dns
 	switch( r ) {
 	case 0: // insert data
 	    {
-		uint32_t insert_position = getRandom( src_size );
-		uint32_t insert_size     = getRandom( 1024 );
+		uint32_t insert_position = getRandom( src_size - 1 );
+		uint32_t insert_size     = getRandom( 1023 );
 		if ( src_size + insert_size > 0xffff ) {
 		    dst = src;
 		    break;
@@ -28,7 +28,7 @@ namespace dns
 	    break;
 	case 1: // repleace data
 	    {
-		uint32_t begin_replace = getRandom( src_size );
+		uint32_t begin_replace = getRandom( src_size - 1 );
 		uint32_t end_replace   = getRandom( src_size - begin_replace );
 		uint32_t insert_size   = getRandom( 1024 );
 		if ( src_size - ( end_replace - begin_replace ) + insert_size > 0xffff ) {

@@ -365,33 +365,33 @@ namespace dns
         return os << name.toString();
     }
 
-    bool operator==( const Domainname &lhs, const Domainname &rhs )
+    bool Domainname::operator==( const Domainname &rhs ) const
     {
-        if ( lhs.getCanonicalLabels().size() != rhs.getCanonicalLabels().size() )
+        if ( getCanonicalLabels().size() != rhs.getCanonicalLabels().size() )
             return false;
 
-        for ( unsigned int i = 0; i < lhs.getCanonicalLabels().size(); i++ ) {
-	    if ( lhs.getCanonicalLabels().at( i ) != rhs.getCanonicalLabels().at( i ) )
+        for ( unsigned int i = 0; i < getCanonicalLabels().size(); i++ ) {
+	    if ( getCanonicalLabels().at( i ) != rhs.getCanonicalLabels().at( i ) )
 		return false;
         }
         return true;
     }
 
-    bool operator!=( const Domainname &lhs, const Domainname &rhs )
+    bool Domainname::operator!=( const Domainname &rhs ) const
     {
-        return !( lhs == rhs );
+        return !( *this == rhs );
     }
 
-    bool operator<( const Domainname &lhs, const Domainname &rhs )
+    bool Domainname::operator<( const Domainname &rhs ) const
     {
-	if ( lhs == rhs )
+	if ( *this == rhs )
 	    return false;
 
-	auto llabel = lhs.getCanonicalLabels().rbegin();
+	auto llabel = getCanonicalLabels().rbegin();
 	auto rlabel = rhs.getCanonicalLabels().rbegin();
 
 	for ( ; true ; llabel++, rlabel++ ) {
-	    if ( llabel == lhs.getCanonicalLabels().rend() )
+	    if ( llabel == getCanonicalLabels().rend() )
 		return true;
 	    if ( rlabel == rhs.getCanonicalLabels().rend() )
 		return false;

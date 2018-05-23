@@ -162,7 +162,12 @@ namespace dns
 
             Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
             for ( ResourceRecord &rr : section ) {
-                rr.mClass = class_table[ getRandom( sizeof(class_table)/sizeof(Class) ) ];
+                unsigned int index = getRandom( sizeof(class_table)/sizeof(Class) - 1 );
+                if ( index >= sizeof(class_table)/sizeof(Class) ) {
+                    std::cerr << "invalid replace class index " << index << "." << std::endl;
+                    throw std::logic_error( "invalid replace class index" );
+                }
+                rr.mClass = class_table[ index ];
             }
         }
 

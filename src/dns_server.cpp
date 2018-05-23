@@ -10,10 +10,6 @@
 
 namespace dns
 {
-    void ignore_sigpipe( int )
-    {
-    }
-
     void DNSServer::addTSIGKey( const std::string &name, const TSIGKey &key )
     {
         mNameToKey.insert( std::pair<std::string, TSIGKey>( name, key ) );
@@ -85,27 +81,25 @@ namespace dns
                     if ( isDebug() )
                         std::cerr << "Response:" << response_info << std::endl; 
 
-		    if ( mTruncation ) {
-			uint32_t requested_max_payload_size = 512;
-			if ( query.isEDNS0() &&
-			     query.mOptPseudoRR.mPayloadSize > 512 ) {
-			    requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
-			    if ( query.mOptPseudoRR.mPayloadSize > 4096 )
-				query.mOptPseudoRR.mPayloadSize = 4096;
-			}
+                    uint32_t requested_max_payload_size = 512;
+                    if ( query.isEDNS0() &&
+                         query.mOptPseudoRR.mPayloadSize > 512 ) {
+                        requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
+                        if ( query.mOptPseudoRR.mPayloadSize > 4096 )
+                            query.mOptPseudoRR.mPayloadSize = 4096;
+                    }
 
+                    if ( isDebug() )
+                        std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+                    if ( response_info.getMessageSize() > requested_max_payload_size ) {
                         if ( isDebug() )
-                            std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
-			if ( response_info.getMessageSize() > requested_max_payload_size ) {
-                            if ( isDebug() )
-                                std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
-			    response_info.mTruncation = 1;
+                            std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+                        response_info.mTruncation = 1;
                             
-			    response_info.clearAnswerSection();
-			    response_info.clearAuthoritySection();
-			    response_info.clearAdditionalSection();
-			}
-		    }
+                        response_info.clearAnswerSection();
+                        response_info.clearAuthoritySection();
+                        response_info.clearAdditionalSection();
+                    }
 		    
                     WireFormat response_packet;
                     response_info.generateMessage( response_packet );
@@ -191,7 +185,14 @@ namespace dns
 
     void DNSServer::start()
     {
-        signal( SIGPIPE, ignore_sigpipe );
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGQUIT);
+        sigaddset(&set, SIGUSR1);
+        int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
+        if ( s != 0 ) {
+            throw std::runtime_error( "cannot set sigmask" );
+        }
 
         boost::thread udp_server_thread( &DNSServer::startUDPServer, this );
         boost::thread tcp_server_thread( &DNSServer::startTCPServer, this );

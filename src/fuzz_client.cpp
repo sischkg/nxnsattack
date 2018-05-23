@@ -104,7 +104,7 @@ int main( int argc, char **argv )
                 break;
             case 2:
                 qname.addSubdomain( "vvv" );
-                switch ( dns::getRandom( 5 ) ) {
+                switch ( dns::getRandom( 4 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -124,7 +124,7 @@ int main( int argc, char **argv )
                 break;
             case 3:
                 qname.addSubdomain( "zzz" );
-                switch ( dns::getRandom( 5 ) ) {
+                switch ( dns::getRandom( 4 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -144,7 +144,7 @@ int main( int argc, char **argv )
                 break;
             case 4:
                 qname.addSubdomain( "yyyy" );
-                switch ( dns::getRandom( 4 ) ) {
+                switch ( dns::getRandom( 3 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -158,7 +158,7 @@ int main( int argc, char **argv )
                 break;
             case 5:
                 qname.addSubdomain( "*" );
-                switch ( dns::getRandom( 5 ) ) {
+                switch ( dns::getRandom( 3 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -181,7 +181,7 @@ int main( int argc, char **argv )
                 break;
             case 8:
                 qname.addSubdomain( label_generator.generateLabel() );
-                switch ( dns::getRandom( 5 ) ) {
+                switch ( dns::getRandom( 3 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -198,7 +198,7 @@ int main( int argc, char **argv )
                 break;
             default:
                 qname.addSubdomain( "child" );
-                switch ( dns::getRandom( 6 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     qname.addSubdomain( "vvv" );
                     break;
@@ -221,7 +221,7 @@ int main( int argc, char **argv )
                 break;
             }
 
-            dns::Type  qtype  = dns::getRandom( 64 );
+            dns::Type  qtype  = dns::getRandom( 63 );
             dns::Class qclass = dns::CLASS_IN;
             if ( dns::getRandom( 16 ) == 0 )
                 qclass = dns::CLASS_ANY;
@@ -239,7 +239,7 @@ int main( int argc, char **argv )
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 dns::RRSet rrset = rr_generator.generate( packet_info );
 
-                switch ( dns::getRandom( 16 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     {
                         auto new_rrs = newRRs( rrset );
@@ -274,7 +274,7 @@ int main( int argc, char **argv )
                 packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
             }
             if ( ! dns::getRandom( 7 ) ) {
-                packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16 );
+                packet_info.mOptPseudoRR.mRCode = dns::getRandom( 15 );
             }
             if ( ! dns::getRandom( 7 ) ) {
                 packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );

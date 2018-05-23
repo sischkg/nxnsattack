@@ -6,6 +6,7 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
+#include <boost/operators.hpp>
 
 namespace dns
 {
@@ -39,7 +40,7 @@ namespace dns
 
 
 
-    class Domainname
+    class Domainname : public boost::less_than_comparable<Domainname>
     {
     private:
         std::deque<std::string> labels;
@@ -100,14 +101,20 @@ namespace dns
                                            const uint8_t *packet_end,
                                            const uint8_t *begin,
                                            int            recur = 0 );
+
+        bool operator==( const Domainname &rhs ) const;
+        bool operator!=( const Domainname &rhs ) const;
+        bool operator<( const Domainname &rhs ) const;
+
     };
 
     std::ostream &operator<<( const Domainname &name, std::ostream &os );
     std::ostream &operator<<( std::ostream &os, const Domainname &name );
+    /*
     bool operator==( const Domainname &lhs, const Domainname &rhs );
     bool operator!=( const Domainname &lhs, const Domainname &rhs );
     bool operator<( const Domainname &lhs, const Domainname &rhs );
-
+    */
     class OffsetDB
     {
     private:
