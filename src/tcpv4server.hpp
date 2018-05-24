@@ -35,7 +35,7 @@ namespace tcpv4
         void shutdownReceive();
     };
 
-    typedef boost::shared_ptr<Connection> ConnectionPtr;
+    typedef std::shared_ptr<Connection> ConnectionPtr;
 
     class Server
     {
@@ -46,7 +46,7 @@ namespace tcpv4
         Server( const ServerParameters &p );
         ~Server();
 
-        ConnectionPtr acceptConnection();
+        Connection *acceptConnection();
     };
 }
 

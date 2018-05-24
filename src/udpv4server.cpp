@@ -46,6 +46,11 @@ namespace udpv4
             std::string msg = getErrorMessage( "cannot setsocketopt", errno );
             throw SocketError( msg );
         }
+        setsockopt( mUDPSocket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one) );
+        if ( err ) {
+            std::string msg = getErrorMessage( "cannot setsocketopt SO_REUSEADDR", errno );
+            throw SocketError( msg );
+        }
 
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
@@ -80,11 +85,11 @@ namespace udpv4
         socket_address.sin_addr   = convertAddressStringToBinary( dest.mAddress );
         socket_address.sin_port   = htons( dest.mPort );
         int sent_size             = sendto( mUDPSocket,
-                                data,
-                                size,
-                                0,
-                                reinterpret_cast<const sockaddr *>( &socket_address ),
-                                sizeof( socket_address ) );
+                                            data,
+                                            size,
+                                            0,
+                                            reinterpret_cast<const sockaddr *>( &socket_address ),
+                                            sizeof( socket_address ) );
         if ( sent_size < 0 ) {
             std::ostringstream s;
             s << "cannot send to " << dest.mAddress << ":" << dest.mPort << ".";

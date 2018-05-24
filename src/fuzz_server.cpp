@@ -12,8 +12,8 @@ namespace dns
     class FuzzServer : public PostSignedAuthServer
     {
     public:
-	FuzzServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::PostSignedAuthServer( addr, port, debug ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
+	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1 )
+	    : dns::PostSignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
 	{
         }
 
@@ -228,6 +228,7 @@ int main( int argc, char **argv )
 
     std::string bind_address;
     uint16_t    bind_port;
+    uint16_t    thread_count; 
     std::string zone_filename;
     std::string apex;
     bool        debug;
@@ -242,16 +243,17 @@ int main( int argc, char **argv )
     desc.add_options()( "help,h", "print this message" )
 
         ( "bind,b",    po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
-        ( "port,p",    po::value<uint16_t>( &bind_port )->default_value( 53 ), "bind port" )
-	( "file,f",    po::value<std::string>( &zone_filename ),           "zone filename" )
-	( "zone,z",    po::value<std::string>( &apex),                     "zone apex" )
-        ( "ksk,K",     po::value<std::string>( &ksk_filename),  "KSK filename" )
-        ( "zsk,Z",     po::value<std::string>( &zsk_filename),  "ZSK filename" )
-        ( "3",         po::value<bool>( &is_nsec3 )->default_value( false ),              "enable NSEC3" )
-        ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ), "NSEC3 salt" )
-        ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ), "NSEC3 iterate" )
-        ( "hash,h",    po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ), "NSEC3 hash algorithm" )
-        ( "debug,d",   po::bool_switch( &debug )->default_value( false ), "debug mode" );
+        ( "port,p",    po::value<uint16_t>( &bind_port )->default_value( 53 ),              "bind port" )
+        ( "thread,n",  po::value<uint16_t>( &thread_count )->default_value( 1 ),            "thread count" )
+	( "file,f",    po::value<std::string>( &zone_filename ),                            "zone filename" )
+	( "zone,z",    po::value<std::string>( &apex),                                      "zone apex" )
+        ( "ksk,K",     po::value<std::string>( &ksk_filename),                              "KSK filename" )
+        ( "zsk,Z",     po::value<std::string>( &zsk_filename),                              "ZSK filename" )
+        ( "3",         po::value<bool>( &is_nsec3 )->default_value( false ),                "enable NSEC3" )
+        ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
+        ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
+        ( "hash,h",    po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
+        ( "debug,d",   po::bool_switch( &debug )->default_value( false ),                   "debug mode" );
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -268,7 +270,7 @@ int main( int argc, char **argv )
     decodeFromHex( nsec3_salt_str, nsec3_salt );
     
     try {
-	dns::FuzzServer server( bind_address, bind_port, debug );
+	dns::FuzzServer server( bind_address, bind_port, debug, thread_count );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1);

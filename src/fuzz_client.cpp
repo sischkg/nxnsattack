@@ -307,6 +307,7 @@ int main( int argc, char **argv )
                 tcp_param.mAddress = target_server;
                 tcp_param.mPort    = target_port;
                 tcpv4::Client tcp( tcp_param );
+                tcp.openSocket();
 
                 uint16_t query_size_data2 = htons( message.size() );
                 tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );

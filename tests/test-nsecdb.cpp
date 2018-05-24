@@ -91,36 +91,36 @@ TEST_F( NSECDBTest, find_for_wildcard )
 
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
-    EXPECT_EQ( "mail.example.com",  nsec_rd->getNextDomainname() );
+    EXPECT_EQ( "mail.example.com.", nsec_rd->getNextDomainname() );
     EXPECT_EQ( 5,                   nsec_rd->getTypes().size() ); // SOA + NS + MX + NSEC + RRSIG
 }
 
 TEST_F( NSECDBTest, find_for_nodata )
 {
     auto nsec_rr = mNSECDB.find( "mail.example.com", 300 );
-    EXPECT_EQ( "mail.example.com",  nsec_rr.mDomainname );
-    EXPECT_EQ( dns::CLASS_IN,       nsec_rr.mClass );
-    EXPECT_EQ( dns::TYPE_NSEC,      nsec_rr.mType );
-    EXPECT_EQ( 300,                 nsec_rr.mTTL );
-
-    auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
-            
-    EXPECT_EQ( "www.example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 3,                  nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
-}
-
-TEST_F( NSECDBTest, find_for_nodata_last )
-{
-    auto nsec_rr = mNSECDB.find( "www.example.com", 300 );
-    EXPECT_EQ( "www.example.com",  nsec_rr.mDomainname );
+    EXPECT_EQ( "mail.example.com", nsec_rr.mDomainname );
     EXPECT_EQ( dns::CLASS_IN,      nsec_rr.mClass );
     EXPECT_EQ( dns::TYPE_NSEC,     nsec_rr.mType );
     EXPECT_EQ( 300,                nsec_rr.mTTL );
 
     auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
             
-    EXPECT_EQ( "example.com",  nsec_rd->getNextDomainname() );
-    EXPECT_EQ( 3,              nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
+    EXPECT_EQ( "www.example.com", nsec_rd->getNextDomainname() );
+    EXPECT_EQ( 3,                 nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
+}
+
+TEST_F( NSECDBTest, find_for_nodata_last )
+{
+    auto nsec_rr = mNSECDB.find( "www.example.com", 300 );
+    EXPECT_EQ( "www.example.com", nsec_rr.mDomainname );
+    EXPECT_EQ( dns::CLASS_IN,     nsec_rr.mClass );
+    EXPECT_EQ( dns::TYPE_NSEC,    nsec_rr.mType );
+    EXPECT_EQ( 300,               nsec_rr.mTTL );
+
+    auto nsec_rd = std::dynamic_pointer_cast<dns::RecordNSEC>( nsec_rr.mRData );
+            
+    EXPECT_EQ( "example.com", nsec_rd->getNextDomainname() );
+    EXPECT_EQ( 3,             nsec_rd->getTypes().size() ); // A, NSEC, RRSIG
 }
 
 

@@ -48,6 +48,12 @@ namespace tcpv4
             std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
+
+        struct timeval tv;
+
+        tv.tv_sec = 10;
+        tv.tv_usec = 0;
+        setsockopt( mTCPSocket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv) );
     }
 
     void Client::closeSocket()
@@ -77,9 +83,12 @@ namespace tcpv4
 
     uint16_t Client::send( const uint8_t *data, uint16_t size )
     {
+        if ( ! isEnableSocket() ) {
+            throw SocketError( "not enabled socket" );
+        }
         int sent_size = write( mTCPSocket, data, size );
         if ( sent_size < 0 ) {
-            std::string msg = getErrorMessage( "cannot connect to " + mParameters.mAddress, errno );
+            std::string msg = getErrorMessage( "cannot send data to " + mParameters.mAddress, errno );
             throw SocketError( msg );
         }
         return sent_size;
@@ -97,6 +106,10 @@ namespace tcpv4
         int flags = 0;
         if ( is_nonblocking )
             flags |= MSG_DONTWAIT;
+
+        if ( ! isEnableSocket() ) {
+            throw SocketError( "not enabled socket" );
+        }
 
         PacketData receive_buffer( TCP_RECEIVE_BUFFER_SIZE );
         int        recv_size = read( mTCPSocket, receive_buffer.data(), TCP_RECEIVE_BUFFER_SIZE );
@@ -118,6 +131,10 @@ namespace tcpv4
 
     ConnectionInfo Client::receive_data( int size )
     {
+        if ( ! isEnableSocket() ) {
+            throw SocketError( "not enabled socket" );
+        }
+
         PacketData receive_buffer( size );
         int        recv_size = read( mTCPSocket, receive_buffer.data(), size );
 

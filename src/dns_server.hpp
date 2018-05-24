@@ -31,13 +31,16 @@ namespace dns
     class DNSServer
     {
     private:
-        std::string mBindAddress;
-        uint16_t    mBindPort;
-        bool        mDebug;
+        std::string  mBindAddress;
+        uint16_t     mBindPort;
+        bool         mDebug;
+        unsigned int mThreadCount;
         std::map<std::string, TSIGKey> mNameToKey;
 
         void startUDPServer();
+        void startUDPThread( udpv4::Server &server );
         void startTCPServer();
+        void replyOverTCP( tcpv4::Connection *connection );
 
         ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const;
         PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const;
@@ -45,8 +48,8 @@ namespace dns
         void sendZone( const PacketInfo &info, tcpv4::ConnectionPtr connection );
         bool isDebug() const { return mDebug; }
     public:
-        DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool truncation = true, bool debug = false )
-            : mBindAddress( address ), mBindPort( port ), mDebug( debug )
+        DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool debug = false, unsigned int thread_count = 1 )
+            : mBindAddress( address ), mBindPort( port ), mDebug( debug ), mThreadCount( thread_count )
         {}
 
         ~DNSServer()

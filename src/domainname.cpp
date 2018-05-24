@@ -402,6 +402,21 @@ namespace dns
     }
 
 
+    bool operator==( const std::string &lhs, const Domainname &rhs )
+    {
+        return rhs == lhs;
+    }
+
+    bool operator!=( const std::string &lhs, const Domainname &rhs )
+    {
+        return rhs != lhs;
+    }
+
+    bool operator<( const std::string &lhs, const Domainname &rhs )
+    {
+        return lhs > rhs;
+    }
+
     uint16_t OffsetDB::findDomainname( const Domainname &name ) const
     {
         OffsetContainerIterator offset = mOffsets.find( name );

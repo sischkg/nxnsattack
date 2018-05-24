@@ -110,11 +110,11 @@ namespace dns
 
     std::ostream &operator<<( const Domainname &name, std::ostream &os );
     std::ostream &operator<<( std::ostream &os, const Domainname &name );
-    /*
-    bool operator==( const Domainname &lhs, const Domainname &rhs );
-    bool operator!=( const Domainname &lhs, const Domainname &rhs );
-    bool operator<( const Domainname &lhs, const Domainname &rhs );
-    */
+
+    bool operator==( const std::string &lhs, const Domainname &rhs );
+    bool operator!=( const std::string &lhs, const Domainname &rhs );
+    bool operator<( const std::string &lhs, const Domainname &rhs );
+
     class OffsetDB
     {
     private:
