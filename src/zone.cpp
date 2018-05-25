@@ -19,6 +19,20 @@ namespace dns
         return os.str();
     }
 
+    void RRSet::addResourceRecords( std::vector<ResourceRecord> &section ) const
+    {
+        for ( auto rdata : mResourceData ) {
+            ResourceRecord rr;
+            rr.mDomainname = mOwner;
+            rr.mClass      = mClass;
+            rr.mType       = mType;
+            rr.mTTL        = mTTL;
+            rr.mRData      = rdata;
+
+            section.push_back( rr );
+        }
+    }
+
     std::ostream &operator<<( std::ostream &os, const RRSet &rrset )
     {
         os << rrset.toString();

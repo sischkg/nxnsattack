@@ -46,9 +46,11 @@ namespace dns
 
 	RDATAPtr operator[]( int index ) { return mResourceData[index]; }
 	ConstRDATAPtr operator[]( int index ) const { return mResourceData[index]; }
-	const RDATAContainer &getRRSet() const { return mResourceData; }
+       	const RDATAContainer &getRRSet() const { return mResourceData; }
 
         RRSet &add( RDATAPtr data ) { mResourceData.push_back( data ); return *this; }
+
+        void addResourceRecords( std::vector<ResourceRecord> &section ) const;
     };
 
     std::ostream &operator<<( std::ostream &os, const RRSet &rrset );

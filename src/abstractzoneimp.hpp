@@ -48,6 +48,7 @@ namespace dns
 
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
 	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const = 0;
+	virtual void responseDelegation( const Domainname &qname, PacketInfo &response, const RRSet &ns_rrset ) const;
 	virtual void responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard_nsec ) const = 0;
 	virtual void responseNXDomain( const Domainname &qname, PacketInfo &response ) const = 0;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const = 0;

@@ -10,6 +10,7 @@ namespace dns
         : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( new NSECDB( zone_name ) )
     {}
 
+
     void SignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
     {
 	response.mResponseCode = NO_ERROR;

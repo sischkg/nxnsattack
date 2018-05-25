@@ -128,6 +128,17 @@ namespace dns
             }   
         }
 
+        // find NS record for delegation.
+        if ( qname != mApex ) {
+            for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
+                auto rrset = findRRSet( parent, TYPE_NS );
+                if ( rrset ) {
+                    responseDelegation( qname, response, *rrset );
+                    return response;
+                }
+            }
+        }
+        
 	// find qname
         auto node = findNode( qname );
         if ( node ) {
@@ -188,7 +199,7 @@ namespace dns
 		return response;
             }
         }
-        
+
         // NXDOMAIN
 	responseNXDomain( qname, response );
         return response;
@@ -228,17 +239,44 @@ namespace dns
 
     }
 
+    void AbstractZoneImp::responseDelegation( const Domainname &qname, PacketInfo &response, const RRSet &ns_rrset ) const
+    {
+        response.mResponseCode        = NO_ERROR;
+        response.mAuthoritativeAnswer = 0;
+
+        for ( auto ns : ns_rrset ) {
+            ResourceRecord rr;
+            rr.mDomainname = ns_rrset.getOwner();
+            rr.mClass      = ns_rrset.getClass();
+            rr.mType       = ns_rrset.getType();
+            rr.mTTL        = ns_rrset.getTTL();
+            rr.mRData      = ns;
+
+            response.pushAuthoritySection( rr );
+
+            Domainname nameserver = dynamic_cast<const RecordNS &>( *ns ).getNameServer();
+            auto glue_node = findNode( nameserver );
+            if ( glue_node ) {
+                auto a_rrset = glue_node->find( TYPE_A );
+                if ( a_rrset ) {
+                    addRRSet( response.mAdditionalSection, *a_rrset );
+                }
+                auto aaaa_rrset = glue_node->find( TYPE_AAAA );
+                if ( aaaa_rrset ) {
+                    addRRSet( response.mAdditionalSection, *aaaa_rrset );
+                }
+            }   
+        }
+        auto ds_rrset = findRRSet( ns_rrset.getOwner(), TYPE_DS );
+        if ( ds_rrset ) {
+            addRRSet( response.mAuthoritySection, *ds_rrset );
+            addRRSIG( response, response.mAuthoritySection, *ds_rrset );            
+        }
+    }
+
     void AbstractZoneImp::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset ) const
     {
-	for ( auto data_itr = rrset.begin() ; data_itr != rrset.end() ; data_itr++ ) {
-	    ResourceRecord r;
-	    r.mDomainname = rrset.getOwner();
-	    r.mType       = rrset.getType();
-	    r.mClass      = rrset.getClass();
-	    r.mTTL        = rrset.getTTL();
-	    r.mRData      = *data_itr;
-	    section.push_back( r );
-	}
+        rrset.addResourceRecords( section );
     }
 
     void AbstractZoneImp::verify() const

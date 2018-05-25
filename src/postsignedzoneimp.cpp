@@ -16,6 +16,7 @@ namespace dns
           mEnableNSEC3( true )
    {}
 
+
     void PostSignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
     {
 	response.mResponseCode = NO_ERROR;
