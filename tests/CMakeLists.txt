@@ -1,9 +1,9 @@
 
 
-set( TEST_LIBRARY      gtest pthread )
-set( UTIL_LIBRARY      libipv4 ${OPENSSL_CRYPTO_LIBRARY} ${TEST_LIBRARY} )
-set( DNS_LIBRARY       libdns ${UTIL_LIBRARY} )
-set( ZONE_LIBRARY      libzone libtokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${DNS_LIBRARY} )
+set( TEST_LIBRARY gtest pthread )
+set( UTIL_LIBRARY ipv4  ${OPENSSL_CRYPTO_LIBRARY} ${TEST_LIBRARY} )
+set( DNS_LIBRARY  dns   ${UTIL_LIBRARY} )
+set( ZONE_LIBRARY zone  tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${DNS_LIBRARY} )
 
 add_executable( test-base64       test-base64.cpp )
 add_executable( test-base32       test-base32.cpp )

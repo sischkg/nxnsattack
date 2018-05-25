@@ -1,8 +1,11 @@
 #include "dns_server.hpp"
+#include "threadpool.hpp"
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
 #include <iostream>
 #include <signal.h>
 #include <stdexcept>
@@ -61,79 +64,75 @@ namespace dns
             params.mPort    = mBindPort;
             udpv4::Server dns_receiver( params );
 
-            std::vector<std::shared_ptr<boost::thread>> udp_threads;
+            utils::ThreadPool pool( mThreadCount );
+            pool.start();
 
-            for ( unsigned int i = 0 ; i < mThreadCount ; i++ ) {
-                std::shared_ptr<boost::thread> udp_thread( new boost::thread( &DNSServer::startUDPThread, this, dns_receiver  ) );
-                udp_threads.push_back( udp_thread );
-                if ( isDebug() )
-                    std::cerr << "Started UDP Server Thread." << std::endl;
+            while ( true ) {
+                udpv4::PacketInfo request = dns_receiver.receivePacket();
+                pool.submit( boost::bind( &DNSServer::replyOverUDP, this, boost::ref( dns_receiver ), request ) );
             }
 
-            for ( auto th = udp_threads.begin() ; th != udp_threads.end() ; th++ )
-                (*th)->join();
+            pool.join();
 
         } catch ( std::runtime_error &e ) {
             std::cerr << "caught " << e.what() << std::endl;
         }
     }
 
-    void DNSServer::startUDPThread( udpv4::Server &dns_receiver )
+    void DNSServer::replyOverUDP( udpv4::Server &dns_receiver, udpv4::PacketInfo recv_data )
     {
-        while ( true ) {
-            try {
-                udpv4::PacketInfo recv_data = dns_receiver.receivePacket();
-                PacketInfo        query     = parseDNSMessage( recv_data.begin(), recv_data.end() );
+        try {
+            PacketInfo query = parseDNSMessage( recv_data.begin(), recv_data.end() );
 
-                if ( isDebug() )
-                    std::cerr << "Query:" << query << std::endl; 
+            if ( isDebug() )
+                std::cerr << "Query:" << query << std::endl; 
 
-                if ( query.mIsTSIG ) {
-                    ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
-                    if ( rcode != NO_ERROR ) {
-                        PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
-                    }
+            if ( query.mIsTSIG ) {
+                ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
+                if ( rcode != NO_ERROR ) {
+                    PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
                 }
+            }
 
-                PacketInfo response_info = generateResponse( query, false );
+            PacketInfo response_info = generateResponse( query, false );
 
+            if ( isDebug() )
+                std::cerr << "Response:" << response_info << std::endl; 
+
+            uint32_t requested_max_payload_size = 512;
+            if ( query.isEDNS0() &&
+                 query.mOptPseudoRR.mPayloadSize > 512 ) {
+                requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
+                if ( query.mOptPseudoRR.mPayloadSize > 4096 )
+                    query.mOptPseudoRR.mPayloadSize = 4096;
+            }
+
+            if ( isDebug() )
+                std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+            if ( response_info.getMessageSize() > requested_max_payload_size ) {
                 if ( isDebug() )
-                    std::cerr << "Response:" << response_info << std::endl; 
-
-                uint32_t requested_max_payload_size = 512;
-                if ( query.isEDNS0() &&
-                     query.mOptPseudoRR.mPayloadSize > 512 ) {
-                    requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
-                    if ( query.mOptPseudoRR.mPayloadSize > 4096 )
-                        query.mOptPseudoRR.mPayloadSize = 4096;
-                }
-
-                if ( isDebug() )
-                    std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
-                if ( response_info.getMessageSize() > requested_max_payload_size ) {
-                    if ( isDebug() )
-                        std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
-                    response_info.mTruncation = 1;
+                    std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+                response_info.mTruncation = 1;
                             
-                    response_info.clearAnswerSection();
-                    response_info.clearAuthoritySection();
-                    response_info.clearAdditionalSection();
-                }
+                response_info.clearAnswerSection();
+                response_info.clearAuthoritySection();
+                response_info.clearAdditionalSection();
+            }
 		    
-                WireFormat response_packet;
-                response_info.generateMessage( response_packet );
+            WireFormat response_packet;
+            response_info.generateMessage( response_packet );
 
-                modifyMessage( query, response_packet );
+            modifyMessage( query, response_packet );
 		    
-                udpv4::ClientParameters client;
-                client.mAddress = recv_data.mSourceAddress;
-                client.mPort    = recv_data.mSourcePort;
-                dns_receiver.sendPacket( client, response_packet );
-            }
-            catch ( std::runtime_error &e ) {
-                std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
-            }
+            udpv4::ClientParameters client;
+            client.mAddress = recv_data.mSourceAddress;
+            client.mPort    = recv_data.mSourcePort;
+            dns_receiver.sendPacket( client, response_packet );
         }
+        catch ( std::runtime_error &e ) {
+            std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
+        }
+
     }
 
     void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr connection )
@@ -152,7 +151,7 @@ namespace dns
             while ( true ) {
 
                 try {
-                    tcpv4::Connection *connection = dns_receiver.acceptConnection();
+                    tcpv4::ConnectionPtr connection = dns_receiver.acceptConnection();
                     boost::thread tcp_thread( &DNSServer::replyOverTCP, this, connection );
                     tcp_thread.detach();
                 }
@@ -167,10 +166,9 @@ namespace dns
     }
 
 
-    void DNSServer::replyOverTCP( tcpv4::Connection *c )
+    void DNSServer::replyOverTCP( tcpv4::ConnectionPtr connection )
     {
         try {
-            tcpv4::ConnectionPtr connection( c );
             PacketData size_data = connection->receive( 2 );
             if ( size_data.size() < 2 ) {
                 throw std::runtime_error( "cannot get message of dns message" );

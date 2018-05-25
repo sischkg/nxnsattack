@@ -5,6 +5,7 @@
 #include "tcpv4server.hpp"
 #include "udpv4server.hpp"
 #include "wireformat.hpp"
+#include "threadpool.hpp"
 #include <boost/thread.hpp>
 #include <map>
 #include <string>
@@ -24,8 +25,7 @@ namespace dns
         PacketData  key;
 
         TSIGKey( const std::string &a, const PacketData &k ) : algorithm( a ), key( k )
-        {
-        }
+        {}
     };
 
     class DNSServer
@@ -38,9 +38,9 @@ namespace dns
         std::map<std::string, TSIGKey> mNameToKey;
 
         void startUDPServer();
-        void startUDPThread( udpv4::Server &server );
+        void replyOverUDP( udpv4::Server &server, udpv4::PacketInfo );
         void startTCPServer();
-        void replyOverTCP( tcpv4::Connection *connection );
+        void replyOverTCP( tcpv4::ConnectionPtr connection );
 
         ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const;
         PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const;

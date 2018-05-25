@@ -46,7 +46,7 @@ namespace tcpv4
         Server( const ServerParameters &p );
         ~Server();
 
-        Connection *acceptConnection();
+        ConnectionPtr acceptConnection();
     };
 }
 

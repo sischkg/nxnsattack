@@ -108,7 +108,7 @@ namespace tcpv4
         close( mTCPSocket );
     }
 
-    Connection *Server::acceptConnection()
+    ConnectionPtr Server::acceptConnection()
     {
         sockaddr_in socket_address;
         socklen_t   socket_address_size = sizeof( socket_address );
@@ -121,6 +121,6 @@ namespace tcpv4
                 goto retry;
             throw SocketError( getErrorMessage( "cannot accept", errno ) );
         }
-        return new Connection( new_connection );
+        return std::make_shared<Connection>( new_connection );
     }
 }

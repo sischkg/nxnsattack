@@ -124,6 +124,7 @@ namespace dns
                 rrsig_rr.mDomainname = rrsig->getOwner();
                 rrsig_rr.mClass      = rrsig->getClass();
                 rrsig_rr.mType       = rrsig->getType();
+                rrsig_rr.mTTL        = rrsig->getTTL();
                 rrsig_rr.mRData      = (*rrsig)[0];
                 modified_response.pushAdditionalSection( rrsig_rr );
             }
@@ -182,6 +183,7 @@ namespace dns
                     rr.mDomainname = rrsig_rrset->getOwner();
                     rr.mClass      = rrsig_rrset->getClass();
                     rr.mType       = rrsig_rrset->getType();
+                    rr.mTTL        = rrsig_rrset->getTTL();
                     rr.mRData      = *rrsig;
                     rrsigs.push_back( rr );
                 }

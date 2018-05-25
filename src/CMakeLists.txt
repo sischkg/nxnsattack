@@ -1,13 +1,14 @@
 add_library(
-  libipv4
+  ipv4
   utils.cpp
   wireformat.cpp
   readbuffer.cpp
   udpv4client.cpp udpv4server.cpp
   tcpv4client.cpp tcpv4server.cpp )
-add_library( libdns dns.cpp domainname.cpp rrgenerator.cpp )
-add_library( libdnsserver dns_server.cpp )
-add_library( libzone
+add_library( threadpool threadpool.cpp )
+add_library( dns dns.cpp domainname.cpp rrgenerator.cpp )
+add_library( dnsserver dns_server.cpp )
+add_library( zone
              signedauthserver.cpp
              unsignedauthserver.cpp
              auth_server.cpp
@@ -25,11 +26,11 @@ add_library( libzone
              zone.cpp
 	     nsecdb.cpp
              nsec3db.cpp )
-add_library( libtokenizer tokenizer.cpp )
+add_library( tokenizer tokenizer.cpp )
 
-set( CLIENT_LIBRARY boost_program_options boost_thread boost_system libdns libipv4 ${OPENSSL_CRYPTO_LIBRARY} )
-set( SERVER_LIBRARY libdnsserver ${CLIENT_LIBRARY} )
-set( ZONE_SERVER_LIBRARY libzone libtokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
+set( CLIENT_LIBRARY boost_program_options boost_thread boost_system dns ipv4 ${OPENSSL_CRYPTO_LIBRARY} )
+set( SERVER_LIBRARY dnsserver threadpool ${CLIENT_LIBRARY} )
+set( ZONE_SERVER_LIBRARY zone tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 
 add_executable( zone_server    zone_server.cpp )
 add_executable( dnssec_server  dnssec_server.cpp )
