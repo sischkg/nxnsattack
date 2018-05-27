@@ -22,15 +22,7 @@ namespace dns
             std::vector<ResourceRecord> rrs;
             std::shared_ptr<RRSet> rrsigs = signRRSet( rrset );
 
-            for( auto rr : rrset.getRRSet() ) {
-                ResourceRecord r;
-                r.mDomainname = rrset.getOwner();
-                r.mType       = rrset.getType();
-                r.mClass      = rrset.getClass();
-                r.mTTL        = rrset.getTTL();
-                r.mRData      = rr;
-                rrs.push_back( r );
-            }
+            rrsigs->addResourceRecords( rrs );
             return rrs;
         }
 
@@ -120,13 +112,7 @@ namespace dns
                              opt_pseudo_rr.mTTL );
 
                 std::shared_ptr<RRSet> rrsig = signRRSet( rrset );
-                ResourceRecord rrsig_rr;
-                rrsig_rr.mDomainname = rrsig->getOwner();
-                rrsig_rr.mClass      = rrsig->getClass();
-                rrsig_rr.mType       = rrsig->getType();
-                rrsig_rr.mTTL        = rrsig->getTTL();
-                rrsig_rr.mRData      = (*rrsig)[0];
-                modified_response.pushAdditionalSection( rrsig_rr );
+                rrsig->addResourceRecords( modified_response.mAdditionalSection );
             }
 
             if ( ! getRandom( 16 ) ) {
@@ -178,15 +164,7 @@ namespace dns
             std::vector< std::shared_ptr<RRSet> > signed_targets = cumulate( section );
             for ( auto signed_target : signed_targets ) {
                 std::shared_ptr<RRSet> rrsig_rrset = signRRSet( *signed_target );
-                for ( auto rrsig = rrsig_rrset->begin() ; rrsig != rrsig_rrset->end() ; rrsig++ ) {
-                    ResourceRecord rr;
-                    rr.mDomainname = rrsig_rrset->getOwner();
-                    rr.mClass      = rrsig_rrset->getClass();
-                    rr.mType       = rrsig_rrset->getType();
-                    rr.mTTL        = rrsig_rrset->getTTL();
-                    rr.mRData      = *rrsig;
-                    rrsigs.push_back( rr );
-                }
+                rrsig_rrset->addResourceRecords( section );
             }
             section.insert( section.end(), rrsigs.begin(), rrsigs.end() );
         }
