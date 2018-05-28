@@ -171,7 +171,7 @@ namespace dns
         try {
             PacketData size_data = connection->receive( 2 );
             if ( size_data.size() < 2 ) {
-                throw std::runtime_error( "cannot get message of dns message" );
+                throw std::runtime_error( "cannot get size of dns message" );
             }
             uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
             if ( isDebug() )
