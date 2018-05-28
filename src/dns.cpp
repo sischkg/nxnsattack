@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 #include <iterator>
 #include <netinet/in.h>
 #include <openssl/hmac.h>
@@ -1427,7 +1428,7 @@ namespace dns
 
         std::ostringstream os;
         os << mKeyTag                   << " "
-           << (unsigned int)mAlgorithm   << " "
+           << (unsigned int)mAlgorithm  << " "
            << (unsigned int)mDigestType << " "
            << digest_str;
         return os.str();
@@ -1440,7 +1441,7 @@ namespace dns
 
         std::ostringstream os;
         os << "keytag: "      << mKeyTag                   << ", "
-           << "algorithm: "   << (unsigned int)mAlgorithm   << ", "
+           << "algorithm: "   << (unsigned int)mAlgorithm  << ", "
            << "digest type: " << (unsigned int)mDigestType << ", "
            << "digest: "      << digest_str;
         return os.str();
@@ -1453,6 +1454,9 @@ namespace dns
 
     void RecordDS::outputCanonicalWireFormat( WireFormat &message ) const
     {
+        std::string digest;
+        encodeToHex( mDigest, digest );
+
         message.pushUInt16HtoN( mKeyTag );
         message.pushUInt8( mAlgorithm );
         message.pushUInt8( mDigestType );

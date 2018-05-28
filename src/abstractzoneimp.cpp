@@ -128,17 +128,6 @@ namespace dns
             }   
         }
 
-        // find NS record for delegation.
-        if ( qname != mApex ) {
-            for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
-                auto rrset = findRRSet( parent, TYPE_NS );
-                if ( rrset ) {
-                    responseDelegation( qname, response, *rrset );
-                    return response;
-                }
-            }
-        }
-        
 	// find qname
         auto node = findNode( qname );
         if ( node ) {
@@ -197,6 +186,15 @@ namespace dns
                 // NoData ( found empty non-terminal or other type )
 		responseNoData( qname, response, node->exist() );
 		return response;
+            }
+        }
+
+        // find NS + and DS for delegation
+        for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
+            auto rrset = findRRSet( parent, TYPE_NS );
+            if ( rrset ) {
+                responseDelegation( qname, response, *rrset );
+                return response;
             }
         }
 
@@ -267,11 +265,13 @@ namespace dns
                 }
             }   
         }
+        /*
         auto ds_rrset = findRRSet( ns_rrset.getOwner(), TYPE_DS );
         if ( ds_rrset ) {
             addRRSet( response.mAuthoritySection, *ds_rrset );
             addRRSIG( response, response.mAuthoritySection, *ds_rrset );            
         }
+        */
     }
 
     void AbstractZoneImp::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset ) const

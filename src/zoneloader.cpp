@@ -513,14 +513,13 @@ namespace dns
 
         RDATAPtr parseRecordCAA( const std::vector<std::string> &data )
         {
-            std::cerr << "tag: " << data[1] << ", value: " << data[2] << ", flag: " << data[0] << std::endl;
             return RDATAPtr( new RecordCAA( data[1], data[2], boost::lexical_cast<uint32_t>( data[0] ) ) );
         }
 
         RDATAPtr parseRecordRRSIG( const std::vector<std::string> &data )
         {
             auto signature_data = data.begin();
-            for ( int i = 0 ; i < 8 ; i++ ) signature_data++;
+            for ( unsigned int i = 0 ; i < 8 ; i++ ) signature_data++;
             auto signature = decodeFromBase64Strings( signature_data, data.end() );
             
             return RDATAPtr( new RecordRRSIG( stringToTypeCode( data[0] ),               // type covered
@@ -536,9 +535,15 @@ namespace dns
 
         RDATAPtr parseRecordDS( const std::vector<std::string> &data )
         {
+            std::string digest_string;
+            PacketData  digest;
             auto digest_data = data.begin();
-            for ( int i = 0 ; i < 3 ; i++ ) digest_data++;
-            auto digest = decodeFromBase64Strings( digest_data, data.end() );
+            for ( unsigned int i = 0 ; i < 3 ; i++ )
+                digest_data++;
+            for ( unsigned int i = 3 ; i < data.size() ; i++ )
+                digest_string += *digest_data;
+
+            decodeFromHex( digest_string, digest );
 
             return RDATAPtr( new RecordDS( boost::lexical_cast<uint16_t>( data[0] ), // key tag
                                            boost::lexical_cast<uint16_t>( data[1] ), // algorithm
