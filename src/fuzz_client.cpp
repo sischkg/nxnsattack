@@ -104,7 +104,7 @@ int main( int argc, char **argv )
                 break;
             case 2:
                 qname.addSubdomain( "vvv" );
-                switch ( dns::getRandom( 4 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -124,7 +124,7 @@ int main( int argc, char **argv )
                 break;
             case 3:
                 qname.addSubdomain( "zzz" );
-                switch ( dns::getRandom( 4 ) ) {
+                switch ( dns::getRandom( 5 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -144,7 +144,7 @@ int main( int argc, char **argv )
                 break;
             case 4:
                 qname.addSubdomain( "yyyy" );
-                switch ( dns::getRandom( 3 ) ) {
+                switch ( dns::getRandom( 4 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -158,7 +158,7 @@ int main( int argc, char **argv )
                 break;
             case 5:
                 qname.addSubdomain( "*" );
-                switch ( dns::getRandom( 3 ) ) {
+                switch ( dns::getRandom( 4 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -181,7 +181,7 @@ int main( int argc, char **argv )
                 break;
             case 8:
                 qname.addSubdomain( label_generator.generateLabel() );
-                switch ( dns::getRandom( 3 ) ) {
+                switch ( dns::getRandom( 4 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -198,7 +198,7 @@ int main( int argc, char **argv )
                 break;
             default:
                 qname.addSubdomain( "child" );
-                switch ( dns::getRandom( 5 ) ) {
+                switch ( dns::getRandom( 6 ) ) {
                 case 0:
                     qname.addSubdomain( "vvv" );
                     break;
