@@ -10,8 +10,8 @@ namespace dns
     class SignedAuthServer : public dns::DNSServer
     {
     public:
-	SignedAuthServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::DNSServer( addr, port, true, debug )
+	SignedAuthServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count )
+	    : dns::DNSServer( addr, port, debug, thread_count )
 	{}
 
 	void load( const std::string &apex, const std::string &zone_filename,

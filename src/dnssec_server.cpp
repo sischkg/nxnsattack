@@ -10,6 +10,7 @@ int main( int argc, char **argv )
 
     std::string bind_address;
     uint16_t    bind_port;
+    uint16_t    thread_count; 
     std::string zone_filename;
     std::string apex;
     bool        debug;
@@ -20,6 +21,7 @@ int main( int argc, char **argv )
 
         ( "bind,b",  po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
         ( "port,p",  po::value<uint16_t>( &bind_port )->default_value( 53 ), "bind port" )
+        ( "thread,n",  po::value<uint16_t>( &thread_count )->default_value( 1 ),            "thread count" )
 	( "file,f",  po::value<std::string>( &zone_filename ),           "zone filename" )
 	( "zone,z",  po::value<std::string>( &apex),                     "zone apex" )
         ( "ksk,K",   po::value<std::string>( &ksk_filename),  "KSK filename" )
@@ -36,7 +38,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	dns::SignedAuthServer server( bind_address, bind_port, debug );
+	dns::SignedAuthServer server( bind_address, bind_port, debug, thread_count );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename );
         std::vector<std::shared_ptr<dns::RecordDS>> rrset_ds = server.getDSRecords();

@@ -51,7 +51,7 @@ namespace tcpv4
 
         struct timeval tv;
 
-        tv.tv_sec = 10;
+        tv.tv_sec  = 1;
         tv.tv_usec = 0;
         setsockopt( mTCPSocket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv) );
     }
