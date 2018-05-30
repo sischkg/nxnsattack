@@ -35,11 +35,11 @@ namespace dns
             ResourceRecordGenerator rr_generator;
 
             // clear rr
-            if ( ! getRandom( 32 ) )
+            if ( withChance( 0.03 ) )
                 modified_response.clearAnswerSection();
-            if ( ! getRandom( 32 ) )
+            if ( withChance( 0.03 ) )
                 modified_response.clearAuthoritySection();
-            if ( ! getRandom( 32 ) )
+            if ( withChance( 0.03 ) )
                 modified_response.clearAdditionalSection();
 
             // appand new rrsets
@@ -94,17 +94,17 @@ namespace dns
 	    for ( unsigned int i = 0 ; i < option_count ; i++ )
 		option_generator.generate( modified_response );
 
-            if ( ! getRandom( 7 ) ) {
+            if ( withChance( 0.1 ) ) {
                 modified_response.mOptPseudoRR.mPayloadSize = getRandom( 0xffff  );
             }
-            if ( ! getRandom( 7 ) ) {
+            if ( withChance( 0.1 ) ) {
                 modified_response.mOptPseudoRR.mRCode = getRandom( 16 );
             }
-            if ( ! getRandom( 7 ) ) {
+            if ( withChance( 0.1 ) ) {
                 modified_response.mOptPseudoRR.mDOBit = getRandom( 1 );
             }
 	    
-            if ( ! getRandom( 5 ) ) {
+            if ( withChance( 0.2 ) ) {
                 ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.mOptPseudoRR );
                 RRSet rrset( opt_pseudo_rr.mDomainname,
                              opt_pseudo_rr.mClass,
@@ -115,17 +115,17 @@ namespace dns
                 rrsig->addResourceRecords( modified_response.mAdditionalSection );
             }
 
-            if ( ! getRandom( 16 ) ) {
+            if ( withChance( 0.1 ) ) {
                 modified_response.mResponseCode = getRandom( 16 );
             }
 
-            if ( ! getRandom( 5 ) )
+            if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAnswerSection );
 
-            if ( ! getRandom( 5 ) )
+            if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAuthoritySection );
 
-            if ( ! getRandom( 5 ) )
+            if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAdditionalSection );
 
             return modified_response;

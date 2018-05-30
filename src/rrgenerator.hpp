@@ -41,6 +41,13 @@ namespace dns
     }
 
 
+    inline bool withChance( float ratio )
+    {
+        if ( ratio < 0 || ratio > 1 )
+            throw std::logic_error( "invalid ratio of change" );
+        return getRandom( 0xffff ) < 0xffff * ratio; 
+    }
+
     class DomainnameGenerator
     {
     public:
