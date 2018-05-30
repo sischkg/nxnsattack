@@ -23,7 +23,7 @@ namespace dns
 	virtual void responseNXDomain( const Domainname &qname, PacketInfo &response ) const;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const;
 	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const;
-        virtual void responseDNSKEY( PacketInfo &response ) const;
+        virtual void responseDNSKEY( const Domainname &qname, PacketInfo &response ) const;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
 	virtual RRSetPtr getDNSKEYRRSet() const;
 	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;

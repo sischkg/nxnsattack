@@ -7,13 +7,14 @@ namespace dns
 {
 
     PostSignedZoneImp::PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
-                                          const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo )
+                                          const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
+                                          bool enable_nsec, bool enable_nsec3 )
         : AbstractZoneImp( zone_name ),
           mSigner( zone_name, ksk_config, zsk_config ),
           mNSECDB( zone_name ),
           mNSEC3DB( zone_name, salt, iterate, algo ),
-          mEnableNSEC( true ),
-          mEnableNSEC3( true )
+          mEnableNSEC( enable_nsec ),
+          mEnableNSEC3( enable_nsec3 )
    {}
 
 
@@ -105,7 +106,7 @@ namespace dns
 	}
     }
 
-    void PostSignedZoneImp::responseDNSKEY( PacketInfo &response ) const
+    void PostSignedZoneImp::responseDNSKEY( const Domainname &qname, PacketInfo &response ) const
     {
 	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
 	std::shared_ptr<RRSet> dnskey_rrset( new RRSet( getSOA().getOwner(), getSOA().getClass(), TYPE_DNSKEY, getSOA().getTTL() ) );
@@ -202,7 +203,10 @@ namespace dns
 
     std::shared_ptr<RRSet> PostSignedZoneImp::signRRSet( const RRSet &rrset ) const
     {
-        return mSigner.signRRSet( rrset );
+        if ( rrset.getType() == TYPE_DNSKEY )
+            return mSigner.signDNSKEY( rrset.getTTL() );
+        else
+            return mSigner.signRRSet( rrset );
     }
 
     void PostSignedZoneImp::initialize()

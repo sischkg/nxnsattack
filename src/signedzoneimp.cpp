@@ -56,7 +56,7 @@ namespace dns
 	}
     }
 
-    void SignedZoneImp::responseDNSKEY( PacketInfo &response ) const
+    void SignedZoneImp::responseDNSKEY( const Domainname &qname, PacketInfo &response ) const
     {
 	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
 	std::shared_ptr<RRSet> dnskey_rrset( new RRSet( getSOA().getOwner(), getSOA().getClass(), TYPE_DNSKEY, getSOA().getTTL() ) );
@@ -167,7 +167,10 @@ namespace dns
 
     std::shared_ptr<RRSet> SignedZoneImp::signRRSet( const RRSet &rrset ) const
     {
-        return mSigner.signRRSet( rrset );
+        if ( rrset.getType() == TYPE_DNSKEY )
+            return mSigner.signDNSKEY( rrset.getTTL() );
+        else
+            return mSigner.signRRSet( rrset );
     }
 
     void SignedZoneImp::initialize()

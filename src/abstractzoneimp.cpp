@@ -96,6 +96,11 @@ namespace dns
 	    return response;
         }
 
+        if ( qtype == TYPE_DNSKEY && qname == mApex ) {
+            responseDNSKEY( qname, response );
+            return response;
+        }
+
         // find DNAME
         for ( auto parent_name = qname ; parent_name != mApex ; parent_name.popSubdomain() ) {
             auto dname_rrset = findRRSet( parent_name, TYPE_DNAME );
@@ -269,6 +274,7 @@ namespace dns
         auto ds_rrset = findRRSet( ns_rrset.getOwner(), TYPE_DS );
         if ( ds_rrset ) {
             addRRSet( response.mAuthoritySection, *ds_rrset );
+          
             addRRSIG( response, response.mAuthoritySection, *ds_rrset );            
         }
         */

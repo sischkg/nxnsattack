@@ -128,6 +128,27 @@ namespace dns
             if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAdditionalSection );
 
+            if ( withChance( 0.05 ) )
+                modified_response.mQueryResponse = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mOpcode = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mAuthoritativeAnswer = getRandom( 2 );
+            if ( withChance( 0.02 ) )
+                modified_response.mTruncation = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mRecursionDesired = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mRecursionAvailable = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mCheckingDisabled = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mZeroField = getRandom( 0x07 );
+            if ( withChance( 0.05 ) )
+                modified_response.mAuthenticData = getRandom( 2 );
+            if ( withChance( 0.05 ) )
+                modified_response.mResponseCode = getRandom( 0x0f );
+
             return modified_response;
         }
 

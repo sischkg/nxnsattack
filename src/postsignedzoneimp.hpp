@@ -17,7 +17,8 @@ namespace dns
         bool       mEnableNSEC3;
     public:
         PostSignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
-                           const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo );
+                           const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
+                           bool enable_nsec = true, bool enable_nsec3 = false );
 
         virtual void setup();
 
@@ -27,7 +28,7 @@ namespace dns
 	virtual void responseNXDomain( const Domainname &qname, PacketInfo &response ) const;
 	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const;
 	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const;
-        virtual void responseDNSKEY( PacketInfo &response ) const;
+        virtual void responseDNSKEY( const Domainname &qname, PacketInfo &response ) const;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
 	virtual RRSetPtr getDNSKEYRRSet() const;
 	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;

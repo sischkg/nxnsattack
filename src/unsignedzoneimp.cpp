@@ -22,9 +22,9 @@ namespace dns
 	addSOAToAuthoritySection( response );
     }
 
-    void UnsignedZoneImp::responseDNSKEY( PacketInfo &response ) const
+    void UnsignedZoneImp::responseDNSKEY( const Domainname &qname, PacketInfo &response ) const
     {
-        responseNoData( getSOA().getOwner(), response, true );
+        responseNoData( qname, response, true );
     }
 
     void UnsignedZoneImp::responseRRSIG( const Domainname &qname, PacketInfo &response ) const
