@@ -88,7 +88,7 @@ namespace dns
         header.question_count              = htons( mQuestionSection.size() );
         header.answer_count                = htons( mAnswerSection.size() );
         header.authority_count             = htons( mAuthoritySection.size() );
-        header.additional_infomation_count = htons( mAdditionalSection.size() );
+        header.additional_infomation_count = htons( additional.size() );
 
         message.pushBuffer( reinterpret_cast<const uint8_t *>( &header ),
                             reinterpret_cast<const uint8_t *>( &header ) + sizeof( header ) );
@@ -102,7 +102,7 @@ namespace dns
         for ( auto q : mAuthoritySection ) {
             generateResourceRecord( q, message, offset_db );
         }
-        for ( auto q : mAdditionalSection ) {
+        for ( auto q : additional ) {
             generateResourceRecord( q, message, offset_db );
         }
     }
