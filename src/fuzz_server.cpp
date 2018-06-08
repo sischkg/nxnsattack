@@ -152,7 +152,7 @@ namespace dns
             return modified_response;
         }
 
-	void modifyMessage( const PacketInfo &query, WireFormat &message )
+	void modifyMessage( const PacketInfo &query, WireFormat &message ) const
 	{
 	    WireFormat src = message;
             dns::shuffle( src, message );

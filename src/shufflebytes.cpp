@@ -53,6 +53,13 @@ namespace dns
 		    dst.push_back( src[i] );
 	    }
 	    break;
+	case 3: // remove data
+	    {
+		uint32_t dst_size = getRandom( 12 );
+		for ( uint32_t i = 0 ; i < dst_size ; i++ )
+		    dst.push_back( src[i] );
+	    }
+	    break;
 	default: // not modify
 	    {
 		dst = src;
