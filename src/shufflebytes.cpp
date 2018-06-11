@@ -7,7 +7,7 @@ namespace dns
     {
 	uint16_t src_size = src.size();
 	dst.clear();
-	int r = getRandom( 7 );
+	int r = getRandom( 16 );
 	switch( r ) {
 	case 0: // insert data
 	    {

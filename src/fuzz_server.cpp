@@ -154,8 +154,11 @@ namespace dns
 
 	void modifyMessage( const PacketInfo &query, WireFormat &message ) const
 	{
-	    WireFormat src = message;
-            dns::shuffle( src, message );
+            unsigned int shuffle_count = getRandom( 3 );
+            for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
+                WireFormat src = message;
+                dns::shuffle( src, message );
+            }
 	}
 	
         void shuffle_rr( std::vector<ResourceRecord> &rrs ) const
