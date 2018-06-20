@@ -4,8 +4,9 @@
 namespace dns
 {
     PostSignedZone::PostSignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
-                                    const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo )
-	: mImp( new PostSignedZoneImp( zone_name, ksk_config, zsk_config, salt, iterate, algo ) )
+                                    const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
+                                    bool enable_nsec, bool enable_nsec3 )
+	: mImp( new PostSignedZoneImp( zone_name, ksk_config, zsk_config, salt, iterate, algo, enable_nsec, enable_nsec3 ) )
     {}
 
     void PostSignedZone::add( std::shared_ptr<RRSet> rrset )

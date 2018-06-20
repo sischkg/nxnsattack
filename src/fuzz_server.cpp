@@ -20,15 +20,13 @@ namespace dns
         std::vector<ResourceRecord> newRRs( const RRSet &rrset ) const
         {
             std::vector<ResourceRecord> rrs;
-            std::shared_ptr<RRSet> rrsigs = signRRSet( rrset );
-
-            rrsigs->addResourceRecords( rrs );
+            rrset.addResourceRecords( rrs );
             return rrs;
         }
 
         PacketInfo modifyResponse( const PacketInfo &query,
                                    const PacketInfo &original_response,
-                                   bool vir_tcp ) const
+                                   bool via_tcp ) const
         {
             PacketInfo modified_response = original_response;
 
@@ -149,12 +147,28 @@ namespace dns
             if ( withChance( 0.05 ) )
                 modified_response.mResponseCode = getRandom( 0x0f );
 
+            uint32_t requested_max_payload_size = 512;
+            if ( query.isEDNS0() &&
+                 query.mOptPseudoRR.mPayloadSize > 512 ) {
+                requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
+            }
+
+            if ( ! via_tcp &&
+                 modified_response.getMessageSize() > requested_max_payload_size ) {
+                if ( withChance( 0.05 ) ) {
+                    modified_response.mTruncation = 1;
+                    modified_response.clearAnswerSection();
+                    modified_response.clearAuthoritySection();
+                    modified_response.clearAdditionalSection();
+                }
+            }
+
             return modified_response;
         }
 
 	void modifyMessage( const PacketInfo &query, WireFormat &message ) const
 	{
-            unsigned int shuffle_count = getRandom( 3 );
+            unsigned int shuffle_count = getRandom( 1 );
             for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
                 WireFormat src = message;
                 dns::shuffle( src, message );
@@ -237,7 +251,8 @@ int main( int argc, char **argv )
     std::string apex;
     bool        debug;
     std::string ksk_filename, zsk_filename;
-    bool                 is_nsec3;
+    bool                 enable_nsec;
+    bool                 enable_nsec3;
     std::vector<uint8_t> nsec3_salt;
     std::string          nsec3_salt_str;
     uint16_t             nsec3_iterate;
@@ -253,10 +268,11 @@ int main( int argc, char **argv )
 	( "zone,z",    po::value<std::string>( &apex),                                      "zone apex" )
         ( "ksk,K",     po::value<std::string>( &ksk_filename),                              "KSK filename" )
         ( "zsk,Z",     po::value<std::string>( &zsk_filename),                              "ZSK filename" )
-        ( "3",         po::value<bool>( &is_nsec3 )->default_value( false ),                "enable NSEC3" )
+        ( "nsec,",     po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
+        ( "nsec3,3",   po::value<bool>( &enable_nsec3 )->default_value( false ),            "enable NSEC3" )
         ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
         ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
-        ( "hash,h",    po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
+        ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
         ( "debug,d",   po::bool_switch( &debug )->default_value( false ),                   "debug mode" );
     
     po::variables_map vm;
@@ -277,7 +293,8 @@ int main( int argc, char **argv )
 	dns::FuzzServer server( bind_address, bind_port, debug, thread_count );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
-                     nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1);
+                     nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,
+                     enable_nsec, enable_nsec3 );
         std::vector<std::shared_ptr<dns::RecordDS>> rrset_ds = server.getDSRecords();
 	std::cout << "DS records" << std::endl;
         for ( auto ds : rrset_ds ){

@@ -6,13 +6,12 @@ add_library(
   udpv4client.cpp udpv4server.cpp
   tcpv4client.cpp tcpv4server.cpp )
 add_library( threadpool threadpool.cpp )
-add_library( dns dns.cpp domainname.cpp rrgenerator.cpp )
+add_library( dns shufflebytes.cpp dns.cpp domainname.cpp rrgenerator.cpp )
 add_library( dnsserver dns_server.cpp )
 add_library( zone
              signedauthserver.cpp
              unsignedauthserver.cpp
              auth_server.cpp
-	     shufflebytes.cpp
              abstractzoneimp.cpp
              signedzone.cpp
              signedzoneimp.cpp

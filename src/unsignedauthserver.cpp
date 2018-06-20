@@ -6,7 +6,8 @@ namespace dns
 {
     void PostSignedAuthServer::load( const std::string &apex, const std::string &filename,
                                      const std::string &ksk_config, const std::string &zsk_config,
-                                     const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo )
+                                     const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
+                                     bool enable_nsec, bool enable_nsec3 )
     {
 	std::ifstream fin( filename );
 	std::string config;
@@ -20,7 +21,8 @@ namespace dns
         PostSignedZone::initialize();
         zone.reset( new PostSignedZone( apex,
                                         ksk_config, zsk_config,
-                                        salt, iterate, algo ) );
+                                        salt, iterate, algo,
+                                        enable_nsec, enable_nsec3 ) );
 	dns::full::load( *zone, apex, config );
         zone->setup();
 	zone->verify();

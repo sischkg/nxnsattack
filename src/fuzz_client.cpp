@@ -2,6 +2,7 @@
 #include "udpv4client.hpp"
 #include "tcpv4client.hpp"
 #include "rrgenerator.hpp"
+#include "shufflebytes.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
@@ -294,6 +295,12 @@ int main( int argc, char **argv )
 	
             WireFormat message;
             packet_info.generateMessage( message );
+
+            unsigned int shuffle_count = dns::getRandom( 3 );
+            for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
+                WireFormat src = message;
+                dns::shuffle( src, message );
+            }
 
             if ( message.size() < 1500 ) {
                 udpv4::ClientParameters udp_param;

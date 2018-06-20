@@ -12,7 +12,8 @@ namespace dns
     {
     public:
         PostSignedZone( const Domainname &zone_name, const std::string &ksk_config = "", const std::string &zsk_config = "",
-                        const std::vector<uint8_t> &salt = std::vector<uint8_t>(), uint16_t iterate = 1, HashAlgorithm alog = DNSSEC_SHA1 );
+                        const std::vector<uint8_t> &salt = std::vector<uint8_t>(), uint16_t iterate = 1, HashAlgorithm alog = DNSSEC_SHA1,
+                        bool enable_nsec = true, bool enable_nsec3 = false );
 
         void add( std::shared_ptr<RRSet> rrset );
         PacketInfo getAnswer( const PacketInfo &query ) const;
