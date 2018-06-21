@@ -1981,7 +1981,7 @@ namespace dns
     void ClientSubnetOption::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( OPT_CLIENT_SUBNET );
-        message.pushUInt16HtoN( size() );
+        message.pushUInt16HtoN( size() - 4 );
         message.pushUInt16HtoN( mFamily );
         message.pushUInt8( mSourcePrefix );
         message.pushUInt8( mScopePrefix );
@@ -1999,7 +1999,12 @@ namespace dns
 
     uint16_t ClientSubnetOption::size() const
     {
-        return 2 + 1 + 1 + getAddressSize( mSourcePrefix ) + 4;
+        return 2 +    // OPTION-CODE
+            2 +       // OPTION-LENGTH
+            2 +       // FAMILY
+            1 +       // SOURCE PREFIX-LENGTH
+            1 +       // SCOPE PREFIX-LENGTH
+            getAddressSize( mSourcePrefix );  // ADDRESS
     }
 
     std::string ClientSubnetOption::toString() const
@@ -2075,7 +2080,10 @@ namespace dns
 
     uint16_t CookieOption::size() const
     {
-        return 2 + 2 + mClientCookie.size() + mServerCookie.size();
+        return 2 +                 // OPTION-CODE
+            2 +                    // OPTION-LENGTH
+            mClientCookie.size() + // CLIENT COOKIE LENGTH
+            mServerCookie.size();  // SERVER COOKIE LENGTH
     }
 
     std::string CookieOption::toString() const
@@ -2115,7 +2123,9 @@ namespace dns
 
     uint16_t TCPKeepaliveOption::size() const
     {
-        return 2 + 2 + 2;
+        return 2 + // OPTION-CODE
+            2 +    // OPTION-LENGTH
+            2;     // TIMEOUT
     }
 
     std::string TCPKeepaliveOption::toString() const

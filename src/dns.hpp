@@ -1073,7 +1073,9 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return mData.size() + 2;
+            return 2 +        // OPTION-CODE
+                2 +           // OPTION-LENGTH
+                mData.size(); // OPTION DATA
         }
 	virtual RAWOption *clone() const
 	{
