@@ -101,6 +101,77 @@ namespace dns
             return response;
         }
 
+	// find qname
+        auto node = findNode( qname );
+        if ( node ) {
+            auto cname_rrset = node->find( TYPE_CNAME );
+            if ( cname_rrset ) {
+                if ( cname_rrset->count() != 1 ) {
+                    throw std::logic_error( "muliple cname records exist in " + qname.toString() );
+                }
+                
+                // found 
+                response.mResponseCode = NO_ERROR;
+                addRRSet( response.mAnswerSection, *cname_rrset );
+		addRRSIG( response, response.mAnswerSection, *cname_rrset );
+
+                std::shared_ptr<RecordCNAME> cname = std::dynamic_pointer_cast<RecordCNAME>( (*cname_rrset)[0] );
+                auto canonical_name = cname->getCanonicalName();
+                if (mApex.isSubDomain( canonical_name ) ) {
+                    auto canonical_node  = findNode( canonical_name );
+                    auto canonical_rrset = canonical_node->find( qtype );
+                    if ( canonical_rrset ) {
+                        addRRSet( response.mAnswerSection, *canonical_rrset );
+			addRRSIG( response, response.mAnswerSection, *canonical_rrset );
+                    }
+                }
+                return response;
+            }
+
+	    if ( qtype == TYPE_ANY ) {
+		if ( node->exist() ) {
+		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
+                        auto rrset = *(rrset_itr->second);
+                        addRRSet( response.mAnswerSection, rrset );
+			addRRSIG( response, response.mAnswerSection, rrset );
+                    }
+                    RRSetPtr nsec = generateNSECRRSet( qname );
+                    if ( nsec ) {
+                        addRRSet( response.mAnswerSection, *nsec );
+                        addRRSIG( response, response.mAnswerSection, *nsec );
+                    }
+		}
+		else {
+		    // NoData ( found empty non-terminal )
+		    responseNoData( qname, response, false );
+		}
+		return response;
+	    }
+
+            auto rrset = node->find( qtype );
+            if ( rrset ) {
+                // found 
+                response.mResponseCode = NO_ERROR;
+                addRRSet( response.mAnswerSection, *rrset );
+		addRRSIG( response, response.mAnswerSection, *rrset );
+                return response;
+            }
+            else {
+                // NoData ( found empty non-terminal or other type )
+		responseNoData( qname, response, node->exist() );
+		return response;
+            }
+        }
+
+        // find NS + and DS for delegation
+        for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
+            auto rrset = findRRSet( parent, TYPE_NS );
+            if ( rrset ) {
+                responseDelegation( qname, response, *rrset );
+                return response;
+            }
+        }
+
         // find DNAME
         for ( auto parent_name = qname ; parent_name != mApex ; parent_name.popSubdomain() ) {
             auto dname_rrset = findRRSet( parent_name, TYPE_DNAME );
@@ -133,75 +204,6 @@ namespace dns
             }   
         }
 
-	// find qname
-        auto node = findNode( qname );
-        if ( node ) {
-	    if ( qtype == TYPE_ANY ) {
-		if ( node->exist() ) {
-		    for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
-                        auto rrset = *(rrset_itr->second);
-                        addRRSet( response.mAnswerSection, rrset );
-			addRRSIG( response, response.mAnswerSection, rrset );
-                    }
-                    RRSetPtr nsec = generateNSECRRSet( qname );
-                    if ( nsec ) {
-                        addRRSet( response.mAnswerSection, *nsec );
-                        addRRSIG( response, response.mAnswerSection, *nsec );
-                    }
-		}
-		else {
-		    // NoData ( found empty non-terminal )
-		    responseNoData( qname, response, false );
-		}
-		return response;
-	    }
-            auto cname_rrset = node->find( TYPE_CNAME );
-            if ( cname_rrset ) {
-                if ( cname_rrset->count() != 1 ) {
-                    throw std::logic_error( "muliple cname records exist in " + qname.toString() );
-                }
-                
-                // found 
-                response.mResponseCode = NO_ERROR;
-                addRRSet( response.mAnswerSection, *cname_rrset );
-		addRRSIG( response, response.mAnswerSection, *cname_rrset );
-
-                std::shared_ptr<RecordCNAME> cname = std::dynamic_pointer_cast<RecordCNAME>( (*cname_rrset)[0] );
-                auto canonical_name = cname->getCanonicalName();
-                if (mApex.isSubDomain( canonical_name ) ) {
-                    auto canonical_node  = findNode( canonical_name );
-                    auto canonical_rrset = canonical_node->find( qtype );
-                    if ( canonical_rrset ) {
-                        addRRSet( response.mAnswerSection, *canonical_rrset );
-			addRRSIG( response, response.mAnswerSection, *canonical_rrset );
-                    }
-                }
-                return response;
-            }
-
-            auto rrset = node->find( qtype );
-            if ( rrset ) {
-                // found 
-                response.mResponseCode = NO_ERROR;
-                addRRSet( response.mAnswerSection, *rrset );
-		addRRSIG( response, response.mAnswerSection, *rrset );
-                return response;
-            }
-            else {
-                // NoData ( found empty non-terminal or other type )
-		responseNoData( qname, response, node->exist() );
-		return response;
-            }
-        }
-
-        // find NS + and DS for delegation
-        for ( auto parent = qname ; parent != mApex ; parent.popSubdomain() ) {
-            auto rrset = findRRSet( parent, TYPE_NS );
-            if ( rrset ) {
-                responseDelegation( qname, response, *rrset );
-                return response;
-            }
-        }
 
         // NXDOMAIN
 	responseNXDomain( qname, response );

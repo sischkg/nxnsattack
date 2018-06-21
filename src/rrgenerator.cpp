@@ -751,7 +751,7 @@ namespace dns
 
     std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate()
     {
-	ssize_t length = getRandom( 0xffff );
+	ssize_t length = getRandom( 0x0fff );
 	PacketData data;
 	for ( ssize_t i = 0 ; i < length ; i++ )
 	    data.push_back( getRandom( 0xff ) );
