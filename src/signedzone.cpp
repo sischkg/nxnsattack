@@ -3,7 +3,9 @@
 
 namespace dns
 {
-    SignedZone::SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
+    SignedZone::SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                            const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm alog,
+                            bool enable_nsec, bool enable_nsec3 )
 	: mImp( new SignedZoneImp( zone_name, ksk_config, zsk_config ) )
     {}
 

@@ -104,8 +104,22 @@ int main( int argc, char **argv )
                 qname.addSubdomain( "vvv" );
                 break;
             case 2:
-                qname.addSubdomain( "vvv" );
-                switch ( dns::getRandom( 5 ) ) {
+                qname.addSubdomain( "yyy" );
+                break;
+            case 3:
+                switch ( dns::getRandom( 3 ) ) {
+                case 0:
+                    qname.addSubdomain( "yyy" );
+                    break;
+                case 1:
+                    qname.addSubdomain( "vvv" );
+                    break;
+                case 2:
+                    qname.addSubdomain( "zzz" );
+                    break;
+                }
+
+                switch ( dns::getRandom( 6 ) ) {
                 case 0:
                     qname.addSubdomain( "www" );
                     break;
@@ -113,32 +127,15 @@ int main( int argc, char **argv )
                     qname.addSubdomain( "zzz" );
                     break;
                 case 2:
-                    qname.addSubdomain( "ns01" );
+                    qname.addSubdomain( "yyy" );
                     break;
                 case 3:
-                    qname.addSubdomain( "child" );
-                    break;
-                case 4:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            case 3:
-                qname.addSubdomain( "zzz" );
-                switch ( dns::getRandom( 5 ) ) {
-                case 0:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 1:
                     qname.addSubdomain( "ns01" );
                     break;
-                case 2:
-                    qname.addSubdomain( "*" );
-                    break;
-                case 3:
+                case 4:
                     qname.addSubdomain( "child" );
                     break;
-                case 4:
+                case 5:
                     qname.addSubdomain( label_generator.generateLabel() );
                     break;
                 }

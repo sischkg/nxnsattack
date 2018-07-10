@@ -58,6 +58,19 @@ namespace dns
         }
     }
 
+    static uint8_t getLabelCountOfCanonicalDomainname( const Domainname &name )
+    {
+        unsigned int label_count = name.getLabels().size();
+        // check wildcard
+        if ( label_count != 0 ) {
+            std::string label = name.getLabels()[0];
+            if ( label == "*" ) {
+                label_count--;
+            }
+        }
+        return label_count;
+    }
+
     void throwException( const char *message, const char *other )
     {
         unsigned int code = ERR_get_error();
@@ -355,7 +368,7 @@ namespace dns
  
 	sign_target.pushUInt16HtoN( rrset.getType() );                 // type covered
 	sign_target.pushUInt8( key.getAlgorithm() );                   // algorithm
-	sign_target.pushUInt8( rrset.getOwner().getLabels().size() );  // label
+	sign_target.pushUInt8( getLabelCountOfCanonicalDomainname( rrset.getOwner() ) );  // label count
 	sign_target.pushUInt32HtoN( rrset.getTTL() );                  // original ttl
 	sign_target.pushUInt32HtoN( key.getNotAfter() );               // expiration
 	sign_target.pushUInt32HtoN( key.getNotBefore() );              // inception
@@ -394,7 +407,7 @@ namespace dns
 
         return std::shared_ptr<RecordRRSIG>( new RecordRRSIG( rrset.getType(),
                                                               key.getAlgorithm(),
-                                                              rrset.getOwner().getLabels().size(),
+                                                              getLabelCountOfCanonicalDomainname( rrset.getOwner() ),
                                                               rrset.getTTL(),
                                                               key.getNotAfter(),
                                                               key.getNotBefore(),

@@ -191,6 +191,9 @@ namespace dns
     void PostSignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {}
 
+    void PostSignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname &owner ) const
+    {}
+
     
     PostSignedZoneImp::RRSetPtr PostSignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {

@@ -139,6 +139,11 @@ namespace dns
 
     void SignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {
+        addRRSIG( response, section, original_rrset, original_rrset.getOwner() );
+    }
+
+    void SignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname &owner ) const
+    {
 	if ( ! response.isDNSSECOK() )
 	    return;
 
@@ -146,7 +151,7 @@ namespace dns
 	
 	for( auto rrsig : rrsigs->getRRSet() ) {
 	    ResourceRecord r;
-	    r.mDomainname = rrsigs->getOwner();
+	    r.mDomainname = owner;
 	    r.mType       = rrsigs->getType();
 	    r.mClass      = rrsigs->getClass();
 	    r.mTTL        = rrsigs->getTTL();

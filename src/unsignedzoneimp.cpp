@@ -67,6 +67,9 @@ namespace dns
     void UnsignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {}
 
+    void UnsignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname & ) const
+    {}
+
     
     UnsignedZoneImp::RRSetPtr UnsignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {

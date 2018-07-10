@@ -204,6 +204,113 @@ namespace dns
             }   
         }
 
+        // find wildcard
+        auto parent_name = qname;
+        while ( true ) {
+            if ( parent_name == mApex )
+                break;
+            parent_name.popSubdomain();
+            auto wildcard = parent_name;
+            wildcard.addSubdomain( "*" );
+
+            auto node = findNode( wildcard );
+            if ( node ) {
+
+                auto cname_rrset = node->find( TYPE_CNAME );
+                if ( cname_rrset ) {
+                    if ( cname_rrset->count() != 1 ) {
+                        throw std::logic_error( "muliple cname records exist in " + wildcard.toString() );
+                    }
+                
+                    // found
+                    response.mResponseCode = NO_ERROR;
+                    addRRSet( response.mAnswerSection, *cname_rrset, qname );
+                    addRRSIG( response, response.mAnswerSection, *cname_rrset, qname );
+
+                    RRSetPtr nsec = generateNSECRRSet( qname );
+                    if ( nsec ) {
+                        addRRSet( response.mAuthoritySection, *nsec );
+                        addRRSIG( response, response.mAuthoritySection, *nsec );
+                    }
+
+                    return response;
+                }
+
+                auto dname_rrset = node->find( TYPE_DNAME );
+                if ( dname_rrset ) {
+                    if ( dname_rrset->count() != 1 )
+                        throw std::logic_error( "multiple DNAME records exist " + parent_name.toString() );
+
+                    Domainname owner = parent_name;
+                    owner.addSubdomain( qname.getLabels()[ qname.getLabelCount() - parent_name.getLabelCount() + 1 ] );
+
+                    response.mResponseCode = NO_ERROR;
+                    addRRSet( response.mAnswerSection, *dname_rrset, owner );
+                    addRRSIG( response, response.mAnswerSection, *dname_rrset, owner );
+
+                    auto dname_rdata    = std::dynamic_pointer_cast<RecordDNAME>( (*dname_rrset)[0] );
+                    auto relative_name  = parent_name.getRelativeDomainname( qname );
+                    auto canonical_name = relative_name + dname_rdata->getCanonicalName();
+                    std::shared_ptr<RecordCNAME> cname_rdata( new RecordCNAME( canonical_name ) );
+                    RRSet cname_rrset( canonical_name, dname_rrset->getClass(), TYPE_CNAME, dname_rrset->getTTL() );
+                    cname_rrset.add( cname_rdata );
+
+                    addRRSet( response.mAnswerSection, cname_rrset );
+                    addRRSIG( response, response.mAnswerSection, cname_rrset );
+
+                    auto canonical_node  = findNode( canonical_name );
+                    if ( canonical_node ) {
+                        auto canonical_rrset = canonical_node->find( qtype );
+                        if ( canonical_rrset ) {
+                            addRRSet( response.mAnswerSection, *canonical_rrset );
+                            addRRSIG( response, response.mAnswerSection, *canonical_rrset );
+                        }
+                    }
+
+                    RRSetPtr nsec = generateNSECRRSet( owner );
+                    if ( nsec ) {
+                        addRRSet( response.mAuthoritySection, *nsec );
+                        addRRSIG( response, response.mAuthoritySection, *nsec );
+                    }
+
+                    return response;
+                }   
+
+                if ( qtype == TYPE_ANY ) {
+                    if ( node->exist() ) {
+                        for ( auto rrset_itr = node->begin() ; rrset_itr != node->end() ; rrset_itr++ ) {
+                            auto rrset = *(rrset_itr->second);
+                            addRRSet( response.mAnswerSection, rrset, qname );
+                            addRRSIG( response, response.mAnswerSection, rrset, qname );
+                        }
+
+                        RRSetPtr nsec = generateNSECRRSet( qname );
+                        if ( nsec ) {
+                            addRRSet( response.mAuthoritySection, *nsec );
+                            addRRSIG( response, response.mAuthoritySection, *nsec );
+                        }
+                    }
+                    return response;
+                }
+
+                auto rrset = node->find( qtype );
+                if ( rrset ) {
+                    // found 
+                    response.mResponseCode = NO_ERROR;
+                    addRRSet( response.mAnswerSection, *rrset, qname );
+                    addRRSIG( response, response.mAnswerSection, *rrset, qname );
+
+                    RRSetPtr nsec = generateNSECRRSet( qname );
+                    if ( nsec ) {
+                        addRRSet( response.mAuthoritySection, *nsec );
+                        addRRSIG( response, response.mAuthoritySection, *nsec );
+                    }
+
+                    return response;
+                }
+            }   
+        }
+
 
         // NXDOMAIN
 	responseNXDomain( qname, response );
@@ -272,19 +379,30 @@ namespace dns
                 }
             }   
         }
-        /*
+
         auto ds_rrset = findRRSet( ns_rrset.getOwner(), TYPE_DS );
         if ( ds_rrset ) {
-            addRRSet( response.mAuthoritySection, *ds_rrset );
-          
+            addRRSet( response.mAuthoritySection, *ds_rrset );          
             addRRSIG( response, response.mAuthoritySection, *ds_rrset );            
         }
-        */
     }
 
-    void AbstractZoneImp::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset ) const
+    void AbstractZoneImp::addRRSet( std::vector<ResourceRecord> &section, const RRSet &rrset, const Domainname &owner ) const
     {
-        rrset.addResourceRecords( section );
+        if ( owner == Domainname() )
+            rrset.addResourceRecords( section );
+        else {
+            for ( auto rdata : rrset ) {
+                ResourceRecord rr;
+                rr.mDomainname = owner;
+                rr.mClass      = rrset.getClass();
+                rr.mType       = rrset.getType();
+                rr.mTTL        = rrset.getTTL();
+                rr.mRData      = rdata;
+
+                section.push_back( rr );
+            }
+        }
     }
 
     void AbstractZoneImp::verify() const

@@ -2,6 +2,7 @@
 #define SIGNED_ZONE_HPP
 
 #include "zone.hpp"
+#include "zonesigner.hpp"
 
 namespace dns
 {
@@ -10,7 +11,9 @@ namespace dns
     class SignedZone : public Zone
     {
     public:
-        SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );
+        SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                    const std::vector<uint8_t> &salt = std::vector<uint8_t>(), uint16_t iterate = 1, HashAlgorithm alog = DNSSEC_SHA1,
+                    bool enable_nsec = true, bool enable_nsec3 = false );
 
         void add( std::shared_ptr<RRSet> rrset );
         PacketInfo getAnswer( const PacketInfo &query ) const;

@@ -21,6 +21,7 @@ namespace dns
 	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const;
         virtual void responseDNSKEY( const Domainname &qname, PacketInfo &response ) const;
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const;
+        virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset, const Domainname &owner ) const;
 	virtual RRSetPtr getDNSKEYRRSet() const;
 	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
 

@@ -1,4 +1,4 @@
-#include "unsignedauthserver.hpp"
+#include "signedauthserver.hpp"
 #include "rrgenerator.hpp"
 #include "shufflebytes.hpp"
 #include <boost/program_options.hpp>
@@ -9,11 +9,11 @@
 
 namespace dns
 {
-    class FuzzServer : public PostSignedAuthServer
+    class FuzzServer : public SignedAuthServer
     {
     public:
 	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1 )
-	    : dns::PostSignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
+	    : dns::SignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
 	{
         }
 
@@ -77,18 +77,18 @@ namespace dns
             replaceClass( modified_response.mAdditionalSection );
 
 	    int sign_count;
-	    sign_count= getRandom( 2 );
+	    sign_count= getRandom( 1 );
 	    for ( int i = 0 ; i < sign_count ; i++ )
 		signSection( modified_response.mAnswerSection );
-	    sign_count= getRandom( 2 );
+	    sign_count= getRandom( 1 );
 	    for ( int i = 0 ; i < sign_count ; i++ )
 		signSection( modified_response.mAuthoritySection );
-	    sign_count= getRandom( 2 );
+	    sign_count= getRandom( 1 );
 	    for ( int i = 0 ; i < sign_count ; i++ )
 		signSection( modified_response.mAdditionalSection );
 
 	    OptionGenerator option_generator;
-	    unsigned int option_count = getRandom( 8 );
+	    unsigned int option_count = getRandom( 3 );
 	    for ( unsigned int i = 0 ; i < option_count ; i++ )
 		option_generator.generate( modified_response );
 
