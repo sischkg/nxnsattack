@@ -36,10 +36,12 @@ add_executable( dnssec_server  dnssec_server.cpp )
 add_executable( fuzz_server    fuzz_server.cpp )
 add_executable( fuzz_client    fuzz_client.cpp )
 add_executable( message_parser message_parser.cpp )
+add_executable( axfr_server    axfr_server.cpp )
 
 target_link_libraries( zone_server    ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( dnssec_server  ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( fuzz_server    ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( axfr_server    ${ZONE_SERVER_LIBRARY} )
 target_link_libraries( fuzz_client    ${CLIENT_LIBRARY} )
 target_link_libraries( message_parser ${CLIENT_LIBRARY} )
 

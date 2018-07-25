@@ -135,8 +135,9 @@ namespace dns
 
     }
 
-    void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr connection )
+    void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr &connection )
     {
+        std::cerr << "sendZone" << std::endl;
         generateAXFRResponse( query, connection );
     }
 
@@ -179,8 +180,14 @@ namespace dns
 
             PacketData recv_data = connection->receive( size );
             PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
+
+            if ( isDebug() )
+                std::cerr << "DNS message of query: " << query << std::endl;
+
             if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
                  query.mQuestionSection[ 0 ].mType == dns::TYPE_IXFR ) {
+                if ( isDebug() )
+                    std::cerr << "responding zone transfer" << std::endl;
                 sendZone( query, connection );
             }
             else {
@@ -218,6 +225,7 @@ namespace dns
         sigemptyset(&set);
         sigaddset(&set, SIGQUIT);
         sigaddset(&set, SIGUSR1);
+        sigaddset(&set, SIGPIPE);
         int s = pthread_sigmask(SIG_BLOCK, &set, NULL);
         if ( s != 0 ) {
             throw std::runtime_error( "cannot set sigmask" );
