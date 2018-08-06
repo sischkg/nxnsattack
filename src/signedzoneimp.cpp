@@ -6,8 +6,13 @@
 namespace dns
 {
 
-    SignedZoneImp::SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config )
-        : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ), mNSECDB( new NSECDB( zone_name ) )
+    SignedZoneImp::SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                                  const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
+                                  bool enable_nsec, bool enable_nsec3 )
+        : AbstractZoneImp( zone_name ), mSigner( zone_name, ksk_config, zsk_config ),
+          mNSECDB( new NSECDB( zone_name ) ),
+          mNSEC3DB( new NSEC3DB( zone_name, salt, iterate, algo ) ),
+          mEnableNSEC( enable_nsec ), mEnableNSEC3( enable_nsec3 )
     {}
 
 
@@ -16,6 +21,11 @@ namespace dns
 	response.mResponseCode = NO_ERROR;
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
+	    RRSetPtr nsec3 = generateNSEC3RRSet( qname );
+            if ( nsec3 ) {
+                addRRSet( response.mAuthoritySection, *nsec3 );
+                addRRSIG( response, response.mAuthoritySection, *nsec3 );
+            }
 	    RRSetPtr nsec = generateNSECRRSet( qname );
             if ( nsec ) {
                 addRRSet( response.mAuthoritySection, *nsec );
@@ -25,6 +35,11 @@ namespace dns
 	    if ( need_wildcard ) {
 		Domainname wildcard = getApex();
 		wildcard.addSubdomain( "*" );
+		RRSetPtr wildcard_nsec3 = generateNSEC3RRSet( wildcard );
+                if ( wildcard_nsec3 ) {
+                    addRRSet( response.mAuthoritySection, *wildcard_nsec3 );
+                    addRRSIG( response, response.mAuthoritySection, *wildcard_nsec3 );
+                }
 		RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
                 if ( wildcard_nsec ) {
                     addRRSet( response.mAuthoritySection, *wildcard_nsec );
@@ -40,6 +55,11 @@ namespace dns
 	response.mResponseCode = NXDOMAIN;
 	addSOAToAuthoritySection( response );
 	if ( response.isDNSSECOK() ) {
+	    RRSetPtr nsec3 = generateNSEC3RRSet( qname );
+            if ( nsec3 ) {
+                addRRSet( response.mAuthoritySection, *nsec3 );
+                addRRSIG( response, response.mAuthoritySection, *nsec3 );
+            }
 	    RRSetPtr nsec = generateNSECRRSet( qname );
             if ( nsec ) {
                 addRRSet( response.mAuthoritySection, *nsec );
@@ -48,6 +68,11 @@ namespace dns
 
 	    Domainname wildcard = getApex();
 	    wildcard.addSubdomain( "*" );
+	    RRSetPtr wildcard_nsec3 = generateNSEC3RRSet( wildcard );
+            if ( wildcard_nsec3 ) {
+                addRRSet( response.mAuthoritySection, *wildcard_nsec3 );
+                addRRSIG( response, response.mAuthoritySection, *wildcard_nsec3 );
+            }
 	    RRSetPtr wildcard_nsec = generateNSECRRSet( wildcard );
             if ( wildcard_nsec ) {
                 addRRSet( response.mAuthoritySection, *wildcard_nsec );
@@ -124,6 +149,7 @@ namespace dns
 	add( getDNSKEYRRSet() ); 
 	for ( auto node = begin() ; node != end() ; node++ ) {
 	    mNSECDB->addNode( node->first, *(node->second) );
+	    mNSEC3DB->addNode( node->first, *(node->second) );
 	}
     }
 
@@ -163,11 +189,30 @@ namespace dns
     
     SignedZoneImp::RRSetPtr SignedZoneImp::generateNSECRRSet( const Domainname &domainname ) const
     {
-	ResourceRecord nsec_rr = mNSECDB->find( domainname, getSOA().getTTL() );
-	RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
-	rrset->add( nsec_rr.mRData );
+        if ( mEnableNSEC ) {
+            ResourceRecord nsec_rr = mNSECDB->find( domainname, getSOA().getTTL() );
+            RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
+            rrset->add( nsec_rr.mRData );
 
-	return rrset;
+            return rrset;
+        }
+        else {
+            return RRSetPtr();
+        }
+    }
+
+    SignedZoneImp::RRSetPtr SignedZoneImp::generateNSEC3RRSet( const Domainname &domainname ) const
+    {
+        if ( mEnableNSEC3 ) {
+            ResourceRecord nsec_rr = mNSEC3DB->find( domainname, getSOA().getTTL() );
+            RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
+            rrset->add( nsec_rr.mRData );
+            std::cerr << "added nsec3: " << nsec_rr.mRData->toString() << std::endl;
+            return rrset;
+        }
+        else {
+            return RRSetPtr();
+        }
     }
 
     std::shared_ptr<RRSet> SignedZoneImp::signRRSet( const RRSet &rrset ) const

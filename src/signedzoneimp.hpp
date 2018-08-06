@@ -3,6 +3,7 @@
 
 #include "abstractzoneimp.hpp"
 #include "nsecdb.hpp"
+#include "nsec3db.hpp"
 
 namespace dns
 {
@@ -10,10 +11,15 @@ namespace dns
     {
     private:
 	ZoneSigner mSigner;
-	NSECDBPtr  mNSECDB;
+	NSECDBPtr mNSECDB;
+        NSECDBPtr mNSEC3DB;
+        bool mEnableNSEC;
+        bool mEnableNSEC3;
 
     public:
-        SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config );
+        SignedZoneImp( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
+                       const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm alog,
+                       bool enable_nsec, bool enable_nsec3 );
 
         virtual void setup();
 
@@ -28,6 +34,7 @@ namespace dns
         virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset, const Domainname &owner ) const;
 	virtual RRSetPtr getDNSKEYRRSet() const;
 	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const;
+	virtual RRSetPtr generateNSEC3RRSet( const Domainname &domainname ) const;
 
         static void initialize();
     };

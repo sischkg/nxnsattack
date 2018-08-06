@@ -71,7 +71,6 @@ namespace dns
 
 	void addNodeToContainer( Container &container, const Domainname &name, const std::vector<Type> &types );
     };
-
 }
 
 #endif

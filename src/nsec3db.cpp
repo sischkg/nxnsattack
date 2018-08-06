@@ -93,15 +93,7 @@ namespace dns
 	    container.insert( pair );
 	}
 	else {
-	    if ( original == nsec3entry->second.getOwner() )
-		nsec3entry->second.addTypes( types );
-	    else {
-		std::ostringstream os;
-		os << "detected hash collision \""
-		   << original << "\" and \"" << nsec3entry->first
-		   << "\" => \"" << owner << "\".";
-		throwException( os.str().c_str() );
-	    }
+            nsec3entry->second.addTypes( types );
 	}
 
 	auto wc_nsec3entry = container.find( wildcard_owner );
@@ -111,15 +103,7 @@ namespace dns
 	    container.insert( wc_pair );
 	}
 	else {
-	    if ( original != nsec3entry->second.getOwner() )
-		nsec3entry->second.addTypes( types );
-	    else {
-		std::ostringstream os;
-		os << "detected hash collision \""
-		   << original << "\" and \"" << nsec3entry->first
-		   << "\" => \"" << owner << "\".";
-		throwException( os.str() );
-	    }
+            wc_nsec3entry->second.addTypes( types );
 	}
     }
 
@@ -207,6 +191,7 @@ namespace dns
 						    mSalt,
 						    next_hash,
 						    types ) );
+        std::cerr << "found NSEC3: " << rr.mRData->toString() << std::endl;
 	return rr;
     }
 }

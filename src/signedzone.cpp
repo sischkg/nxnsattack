@@ -4,9 +4,11 @@
 namespace dns
 {
     SignedZone::SignedZone( const Domainname &zone_name, const std::string &ksk_config, const std::string &zsk_config,
-                            const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm alog,
+                            const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
                             bool enable_nsec, bool enable_nsec3 )
-	: mImp( new SignedZoneImp( zone_name, ksk_config, zsk_config ) )
+	: mImp( new SignedZoneImp( zone_name, ksk_config, zsk_config,
+                                   salt, iterate, algo,
+                                   enable_nsec, enable_nsec3) )
     {}
 
     void SignedZone::add( std::shared_ptr<RRSet> rrset )

@@ -1593,7 +1593,8 @@ namespace dns
 	for ( auto win : mWindows )
 	    os << win.second.toString() << " ";
 	std::string result( os.str() );
-	result.pop_back();
+        if ( ! result.empty() )
+            result.pop_back();
 	return result;
     }
 
@@ -1697,10 +1698,16 @@ namespace dns
     std::string RecordNSEC3::toString() const
     {
 	std::string salt_string;
-	encodeToHex( mSalt, salt_string );
+        if ( mSalt.size() == 0 )
+            salt_string == "";
+        else
+            encodeToHex( mSalt, salt_string );
 	
 	std::string hash_string;
-	encodeToBase32Hex( mNextHash, hash_string );
+        if ( mNextHash.size() == 0 )
+            hash_string == "";
+        else
+            encodeToBase32Hex( mNextHash, hash_string );
 
 	std::stringstream os;
 	os << (uint32_t)mHashAlgorithm << " "
