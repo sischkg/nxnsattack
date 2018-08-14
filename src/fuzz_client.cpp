@@ -264,6 +264,9 @@ int main( int argc, char **argv )
                 }
             }
 
+            packet_info.mIsEDNS0 = true;
+            packet_info.mOptPseudoRR.mDOBit = true;
+
             unsigned int option_count = dns::getRandom( 4 );
             for ( unsigned int i = 0 ; i < option_count ; i++ )
                 option_generator.generate( packet_info );
