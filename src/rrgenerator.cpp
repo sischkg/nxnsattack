@@ -78,9 +78,15 @@ namespace dns
         return Domainname( labels );
     }
 
-    Domainname DomainnameGenerator::generate( const Domainname &hint )
+    Domainname DomainnameGenerator::generate( const Domainname &hint1, const Domainname &hint2 )
     {
-        Domainname result = hint;
+        Domainname hint = hint1;
+        Domainname result = hint1;
+        if ( hint2 != "" && getRandom( 2 ) == 0 ) {
+            hint   = hint2;
+            result = hint2;
+        }
+        
         switch ( getRandom( 3 ) ) {
         case 0:
             return result;
@@ -128,17 +134,17 @@ namespace dns
                     label_count++;
                 }
 
-                return result; 
+                return result;
             }
         default:
             throw std::logic_error( "generate domainname error" );
         }
     }
 
-    static Domainname generateDomainname( const Domainname &hint )
+    static Domainname generateDomainname( const Domainname &hint1, const Domainname &hint2 = Domainname() )
     {
         DomainnameGenerator g;
-        return g.generate( hint );
+        return g.generate( hint1, hint2 );
     }
 
     static Domainname generateDomainname()
@@ -173,7 +179,7 @@ namespace dns
      * XNAMEGenarator
      **********************************************************/
     template<class T>
-    std::shared_ptr<RDATA> XNameGenerator<T>::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> XNameGenerator<T>::generate( const PacketInfo &hint, const Domainname &hint2 )
     {
         Domainname hint_name;
         uint32_t qdcount = hint.getQuestionSection().size();
@@ -198,7 +204,7 @@ namespace dns
             throw std::logic_error( "invalid index of XNameGenerator::generate( hint )" );
         }
 
-        return std::shared_ptr<RDATA>( new T( DomainnameGenerator().generate( hint_name ) ) );
+        return std::shared_ptr<RDATA>( new T( DomainnameGenerator().generate( hint_name, hint2 ) ) );
     }
 
     template<class T>
@@ -211,7 +217,7 @@ namespace dns
     /**********************************************************
      * RAWGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> RawGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> RawGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
 	return generate();
     }
@@ -228,7 +234,7 @@ namespace dns
     /**********************************************************
      * AGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> AGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> AGenerator::generate( const PacketInfo &hint, const Domainname &hint2 )
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
         for ( auto rr : hint.getAnswerSection() ) {
@@ -263,7 +269,7 @@ namespace dns
     /**********************************************************
      * WKSGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> WKSGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> WKSGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
 	return generate();
     }
@@ -290,20 +296,20 @@ namespace dns
     /**********************************************************
      * AAAAGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> AAAAGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> AAAAGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
-        for ( auto rr : hint.getAnswerSection() ) {
+        for ( auto rr : hint1.getAnswerSection() ) {
             if ( rr.mType == TYPE_AAAA ) {
                 record_a_list.push_back( rr.mRData );
             }
         }
-        for ( auto rr : hint.getAuthoritySection() ) {
+        for ( auto rr : hint1.getAuthoritySection() ) {
             if ( rr.mType == TYPE_AAAA ) {
                 record_a_list.push_back( rr.mRData );
             }
         }
-        for ( auto rr : hint.getAdditionalSection() ) {
+        for ( auto rr : hint1.getAdditionalSection() ) {
             if ( rr.mType == TYPE_AAAA ) {
                 record_a_list.push_back( rr.mRData );
             }
@@ -326,10 +332,10 @@ namespace dns
     /**********************************************************
      * SOAGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> SOAGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> SOAGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
-	return std::shared_ptr<RDATA>( new RecordSOA( getDomainname( hint ),
-						      getDomainname( hint ),
+	return std::shared_ptr<RDATA>( new RecordSOA( getDomainname( hint1 ),
+						      getDomainname( hint1 ),
 						      getRandom(),
 						      getRandom(),
 						      getRandom(),
@@ -351,7 +357,7 @@ namespace dns
     /**********************************************************
      * RRSIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> RRSIGGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> RRSIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         PacketData signature = getRandomSizeStream( 256 );
 
@@ -362,7 +368,7 @@ namespace dns
 						   getRandom(),         // expiration
 						   getRandom(),         // inception
 						   getRandom( 0xffff ), // key tag
-						   generateDomainname( getDomainname( hint ) ),
+						   generateDomainname( getDomainname( hint1 ), hint2 ),
 						   signature ) );
         return p;
     }
@@ -384,7 +390,7 @@ namespace dns
     /**********************************************************
      * DNSKEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> DNSKEYGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> DNSKEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordDNSKEY( getRandom() % 2 ? RecordDNSKEY::KSK : RecordDNSKEY::ZSK,
@@ -404,7 +410,7 @@ namespace dns
     /**********************************************************
      * DSGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> DSGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> DSGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         if ( getRandom( 2 ) ) {
             PacketData hash = getRandomStream( 20 );
@@ -444,7 +450,7 @@ namespace dns
     /**********************************************************
      * NSECGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSECGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> NSECGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         std::vector<Type> types;
         unsigned int type_count = getRandom( 0xffff );
@@ -452,7 +458,7 @@ namespace dns
             types.push_back( getRandom( 0xffff ) );
         }
 
-        return std::shared_ptr<RDATA>( new RecordNSEC( getDomainname( hint ),
+        return std::shared_ptr<RDATA>( new RecordNSEC( generateDomainname( getDomainname( hint1 ), hint2 ),
 						       types ) );
     }
 
@@ -470,7 +476,7 @@ namespace dns
     /**********************************************************
      * NSEC3Genarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSEC3Generator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> NSEC3Generator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         return generate();
     }
@@ -499,7 +505,7 @@ namespace dns
     /**********************************************************
      * NSEC3PARAMGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         return generate();
     }
@@ -520,7 +526,7 @@ namespace dns
     /**********************************************************
      * SIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> SIGGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> SIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         PacketData signature = getRandomStream( 256 );
 
@@ -531,7 +537,7 @@ namespace dns
 						 getRandom(),         // expiration
 						 getRandom(),         // inception
 						 getRandom( 0xffff ), // key tag
-						 generateDomainname( getDomainname( hint ) ),
+						 generateDomainname( getDomainname( hint1 ), hint2 ),
 						 signature ) );
         return p;
     }
@@ -553,7 +559,7 @@ namespace dns
     /**********************************************************
      * KEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> KEYGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> KEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordKEY( 0xffff,
@@ -572,7 +578,7 @@ namespace dns
     /**********************************************************
      * NXTGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NXTGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> NXTGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         std::vector<Type> types;
         unsigned int type_count = getRandom( 0xffff );
@@ -580,7 +586,7 @@ namespace dns
             types.push_back( getRandom( 0xffff ) );
         }
 
-        return std::shared_ptr<RDATA>( new RecordNXT( getDomainname( hint ),
+        return std::shared_ptr<RDATA>( new RecordNXT( generateDomainname( getDomainname( hint1 ), hint2 ),
 						      types ) );
     }
 
@@ -598,7 +604,7 @@ namespace dns
     /**********************************************************
      * TKEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> TKEYGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> TKEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
 	std::string algo = "HMAC-MD5.SIG-ALG.REG.INT";
 	if ( getRandom( 1 ) ) {
@@ -608,7 +614,7 @@ namespace dns
 	PacketData signature = getRandomStream( 0xffff );
 	PacketData other     = getRandomStream( 0xffff );
 
-	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname( getDomainname( hint ) ).toString(), // domain
+	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname( getDomainname( hint1 ), hint2 ).toString(), // domain
 						  algo,                                                   // algorithm
 						  getRandom(),         // inception
 						  getRandom(),         // expiration
@@ -642,7 +648,7 @@ namespace dns
     /**********************************************************
      * TSIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> TSIGGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<RDATA> TSIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
 	std::string algo = "HMAC-MD5.SIG-ALG.REG.INT";
 	if ( getRandom( 1 ) ) {
@@ -654,7 +660,7 @@ namespace dns
 
 	PacketData other = getRandomStream( getRandom( 0xffff ) );
 
-	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint ) ).toString(), // domain
+	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint1 ), hint2 ).toString(), // domain
                                                            algo,                                                   // algorithm
                                                            signed_time,              // signed time
                                                            getRandom( 0xffff ),      // fudge
@@ -714,21 +720,21 @@ namespace dns
     }
 
 
-    RRSet ResourceRecordGenerator::generate( const PacketInfo &hint )
+    RRSet ResourceRecordGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
 
-        std::shared_ptr<RDATA> resource_data = mGenerators.at( getRandom( mGenerators.size() - 1 ) )->generate( hint );
+        std::shared_ptr<RDATA> resource_data = mGenerators.at( getRandom( mGenerators.size() - 1 ) )->generate( hint1, hint2 );
 
         Domainname owner;
         if ( resource_data->type() == TYPE_NSEC3 ) {
             std::string hash;
             encodeToBase32Hex( getRandomStream( 20 ), hash ); 
-            owner = getDomainname( hint );
+            owner = getDomainname( hint1  );
             owner.addSubdomain( hash );
         }
         else {
-            owner = getDomainname( hint );
+            owner = generateDomainname( getDomainname( hint1 ), hint2 );
         }
 
         unsigned int index = getRandom( sizeof(class_table)/sizeof(Class) - 1 );

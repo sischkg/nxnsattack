@@ -36,7 +36,7 @@ int main( int argc, char **argv )
 {
     std::string target_server;
     uint16_t    target_port;
-    std::string basename;
+    std::string basename, another_basename;
     uint32_t    interval = 0;
 
     po::options_description desc( "query generator" );
@@ -51,6 +51,9 @@ int main( int argc, char **argv )
         ( "base,b",
           po::value<std::string>( &basename ),
           "basename" )
+        ( "y,another",
+          po::value<std::string>( &another_basename ),
+          "yet another base name for cache poisoning" )
 	( "interval,i",
           po::value<uint32_t>( &interval )->default_value( DEFAULT_INTERVAL_MSEC ) );
 
@@ -95,7 +98,12 @@ int main( int argc, char **argv )
                 }
             }
 
-            dns::Domainname qname = basename;
+            dns::Domainname qname;
+            if ( dns::getRandom( 2 ) )
+                qname = basename;
+            else
+                qname = another_basename;
+            
             switch ( dns::getRandom( 12 ) ) {
             case 0:
                 qname.addSubdomain( "www" );
@@ -235,7 +243,7 @@ int main( int argc, char **argv )
             // appand new rrsets
             unsigned int rrsets_count = dns::getRandom( 4 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
-                dns::RRSet rrset = rr_generator.generate( packet_info );
+                dns::RRSet rrset = rr_generator.generate( packet_info, another_basename );
 
                 switch ( dns::getRandom( 5 ) ) {
                 case 0:

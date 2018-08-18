@@ -27,7 +27,7 @@ add_library( zone
              nsec3db.cpp )
 add_library( tokenizer tokenizer.cpp )
 
-set( CLIENT_LIBRARY boost_program_options boost_thread boost_system dns ipv4 ${OPENSSL_CRYPTO_LIBRARY} )
+set( CLIENT_LIBRARY boost_program_options boost_thread boost_system pthread dns ipv4 ${OPENSSL_CRYPTO_LIBRARY} )
 set( SERVER_LIBRARY dnsserver threadpool ${CLIENT_LIBRARY} )
 set( ZONE_SERVER_LIBRARY zone tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 

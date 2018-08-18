@@ -12,8 +12,9 @@ namespace dns
     class FuzzServer : public SignedAuthServer
     {
     public:
-	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1 )
-	    : dns::SignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() )
+	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
+	    : dns::SignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() ),
+            mAnotherHint( hint2 )
 	{
         }
 
@@ -43,7 +44,7 @@ namespace dns
             // appand new rrsets
             unsigned int rrsets_count = getRandom( 8 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
-                RRSet rrset = rr_generator.generate( original_response );
+                RRSet rrset = rr_generator.generate( original_response, mAnotherHint );
 
                 switch ( getRandom( 4 ) ) {
                 case 0:
@@ -235,6 +236,7 @@ namespace dns
     private:
         mutable std::random_device mSeedGenerator;
         mutable std::mt19937 mRandomEngine;
+        Domainname mAnotherHint;
     };
 
 
@@ -257,7 +259,8 @@ int main( int argc, char **argv )
     std::string          nsec3_salt_str;
     uint16_t             nsec3_iterate;
     uint16_t             nsec3_hash_algo;
-
+    std::string          another_hint;
+    
     po::options_description desc( "fuzz server" );
     desc.add_options()( "help,h", "print this message" )
 
@@ -266,6 +269,7 @@ int main( int argc, char **argv )
         ( "thread,n",  po::value<uint16_t>( &thread_count )->default_value( 1 ),            "thread count" )
 	( "file,f",    po::value<std::string>( &zone_filename ),                            "zone filename" )
 	( "zone,z",    po::value<std::string>( &apex),                                      "zone apex" )
+	( "another,a", po::value<std::string>( &another_hint ),                             "another domainname for cache poisoning" )
         ( "ksk,K",     po::value<std::string>( &ksk_filename),                              "KSK filename" )
         ( "zsk,Z",     po::value<std::string>( &zsk_filename),                              "ZSK filename" )
         ( "nsec,",     po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
@@ -290,7 +294,7 @@ int main( int argc, char **argv )
     decodeFromHex( nsec3_salt_str, nsec3_salt );
     
     try {
-	dns::FuzzServer server( bind_address, bind_port, debug, thread_count );
+	dns::FuzzServer server( bind_address, bind_port, debug, thread_count, another_hint );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,

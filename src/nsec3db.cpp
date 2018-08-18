@@ -191,7 +191,6 @@ namespace dns
 						    mSalt,
 						    next_hash,
 						    types ) );
-        std::cerr << "found NSEC3: " << rr.mRData->toString() << std::endl;
 	return rr;
     }
 }

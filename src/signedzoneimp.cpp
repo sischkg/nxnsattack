@@ -207,7 +207,6 @@ namespace dns
             ResourceRecord nsec_rr = mNSEC3DB->find( domainname, getSOA().getTTL() );
             RRSetPtr rrset( new RRSet( nsec_rr.mDomainname, nsec_rr.mClass, nsec_rr.mType, nsec_rr.mTTL ) );
             rrset->add( nsec_rr.mRData );
-            std::cerr << "added nsec3: " << nsec_rr.mRData->toString() << std::endl;
             return rrset;
         }
         else {
