@@ -56,6 +56,8 @@ namespace dns
         std::string generateLabel();
     };
 
+    Domainname generateDomainname();
+
     class RDATAGeneratable
     {
     public:

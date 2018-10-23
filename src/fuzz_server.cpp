@@ -102,6 +102,12 @@ namespace dns
             if ( withChance( 0.1 ) ) {
                 modified_response.mOptPseudoRR.mDOBit = getRandom( 1 );
             }
+            if ( withChance( 0.1 ) ) {
+                modified_response.mOptPseudoRR.mVersion = getRandom( 0xff );
+            }
+            if ( withChance( 0.05 ) ) {
+                modified_response.mOptPseudoRR.mDomainname = generateDomainname();
+            }
 	    
             if ( withChance( 0.2 ) ) {
                 ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.mOptPseudoRR );

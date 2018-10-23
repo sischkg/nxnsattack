@@ -147,7 +147,7 @@ namespace dns
         return g.generate( hint1, hint2 );
     }
 
-    static Domainname generateDomainname()
+    Domainname generateDomainname()
     {
         DomainnameGenerator g;
         return g.generate();
@@ -453,7 +453,7 @@ namespace dns
     std::shared_ptr<RDATA> NSECGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
     {
         std::vector<Type> types;
-        unsigned int type_count = getRandom( 0xffff );
+        unsigned int type_count = getRandom( 4 );
         for ( unsigned int i = 0 ; i < type_count ; i++ ) {
             types.push_back( getRandom( 0xffff ) );
         }
@@ -488,7 +488,7 @@ namespace dns
             optout = 0;
         }
         std::vector<Type> types;
-        unsigned int type_count = getRandom( 0xffff );
+        unsigned int type_count = getRandom( 4 );
         for ( unsigned int i = 0 ; i < type_count ; i++ ) {
             types.push_back( getRandom( 0xffff ) );
         }
