@@ -244,6 +244,13 @@ namespace dns
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
+    class KeyTagGenerator : public OptGeneratable
+    {
+    public:
+	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate();
+    };
+
     class OptionGenerator
     {
     public:

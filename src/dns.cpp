@@ -2158,6 +2158,43 @@ namespace dns
         return OptPseudoRROptPtr( new TCPKeepaliveOption( timeout ) );        
     }
 
+    std::string KeyTagOption::toString() const
+    {
+        std::ostringstream os;
+        for ( auto tag : getTags() )
+            os << tag << ", ";
+        return os.str();
+    }
+
+    uint16_t KeyTagOption::size() const
+    {
+        return 2 + // OPTION-CODE
+            2 +    // OPTION-LENGTH
+            mTags.size() * 2;     // Tags Size(2byte) * Tag Count
+    }
+
+    void KeyTagOption::outputWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( OPT_KEY_TAG );
+        message.pushUInt16HtoN( getTags().size() );
+        for ( uint16_t tag : getTags() )
+            message.pushUInt16HtoN( tag );
+    }
+
+    OptPseudoRROptPtr KeyTagOption::parse( const uint8_t *begin, const uint8_t *end )
+    {
+        const uint8_t *pos = begin;
+        uint16_t size = end - begin;
+        if ( size % 2 != 0 )
+            throw FormatError( "bad option length for Key Tag Option" );
+        uint16_t tag_count = size / 2;
+        std::vector<uint16_t> tags;
+        for ( uint16_t i = 0 ; i < tag_count ; i++ )
+            tags.push_back( ntohs( get_bytes<uint16_t>( &pos ) ) );
+            
+        return OptPseudoRROptPtr( new KeyTagOption( tags ) );
+    }
+
     std::string RecordTKEY::toZone() const
     {
         return "";

@@ -70,6 +70,7 @@ namespace dns
     const OptType    OPT_CLIENT_SUBNET = 8;
     const OptType    OPT_COOKIE        = 10;
     const OptType    OPT_TCP_KEEPALIVE = 11;
+    const OptType    OPT_KEY_TAG       = 14;
 
     typedef uint8_t    ResponseCode;
     const ResponseCode NO_ERROR       = 0;
@@ -1200,6 +1201,36 @@ namespace dns
 
         static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
     };
+
+
+    class KeyTagOption : public OptPseudoRROption
+    {
+    private:
+        std::vector<uint16_t> mTags;
+
+    public:
+        KeyTagOption( std::vector<uint16_t> tags )
+            : mTags( tags )
+        {
+        }
+
+        virtual std::string toString() const;
+        virtual void        outputWireFormat( WireFormat & ) const;
+        virtual uint16_t    code() const
+        {
+            return OPT_KEY_TAG;
+        }
+	virtual KeyTagOption *clone() const
+	{
+	    return new KeyTagOption( getTags() );
+	}
+        virtual uint16_t size() const;
+
+        const std::vector<uint16_t> &getTags() const { return mTags; }
+
+        static OptPseudoRROptPtr parse( const uint8_t *begin, const uint8_t *end );
+    };
+
 
     class RecordOptionsData : public RDATA
     {

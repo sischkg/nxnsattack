@@ -840,6 +840,21 @@ namespace dns
         return std::shared_ptr<OptPseudoRROption>( new TCPKeepaliveOption( timeout ) );
     }
 
+
+    std::shared_ptr<OptPseudoRROption> KeyTagGenerator::generate( const PacketInfo &hint )
+    {
+	return generate();
+    }
+
+    std::shared_ptr<OptPseudoRROption> KeyTagGenerator::generate()
+    {
+        uint16_t count = getRandom( 0x0fff );
+        std::vector<uint16_t> tags;
+        for ( uint16_t i = 0 ; i < count ; i++ )
+            tags.push_back( getRandom( 0xffff ) );
+        return std::shared_ptr<OptPseudoRROption>( new KeyTagOption( tags ) );
+    }
+
     /**********************************************************
      * OptionGenarator
      **********************************************************/
@@ -850,6 +865,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new ClientSubnetGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new CookieGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new TCPKeepaliveGenerator ) );
+//        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new KeyTagGenerator ) );
     }
 
 
