@@ -240,7 +240,7 @@ int main( int argc, char **argv )
             q.mClass      = qclass;
             packet_info.mQuestionSection.push_back( q );
 
-            // appand new rrsets
+            // append new rrsets
             unsigned int rrsets_count = dns::getRandom( 4 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 dns::RRSet rrset = rr_generator.generate( packet_info, another_basename );
@@ -290,24 +290,25 @@ int main( int argc, char **argv )
             }
 
             packet_info.mID                  = dns::getRandom( 0xffff );
-            packet_info.mOpcode              = 0;
-            packet_info.mQueryResponse       = 0;
-            packet_info.mAuthoritativeAnswer = 0;
-            packet_info.mTruncation          = 0;
-            packet_info.mRecursionDesired    = 1;
-            packet_info.mRecursionAvailable  = 0;
-            packet_info.mZeroField           = 0;
-            packet_info.mAuthenticData       = 0;
-            packet_info.mCheckingDisabled    = 1;
-            packet_info.mResponseCode        = 0;
+            packet_info.mOpcode              = dns::getRandom( 0x02 );
+            packet_info.mQueryResponse       = dns::getRandom( 0x02 );
+            packet_info.mAuthoritativeAnswer = dns::getRandom( 0x02 );
+            packet_info.mTruncation          = dns::getRandom( 0x02 );
+            packet_info.mRecursionDesired    = dns::getRandom( 0x02 );
+            packet_info.mRecursionAvailable  = dns::getRandom( 0x02 );
+            packet_info.mZeroField           = dns::getRandom( 0x0f );
+            packet_info.mAuthenticData       = dns::getRandom( 0x02 );
+            packet_info.mCheckingDisabled    = dns::getRandom( 0x02 );
+            packet_info.mResponseCode        = dns::getRandom( 0x0f );
 	
             WireFormat message;
             packet_info.generateMessage( message );
-
             unsigned int shuffle_count = dns::getRandom( 3 );
             for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
-                WireFormat src = message;
-                dns::shuffle( src, message );
+                if ( dns::getRandom( 8 ) == 0 ) {
+                    WireFormat src = message;
+                    dns::shuffle( src, message );
+                }
             }
 
             if ( message.size() < 1500 ) {
