@@ -63,7 +63,7 @@ namespace dns
     const Type       TYPE_ANY         = 255;
     const Type       TYPE_CAA         = 257;
 
-    typedef uint32_t TTL;
+    typedef int32_t TTL;
 
     typedef uint16_t OptType;
     const OptType    OPT_NSID          = 3;
@@ -583,7 +583,7 @@ namespace dns
         Type       mTypeCovered;
         uint8_t    mAlgorithm;
         uint8_t    mLabelCount;
-        uint32_t   mOriginalTTL;
+        TTL        mOriginalTTL;
         uint32_t   mExpiration;
         uint32_t   mInception;
         uint16_t   mKeyTag;
@@ -600,7 +600,7 @@ namespace dns
         RecordRRSIG( Type              t,
                      uint8_t           algo,
                      uint8_t           label,
-                     uint32_t          ttl,
+                     TTL               ttl,
                      uint32_t          expire,
                      uint32_t          incept,
                      uint16_t          tag,
@@ -621,7 +621,7 @@ namespace dns
         Type     getTypeCovered() const { return mTypeCovered; }
         uint8_t  getAlgorithm() const { return mAlgorithm; }
         uint8_t  getLabelCount() const { return mLabelCount; }
-        uint32_t getOriginalTTL() const { return mOriginalTTL; }
+        TTL      getOriginalTTL() const { return mOriginalTTL; }
         uint32_t getExpiration() const { return mExpiration; }
         uint32_t getInception() const { return mInception; }
         uint8_t  getKeyTag() const { return mKeyTag; }
@@ -1488,7 +1488,7 @@ namespace dns
         Domainname mDomainname;
         uint16_t   mType;
         uint16_t   mClass;
-        uint32_t   mTTL;
+        TTL        mTTL;
         RDATAPtr   mRData;
 
         ResourceRecord() 
