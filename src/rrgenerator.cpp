@@ -13,6 +13,7 @@ namespace dns
     RandomGenerator *RandomGenerator::mInstance = nullptr;
     
     RandomGenerator::RandomGenerator()
+        : mGenerator( static_cast<unsigned long>(time(nullptr)) )
     {
         std::srand( getpid() * time( nullptr ) );
     }
@@ -21,7 +22,12 @@ namespace dns
     {
         if ( base == 0 )
             return 0;
-        return std::rand() % base;
+
+        boost::mutex::scoped_lock lock( mMutex );
+        boost::uniform_smallint<> dst( 0, base);
+        uint32_t v = dst( mGenerator );
+        // uint32_t v = std::rand() % base;
+        return v;
     }
 
     PacketData RandomGenerator::randStream( unsigned int size )
@@ -41,11 +47,11 @@ namespace dns
 	return stream;
     }
 
-    RandomGenerator &RandomGenerator::getInstance()
+    RandomGenerator *RandomGenerator::getInstance()
     {
 	if ( mInstance == nullptr )
 	    mInstance = new RandomGenerator();
-	return *mInstance;
+	return mInstance;
     }
     
     /**********************************************************
@@ -54,11 +60,12 @@ namespace dns
     std::string DomainnameGenerator::generateLabel()
     {
         std::string label;
-	if ( getRandom( 32 ) == 0 )
+        if ( getRandom( 37 ) == 0 )
 	    return "*";
+
         unsigned int label_size = 1 + getRandom( 62 );
         for ( unsigned int i = 0 ; i < label_size ; i++ )
-            label.push_back( getRandom( 255 ) );
+            label.push_back( getRandom( 0xff ) );
         return label;
     }
 
@@ -74,7 +81,6 @@ namespace dns
             labels.push_back( label );
             domainname_size += ( label.size() + 1 );
         }
-
         return Domainname( labels );
     }
 

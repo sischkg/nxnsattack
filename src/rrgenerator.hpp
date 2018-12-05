@@ -5,6 +5,7 @@
 #include "zone.hpp"
 #include <boost/noncopyable.hpp>
 #include <boost/random.hpp>
+#include <boost/thread.hpp>
 
 namespace dns
 {
@@ -18,26 +19,30 @@ namespace dns
         std::vector<uint8_t> randStream( unsigned int );
         std::vector<uint8_t> randSizeStream( unsigned int );
 
-	static RandomGenerator &getInstance();
+	static RandomGenerator *getInstance();
     private:
         static RandomGenerator *mInstance;
         RandomGenerator();
+
+        boost::mt19937 mGenerator;
+        boost::mutex mMutex;
     };
 
 
     inline uint32_t getRandom( uint32_t base = 0xffffffff )
     {
-        return RandomGenerator::getInstance().rand( base );
+        uint32_t v = RandomGenerator::getInstance()->rand( base );
+        return v;
     }
 
     inline std::vector<uint8_t> getRandomStream( unsigned int size )
     {
-        return RandomGenerator::getInstance().randStream( size );
+        return RandomGenerator::getInstance()->randStream( size );
     }
 
     inline std::vector<uint8_t> getRandomSizeStream( unsigned int max_size )
     {
-        return RandomGenerator::getInstance().randSizeStream( max_size );
+        return RandomGenerator::getInstance()->randSizeStream( max_size );
     }
 
 
