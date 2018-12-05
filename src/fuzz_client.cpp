@@ -38,6 +38,7 @@ int main( int argc, char **argv )
     uint16_t    target_port;
     std::string basename, another_basename;
     uint32_t    interval = 0;
+    bool        is_randomize = true;
 
     po::options_description desc( "query generator" );
     desc.add_options()( "help,h", "print this message" )
@@ -51,6 +52,9 @@ int main( int argc, char **argv )
         ( "base,b",
           po::value<std::string>( &basename ),
           "basename" )
+        ( "randomize,r",
+          po::value<bool>( &is_randomize )->default_value( true ),
+          "randomize message" )
         ( "y,another",
           po::value<std::string>( &another_basename ),
           "yet another base name for cache poisoning" )
@@ -303,11 +307,14 @@ int main( int argc, char **argv )
 	
             WireFormat message;
             packet_info.generateMessage( message );
-            unsigned int shuffle_count = dns::getRandom( 3 );
-            for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
-                if ( dns::getRandom( 8 ) == 0 ) {
-                    WireFormat src = message;
-                    dns::shuffle( src, message );
+
+            if ( is_randomize ) {
+                unsigned int shuffle_count = dns::getRandom( 3 );
+                for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
+                    if ( dns::getRandom( 8 ) == 0 ) {
+                        WireFormat src = message;
+                        dns::shuffle( src, message );
+                    }
                 }
             }
 
