@@ -42,7 +42,7 @@ namespace dns
                 modified_response.clearAdditionalSection();
 
             // appand new rrsets
-            unsigned int rrsets_count = getRandom( 8 );
+            unsigned int rrsets_count = getRandom( 16 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 RRSet rrset = rr_generator.generate( original_response, mAnotherHint );
 
@@ -298,6 +298,8 @@ int main( int argc, char **argv )
 	apex.push_back( '.' );
 
     decodeFromHex( nsec3_salt_str, nsec3_salt );
+
+    dns::getRandom();
     
     try {
 	dns::FuzzServer server( bind_address, bind_port, debug, thread_count, another_hint );
