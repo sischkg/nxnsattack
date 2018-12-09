@@ -114,7 +114,11 @@ namespace dns
         return output.size();
     }
 
-
+    void PacketInfo::addOption( std::shared_ptr<OptPseudoRROption> opt )
+    {
+	std::dynamic_pointer_cast<RecordOptionsData>( mOptPseudoRR.mOptions )->add( opt );
+    }
+    
     PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end )
     {
         const uint8_t *packet = begin;
@@ -290,7 +294,7 @@ namespace dns
         default:
             std::ostringstream msg;
             msg << "not support type \"" << sec.mType << "\".";
-            throw std::runtime_error( msg.str() );
+            parsed_data = RecordRaw::parse( sec.mType, pos, pos + data_length );
         }
         pos += data_length;
 
@@ -503,30 +507,59 @@ namespace dns
     }
 
 
+    std::ostream &operator<<( std::ostream &os, const OptPseudoRecord &opt )
+    {
+        os << "Domainname: "  << opt.mDomainname        << "\t"
+           << "PayloadSize: " << opt.mPayloadSize       << "\t"
+           << "RCode: "       << (uint32_t)opt.mRCode   << "\t"
+           << "Version: "     << (uint32_t)opt.mVersion << "\t"
+           << "DOBIt: "       << (uint32_t)opt.mDOBit   << "\t"
+           << "Options: "     << opt.mOptions->toString();
+            
+        return os;
+    }
+
     std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
     {
         os << "ID: "                   << res.mID << std::endl
            << "Query/Response: "       << ( res.mQueryResponse ? "Response" : "Query" ) << std::endl
-           << "OpCode:"                << res.mOpcode  << std::endl
+           << "OpCode:"                << (uint32_t)res.mOpcode    << std::endl
            << "Authoritative Answer: " << res.mAuthoritativeAnswer << std::endl
-           << "Truncation: "           << res.mTruncation << std::endl
-           << "Recursion Desired: "    << res.mRecursionDesired << std::endl
-           << "Recursion Available: "  << res.mRecursionAvailable << std::endl
-           << "Checking Disabled: "    << res.mCheckingDisabled << std::endl
+           << "Truncation: "           << res.mTruncation          << std::endl
+           << "Recursion Desired: "    << res.mRecursionDesired    << std::endl
+           << "Recursion Available: "  << res.mRecursionAvailable  << std::endl
+           << "Checking Disabled: "    << res.mCheckingDisabled    << std::endl
            << "Response Code: "        << responseCodeToString( res.mResponseCode ) << std::endl;
 
         for ( auto q : res.mQuestionSection )
-            os << "Query: " << q.mDomainname << " " << classCodeToString( q.mClass ) << " " << typeCodeToString( q.mType ) << std::endl;
+            os << "Query:"                      << "\t"
+               << q.mDomainname                 << "\t"
+               << classCodeToString( q.mClass ) << "\t"
+               << typeCodeToString( q.mType )   << std::endl;
         for ( auto a : res.mAnswerSection )
-            std::cout << "Answer: " << a.mDomainname << " " << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType )
-                      << " " << a.mRData->toString() << std::endl;
+            os << "Answer:"                     << "\t"
+               << a.mDomainname                 << "\t"
+               << a.mTTL                        << "\t"
+               << classCodeToString( a.mClass ) << "\t"
+               << typeCodeToString( a.mType )   << "\t"
+               << a.mRData->toString()          << std::endl;
         for ( auto a : res.mAuthoritySection )
-            std::cout << "Authority: " << a.mDomainname << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType ) << " "
-                      << a.mRData->toString() << std::endl;
+            os << "Authority:"                  << "\t"
+               << a.mDomainname                 << "\t"
+               << a.mTTL                        << "\t"
+               << classCodeToString( a.mClass ) << "\t"
+               << typeCodeToString( a.mType )   << "\t"
+               << a.mRData->toString()          << std::endl;
         for ( auto a : res.mAdditionalSection )
-            std::cout << "Additional: " << a.mDomainname << " " << a.mTTL << " " << classCodeToString( a.mClass ) << typeCodeToString( a.mType )
-                      << " " << a.mRData->toString() << std::endl;
-
+            os << "Additional:"                 << "\t"
+               << a.mDomainname                 << "\t"
+               << a.mTTL                        << "\t"
+               << classCodeToString( a.mClass ) << "\t"
+               << typeCodeToString( a.mType )   << "\t"
+               << a.mRData->toString()          << std::endl;
+        if ( res.isEDNS0() ) {
+            os << res.mOptPseudoRR << std::endl;
+        }
         return os;
     }
 
@@ -541,7 +574,6 @@ namespace dns
     {
         std::ostringstream os;
         os << "type: RAW(" << mRRType << "), data: ";
-        std::string data_str;
  
         for ( unsigned int i = 0; i < mData.size(); i++ ) {
             os << std::hex << (unsigned int)mData[ i ] << " ";
@@ -557,6 +589,11 @@ namespace dns
     void RecordRaw::outputCanonicalWireFormat( WireFormat &message ) const
     {
         message.pushBuffer( mData );
+    }
+
+    RDATAPtr RecordRaw::parse( Type type, const uint8_t *begin, const uint8_t *end )
+    {
+        return RDATAPtr( new RecordRaw( type, PacketData( begin, end ) ) );
     }
 
     RecordA::RecordA( uint32_t addr ) : mSinAddr( addr )
@@ -1860,7 +1897,7 @@ namespace dns
         std::ostringstream os;
 
         for ( auto option : mOptions )
-            os << option->toString();
+            os << option->toString() << ", ";
 
         return os.str();
     }
@@ -1972,6 +2009,16 @@ namespace dns
         message.pushUInt16HtoN( OPT_NSID );
         message.pushUInt16HtoN( mNSID.size() );
         message.pushBuffer( mNSID );
+    }
+
+    std::string NSIDOption::toString() const
+    {
+        PacketData data;
+        for ( auto c : mNSID )
+            data.push_back( (uint8_t)c );
+        std::string hex;
+        encodeToHex( data, hex );
+        return "NSID: " + hex;
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
@@ -2111,7 +2158,6 @@ namespace dns
             std::ostringstream os;
             os << "DNS Cookie length " << size << " is too short"; 
             std::cerr << os.str() << std::endl;
-            //throw FormatError( os.str());
             return OptPseudoRROptPtr( new CookieOption( PacketData(), PacketData() ) );        
         }
 
@@ -2138,7 +2184,7 @@ namespace dns
     std::string TCPKeepaliveOption::toString() const
     {
         std::ostringstream os;
-        os << "DNSTCPKeepalive: " << mTimeout;
+        os << "TCPKeepalive: " << mTimeout;
         return os.str();
     }
 
@@ -2176,7 +2222,7 @@ namespace dns
     void KeyTagOption::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( OPT_KEY_TAG );
-        message.pushUInt16HtoN( getTags().size() );
+        message.pushUInt16HtoN( mTags.size() * 2 );
         for ( uint16_t tag : getTags() )
             message.pushUInt16HtoN( tag );
     }

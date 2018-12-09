@@ -26,7 +26,6 @@ namespace dns
         boost::mutex::scoped_lock lock( mMutex );
         boost::uniform_smallint<> dst( 0, base);
         uint32_t v = dst( mGenerator );
-        // uint32_t v = std::rand() % base;
         return v;
     }
 
@@ -871,7 +870,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new ClientSubnetGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new CookieGenerator ) );
         mGenerators.push_back( std::shared_ptr<OptGeneratable>( new TCPKeepaliveGenerator ) );
-//        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new KeyTagGenerator ) );
+        mGenerators.push_back( std::shared_ptr<OptGeneratable>( new KeyTagGenerator ) );
     }
 
 
@@ -881,7 +880,7 @@ namespace dns
 	    return;
 
         std::shared_ptr<OptPseudoRROption> option = mGenerators.at( getRandom( mGenerators.size() - 1 ) )->generate( packet );
-	std::dynamic_pointer_cast<RecordOptionsData>( packet.mOptPseudoRR.mOptions )->add( option );
+	packet.addOption( option );
     }
 
 }

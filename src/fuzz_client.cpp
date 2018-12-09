@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <time.h>
 
 const char *DNS_SERVER_ADDRESS       = "127.0.0.1";
@@ -32,6 +33,27 @@ std::vector<dns::ResourceRecord> newRRs( const dns::RRSet &rrset )
 }
 
 
+std::string now_string();
+
+std::string now_string()
+{
+    time_t t = time(NULL);
+    tm *tmp = localtime(&t);
+    if ( tmp == nullptr) {
+        exit(EXIT_FAILURE);
+    }
+
+    char outstr[256];
+    if (strftime(outstr, sizeof(outstr), "%Y-%m-%d %H:%M:%S", tmp) == 0) {
+        std::cerr << "strftime returned 0" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    return outstr;
+}
+
+
+
 int main( int argc, char **argv )
 {
     std::string target_server;
@@ -39,6 +61,7 @@ int main( int argc, char **argv )
     std::string basename, another_basename;
     uint32_t    interval = 0;
     bool        is_randomize = true;
+    std::string sent_queries_file = "";
 
     po::options_description desc( "query generator" );
     desc.add_options()( "help,h", "print this message" )
@@ -55,6 +78,9 @@ int main( int argc, char **argv )
         ( "randomize,r",
           po::value<bool>( &is_randomize )->default_value( true ),
           "randomize message" )
+        ( "sent-queries,q",
+          po::value<std::string>( &sent_queries_file )->default_value( "" ),
+          "output filename for recording query messages" )
         ( "y,another",
           po::value<std::string>( &another_basename ),
           "yet another base name for cache poisoning" )
@@ -68,6 +94,13 @@ int main( int argc, char **argv )
     if ( vm.count( "help" ) ) {
         std::cerr << desc << "\n";
         return 1;
+    }
+
+    bool record_queries = false;
+    std::fstream fs_record_queries;
+    if ( sent_queries_file != "" ) {
+        record_queries = true;
+        fs_record_queries.open( sent_queries_file,  std::fstream::out | std::fstream::app );
     }
 
     dns::DomainnameGenerator label_generator;
@@ -316,6 +349,15 @@ int main( int argc, char **argv )
                         dns::shuffle( src, message );
                     }
                 }
+            }
+
+            if ( record_queries ) {
+                std::string message_base64;
+                std::vector<uint8_t> m;
+                m = message.get();
+                encodeToBase64( m, message_base64 );
+
+                fs_record_queries << now_string() << "," << message_base64 << std::endl;
             }
 
             if ( message.size() < 1500 ) {

@@ -140,6 +140,7 @@ namespace dns
             return size();
         }
 	virtual RecordRaw *clone() const { return new RecordRaw( mRRType, mData ); }
+        static RDATAPtr parse( Type type, const uint8_t *begin, const uint8_t *end );
     };
 
     class RecordA : public RDATA
@@ -1094,10 +1095,7 @@ namespace dns
         {
         }
 
-        virtual std::string toString() const
-        {
-            return "NSID: \"" + mNSID + "\"";
-        }
+        virtual std::string toString() const;
         virtual void     outputWireFormat( WireFormat & ) const;
         virtual uint16_t code() const
         {
@@ -1578,8 +1576,9 @@ namespace dns
                 return mOptPseudoRR.mDOBit;
             else
                 return false;
-
 	}
+
+	void addOption(  std::shared_ptr<OptPseudoRROption> opt );
 
         const std::vector<QuestionSectionEntry> &getQuestionSection() const { return mQuestionSection; }
         const std::vector<ResourceRecord>       &getAnswerSection() const { return mAnswerSection; }
@@ -1603,6 +1602,7 @@ namespace dns
     PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
     std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
+    std::ostream &operator<<( std::ostream &os, const OptPseudoRecord &opt );
     std::string classCodeToString( Class );
     std::string typeCodeToString( Type t );
     std::string responseCodeToString( uint8_t rcode );

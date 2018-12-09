@@ -157,7 +157,10 @@ namespace dns
         std::stringstream result;
         int length = 0;
         for ( auto label : labels ) {
-            for ( auto c : label ) {
+            for ( uint8_t c : label ) {
+                result << "0x" << std::hex << (uint32_t)c << " ";
+                length++;
+                /*
                 if ( c == '\\' ) {
                     result << '\\';
                     result << '\\';
@@ -174,6 +177,7 @@ namespace dns
                     result << std::oct << std::setw( 3 ) << std::setfill( '0' ) << (uint16_t)c;
                 }
                 length++;
+                */
             }
             result << '.';
             length ++;
