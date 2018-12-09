@@ -1,14 +1,11 @@
 #include "dns.hpp"
 #include "udpv4client.hpp"
 #include "tcpv4client.hpp"
-#include "rrgenerator.hpp"
-#include "shufflebytes.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
 #include <cstring>
 #include <iostream>
-#include <fstream>
 #include <time.h>
 
 const char *DNS_SERVER_ADDRESS       = "127.0.0.1";
@@ -88,43 +85,47 @@ int main( int argc, char **argv )
     packet_info.generateMessage( message );
 
     while ( true ) {
-        if ( message.size() < 1500 ) {
-            udpv4::ClientParameters udp_param;
-            udp_param.mAddress = target_server;
-            udp_param.mPort    = target_port;
-            udpv4::Client udp( udp_param );
-            udp.sendPacket( message );
-        }
-        else {
-            tcpv4::ClientParameters tcp_param;
-            tcp_param.mAddress = target_server;
-            tcp_param.mPort    = target_port;
-            tcpv4::Client tcp( tcp_param );
-            tcp.openSocket();
+        try {
+	    if ( message.size() < 1500 ) {
+		udpv4::ClientParameters udp_param;
+		udp_param.mAddress = target_server;
+		udp_param.mPort    = target_port;
+		udpv4::Client udp( udp_param );
+		udp.sendPacket( message );
+	    }
+	    else {
+		tcpv4::ClientParameters tcp_param;
+		tcp_param.mAddress = target_server;
+		tcp_param.mPort    = target_port;
+		tcpv4::Client tcp( tcp_param );
+		tcp.openSocket();
 
-            uint16_t query_size_data2 = htons( message.size() );
-            tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );
-            tcp.send( message );
+		uint16_t query_size_data2 = htons( message.size() );
+		tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );
+		tcp.send( message );
 
-            tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
-            if ( response_size_data.getLength() < 2 )
-                return 1;
-            uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
+		tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
+		if ( response_size_data.getLength() < 2 )
+		    return 1;
+		uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
 
-            PacketData response_data;
-            while ( response_data.size() < response_size ) {
-                tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
+		PacketData response_data;
+		while ( response_data.size() < response_size ) {
+		    tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
 
-                response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
-            }
+		    response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
+		}
 
-        }
-        timespec wait_time;
-        wait_time.tv_sec = 0;
-        wait_time.tv_nsec = 1000* 1000 * interval;
-        nanosleep( &wait_time, nullptr );
+	    }
+	    timespec wait_time;
+	    wait_time.tv_sec = 0;
+	    wait_time.tv_nsec = 1000* 1000 * interval;
+	    nanosleep( &wait_time, nullptr );
+	}
+	catch ( std::runtime_error &e ) {
+	    std::cerr << e.what() << std::endl;
+	}
         count++;
-
         if ( count % 10000 == 0 )
             std::cerr << "sent queries: " << count << std::endl;
     }
