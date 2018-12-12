@@ -1075,9 +1075,7 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return 2 +        // OPTION-CODE
-                2 +           // OPTION-LENGTH
-                mData.size(); // OPTION DATA
+            return mData.size(); // OPTION DATA
         }
 	virtual RAWOption *clone() const
 	{
@@ -1103,7 +1101,7 @@ namespace dns
         }
         virtual uint16_t size() const
         {
-            return 2 + 2 + mNSID.size();
+            return mNSID.size();
         }
 	virtual NSIDOption *clone() const
 	{

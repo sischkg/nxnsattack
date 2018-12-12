@@ -1907,7 +1907,9 @@ namespace dns
     {
         uint32_t rr_size = 0;
         for ( auto option : mOptions ) {
-            rr_size += option->size();
+            rr_size += 2; // Option-Code
+            rr_size += 2; // Option-Data Length 
+            rr_size += option->size(); // OPtion-Data
         }
         return rr_size;
     }
@@ -2053,8 +2055,7 @@ namespace dns
 
     uint16_t ClientSubnetOption::size() const
     {
-        return 2 +    // OPTION-CODE
-            2 +       // OPTION-LENGTH
+        return
             2 +       // FAMILY
             1 +       // SOURCE PREFIX-LENGTH
             1 +       // SCOPE PREFIX-LENGTH
@@ -2134,8 +2135,7 @@ namespace dns
 
     uint16_t CookieOption::size() const
     {
-        return 2 +                 // OPTION-CODE
-            2 +                    // OPTION-LENGTH
+        return
             mClientCookie.size() + // CLIENT COOKIE LENGTH
             mServerCookie.size();  // SERVER COOKIE LENGTH
     }
@@ -2176,9 +2176,7 @@ namespace dns
 
     uint16_t TCPKeepaliveOption::size() const
     {
-        return 2 + // OPTION-CODE
-            2 +    // OPTION-LENGTH
-            2;     // TIMEOUT
+        return 2;
     }
 
     std::string TCPKeepaliveOption::toString() const
@@ -2214,9 +2212,7 @@ namespace dns
 
     uint16_t KeyTagOption::size() const
     {
-        return 2 + // OPTION-CODE
-            2 +    // OPTION-LENGTH
-            mTags.size() * 2;     // Tags Size(2byte) * Tag Count
+        return mTags.size() * 2;     // Tags Size(2byte) * Tag Count
     }
 
     void KeyTagOption::outputWireFormat( WireFormat &message ) const
