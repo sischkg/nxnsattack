@@ -2037,7 +2037,7 @@ namespace dns
     void ClientSubnetOption::outputWireFormat( WireFormat &message ) const
     {
         message.pushUInt16HtoN( OPT_CLIENT_SUBNET );
-        message.pushUInt16HtoN( size() - 4 );
+        message.pushUInt16HtoN( size() );
         message.pushUInt16HtoN( mFamily );
         message.pushUInt8( mSourcePrefix );
         message.pushUInt8( mScopePrefix );
