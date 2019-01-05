@@ -1,6 +1,7 @@
 add_library(
   ipv4
   utils.cpp
+  logger.cpp
   wireformat.cpp
   readbuffer.cpp
   udpv4client.cpp udpv4server.cpp
@@ -27,7 +28,17 @@ add_library( zone
              nsec3db.cpp )
 add_library( tokenizer tokenizer.cpp )
 
-set( CLIENT_LIBRARY boost_chrono boost_program_options boost_thread boost_system pthread dns ipv4 ${OPENSSL_CRYPTO_LIBRARY} )
+set( CLIENT_LIBRARY
+  dns
+  ipv4
+  boost_chrono
+  boost_log_setup
+  boost_log
+  boost_program_options
+  boost_thread
+  boost_system
+  ${OPENSSL_CRYPTO_LIBRARY}
+  pthread )
 set( SERVER_LIBRARY dnsserver threadpool ${CLIENT_LIBRARY} )
 set( ZONE_SERVER_LIBRARY zone tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 

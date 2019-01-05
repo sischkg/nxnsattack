@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include <cstring>
 #include <iostream>
+#include <boost/log/trivial.hpp>
 
 
 class WindowTest : public ::testing::Test

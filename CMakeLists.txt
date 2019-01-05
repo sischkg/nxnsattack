@@ -16,12 +16,13 @@ include_directories(${YAML_CPP_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 link_directories(${YAML_CPP_LIBRARY_DIRS})
 
-add_definitions("-Wall -std=c++11 -g -fPIC")
+add_definitions("-Wall -std=c++11 -g -fPIC -DBOOST_ALL_DYN_LINK")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_EXE_LINKER_FLAGS "-L/usr/local/lib -L/usr/local/lib64 ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_EXE_LINKER_FLAGS}")
+
 message( "crypto lib: ${OPENSSL_CRYPTO_LIBRARY}" )
 message( "ssl lib: ${OPENSSL_SSL_LIBRARY}" )
 message( "lib: ${_OPENSSL_LIBDIR}" )

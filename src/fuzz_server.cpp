@@ -1,6 +1,7 @@
 #include "signedauthserver.hpp"
 #include "rrgenerator.hpp"
 #include "shufflebytes.hpp"
+#include "logger.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
@@ -257,7 +258,7 @@ int main( int argc, char **argv )
     uint16_t    thread_count; 
     std::string zone_filename;
     std::string apex;
-    bool        debug;
+    std::string log_level;
     std::string ksk_filename, zsk_filename;
     bool                 enable_nsec;
     bool                 enable_nsec3;
@@ -266,6 +267,7 @@ int main( int argc, char **argv )
     uint16_t             nsec3_iterate;
     uint16_t             nsec3_hash_algo;
     std::string          another_hint;
+    bool                 debug = false;
     
     po::options_description desc( "fuzz server" );
     desc.add_options()( "help,h", "print this message" )
@@ -283,7 +285,7 @@ int main( int argc, char **argv )
         ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
         ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
         ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
-        ( "debug,d",   po::bool_switch( &debug )->default_value( false ),                   "debug mode" );
+        ( "log-leevel,l",   po::value<std::string>( &log_level )->default_value( "info" ),       "Log Level" );
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -294,6 +296,8 @@ int main( int argc, char **argv )
         return 1;
     }
 
+    dns::logger::initialize( log_level );
+    
     if ( apex.back() != '.' )
 	apex.push_back( '.' );
 
@@ -312,6 +316,8 @@ int main( int argc, char **argv )
         for ( auto ds : rrset_ds ){
             std::cout << apex << "   IN DS " << ds->toZone() << std::endl;
         }
+
+	BOOST_LOG_TRIVIAL(info) << "Starting Fuzzing Server on " << bind_address << ":" << bind_port << ".";
 	server.start();
     }
     catch ( std::runtime_error &e ) {

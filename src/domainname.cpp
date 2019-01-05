@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cctype>
 #include <sstream>
+#include <boost/log/trivial.hpp>
 
 namespace dns
 {
@@ -160,24 +161,6 @@ namespace dns
             for ( uint8_t c : label ) {
                 result << "0x" << std::hex << (uint32_t)c << " ";
                 length++;
-                /*
-                if ( c == '\\' ) {
-                    result << '\\';
-                    result << '\\';
-                }
-                else if ( c == '.' ) {
-                    result << '\\';
-                    result << '.';
-                }
-                else if ( std::isprint( c ) ) {
-                    result << c;
-                }
-                else {
-                    result << '\\';
-                    result << std::oct << std::setw( 3 ) << std::setfill( '0' ) << (uint16_t)c;
-                }
-                length++;
-                */
             }
             result << '.';
             length ++;
@@ -234,10 +217,16 @@ namespace dns
             throw FormatError( "cannot parse empty data as a domainname" );
         }
 
+	std::ostringstream log;
+	log << std::hex << std::setw( 2 ) << std::setfill( '0' );
+	for ( const uint8_t *p = packet_begin ; p < packet_end ; p++ )
+	    log << "0x" << (uint32_t) *p << " ";
+	BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse domainname " << log.str();
+
         std::string    label;
         const uint8_t *p = begin;
         while ( *p != 0 ) {
-            // メッセージ圧縮を行っている場合
+            // compressed
             if ( *p & 0xC0 ) {
                 if ( packet_end - p < 2 ) {
                     throw FormatError( "domainname size is too short for decopression" );

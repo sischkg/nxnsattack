@@ -5,6 +5,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/range/adaptor/reversed.hpp>
+#include <boost/log/trivial.hpp>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -121,6 +122,8 @@ namespace dns
     
     PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end )
     {
+	BOOST_LOG_TRIVIAL(trace) << "dns.message.parse: parse message ";
+	
         const uint8_t *packet = begin;
 
         if ( ( end - begin ) < sizeof(PacketHeaderField) ) {
@@ -145,6 +148,13 @@ namespace dns
         int answer_count                = ntohs( header->answer_count );
         int authority_count             = ntohs( header->authority_count );
         int additional_infomation_count = ntohs( header->additional_infomation_count );
+
+	BOOST_LOG_TRIVIAL(trace)
+	    << "dns.domainname.parse: "
+	    << "qd: " << question_count  << ", "
+	    << "ad: " << answer_count    << ", "
+	    << "ns: " << authority_count << ", "
+	    << "ar: " << additional_infomation_count;
 
         packet += sizeof( PacketHeaderField );
         for ( int i = 0; i < question_count; i++ ) {
@@ -227,6 +237,8 @@ namespace dns
 
     ResourceRecordPair parseResourceRecord( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *section_begin )
     {
+	BOOST_LOG_TRIVIAL(trace) << "dns.rr.parse: parse resource record";
+
         ResourceRecord sec;
 
         const uint8_t *pos   = Domainname::parsePacket( sec.mDomainname, packet_begin, packet_end, section_begin );
@@ -235,6 +247,7 @@ namespace dns
         sec.mTTL   = ntohl( get_bytes<uint32_t>( &pos ) );
         uint16_t data_length = ntohs( get_bytes<uint16_t>( &pos ) );
 
+	BOOST_LOG_TRIVIAL(trace) << "dns.rr.parse: parse " << typeCodeToString( sec.mType ) << " resource record";
         RDATAPtr parsed_data;
         switch ( sec.mType ) {
         case TYPE_A:
@@ -297,6 +310,8 @@ namespace dns
             parsed_data = RecordRaw::parse( sec.mType, pos, pos + data_length );
         }
         pos += data_length;
+
+	BOOST_LOG_TRIVIAL(trace) << "dns.rr.parse: parsed resource record";
 
         sec.mRData = parsed_data;
         return ResourceRecordPair( sec, pos );
@@ -1928,6 +1943,8 @@ namespace dns
 
     RDATAPtr RecordOptionsData::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
     {
+	BOOST_LOG_TRIVIAL(trace) << "dns.opt.parse: parse options data";
+
         const uint8_t *pos = rdata_begin;
 
         std::vector<OptPseudoRROptPtr> options;
@@ -1950,20 +1967,32 @@ namespace dns
 
             switch ( option_code ) {
             case OPT_NSID:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse NSID";
                 options.push_back( NSIDOption::parse( pos, pos + option_size ) );
                 break;
             case OPT_COOKIE:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse COOKIE";
                 options.push_back( CookieOption::parse( pos, pos + option_size ) );
                 break;
+            case OPT_CLIENT_SUBNET:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse ClientSubnet";
+                options.push_back( ClientSubnetOption::parse( pos, pos + option_size ) );
+                break;
             case OPT_TCP_KEEPALIVE:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse TCPKEEPALIVE";
                 options.push_back( TCPKeepaliveOption::parse( pos, pos + option_size ) );
                 break;
+            case OPT_KEY_TAG:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse KEYTAG";
+                options.push_back( KeyTagOption::parse( pos, pos + option_size ) );
             default:
+		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: unknown option " << option_code;
                 break;
             }
             pos += option_size;
         }
 
+	BOOST_LOG_TRIVIAL(trace) << "dns.opt.parsed: parse options data";
         return RDATAPtr( new RecordOptionsData( options ) );
     }
 

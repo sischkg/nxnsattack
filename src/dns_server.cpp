@@ -1,5 +1,6 @@
 #include "dns_server.hpp"
 #include "threadpool.hpp"
+#include "logger.hpp"
 #include <boost/cstdint.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
@@ -75,17 +76,19 @@ namespace dns
             pool.join();
 
         } catch ( std::runtime_error &e ) {
-            std::cerr << "caught " << e.what() << std::endl;
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: exception: " << e.what();
         }
     }
 
     void DNSServer::replyOverUDP( udpv4::Server &dns_receiver, udpv4::PacketInfo recv_data )
     {
         try {
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: received DNS message from "
+				     << recv_data.mSourceAddress << ":" << recv_data.mSourcePort << ".";
+	    
             PacketInfo query = parseDNSMessage( recv_data.begin(), recv_data.end() );
 
-            if ( isDebug() )
-                std::cerr << "Query:" << query << std::endl; 
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: " << "Query: " << query; 
 
             if ( query.mIsTSIG ) {
                 ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
@@ -97,7 +100,7 @@ namespace dns
             PacketInfo response_info = generateResponse( query, false );
 
             if ( isDebug() )
-                std::cerr << "Response:" << response_info << std::endl; 
+		BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: Response: " << response_info;
 
             uint32_t requested_max_payload_size = 512;
             if ( query.isEDNS0() &&
@@ -108,10 +111,10 @@ namespace dns
             }
 
             if ( isDebug() )
-                std::cerr << "response size(UDP): " << response_info.getMessageSize() << std::endl;
+		BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response size(UDP): " << response_info.getMessageSize();
             if ( response_info.getMessageSize() > requested_max_payload_size ) {
                 if ( isDebug() )
-                    std::cerr << "response TC=1: " << response_info.getMessageSize() << std::endl;
+                    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response TC=1: " << response_info.getMessageSize();
                 response_info.mTruncation = 1;
                             
                 response_info.clearAnswerSection();
@@ -128,16 +131,19 @@ namespace dns
             client.mAddress = recv_data.mSourceAddress;
             client.mPort    = recv_data.mSourcePort;
             dns_receiver.sendPacket( client, response_packet );
+
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: sent DNS message to "
+				     << client.mAddress << ":" << client.mPort << ".";
         }
         catch ( std::runtime_error &e ) {
-            std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
+	    BOOST_LOG_TRIVIAL(error) << "dns.server.udp: recv/send response failed(" << e.what() << ") from "
+				     << recv_data.mSourceAddress << ":" << recv_data.mSourcePort << ".";
         }
 
     }
 
     void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr &connection )
     {
-        std::cerr << "sendZone" << std::endl;
         generateAXFRResponse( query, connection );
     }
 
@@ -157,12 +163,12 @@ namespace dns
                     tcp_thread.detach();
                 }
                 catch ( std::runtime_error &e ) {
-                    std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
+                    BOOST_LOG_TRIVIAL(error) << "dns,server.tcp: recv/send response failed(" << e.what() << ").";
                 }
             }
         }
         catch ( std::runtime_error &e ) {
-            std::cerr << "caught " << e.what() << std::endl;
+	    BOOST_LOG_TRIVIAL(error) << "dns.server.tcp: exception: " << e.what() << std::endl;
         }
     }
 
@@ -170,36 +176,34 @@ namespace dns
     void DNSServer::replyOverTCP( tcpv4::ConnectionPtr connection )
     {
         try {
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: connected.";
+
             PacketData size_data = connection->receive( 2 );
             if ( size_data.size() < 2 ) {
                 throw std::runtime_error( "cannot get size of dns message" );
             }
             uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
-            if ( isDebug() )
-                std::cerr << "DNS message size: " << size << std::endl;
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: message size: " << size;
 
             PacketData recv_data = connection->receive( size );
             PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
 
-            if ( isDebug() )
-                std::cerr << "DNS message of query: " << query << std::endl;
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: query: " << query;
 
             if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
                  query.mQuestionSection[ 0 ].mType == dns::TYPE_IXFR ) {
-                if ( isDebug() )
-                    std::cerr << "responding zone transfer" << std::endl;
+		BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: sending zone";
                 sendZone( query, connection );
             }
             else {
                 PacketInfo response_info = generateResponse( query, true );
                 WireFormat response_stream;
 
-                if ( isDebug() )
-                    std::cerr << "response size(TCP): " << response_info.getMessageSize() << std::endl;
+		BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: response size(TCP): " << response_info.getMessageSize();
 
                 if ( response_info.getMessageSize() > 0xffff ) {
-                    if ( isDebug() )
-                        std::cerr << "too large size: " << response_info.getMessageSize() << std::endl;
+		    BOOST_LOG_TRIVIAL(info) << "dns.server.tcp: too large size: " << response_info.getMessageSize();
+		    
                     response_info.mResponseCode = SERVER_ERROR;
                     response_info.clearAnswerSection();
                     response_info.clearAuthoritySection();
@@ -213,9 +217,10 @@ namespace dns
                 connection->send( reinterpret_cast<const uint8_t *>( &send_size ), sizeof( send_size ) );
                 connection->send( response_stream );
             }
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: sent response.";
         } 
         catch ( std::runtime_error &e ) {
-            std::cerr << "recv/send response failed(" << e.what() << ")." << std::endl;
+	    BOOST_LOG_TRIVIAL(error) << "dns.server.tcp: recv/send response failed(" << e.what() << ").";
         }
     }
 

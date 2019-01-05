@@ -3,6 +3,7 @@
 #include "tcpv4client.hpp"
 #include "rrgenerator.hpp"
 #include "shufflebytes.hpp"
+#include "logger.hpp"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <boost/program_options.hpp>
@@ -62,7 +63,8 @@ int main( int argc, char **argv )
     uint32_t    interval = 0;
     bool        is_randomize = true;
     std::string sent_queries_file = "";
-
+    std::string log_level;
+    
     po::options_description desc( "query generator" );
     desc.add_options()( "help,h", "print this message" )
 
@@ -85,7 +87,9 @@ int main( int argc, char **argv )
           po::value<std::string>( &another_basename ),
           "yet another base name for cache poisoning" )
 	( "interval,i",
-          po::value<uint32_t>( &interval )->default_value( DEFAULT_INTERVAL_MSEC ) );
+          po::value<uint32_t>( &interval )->default_value( DEFAULT_INTERVAL_MSEC ) )
+	( "log-level",
+	  po::value<std::string>( &log_level )->default_value( "info" ) );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -95,6 +99,8 @@ int main( int argc, char **argv )
         std::cerr << desc << "\n";
         return 1;
     }
+
+    dns::logger::initialize( log_level );
 
     bool record_queries = false;
     std::fstream fs_record_queries;
@@ -107,6 +113,8 @@ int main( int argc, char **argv )
     dns::ResourceRecordGenerator rr_generator;
     dns::OptionGenerator option_generator;
 
+    BOOST_LOG_TRIVIAL(info) << "Sending fuzzing queries to " << target_server << ":" << target_port << ".";
+    
     while ( true ) {
         try {
             dns::PacketInfo packet_info;
@@ -399,10 +407,10 @@ int main( int argc, char **argv )
             nanosleep( &wait_time, nullptr );
         }
         catch ( std::runtime_error &e )  {
-            std::cerr << e.what() << std::endl;
+            BOOST_LOG_TRIVIAL(error) << e.what();
         }
         catch ( ... ) {
-            std::cerr << "other error" << std::endl;
+            BOOST_LOG_TRIVIAL(error) << "other error";
         }
 
     }
