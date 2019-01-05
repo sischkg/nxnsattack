@@ -159,7 +159,7 @@ namespace dns
     }
 
 
-    Domainname getDomainname( const PacketInfo &hint )
+    Domainname getDomainname( const MessageInfo &hint )
     {
         std::vector<Domainname> names;
         for ( auto rr : hint.getQuestionSection() ) {
@@ -184,7 +184,7 @@ namespace dns
      * XNAMEGenarator
      **********************************************************/
     template<class T>
-    std::shared_ptr<RDATA> XNameGenerator<T>::generate( const PacketInfo &hint, const Domainname &hint2 )
+    std::shared_ptr<RDATA> XNameGenerator<T>::generate( const MessageInfo &hint, const Domainname &hint2 )
     {
         Domainname hint_name;
         uint32_t qdcount = hint.getQuestionSection().size();
@@ -222,7 +222,7 @@ namespace dns
     /**********************************************************
      * RAWGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> RawGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> RawGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
 	return generate();
     }
@@ -239,7 +239,7 @@ namespace dns
     /**********************************************************
      * AGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> AGenerator::generate( const PacketInfo &hint, const Domainname &hint2 )
+    std::shared_ptr<RDATA> AGenerator::generate( const MessageInfo &hint, const Domainname &hint2 )
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
         for ( auto rr : hint.getAnswerSection() ) {
@@ -274,7 +274,7 @@ namespace dns
     /**********************************************************
      * WKSGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> WKSGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> WKSGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
 	return generate();
     }
@@ -301,7 +301,7 @@ namespace dns
     /**********************************************************
      * AAAAGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> AAAAGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> AAAAGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         std::vector<std::shared_ptr<RDATA> > record_a_list;
         for ( auto rr : hint1.getAnswerSection() ) {
@@ -337,7 +337,7 @@ namespace dns
     /**********************************************************
      * SOAGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> SOAGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> SOAGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
 	return std::shared_ptr<RDATA>( new RecordSOA( getDomainname( hint1 ),
 						      getDomainname( hint1 ),
@@ -362,7 +362,7 @@ namespace dns
     /**********************************************************
      * RRSIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> RRSIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> RRSIGGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         PacketData signature = getRandomSizeStream( 256 );
 
@@ -395,7 +395,7 @@ namespace dns
     /**********************************************************
      * DNSKEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> DNSKEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> DNSKEYGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordDNSKEY( getRandom() % 2 ? RecordDNSKEY::KSK : RecordDNSKEY::ZSK,
@@ -415,7 +415,7 @@ namespace dns
     /**********************************************************
      * DSGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> DSGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> DSGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         if ( getRandom( 2 ) ) {
             PacketData hash = getRandomStream( 20 );
@@ -455,7 +455,7 @@ namespace dns
     /**********************************************************
      * NSECGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSECGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> NSECGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         std::vector<Type> types;
         unsigned int type_count = getRandom( 4 );
@@ -481,7 +481,7 @@ namespace dns
     /**********************************************************
      * NSEC3Genarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSEC3Generator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> NSEC3Generator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         return generate();
     }
@@ -510,7 +510,7 @@ namespace dns
     /**********************************************************
      * NSEC3PARAMGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> NSEC3PARAMGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         return generate();
     }
@@ -531,7 +531,7 @@ namespace dns
     /**********************************************************
      * SIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> SIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> SIGGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         PacketData signature = getRandomStream( 256 );
 
@@ -564,7 +564,7 @@ namespace dns
     /**********************************************************
      * KEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> KEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> KEYGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         PacketData public_key = getRandomStream( 132 );
 	return std::shared_ptr<RDATA>( new RecordKEY( 0xffff,
@@ -583,7 +583,7 @@ namespace dns
     /**********************************************************
      * NXTGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> NXTGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> NXTGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         std::vector<Type> types;
         unsigned int type_count = getRandom( 0xffff );
@@ -609,7 +609,7 @@ namespace dns
     /**********************************************************
      * TKEYGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> TKEYGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> TKEYGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
 	std::string algo = "HMAC-MD5.SIG-ALG.REG.INT";
 	if ( getRandom( 1 ) ) {
@@ -653,7 +653,7 @@ namespace dns
     /**********************************************************
      * TSIGGenarator
      **********************************************************/
-    std::shared_ptr<RDATA> TSIGGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    std::shared_ptr<RDATA> TSIGGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
 	std::string algo = "HMAC-MD5.SIG-ALG.REG.INT";
 	if ( getRandom( 1 ) ) {
@@ -725,7 +725,7 @@ namespace dns
     }
 
 
-    RRSet ResourceRecordGenerator::generate( const PacketInfo &hint1, const Domainname &hint2 )
+    RRSet ResourceRecordGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
         Class class_table[] = { CLASS_IN, CLASS_CH, CLASS_HS, CLASS_NONE, CLASS_ANY };
 
@@ -755,7 +755,7 @@ namespace dns
         return rrset;
     }
 
-    std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> RawOptionGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -769,7 +769,7 @@ namespace dns
 	return std::shared_ptr<OptPseudoRROption>( new RAWOption( getRandom( 0x0f ), data ) );
     }
 
-    std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> NSIDGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -783,7 +783,7 @@ namespace dns
 	return std::shared_ptr<OptPseudoRROption>( new NSIDOption( id ) );
     }
 
-    std::shared_ptr<OptPseudoRROption> ClientSubnetGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> ClientSubnetGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -811,7 +811,7 @@ namespace dns
     }
 
 
-    std::shared_ptr<OptPseudoRROption> CookieGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> CookieGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -831,7 +831,7 @@ namespace dns
     }
 
 
-    std::shared_ptr<OptPseudoRROption> TCPKeepaliveGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> TCPKeepaliveGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -846,7 +846,7 @@ namespace dns
     }
 
 
-    std::shared_ptr<OptPseudoRROption> KeyTagGenerator::generate( const PacketInfo &hint )
+    std::shared_ptr<OptPseudoRROption> KeyTagGenerator::generate( const MessageInfo &hint )
     {
 	return generate();
     }
@@ -874,7 +874,7 @@ namespace dns
     }
 
 
-    void OptionGenerator::generate( PacketInfo &packet )
+    void OptionGenerator::generate( MessageInfo &packet )
     {
 	if ( ! packet.isEDNS0() )
 	    return;

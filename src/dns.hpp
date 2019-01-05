@@ -1427,14 +1427,14 @@ namespace dns
                         uint16_t           in_original_id  = 0,
                         uint16_t           in_error        = 0,
                         const PacketData & in_other        = PacketData() )
-            : mKeyName( in_key_name ),
-              mAlgorithm( in_algo ),
-              mSignedTime( in_signed_time ),
-              mFudge( in_fudge ),
-              mMAC( in_mac ),
-              mOriginalID( in_original_id ),
-              mError( in_error ),
-              mOther( in_other )
+	: mKeyName( in_key_name ),
+	  mAlgorithm( in_algo ),
+	  mSignedTime( in_signed_time ),
+	  mFudge( in_fudge ),
+	  mMAC( in_mac ),
+	  mOriginalID( in_original_id ),
+	  mError( in_error ),
+	  mOther( in_other )
         {
         }
 
@@ -1521,7 +1521,7 @@ namespace dns
 	}
     };
 
-    struct PacketInfo {
+    struct MessageInfo {
         uint16_t mID;
 
         uint8_t mQueryResponse;
@@ -1547,7 +1547,7 @@ namespace dns
         std::vector<ResourceRecord>       mAuthoritySection;
         std::vector<ResourceRecord>       mAdditionalSection;
 
-        PacketInfo()
+        MessageInfo()
             : mID( 0 ),
               mQueryResponse( 0 ),
               mOpcode( 0 ),
@@ -1597,9 +1597,9 @@ namespace dns
         uint32_t getMessageSize() const;
     };
 
-    PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
-    std::ostream &operator<<( std::ostream &os, const PacketInfo &query );
-    std::ostream &printHeader( std::ostream &os, const PacketInfo &packet );
+    MessageInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
+    std::ostream &operator<<( std::ostream &os, const MessageInfo &query );
+    std::ostream &printHeader( std::ostream &os, const MessageInfo &packet );
     std::ostream &operator<<( std::ostream &os, const OptPseudoRecord &opt );
     std::string classCodeToString( Class );
     std::string typeCodeToString( Type t );
@@ -1632,7 +1632,7 @@ namespace dns
     void
     addTSIGResourceRecord( const TSIGInfo &tsig_info, WireFormat &message, const PacketData &query_mac = PacketData() );
     bool
-    verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message );
+    verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const MessageInfo &packet_info, const WireFormat &message );
 
     
     template <typename Type>

@@ -86,7 +86,7 @@ int main( int argc, char **argv )
         queries.push_back( query );
 
         try {
-            dns::PacketInfo query_info = dns::parseDNSMessage( &query[0], &query[0] + query.size() );
+            dns::MessageInfo query_info = dns::parseDNSMessage( &query[0], &query[0] + query.size() );
             std::cout << query_info << std::endl;
         }
         catch ( std::runtime_error &e ) {

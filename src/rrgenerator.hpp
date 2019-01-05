@@ -67,7 +67,7 @@ namespace dns
     {
     public:
         virtual ~RDATAGeneratable() {}
-        virtual std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 ) = 0;
+        virtual std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 ) = 0;
         virtual std::shared_ptr<RDATA> generate() = 0;
     };
 
@@ -76,7 +76,7 @@ namespace dns
     public:
         ResourceRecordGenerator();
 
-        RRSet generate( const PacketInfo &hint1, const Domainname &hint2 );
+        RRSet generate( const MessageInfo &hint1, const Domainname &hint2 );
 
     private:
         std::vector<std::shared_ptr<RDATAGeneratable>> mGenerators;
@@ -85,7 +85,7 @@ namespace dns
     class RawGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
@@ -93,7 +93,7 @@ namespace dns
     class XNameGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
@@ -104,133 +104,133 @@ namespace dns
     class AGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class AAAAGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class WKSGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class SOAGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class RRSIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class DNSKEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class DSGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class NSECGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class NSEC3Generator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class NSEC3PARAMGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class TKEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class TSIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class SIGGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class KEYGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class NXTGenerator : public RDATAGeneratable
     {
     public:
-        std::shared_ptr<RDATA> generate( const PacketInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
         std::shared_ptr<RDATA> generate();
     };
 
     class OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint ) = 0;
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint ) = 0;
 	virtual std::shared_ptr<OptPseudoRROption> generate() = 0;
     };
 
     class RawOptionGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
     class NSIDGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
     class ClientSubnetGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
@@ -238,21 +238,21 @@ namespace dns
     class CookieGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
     class TCPKeepaliveGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
     class KeyTagGenerator : public OptGeneratable
     {
     public:
-	virtual std::shared_ptr<OptPseudoRROption> generate( const PacketInfo &hint );
+	virtual std::shared_ptr<OptPseudoRROption> generate( const MessageInfo &hint );
 	virtual std::shared_ptr<OptPseudoRROption> generate();
     };
 
@@ -261,7 +261,7 @@ namespace dns
     public:
         OptionGenerator();
 
-	void generate( PacketInfo &packet );
+	void generate( MessageInfo &packet );
     private:
         std::vector<std::shared_ptr<OptGeneratable>> mGenerators;
     };

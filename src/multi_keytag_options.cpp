@@ -43,7 +43,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    dns::PacketInfo packet_info;
+    dns::MessageInfo packet_info;
 
     packet_info.mOptPseudoRR.mDomainname  = ".";
     packet_info.mOptPseudoRR.mPayloadSize = 4096;

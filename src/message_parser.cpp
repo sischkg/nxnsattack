@@ -22,7 +22,7 @@ int main( int argc, char **argv )
             message.push_back( c );
         }
     
-        dns::PacketInfo msg = dns::parseDNSMessage( &message[0], &message[0] + message.size() );
+        dns::MessageInfo msg = dns::parseDNSMessage( &message[0], &message[0] + message.size() );
 
         std::cout << msg << std::endl;
     }

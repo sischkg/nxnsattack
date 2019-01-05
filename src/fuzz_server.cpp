@@ -26,11 +26,11 @@ namespace dns
             return rrs;
         }
 
-        PacketInfo modifyResponse( const PacketInfo &query,
-                                   const PacketInfo &original_response,
-                                   bool via_tcp ) const
+        MessageInfo modifyResponse( const MessageInfo &query,
+				    const MessageInfo &original_response,
+				    bool via_tcp ) const
         {
-            PacketInfo modified_response = original_response;
+            MessageInfo modified_response = original_response;
 
             ResourceRecordGenerator rr_generator;
 
@@ -174,7 +174,7 @@ namespace dns
             return modified_response;
         }
 
-	void modifyMessage( const PacketInfo &query, WireFormat &message ) const
+	void modifyMessage( const MessageInfo &query, WireFormat &message ) const
 	{
             unsigned int shuffle_count = getRandom( 1 );
             for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
@@ -185,7 +185,7 @@ namespace dns
 	
         void shuffle_rr( std::vector<ResourceRecord> &rrs ) const
         {
-	  std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
+	    std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
         }
 
         void replaceClass( std::vector<ResourceRecord> &section ) const

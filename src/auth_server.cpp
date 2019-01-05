@@ -20,15 +20,15 @@ namespace dns
     }
 
 
-    PacketInfo AuthServer::generateResponse( const dns::PacketInfo &query, bool via_tcp ) const
+    MessageInfo AuthServer::generateResponse( const dns::MessageInfo &query, bool via_tcp ) const
     {
-	dns::PacketInfo response = zone->getAnswer( query );
+	dns::MessageInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );
     }
 
-    PacketInfo AuthServer::modifyResponse( const dns::PacketInfo &query,
-					   const dns::PacketInfo &original_response,
-					   bool via_tcp ) const
+    MessageInfo AuthServer::modifyResponse( const dns::MessageInfo &query,
+					    const dns::MessageInfo &original_response,
+					    bool via_tcp ) const
     {
 	return original_response;
     }

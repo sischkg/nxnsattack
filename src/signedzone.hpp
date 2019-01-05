@@ -16,7 +16,7 @@ namespace dns
                     bool enable_nsec = true, bool enable_nsec3 = false );
 
         void add( std::shared_ptr<RRSet> rrset );
-        PacketInfo getAnswer( const PacketInfo &query ) const;
+        MessageInfo getAnswer( const MessageInfo &query ) const;
         NodePtr  findNode( const Domainname &domainname ) const;
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
 	std::vector<std::shared_ptr<RecordDS>> getDSRecords() const; 

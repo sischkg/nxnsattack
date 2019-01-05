@@ -18,10 +18,10 @@ namespace dns
                    const std::string &ksk_config_yaml, const std::string &zsk_config_yaml,
                    const std::vector<uint8_t> &salt, uint16_t iterate, HashAlgorithm algo,
                    bool enable_nsec, bool enable_nsec3 );
-	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const;
-	virtual PacketInfo modifyResponse( const PacketInfo &query,
-					   const PacketInfo &original_response,
-					   bool vir_tcp ) const;
+	MessageInfo generateResponse( const MessageInfo &query, bool via_tcp ) const;
+	virtual MessageInfo modifyResponse( const MessageInfo &query,
+					    const MessageInfo &original_response,
+					    bool vir_tcp ) const;
 
         std::vector<std::shared_ptr<RecordDS>> getDSRecords() const;
 	std::shared_ptr<RRSet> signRRSet( const RRSet &rrset ) const;

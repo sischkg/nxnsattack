@@ -42,10 +42,10 @@ namespace dns
         void startTCPServer();
         void replyOverTCP( tcpv4::ConnectionPtr connection );
 
-        ResponseCode verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const;
-        PacketInfo generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const;
+        ResponseCode verifyTSIGQuery( const MessageInfo &query, const uint8_t *begin, const uint8_t *end ) const;
+        MessageInfo generateTSIGErrorResponse( const MessageInfo &query, ResponseCode rcode ) const;
 
-        void sendZone( const PacketInfo &info, tcpv4::ConnectionPtr &connection );
+        void sendZone( const MessageInfo &info, tcpv4::ConnectionPtr &connection );
         bool isDebug() const { return mDebug; }
     public:
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool debug = false, unsigned int thread_count = 1 )
@@ -55,9 +55,9 @@ namespace dns
         ~DNSServer()
         {}
 
-        virtual PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const = 0;
-        virtual void generateAXFRResponse( const PacketInfo &query, tcpv4::ConnectionPtr &conn ) const {}
-	virtual void modifyMessage( const PacketInfo &query, WireFormat &messge ) const {} 
+        virtual MessageInfo generateResponse( const MessageInfo &query, bool via_tcp ) const = 0;
+        virtual void generateAXFRResponse( const MessageInfo &query, tcpv4::ConnectionPtr &conn ) const {}
+	virtual void modifyMessage( const MessageInfo &query, WireFormat &messge ) const {} 
         void start();
 
         void addTSIGKey( const std::string &name, const TSIGKey &key );

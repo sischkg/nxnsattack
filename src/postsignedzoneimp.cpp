@@ -18,7 +18,7 @@ namespace dns
    {}
 
 
-    void PostSignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
+    void PostSignedZoneImp::responseNoData( const Domainname &qname, MessageInfo &response, bool need_wildcard ) const
     {
 	response.mResponseCode = NO_ERROR;
 	addSOAToAuthoritySection( response );
@@ -55,7 +55,7 @@ namespace dns
     }
 
 
-    void PostSignedZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
+    void PostSignedZoneImp::responseNXDomain( const Domainname &qname, MessageInfo &response ) const
     {
 	response.mResponseCode = NXDOMAIN;
 	addSOAToAuthoritySection( response );
@@ -106,7 +106,7 @@ namespace dns
 	}
     }
 
-    void PostSignedZoneImp::responseDNSKEY( const Domainname &qname, PacketInfo &response ) const
+    void PostSignedZoneImp::responseDNSKEY( const Domainname &qname, MessageInfo &response ) const
     {
 	std::vector<std::shared_ptr<RecordDNSKEY>> keys = mSigner.getDNSKEYRecords();
 	std::shared_ptr<RRSet> dnskey_rrset( new RRSet( getSOA().getOwner(), getSOA().getClass(), TYPE_DNSKEY, getSOA().getTTL() ) );
@@ -120,7 +120,7 @@ namespace dns
 	}
     }
 
-    void PostSignedZoneImp::responseRRSIG( const Domainname &qname, PacketInfo &response ) const
+    void PostSignedZoneImp::responseRRSIG( const Domainname &qname, MessageInfo &response ) const
     {
 	auto node = findNode( qname );
 	if ( node ) {
@@ -141,7 +141,7 @@ namespace dns
 	}
     }
 
-    void PostSignedZoneImp::responseNSEC( const Domainname &qname, PacketInfo &response ) const
+    void PostSignedZoneImp::responseNSEC( const Domainname &qname, MessageInfo &response ) const
     {
 	auto node = findNode( qname );
 	if ( node ) {
@@ -188,10 +188,10 @@ namespace dns
 	return dnskey_rrset;
     }
 
-    void PostSignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
+    void PostSignedZoneImp::addRRSIG( MessageInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {}
 
-    void PostSignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname &owner ) const
+    void PostSignedZoneImp::addRRSIG( MessageInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname &owner ) const
     {}
 
     

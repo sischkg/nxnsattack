@@ -23,7 +23,7 @@ class AXFRServer : public dns::DNSServer
 private:
     unsigned long long rr_count;
 
-    dns::Domainname getQName( const dns::PacketInfo &query ) const
+    dns::Domainname getQName( const dns::MessageInfo &query ) const
     {
         if ( query.getQuestionSection().size() == 0 ) {
             return dns::Domainname();
@@ -33,7 +33,7 @@ private:
         }
     }
 
-    void setMessageHeader( dns::PacketInfo &response, uint16_t id ) const
+    void setMessageHeader( dns::MessageInfo &response, uint16_t id ) const
     {
         response.mID                  = id;
         response.mOpcode              = 0;
@@ -61,9 +61,9 @@ private:
 	return dns::RDATAPtr( new dns::RecordSOA( mname, rname, serial, 360000, 10000, 3600000, 3600 ) );
     }
 
-    void sendFirstResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn, dns::RDATAPtr soa ) const
+    void sendFirstResponse( const dns::MessageInfo &query, tcpv4::ConnectionPtr &conn, dns::RDATAPtr soa ) const
     {
-        dns::PacketInfo           response;
+        dns::MessageInfo          response;
         dns::QuestionSectionEntry query_question = query.mQuestionSection[ 0 ];
 
         dns::QuestionSectionEntry question;
@@ -106,9 +106,9 @@ private:
         conn->send( response_message );
     }
 
-    void sendLastResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn, dns::RDATAPtr soa ) const
+    void sendLastResponse( const dns::MessageInfo &query, tcpv4::ConnectionPtr &conn, dns::RDATAPtr soa ) const
     {
-        dns::PacketInfo           response;
+        dns::MessageInfo          response;
         dns::QuestionSectionEntry query_question = query.mQuestionSection[ 0 ];
 
         dns::QuestionSectionEntry question;
@@ -135,9 +135,9 @@ private:
         conn->send( response_message );
     }
 
-    void sendResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn, unsigned long long &index ) const
+    void sendResponse( const dns::MessageInfo &query, tcpv4::ConnectionPtr &conn, unsigned long long &index ) const
     {
-        dns::PacketInfo           response;
+        dns::MessageInfo          response;
         dns::QuestionSectionEntry query_question = query.mQuestionSection[ 0 ];
 
         dns::QuestionSectionEntry question;
@@ -188,7 +188,7 @@ public:
     {
     }
 
-    void generateAXFRResponse( const dns::PacketInfo &query, tcpv4::ConnectionPtr &conn ) const
+    void generateAXFRResponse( const dns::MessageInfo &query, tcpv4::ConnectionPtr &conn ) const
     {
         unsigned long long index = 0;
         dns::RDATAPtr soa = generateSOA( query.mQuestionSection[0].mDomainname );
@@ -204,9 +204,9 @@ public:
         sendLastResponse( query, conn, soa );
     }
 
-    dns::PacketInfo generateResponse( const dns::PacketInfo &query, bool via_tcp ) const
+    dns::MessageInfo generateResponse( const dns::MessageInfo &query, bool via_tcp ) const
     {
-        dns::PacketInfo           response;
+        dns::MessageInfo          response;
         dns::QuestionSectionEntry query_question = query.mQuestionSection[ 0 ];
 
         dns::QuestionSectionEntry question;

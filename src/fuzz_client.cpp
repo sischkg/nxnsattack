@@ -117,7 +117,7 @@ int main( int argc, char **argv )
     
     while ( true ) {
         try {
-            dns::PacketInfo packet_info;
+            dns::MessageInfo packet_info;
 
             if ( dns::getRandom( 5 ) ) {
                 packet_info.mOptPseudoRR.mDomainname  = ".";

@@ -14,7 +14,7 @@ namespace dns
 	mImp->add( rrset );
     }
 
-    PacketInfo PostSignedZone::getAnswer( const PacketInfo &query ) const
+    MessageInfo PostSignedZone::getAnswer( const MessageInfo &query ) const
     {
 	return mImp->getAnswer( query );
     }

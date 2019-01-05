@@ -19,7 +19,7 @@ namespace dns
         mNameToKey.insert( std::pair<std::string, TSIGKey>( name, key ) );
     }
 
-    ResponseCode DNSServer::verifyTSIGQuery( const PacketInfo &query, const uint8_t *begin, const uint8_t *end ) const
+    ResponseCode DNSServer::verifyTSIGQuery( const MessageInfo &query, const uint8_t *begin, const uint8_t *end ) const
     {
         auto tsig_key = mNameToKey.find( query.mTSIGRR.mKeyName.toString() );
         if ( tsig_key == mNameToKey.end() )
@@ -49,9 +49,9 @@ namespace dns
         return BADSIG;
     }
 
-    PacketInfo DNSServer::generateTSIGErrorResponse( const PacketInfo &query, ResponseCode rcode ) const
+    MessageInfo DNSServer::generateTSIGErrorResponse( const MessageInfo &query, ResponseCode rcode ) const
     {
-        PacketInfo response;
+        MessageInfo response;
 
         return response;
     }
@@ -86,18 +86,18 @@ namespace dns
 	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: received DNS message from "
 				     << recv_data.mSourceAddress << ":" << recv_data.mSourcePort << ".";
 	    
-            PacketInfo query = parseDNSMessage( recv_data.begin(), recv_data.end() );
+            MessageInfo query = parseDNSMessage( recv_data.begin(), recv_data.end() );
 
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: " << "Query: " << query; 
 
             if ( query.mIsTSIG ) {
                 ResponseCode rcode = verifyTSIGQuery( query, recv_data.begin(), recv_data.end() );
                 if ( rcode != NO_ERROR ) {
-                    PacketInfo response_info = generateTSIGErrorResponse( query, rcode );
+                    MessageInfo response_info = generateTSIGErrorResponse( query, rcode );
                 }
             }
 
-            PacketInfo response_info = generateResponse( query, false );
+            MessageInfo response_info = generateResponse( query, false );
 
             if ( isDebug() )
 		BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: Response: " << response_info;
@@ -142,7 +142,7 @@ namespace dns
 
     }
 
-    void DNSServer::sendZone( const PacketInfo &query, tcpv4::ConnectionPtr &connection )
+    void DNSServer::sendZone( const MessageInfo &query, tcpv4::ConnectionPtr &connection )
     {
         generateAXFRResponse( query, connection );
     }
@@ -186,7 +186,7 @@ namespace dns
 	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: message size: " << size;
 
             PacketData recv_data = connection->receive( size );
-            PacketInfo query     = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
+            MessageInfo query    = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
 
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: query: " << query;
 
@@ -196,8 +196,8 @@ namespace dns
                 sendZone( query, connection );
             }
             else {
-                PacketInfo response_info = generateResponse( query, true );
-                WireFormat response_stream;
+                MessageInfo response_info = generateResponse( query, true );
+                WireFormat  response_stream;
 
 		BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: response size(TCP): " << response_info.getMessageSize();
 

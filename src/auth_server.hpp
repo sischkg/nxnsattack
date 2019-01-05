@@ -15,10 +15,10 @@ namespace dns
 	{}
 
 	void load( const std::string &apex, const std::string &filename );
-	PacketInfo generateResponse( const PacketInfo &query, bool via_tcp ) const;
-	virtual PacketInfo modifyResponse( const PacketInfo &query,
-					   const PacketInfo &original_response,
-					   bool vir_tcp ) const;
+	MessageInfo generateResponse( const MessageInfo &query, bool via_tcp ) const;
+	virtual MessageInfo modifyResponse( const MessageInfo &query,
+					    const MessageInfo &original_response,
+					    bool vir_tcp ) const;
 
     private:
 	std::shared_ptr<Zone> zone;

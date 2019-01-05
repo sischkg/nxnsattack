@@ -90,7 +90,7 @@ namespace dns
         virtual ~Zone() {}
  
         virtual void add( std::shared_ptr<RRSet> rrset ) = 0;
-        virtual PacketInfo getAnswer( const PacketInfo &query ) const = 0;
+        virtual MessageInfo getAnswer( const MessageInfo &query ) const = 0;
         virtual NodePtr  findNode( const Domainname &domainname ) const = 0;
         virtual RRSetPtr findRRSet( const Domainname &domainname, Type type ) const = 0;
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;

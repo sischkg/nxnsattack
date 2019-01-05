@@ -10,24 +10,24 @@ namespace dns
         : AbstractZoneImp( zone_name )
     {}
 
-    void UnsignedZoneImp::responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard ) const
+    void UnsignedZoneImp::responseNoData( const Domainname &qname, MessageInfo &response, bool need_wildcard ) const
     {
 	response.mResponseCode = NO_ERROR;
 	addSOAToAuthoritySection( response );
     }
 
-    void UnsignedZoneImp::responseNXDomain( const Domainname &qname, PacketInfo &response ) const
+    void UnsignedZoneImp::responseNXDomain( const Domainname &qname, MessageInfo &response ) const
     {
 	response.mResponseCode = NXDOMAIN;
 	addSOAToAuthoritySection( response );
     }
 
-    void UnsignedZoneImp::responseDNSKEY( const Domainname &qname, PacketInfo &response ) const
+    void UnsignedZoneImp::responseDNSKEY( const Domainname &qname, MessageInfo &response ) const
     {
         responseNoData( qname, response, true );
     }
 
-    void UnsignedZoneImp::responseRRSIG( const Domainname &qname, PacketInfo &response ) const
+    void UnsignedZoneImp::responseRRSIG( const Domainname &qname, MessageInfo &response ) const
     {
 	auto node = findNode( qname );
 	if ( node ) {
@@ -39,7 +39,7 @@ namespace dns
 	}
     }
 
-    void UnsignedZoneImp::responseNSEC( const Domainname &qname, PacketInfo &response ) const
+    void UnsignedZoneImp::responseNSEC( const Domainname &qname, MessageInfo &response ) const
     {
 	auto node = findNode( qname );
 	if ( node ) {
@@ -64,10 +64,10 @@ namespace dns
         return RRSetPtr();
     }
 
-    void UnsignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
+    void UnsignedZoneImp::addRRSIG( MessageInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset ) const
     {}
 
-    void UnsignedZoneImp::addRRSIG( PacketInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname & ) const
+    void UnsignedZoneImp::addRRSIG( MessageInfo &response, std::vector<ResourceRecord> &section, const RRSet &original_rrset, const Domainname & ) const
     {}
 
     

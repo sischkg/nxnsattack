@@ -44,7 +44,7 @@ namespace dns
 	}	
     }
 
-    PacketInfo AbstractZoneImp::getAnswer( const PacketInfo &query ) const
+    MessageInfo AbstractZoneImp::getAnswer( const MessageInfo &query ) const
     {
         if ( query.mQuestionSection.size() != 1 ) {
             throw std::logic_error( "one qname must be exist" );
@@ -54,7 +54,7 @@ namespace dns
         Type       qtype  = query.mQuestionSection[0].mType;
         Class      qclass = query.mQuestionSection[0].mClass;
 
-        PacketInfo response;
+        MessageInfo response;
 
         response.mID                  = query.mID;
         response.mOpcode              = query.mOpcode;
@@ -339,7 +339,7 @@ namespace dns
         return NodePtr();
     }
 
-    void AbstractZoneImp::addSOAToAuthoritySection( PacketInfo &response ) const
+    void AbstractZoneImp::addSOAToAuthoritySection( MessageInfo &response ) const
     {
         if ( ! mSOA || mSOA->count() != 1 )
             throw std::logic_error( "SOA record must be exist in zone" );
@@ -351,7 +351,7 @@ namespace dns
 
     }
 
-    void AbstractZoneImp::responseDelegation( const Domainname &qname, PacketInfo &response, const RRSet &ns_rrset ) const
+    void AbstractZoneImp::responseDelegation( const Domainname &qname, MessageInfo &response, const RRSet &ns_rrset ) const
     {
         response.mResponseCode        = NO_ERROR;
         response.mAuthoritativeAnswer = 0;

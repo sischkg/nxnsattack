@@ -63,7 +63,7 @@ namespace dns
     }
 
 
-    void PacketInfo::generateMessage( WireFormat &message ) const
+    void MessageInfo::generateMessage( WireFormat &message ) const
     {
         OffsetDB offset_db;
 
@@ -108,19 +108,19 @@ namespace dns
         }
     }
 
-    uint32_t PacketInfo::getMessageSize() const
+    uint32_t MessageInfo::getMessageSize() const
     {
         WireFormat output;
         generateMessage( output );
         return output.size();
     }
 
-    void PacketInfo::addOption( std::shared_ptr<OptPseudoRROption> opt )
+    void MessageInfo::addOption( std::shared_ptr<OptPseudoRROption> opt )
     {
 	std::dynamic_pointer_cast<RecordOptionsData>( mOptPseudoRR.mOptions )->add( opt );
     }
     
-    PacketInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end )
+    MessageInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end )
     {
 	BOOST_LOG_TRIVIAL(trace) << "dns.message.parse: parse message ";
 	
@@ -130,7 +130,7 @@ namespace dns
             throw FormatError( "too short message size( less than DNS message header size )." );
         }
 
-        PacketInfo               packet_info;
+        MessageInfo              packet_info;
         const PacketHeaderField *header = reinterpret_cast<const PacketHeaderField *>( begin );
 
         packet_info.mID                  = ntohs( header->id );
@@ -317,7 +317,7 @@ namespace dns
         return ResourceRecordPair( sec, pos );
     }
 
-    std::ostream &printHeader( std::ostream &os, const PacketInfo &packet )
+    std::ostream &printHeader( std::ostream &os, const MessageInfo &packet )
     {
         os << "ID: "                  << packet.mID << std::endl
            << "Query/Response: "      << ( packet.mQueryResponse == 0 ? "Query" : "Response" ) << std::endl
@@ -534,7 +534,7 @@ namespace dns
         return os;
     }
 
-    std::ostream &operator<<( std::ostream &os, const PacketInfo &res )
+    std::ostream &operator<<( std::ostream &os, const MessageInfo &res )
     {
         os << "ID: "                   << res.mID << std::endl
            << "Query/Response: "       << ( res.mQueryResponse ? "Response" : "Query" ) << std::endl
@@ -2540,7 +2540,7 @@ namespace dns
         generateResourceRecord( entry, message, offset_db, false );
     }
 
-    bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const PacketInfo &packet_info, const WireFormat &message )
+    bool verifyTSIGResourceRecord( const TSIGInfo &tsig_info, const MessageInfo &packet_info, const WireFormat &message )
     {
         PacketData hash_data = message.get();
 

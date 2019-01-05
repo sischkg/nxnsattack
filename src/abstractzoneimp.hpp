@@ -25,7 +25,7 @@ namespace dns
     protected:
         void addEmptyNode( const Domainname & );
         void addRRSet( std::vector<ResourceRecord> &, const RRSet &rrset, const Domainname &owner = Domainname() ) const;
-        void addSOAToAuthoritySection( PacketInfo &res ) const;
+        void addSOAToAuthoritySection( MessageInfo &res ) const;
 
     public:
         AbstractZoneImp( const Domainname &zone_name );
@@ -35,7 +35,7 @@ namespace dns
         const RRSet &getNameServers() const { return *mNameServers; }
 
         void add( RRSetPtr rrest );
-        PacketInfo getAnswer( const PacketInfo &query ) const;
+        MessageInfo getAnswer( const MessageInfo &query ) const;
 	
         NodePtr  findNode( const Domainname &domainname ) const;
         RRSetPtr findRRSet( const Domainname &domainname, Type type ) const;
@@ -48,14 +48,14 @@ namespace dns
 
 	virtual std::vector<std::shared_ptr<RecordDS>> getDSRecords() const = 0;
 	virtual std::shared_ptr<RRSet> signRRSet( const RRSet & ) const = 0;
-	virtual void responseDelegation( const Domainname &qname, PacketInfo &response, const RRSet &ns_rrset ) const;
-	virtual void responseNoData( const Domainname &qname, PacketInfo &response, bool need_wildcard_nsec ) const = 0;
-	virtual void responseNXDomain( const Domainname &qname, PacketInfo &response ) const = 0;
-	virtual void responseRRSIG( const Domainname &qname, PacketInfo &response ) const = 0;
-	virtual void responseNSEC( const Domainname &qname, PacketInfo &response ) const = 0;
-	virtual void responseDNSKEY( const Domainname &qname, PacketInfo &response ) const = 0;
-        virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const = 0;
-        virtual void addRRSIG( PacketInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset, const Domainname &owner ) const = 0;
+	virtual void responseDelegation( const Domainname &qname, MessageInfo &response, const RRSet &ns_rrset ) const;
+	virtual void responseNoData( const Domainname &qname, MessageInfo &response, bool need_wildcard_nsec ) const = 0;
+	virtual void responseNXDomain( const Domainname &qname, MessageInfo &response ) const = 0;
+	virtual void responseRRSIG( const Domainname &qname, MessageInfo &response ) const = 0;
+	virtual void responseNSEC( const Domainname &qname, MessageInfo &response ) const = 0;
+	virtual void responseDNSKEY( const Domainname &qname, MessageInfo &response ) const = 0;
+        virtual void addRRSIG( MessageInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset ) const = 0;
+        virtual void addRRSIG( MessageInfo &, std::vector<ResourceRecord> &, const RRSet &original_rrset, const Domainname &owner ) const = 0;
 	virtual RRSetPtr getDNSKEYRRSet() const = 0;
 	virtual RRSetPtr generateNSECRRSet( const Domainname &domainname ) const = 0;
     };

@@ -12,7 +12,7 @@ namespace dns
 	mImp->add( rrset );
     }
 
-    PacketInfo UnsignedZone::getAnswer( const PacketInfo &query ) const
+    MessageInfo UnsignedZone::getAnswer( const MessageInfo &query ) const
     {
 	return mImp->getAnswer( query );
     }
