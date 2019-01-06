@@ -188,6 +188,7 @@ namespace dns
             PacketData recv_data = connection->receive( size );
             MessageInfo query    = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
 
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: parsed query." << size;
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: query: " << query;
 
             if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
@@ -203,6 +204,7 @@ namespace dns
 
                 if ( response_info.getMessageSize() > 0xffff ) {
 		    BOOST_LOG_TRIVIAL(info) << "dns.server.tcp: too large size: " << response_info.getMessageSize();
+		    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: sending SREVFAIL." << response_info.getMessageSize();
 		    
                     response_info.mResponseCode = SERVER_ERROR;
                     response_info.clearAnswerSection();
@@ -211,6 +213,7 @@ namespace dns
                 }
 
                 response_info.generateMessage( response_stream );
+		BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: generated DNS Message.";
                 modifyMessage( query, response_stream );
 			
                 uint16_t send_size = htons( response_stream.size() );

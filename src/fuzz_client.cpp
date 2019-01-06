@@ -401,12 +401,7 @@ int main( int argc, char **argv )
                 }
             }
 
-
-
-            timespec wait_time;
-            wait_time.tv_sec = 0;
-            wait_time.tv_nsec = 1000* 1000 * interval;
-            nanosleep( &wait_time, nullptr );
+	    wait_msec( interval );
         }
         catch ( std::runtime_error &e )  {
             BOOST_LOG_TRIVIAL(error) << e.what();

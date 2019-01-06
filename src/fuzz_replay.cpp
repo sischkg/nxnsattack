@@ -102,10 +102,7 @@ int main( int argc, char **argv )
         if ( count % 10000 == 0 )
             std::cerr << "sent " << count << std::endl;
 
-        timespec wait_time;
-        wait_time.tv_sec = 0;
-        wait_time.tv_nsec = 1000* 1000 * interval;
-        nanosleep( &wait_time, nullptr );
+	wait_msec( interval );
         count++;
 
         for ( auto message : queries ) {

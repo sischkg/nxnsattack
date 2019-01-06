@@ -6,6 +6,7 @@
 #include <iostream>
 #include <openssl/md5.h>
 #include <sstream>
+#include <time.h>
 
 const int ERROR_BUFFER_SIZE = 256;
 
@@ -529,4 +530,15 @@ void decodeFromBase32Hex( const std::string &src, std::vector<uint8_t> &dst )
         dst.push_back( ( convertFromBase32Hex( *( pos + 0 ) ) << 7 ) + ( convertFromBase32Hex( *( pos + 1 ) ) << 2 ) + ( convertFromBase32Hex( *( pos + 2 ) ) >> 3 ) );
         pos += 3;
     }
+}
+
+
+
+void wait_msec( unsigned int msec )
+{
+    timespec wait_time;
+    wait_time.tv_sec  = msec / 1000;
+    wait_time.tv_nsec = 1000 * 1000 * ( msec % 1000 );
+    std::cerr << "sec: " << wait_time.tv_sec << ", nanosec: " << wait_time.tv_nsec << std::endl;
+    nanosleep( &wait_time, nullptr );
 }

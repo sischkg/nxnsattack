@@ -74,4 +74,7 @@ void decodeFromHex( const std::string &src, std::vector<uint8_t> &dst );
 
 std::string printPacketData( const PacketData &p );
 
+
+void wait_msec( unsigned int msec );
+
 #endif

@@ -2049,7 +2049,7 @@ namespace dns
             data.push_back( (uint8_t)c );
         std::string hex;
         encodeToHex( data, hex );
-        return "NSID: " + hex;
+        return "NSID: ***"; //" + hex;
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
