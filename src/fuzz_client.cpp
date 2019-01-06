@@ -82,14 +82,16 @@ int main( int argc, char **argv )
           "randomize message" )
         ( "sent-queries,q",
           po::value<std::string>( &sent_queries_file )->default_value( "" ),
-          "output filename for recording query messages" )
-        ( "y,another",
+          "recording query messages" )
+        ( "another,y",
           po::value<std::string>( &another_basename ),
           "yet another base name for cache poisoning" )
 	( "interval,i",
-          po::value<uint32_t>( &interval )->default_value( DEFAULT_INTERVAL_MSEC ) )
-	( "log-level",
-	  po::value<std::string>( &log_level )->default_value( "info" ) );
+          po::value<uint32_t>( &interval )->default_value( DEFAULT_INTERVAL_MSEC ),
+	  "interval(msec) of each queries")
+	( "log-level,l",
+	  po::value<std::string>( &log_level )->default_value( "info" ),
+	  "trace|debug|info|warning|error|fatal" );
 
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );

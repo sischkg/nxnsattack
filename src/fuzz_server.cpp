@@ -280,12 +280,13 @@ int main( int argc, char **argv )
 	( "another,a", po::value<std::string>( &another_hint ),                             "another domainname for cache poisoning" )
         ( "ksk,K",     po::value<std::string>( &ksk_filename),                              "KSK filename" )
         ( "zsk,Z",     po::value<std::string>( &zsk_filename),                              "ZSK filename" )
-        ( "nsec,",     po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
+        ( "nsec",      po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
         ( "nsec3,3",   po::value<bool>( &enable_nsec3 )->default_value( false ),            "enable NSEC3" )
         ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
         ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
         ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
-        ( "log-leevel,l",   po::value<std::string>( &log_level )->default_value( "info" ),       "Log Level" );
+        ( "log-leevel,l",   po::value<std::string>( &log_level )->default_value( "info" ),  "trace|debug|info|warning|error|fatal" )
+	;
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
