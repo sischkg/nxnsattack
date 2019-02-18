@@ -56,7 +56,28 @@ namespace dns
         return response;
     }
 
+    MessageInfo DNSServer::generateErrorResponse( const MessageInfo &query, uint8_t rcode ) const
+    {
+        MessageInfo response;
 
+	response.mID                  = query.mID;
+	response.mQueryResponse       = 1;
+	response.mOpcode              = 0;
+	response.mAuthoritativeAnswer = 0;
+	response.mTruncation          = 0;
+	response.mRecursionDesired    = query.mRecursionDesired;
+	response.mCheckingDisabled    = query.mCheckingDisabled;
+	response.mAuthenticData       = 0;
+	response.mResponseCode        = rcode;
+	
+	response.mQuestionSection = query.mQuestionSection;
+	response.clearAnswerSection();
+	response.clearAuthoritySection();
+	response.clearAdditionalSection();
+
+        return response;
+    }
+    
     void DNSServer::startUDPServer()
     {
         try {
@@ -86,7 +107,14 @@ namespace dns
 	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: received DNS message from "
 				     << recv_data.mSourceAddress << ":" << recv_data.mSourcePort << ".";
 	    
-            MessageInfo query = parseDNSMessage( recv_data.begin(), recv_data.end() );
+            MessageInfo query;
+	    try {
+		query = parseDNSMessage( recv_data.begin(), recv_data.end() );
+	    }
+	    catch ( FormatError &e ) {
+		BOOST_LOG_TRIVIAL(info) << "dns.server.udp: " << "cannot parse query";
+		return;
+	    }
 
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: " << "Query: " << query; 
 
@@ -185,10 +213,17 @@ namespace dns
             uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
 	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: message size: " << size;
 
-            PacketData recv_data = connection->receive( size );
-            MessageInfo query    = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
-
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: parsed query." << size;
+            PacketData  recv_data = connection->receive( size );
+	    MessageInfo query;
+	    try {
+		query = parseDNSMessage( &recv_data[ 0 ], &recv_data[ 0 ] + recv_data.size() );
+	    }
+	    catch ( FormatError &e ) {
+		BOOST_LOG_TRIVIAL(info) << "dns.server.tcp: cannot parse DNS query message( " << e.what() << " ).";
+		return;
+	    }
+		
+	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: parsed query.";
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: query: " << query;
 
             if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
@@ -204,12 +239,8 @@ namespace dns
 
                 if ( response_info.getMessageSize() > 0xffff ) {
 		    BOOST_LOG_TRIVIAL(info) << "dns.server.tcp: too large size: " << response_info.getMessageSize();
-		    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: sending SREVFAIL." << response_info.getMessageSize();
-		    
-                    response_info.mResponseCode = SERVER_ERROR;
-                    response_info.clearAnswerSection();
-                    response_info.clearAuthoritySection();
-                    response_info.clearAdditionalSection();
+		    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: sending SREVFAIL." << response_info.getMessageSize();		    
+		    response_info = generateErrorResponse( query, SERVER_ERROR );
                 }
 
                 response_info.generateMessage( response_stream );

@@ -319,15 +319,15 @@ namespace dns
 
     std::ostream &printHeader( std::ostream &os, const MessageInfo &packet )
     {
-        os << "ID: "                  << packet.mID << std::endl
-           << "Query/Response: "      << ( packet.mQueryResponse == 0 ? "Query" : "Response" ) << std::endl
-           << "OpCode:"               << packet.mOpcode << std::endl
-           << "Authoritative Answer:" << packet.mAuthoritativeAnswer << std::endl
-           << "Truncation: "          << packet.mTruncation << std::endl
-           << "Recursion Desired: "   << packet.mRecursionDesired << std::endl
-           << "Recursion Available: " << packet.mRecursionAvailable << std::endl
-           << "Checking Disabled: "   << packet.mCheckingDisabled << std::endl
-           << "Response Code: "       << responseCodeToString( packet.mResponseCode ) << std::endl;
+        os << "ID: "                  << packet.mID << "\t"
+           << "Query/Response: "      << ( packet.mQueryResponse == 0 ? "Query" : "Response" ) << "\t"
+           << "OpCode:"               << packet.mOpcode << "\t"
+           << "Authoritative Answer:" << packet.mAuthoritativeAnswer << "\t"
+           << "Truncation: "          << packet.mTruncation << "\t"
+           << "Recursion Desired: "   << packet.mRecursionDesired << "\t"
+           << "Recursion Available: " << packet.mRecursionAvailable << "\t"
+           << "Checking Disabled: "   << packet.mCheckingDisabled << "\t"
+           << "Response Code: "       << responseCodeToString( packet.mResponseCode ) << "\t";
 
         return os;
     }
@@ -536,44 +536,44 @@ namespace dns
 
     std::ostream &operator<<( std::ostream &os, const MessageInfo &res )
     {
-        os << "ID: "                   << res.mID << std::endl
-           << "Query/Response: "       << ( res.mQueryResponse ? "Response" : "Query" ) << std::endl
-           << "OpCode:"                << (uint32_t)res.mOpcode    << std::endl
-           << "Authoritative Answer: " << res.mAuthoritativeAnswer << std::endl
-           << "Truncation: "           << res.mTruncation          << std::endl
-           << "Recursion Desired: "    << res.mRecursionDesired    << std::endl
-           << "Recursion Available: "  << res.mRecursionAvailable  << std::endl
-           << "Checking Disabled: "    << res.mCheckingDisabled    << std::endl
-           << "Response Code: "        << responseCodeToString( res.mResponseCode ) << std::endl;
+        os << "ID: "                   << res.mID << "\t"
+           << "Query/Response: "       << ( res.mQueryResponse ? "Response" : "Query" ) << "\t"
+           << "OpCode:"                << (uint32_t)res.mOpcode    << "\t"
+           << "Authoritative Answer: " << res.mAuthoritativeAnswer << "\t"
+           << "Truncation: "           << res.mTruncation          << "\t"
+           << "Recursion Desired: "    << res.mRecursionDesired    << "\t"
+           << "Recursion Available: "  << res.mRecursionAvailable  << "\t"
+           << "Checking Disabled: "    << res.mCheckingDisabled    << "\t"
+           << "Response Code: "        << responseCodeToString( res.mResponseCode ) << "\t";
 
         for ( auto q : res.mQuestionSection )
             os << "Query:"                      << "\t"
                << q.mDomainname                 << "\t"
                << classCodeToString( q.mClass ) << "\t"
-               << typeCodeToString( q.mType )   << std::endl;
+               << typeCodeToString( q.mType )   << ", ";
         for ( auto a : res.mAnswerSection )
             os << "Answer:"                     << "\t"
                << a.mDomainname                 << "\t"
                << a.mTTL                        << "\t"
                << classCodeToString( a.mClass ) << "\t"
                << typeCodeToString( a.mType )   << "\t"
-               << a.mRData->toString()          << std::endl;
+               << a.mRData->toString()          << ", ";
         for ( auto a : res.mAuthoritySection )
             os << "Authority:"                  << "\t"
                << a.mDomainname                 << "\t"
                << a.mTTL                        << "\t"
                << classCodeToString( a.mClass ) << "\t"
                << typeCodeToString( a.mType )   << "\t"
-               << a.mRData->toString()          << std::endl;
+               << a.mRData->toString()          << ", ";
         for ( auto a : res.mAdditionalSection )
             os << "Additional:"                 << "\t"
                << a.mDomainname                 << "\t"
                << a.mTTL                        << "\t"
                << classCodeToString( a.mClass ) << "\t"
                << typeCodeToString( a.mType )   << "\t"
-               << a.mRData->toString()          << std::endl;
+               << a.mRData->toString()          << ", ";
         if ( res.isEDNS0() ) {
-            os << res.mOptPseudoRR << std::endl;
+            os << res.mOptPseudoRR << "\t";
         }
         return os;
     }
@@ -1967,32 +1967,32 @@ namespace dns
 
             switch ( option_code ) {
             case OPT_NSID:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse NSID";
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: parse NSID";
                 options.push_back( NSIDOption::parse( pos, pos + option_size ) );
                 break;
             case OPT_COOKIE:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse COOKIE";
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: parse COOKIE";
                 options.push_back( CookieOption::parse( pos, pos + option_size ) );
                 break;
             case OPT_CLIENT_SUBNET:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse ClientSubnet";
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: parse ClientSubnet";
                 options.push_back( ClientSubnetOption::parse( pos, pos + option_size ) );
                 break;
             case OPT_TCP_KEEPALIVE:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse TCPKEEPALIVE";
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: parse TCPKEEPALIVE";
                 options.push_back( TCPKeepaliveOption::parse( pos, pos + option_size ) );
                 break;
             case OPT_KEY_TAG:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: parse KEYTAG";
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: parse KEYTAG";
                 options.push_back( KeyTagOption::parse( pos, pos + option_size ) );
             default:
-		BOOST_LOG_TRIVIAL(trace) << "dns.domainname.parse: unknown option " << option_code;
+		BOOST_LOG_TRIVIAL(trace) << "dns.option.parse: unknown option " << option_code;
                 break;
             }
             pos += option_size;
         }
 
-	BOOST_LOG_TRIVIAL(trace) << "dns.opt.parsed: parse options data";
+	BOOST_LOG_TRIVIAL(trace) << "dns.opiont.parsed: parse options data";
         return RDATAPtr( new RecordOptionsData( options ) );
     }
 
@@ -2186,7 +2186,7 @@ namespace dns
         if ( size < 8 ) {
             std::ostringstream os;
             os << "DNS Cookie length " << size << " is too short"; 
-            std::cerr << os.str() << std::endl;
+            std::cerr << os.str();
             return OptPseudoRROptPtr( new CookieOption( PacketData(), PacketData() ) );        
         }
 
@@ -2223,8 +2223,7 @@ namespace dns
         if ( size != 2 ) {
             std::ostringstream os;
             os << "DNS TCPKeepalive length " << size << " must be 2."; 
-            std::cerr << os.str() << std::endl;
-            return OptPseudoRROptPtr( new TCPKeepaliveOption( 0 ) );        
+	    throw FormatError( os.str() );
         }
 
         uint16_t timeout = ntohs( get_bytes<uint16_t>( &pos ) );

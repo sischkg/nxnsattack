@@ -44,7 +44,7 @@ namespace dns
 
         ResponseCode verifyTSIGQuery( const MessageInfo &query, const uint8_t *begin, const uint8_t *end ) const;
         MessageInfo generateTSIGErrorResponse( const MessageInfo &query, ResponseCode rcode ) const;
-
+	MessageInfo generateErrorResponse( const MessageInfo &query, ResponseCode rcode ) const;
         void sendZone( const MessageInfo &info, tcpv4::ConnectionPtr &connection );
         bool isDebug() const { return mDebug; }
     public:
