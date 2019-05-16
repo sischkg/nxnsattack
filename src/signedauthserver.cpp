@@ -1,4 +1,5 @@
 #include "signedauthserver.hpp"
+#include "logger.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -36,6 +37,7 @@ namespace dns
 
     MessageInfo SignedAuthServer::generateResponse( const dns::MessageInfo &query, bool via_tcp ) const
     {
+        BOOST_LOG_TRIVIAL(trace) << "dns.server.signedauthsever: " << "getting answer";
 	dns::MessageInfo response = zone->getAnswer( query );
 	return modifyResponse( query, response, via_tcp );
     }

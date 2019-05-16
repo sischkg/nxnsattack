@@ -127,8 +127,8 @@ namespace dns
 
             MessageInfo response_info = generateResponse( query, false );
 
-            if ( isDebug() )
-		BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: Response: " << response_info;
+            // BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: Response: " << response_info;
+	    std::cerr << "generated Response" << std::endl;
 
             uint32_t requested_max_payload_size = 512;
             if ( query.isEDNS0() &&
@@ -138,11 +138,9 @@ namespace dns
                     query.mOptPseudoRR.mPayloadSize = 4096;
             }
 
-            if ( isDebug() )
-		BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response size(UDP): " << response_info.getMessageSize();
+            BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response size(UDP): " << response_info.getMessageSize();
             if ( response_info.getMessageSize() > requested_max_payload_size ) {
-                if ( isDebug() )
-                    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response TC=1: " << response_info.getMessageSize();
+                BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response TC=1: " << response_info.getMessageSize();
                 response_info.mTruncation = 1;
                             
                 response_info.clearAnswerSection();
@@ -150,10 +148,15 @@ namespace dns
                 response_info.clearAdditionalSection();
             }
 		    
+            BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: generating message";
+	    std::cerr << "generating message" << std::endl;
             WireFormat response_packet;
             response_info.generateMessage( response_packet );
+	    std::cerr << "generated message" << std::endl;
+            BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: generated message";
 
             modifyMessage( query, response_packet );
+            BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: modified message";
 		    
             udpv4::ClientParameters client;
             client.mAddress = recv_data.mSourceAddress;

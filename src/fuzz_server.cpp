@@ -3,6 +3,7 @@
 #include "shufflebytes.hpp"
 #include "logger.hpp"
 #include <boost/program_options.hpp>
+#include <boost/thread.hpp>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -14,7 +15,7 @@ namespace dns
     {
     public:
 	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
-	    : dns::SignedAuthServer( addr, port, debug, thread_count ), mSeedGenerator(), mRandomEngine( mSeedGenerator() ),
+	    : dns::SignedAuthServer( addr, port, debug, thread_count ), 
             mAnotherHint( hint2 )
 	{
         }
@@ -30,6 +31,7 @@ namespace dns
 				    const MessageInfo &original_response,
 				    bool via_tcp ) const
         {
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "modifying response: " << original_response;
             MessageInfo modified_response = original_response;
 
             ResourceRecordGenerator rr_generator;
@@ -44,6 +46,7 @@ namespace dns
 
             // appand new rrsets
             unsigned int rrsets_count = getRandom( 16 );
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "generating rr : size = " << rrsets_count;
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
                 RRSet rrset = rr_generator.generate( original_response, mAnotherHint );
 
@@ -73,6 +76,7 @@ namespace dns
                     break;
                 }
             }
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "generated rr : size = " << rrsets_count;
 
             replaceClass( modified_response.mAnswerSection );
             replaceClass( modified_response.mAuthoritySection );
@@ -91,6 +95,7 @@ namespace dns
 
 	    OptionGenerator option_generator;
 	    unsigned int option_count = getRandom( 3 );
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "generating options : size = " << option_count;
 	    for ( unsigned int i = 0 ; i < option_count ; i++ )
 		option_generator.generate( modified_response );
 
@@ -109,8 +114,10 @@ namespace dns
             if ( withChance( 0.05 ) ) {
                 modified_response.mOptPseudoRR.mDomainname = generateDomainname();
             }
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "generated options : size = " << option_count;
 	    
             if ( withChance( 0.2 ) ) {
+                BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "adding options : size = " << option_count;
                 ResourceRecord opt_pseudo_rr = generateOptPseudoRecord( modified_response.mOptPseudoRR );
                 RRSet rrset( opt_pseudo_rr.mDomainname,
                              opt_pseudo_rr.mClass,
@@ -119,13 +126,15 @@ namespace dns
 
                 std::shared_ptr<RRSet> rrsig = signRRSet( rrset );
                 rrsig->addResourceRecords( modified_response.mAdditionalSection );
+                BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "added options : size = " << option_count;
             }
 
             if ( withChance( 0.1 ) ) {
                 modified_response.mResponseCode = getRandom( 16 );
             }
 
-            if ( withChance( 0.2 ) )
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "shuffling RR";
+/*            if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAnswerSection );
 
             if ( withChance( 0.2 ) )
@@ -133,6 +142,8 @@ namespace dns
 
             if ( withChance( 0.2 ) )
                 shuffle_rr( modified_response.mAdditionalSection );
+		*/
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "shuffled RR";
 
             if ( withChance( 0.05 ) )
                 modified_response.mQueryResponse = getRandom( 2 );
@@ -161,6 +172,7 @@ namespace dns
                 requested_max_payload_size = query.mOptPseudoRR.mPayloadSize;
             }
 
+            std::cerr << "getting Message Size" << std::endl; 
             if ( ! via_tcp &&
                  modified_response.getMessageSize() > requested_max_payload_size ) {
                 if ( withChance( 0.05 ) ) {
@@ -170,7 +182,9 @@ namespace dns
                     modified_response.clearAdditionalSection();
                 }
             }
+            std::cerr << "got Message Size" << std::endl; 
 
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.fuzzing: " << "modified response";
             return modified_response;
         }
 
@@ -185,7 +199,11 @@ namespace dns
 	
         void shuffle_rr( std::vector<ResourceRecord> &rrs ) const
         {
-	    std::shuffle( rrs.begin(), rrs.end(), mRandomEngine );
+            static boost::thread_specific_ptr<std::mt19937> tls_random;
+            if ( ! tls_random.get() ) {
+		tls_random.reset( new std::mt19937 );
+            }
+	    std::shuffle( rrs.begin(), rrs.end(), *tls_random );
         }
 
         void replaceClass( std::vector<ResourceRecord> &section ) const
@@ -241,8 +259,6 @@ namespace dns
         }
 
     private:
-        mutable std::random_device mSeedGenerator;
-        mutable std::mt19937 mRandomEngine;
         Domainname mAnotherHint;
     };
 

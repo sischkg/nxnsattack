@@ -5,6 +5,7 @@ namespace dns
 {
     void shuffle( const WireFormat &src, WireFormat &dst )
     {
+	std::cerr << "shuffling message" << std::endl;
 	uint16_t src_size = src.size();
 	dst.clear();
 	int r = getRandom( 32 );
@@ -65,6 +66,7 @@ namespace dns
 		dst = src;
 	    }
 	}
+	std::cerr << "shuffled message" << std::endl;
     }
 
 }

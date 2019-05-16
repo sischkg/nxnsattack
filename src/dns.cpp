@@ -2044,12 +2044,7 @@ namespace dns
 
     std::string NSIDOption::toString() const
     {
-        PacketData data;
-        for ( auto c : mNSID )
-            data.push_back( (uint8_t)c );
-        std::string hex;
-        encodeToHex( data, hex );
-        return "NSID: ***"; //" + hex;
+        return "NSID: ***";
     }
 
     OptPseudoRROptPtr NSIDOption::parse( const uint8_t *begin, const uint8_t *end )
@@ -2259,6 +2254,7 @@ namespace dns
             throw FormatError( "bad option length for Key Tag Option" );
         uint16_t tag_count = size / 2;
         std::vector<uint16_t> tags;
+	tags.reserve( tag_count );
         for ( uint16_t i = 0 ; i < tag_count ; i++ )
             tags.push_back( ntohs( get_bytes<uint16_t>( &pos ) ) );
             
