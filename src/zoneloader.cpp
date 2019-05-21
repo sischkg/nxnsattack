@@ -78,7 +78,7 @@ namespace dns
         RDATAPtr parseRecordNS( const YAML::Node &node )
         {
             if ( node["nameserver"] ) {
-                return std::shared_ptr<RDATA>( new RecordNS( node["nameserver"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordNS( (Domainname)node["nameserver"].as<std::string>() ) );
             }
             throw ZoneConfigError( "NS record must have \"nameserver\" attribute" );
         }
@@ -87,7 +87,7 @@ namespace dns
         {
             if ( node["priority"] && node["mailserver"] ) {
                 return std::shared_ptr<RDATA>( new RecordMX( node["priority"].as<uint16_t>(),
-                                                             node["mailserver"].as<std::string>() ) );
+                                                             (Domainname)node["mailserver"].as<std::string>() ) );
             }
             throw ZoneConfigError( "MX record must have \"priority and mailserver\" attribute" );
         }
@@ -98,8 +98,8 @@ namespace dns
 
             if ( node["mname"] && node["rname"] &&
                  node["serial"] && node["refresh"] && node["retry"] && node["expire"] && node["minimum"] ) {
-                return RDATAPtr( new RecordSOA( node["mname"].as<std::string>(),
-                                                node["rname"].as<std::string>(),
+                return RDATAPtr( new RecordSOA( (Domainname)node["mname"].as<std::string>(),
+                                                (Domainname)node["rname"].as<std::string>(),
                                                 node["serial"].as<uint32_t>(),
                                                 node["refresh"].as<uint32_t>(),
                                                 node["retry"].as<uint32_t>(),
@@ -113,7 +113,7 @@ namespace dns
         RDATAPtr parseRecordCNAME( const YAML::Node &node )
         {
             if ( node["canonicalname"] ) {
-                return std::shared_ptr<RDATA>( new RecordCNAME( node["canonicalname"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordCNAME( (Domainname)node["canonicalname"].as<std::string>() ) );
             }
             throw ZoneConfigError( "CNAME record must have \"canonical\" attribute" );
         }
@@ -121,7 +121,7 @@ namespace dns
         RDATAPtr parseRecordDNAME( const YAML::Node &node )
         {
             if ( node["canonicalname"] ) {
-                return std::shared_ptr<RDATA>( new RecordDNAME( node["canonicalname"].as<std::string>() ) );
+                return std::shared_ptr<RDATA>( new RecordDNAME( (Domainname)node["canonicalname"].as<std::string>() ) );
             }
             throw ZoneConfigError( "DNAME record must have \"canonical\" attribute" );
         }
@@ -171,7 +171,7 @@ namespace dns
                                                                 node["expiration"].as<uint32_t>(),
                                                                 node["inception"].as<uint32_t>(),
                                                                 node["key_tag"].as<uint16_t>(),
-                                                                node["signer"].as<std::string>(),
+                                                                (Domainname)node["signer"].as<std::string>(),
                                                                 signature ) );
             }
             const char *error_message = "RRSIG record must have "
@@ -222,7 +222,7 @@ namespace dns
                     std::string type_string = node_types[i].as<std::string>();
                     types.push_back( stringToTypeCode( type_string ) );
                 }
-                return std::shared_ptr<RDATA>( new RecordNSEC( node["next"].as<std::string>(),
+                return std::shared_ptr<RDATA>( new RecordNSEC( (Domainname)node["next"].as<std::string>(),
                                                                types ) );
             }
             throw ZoneConfigError( "NSEC record must have \"next\", and \"types\" attribute" );
@@ -238,7 +238,7 @@ namespace dns
             TTL  ttl          = node["ttl"].as<uint32_t>();
             Type type         = stringToTypeCode( node["type"].as<std::string>() );
 
-            std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
+            std::shared_ptr<RRSet> rrset( new RRSet( (Domainname)owner, CLASS_IN, type, ttl ) );
   
             try {
                 const YAML::Node records = node["record"];
@@ -420,7 +420,7 @@ namespace dns
 		    throw std::runtime_error( "unknown supported type" );
 		}
 
-		std::shared_ptr<RRSet> rrset( new RRSet( owner, CLASS_IN, type, ttl ) );
+		std::shared_ptr<RRSet> rrset( new RRSet( (Domainname)owner, CLASS_IN, type, ttl ) );
 		rrset->add( rr );
 		return rrset;
 	    }
@@ -470,19 +470,19 @@ namespace dns
 
         RDATAPtr parseRecordNS( const std::vector<std::string> &data )
         {
-            return RDATAPtr( new RecordNS( data[0] ) );
+            return RDATAPtr( new RecordNS( (Domainname)data[0] ) );
         }
 
         RDATAPtr parseRecordMX( const std::vector<std::string> &data )
         {
             return RDATAPtr( new RecordMX( boost::lexical_cast<uint16_t>( data[0] ),
-                                           data[1] ) );
+                                           (Domainname)data[1] ) );
         }
 
         RDATAPtr parseRecordSOA( const std::vector<std::string> &data )
         {
-            return RDATAPtr( new RecordSOA( data[0],                                  // mname
-                                            data[1],                                  // rname
+            return RDATAPtr( new RecordSOA( (Domainname)data[0],                      // mname
+                                            (Domainname)data[1],                      // rname
                                             boost::lexical_cast<uint32_t>( data[2] ), // serial
                                             boost::lexical_cast<uint32_t>( data[3] ), // refresh
                                             boost::lexical_cast<uint32_t>( data[4] ), // retry
@@ -493,12 +493,12 @@ namespace dns
 
         RDATAPtr parseRecordCNAME( const std::vector<std::string> &data )
         {
-            return RDATAPtr( new RecordCNAME( data[0] ) );
+            return RDATAPtr( new RecordCNAME( (Domainname)data[0] ) );
         }
 
         RDATAPtr parseRecordDNAME( const std::vector<std::string> &data )
         {
-            return RDATAPtr( new RecordDNAME( data[0] ) );
+            return RDATAPtr( new RecordDNAME( (Domainname)data[0] ) );
         }
 
 	RDATAPtr parseRecordTXT( const std::vector<std::string> &data )
@@ -529,7 +529,7 @@ namespace dns
                                               convertTimestampToEpoch( data[4] ),        // expiration
                                               convertTimestampToEpoch( data[5] ),        // inception
                                               boost::lexical_cast<uint16_t>( data[6] ),  // key tag
-                                              data[7],                                   // signer
+                                              (Domainname)data[7],                       // signer
                                               signature ) );
         }
 
@@ -568,7 +568,7 @@ namespace dns
             for ( unsigned int i = 1 ; i < data.size() ; i++ ) {
                 types.push_back( stringToTypeCode( data[i] ) );
             }
-            return RDATAPtr( new RecordNSEC( data[0], types ) );
+            return RDATAPtr( new RecordNSEC( (Domainname)data[0], types ) );
         }
 
         void load( Zone &zone, const Domainname &apex, const std::string &config )

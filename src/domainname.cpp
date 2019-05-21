@@ -156,16 +156,13 @@ namespace dns
     std::string Domainname::toString() const
     {
         std::stringstream result;
-        int length = 0;
         for ( auto label : labels ) {
             for ( uint8_t c : label ) {
                 result << "0x" << std::hex << (uint32_t)c << " ";
-                length++;
             }
             result << '.';
-            length ++;
         }
-
+        
         return result.str();
     }
 
@@ -285,7 +282,7 @@ namespace dns
         canonical_labels.insert( canonical_labels.end(),
                                  rhs.getCanonicalLabels().begin(),
                                  rhs.getCanonicalLabels().end() ); 
-       return *this;
+        return *this;
     }
 
     Domainname Domainname::getCanonicalDomainname() const
@@ -397,17 +394,17 @@ namespace dns
 
     bool operator==( const std::string &lhs, const Domainname &rhs )
     {
-        return rhs == lhs;
+        return rhs == (Domainname)lhs;
     }
 
     bool operator!=( const std::string &lhs, const Domainname &rhs )
     {
-        return rhs != lhs;
+        return rhs != (Domainname)lhs;
     }
 
     bool operator<( const std::string &lhs, const Domainname &rhs )
     {
-        return lhs > rhs;
+        return (Domainname)lhs > rhs;
     }
 
     uint16_t OffsetDB::findDomainname( const Domainname &name ) const
@@ -419,16 +416,16 @@ namespace dns
             return offset->second;
     }
 
-    void OffsetDB::add( const Domainname &name, uint16_t offset )
+    void OffsetDB::add( const Domainname &name, uint32_t offset )
     {
         if ( NOT_FOUND == findDomainname( name ) ) 
             mOffsets.insert( std::make_pair( name, offset ) );
     }
 
-    uint16_t OffsetDB::outputWireFormat( const Domainname &original, WireFormat &message )
+    uint32_t OffsetDB::outputWireFormat( const Domainname &original, WireFormat &message )
     {
-        uint16_t pos = message.size();
-        uint16_t wrote_size = 0;
+        uint32_t pos = message.size();
+        uint32_t wrote_size = 0;
         
         for ( Domainname name = original ; name.getLabelCount() > 0 ; ) {
             uint16_t offset = findDomainname( name );
@@ -454,24 +451,25 @@ namespace dns
         return wrote_size;
     }
 
-    uint16_t OffsetDB::getOutputWireFormatSize( const Domainname &original ) const
+    uint32_t OffsetDB::getOutputWireFormatSize( const Domainname &original, uint32_t begin )
     {
-        uint16_t wrote_size = 0;
-        
+        uint16_t pos = begin;
+
         for ( Domainname name = original ; name.getLabelCount() > 0 ; ) {
             uint16_t offset = findDomainname( name );
             if ( offset != NOT_FOUND ) {
-                wrote_size += 2;
-                return wrote_size;
+                pos += 2;
+                return pos - begin;
             }
             else {
+                add( name, pos );
                 std::string label = name.getLabels().front();
-                wrote_size += ( 1 + label.size() );
+                pos++;               // write label size
+                pos += label.size(); // write label
                 name.popSubdomain();
             }
         }
-        wrote_size++;
-
-        return wrote_size;
+        pos++; // write "."
+        return pos - begin;
     }
 }

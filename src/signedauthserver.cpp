@@ -22,10 +22,10 @@ namespace dns
 	std::cerr << config << std::endl;
 
         SignedZone::initialize();
-        zone.reset( new SignedZone( apex, ksk_config, zsk_config,
+        zone.reset( new SignedZone( Domainname( apex ), ksk_config, zsk_config,
                                     salt, iterate, algo,
                                     enable_nsec, enable_nsec3 ) );
-	dns::full::load( *zone, apex, config );
+	dns::full::load( *zone, Domainname( apex ), config );
         zone->setup();
 	zone->verify();
     }

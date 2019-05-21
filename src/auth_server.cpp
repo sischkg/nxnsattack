@@ -15,8 +15,8 @@ namespace dns
 	    config += line;
 	    config += "\n";
 	}
-        zone.reset( new UnsignedZone( apex ) );
-	dns::full::load( *zone, apex, config );
+        zone.reset( new UnsignedZone( Domainname( apex ) ) );
+	dns::full::load( *zone, Domainname( apex ), config );
     }
 
 

@@ -25,6 +25,8 @@ namespace dns
 {
     void generateQuestion( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
     void generateResourceRecord( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
+    uint32_t getQuestionSize( const QuestionSectionEntry &q, uint32_t begin, OffsetDB &offset );
+    uint32_t getResourceRecordSize( const ResourceRecord &r, uint32_t begin, OffsetDB &offset, bool compression = true );
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
     QuestionSectionEntryPair parseQuestion( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
@@ -110,9 +112,37 @@ namespace dns
 
     uint32_t MessageInfo::getMessageSize() const
     {
-        WireFormat output;
-        generateMessage( output );
-        return output.size();
+        uint32_t pos = 0;
+        OffsetDB offset_db;
+
+        pos += sizeof(PacketHeaderField);
+
+        std::vector<ResourceRecord> additional = mAdditionalSection;
+
+        if ( isEDNS0() ) {
+            additional.push_back( generateOptPseudoRecord( mOptPseudoRR ) );
+        }
+
+        pos += ( 2 * 4 ); // QDCOUNT + ANCOUNT + NSCOUNT + ADCOUNT
+
+        for ( auto q : mQuestionSection ) {
+            uint32_t size = getQuestionSize( q, pos, offset_db );
+            pos += size;
+        }
+        for ( auto a : mAnswerSection ) {
+            uint32_t size = getResourceRecordSize( a, pos, offset_db );
+            pos += size;
+        }
+        for ( auto a : mAuthoritySection ) {
+            uint32_t size = getResourceRecordSize( a, pos, offset_db );
+            pos += size;
+        }
+        for ( auto a : additional ) {
+            uint32_t size = getResourceRecordSize( a, pos, offset_db );
+            pos += size;
+        }
+
+        return pos;
     }
 
     void MessageInfo::addOption( std::shared_ptr<OptPseudoRROption> opt )
@@ -202,6 +232,12 @@ namespace dns
         message.pushUInt16HtoN( question.mClass );
     }
 
+    uint32_t getQuestionSize( const QuestionSectionEntry &question, uint32_t begin, OffsetDB &offset_db )
+    {
+        uint32_t domainname_size = offset_db.getOutputWireFormatSize( question.mDomainname, begin );
+        return domainname_size + 2 + 2;  // domainname + type + class 
+    }
+
     QuestionSectionEntryPair parseQuestion( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *p )
     {
         QuestionSectionEntry question;
@@ -225,7 +261,7 @@ namespace dns
         if ( response.mRData ) {
             uint32_t rdata_size = 0;
             if ( compression )
-                rdata_size = response.mRData->size( offset_db );
+                rdata_size = response.mRData->size( offset_db, message.size() );
             else
                 rdata_size = response.mRData->size();
             message.pushUInt16HtoN( rdata_size );
@@ -233,6 +269,42 @@ namespace dns
         } else {
             message.pushUInt16HtoN( 0 );
         }
+    }
+
+    uint32_t getResourceRecordSize( const ResourceRecord &response, uint32_t begin, OffsetDB &offset_db, bool compression )
+    {
+        uint32_t size = 0;
+        uint32_t pos  = begin;
+        
+        if ( compression ) {
+            size = offset_db.getOutputWireFormatSize( response.mDomainname, pos );
+            pos += size;
+        }
+        else {
+            size = response.mDomainname.size();
+            pos += size;
+        }
+        
+        size += ( 2 + 2 + 4 ); // Type + Class + TTL
+        pos  += ( 2 + 2 + 4 ); // Type + Class + TTL
+ 
+        if ( response.mRData ) {
+            size += 2; // rdata size
+            pos  += 2; // rdata size
+
+            uint32_t rdata_size = 0;
+            if ( compression )
+                rdata_size = response.mRData->size( offset_db, pos );
+            else
+                rdata_size = response.mRData->size();
+            size += rdata_size;
+            pos  += rdata_size;
+        } else {
+            size += 2;
+            pos  += 2;
+        }
+
+        return size;
     }
 
     ResourceRecordPair parseResourceRecord( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *section_begin )
@@ -809,9 +881,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    uint32_t RecordNS::size( const OffsetDB &offset_db ) const
+    uint32_t RecordNS::size( OffsetDB &offset_db, uint32_t begin ) const
     {
-        return offset_db.getOutputWireFormatSize( mDomainname );
+        return offset_db.getOutputWireFormatSize( mDomainname, begin );
     }
 
     void RecordNS::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -848,9 +920,9 @@ namespace dns
         return os.str();
     }
 
-    uint32_t RecordMX::size( const OffsetDB &offset_db ) const
+    uint32_t RecordMX::size( OffsetDB &offset_db, uint32_t begin ) const
     {
-        return sizeof(uint16_t) + offset_db.getOutputWireFormatSize( mDomainname );
+        return sizeof(uint16_t) + offset_db.getOutputWireFormatSize( mDomainname, begin );
     }
 
     void RecordMX::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -1024,9 +1096,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    uint32_t RecordCNAME::size( const OffsetDB &offset_db ) const
+    uint32_t RecordCNAME::size( OffsetDB &offset_db, uint32_t begin ) const
     {
-        return offset_db.getOutputWireFormatSize( mDomainname );
+        return offset_db.getOutputWireFormatSize( mDomainname, begin );
     }
 
     void RecordCNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -1134,9 +1206,9 @@ namespace dns
         return mDomainname.toString();
     }
 
-    uint32_t RecordDNAME::size( const OffsetDB &offset_db ) const
+    uint32_t RecordDNAME::size( OffsetDB &offset_db, uint32_t begin ) const
     {
-        return offset_db.getOutputWireFormatSize( mDomainname );
+        return offset_db.getOutputWireFormatSize( mDomainname, begin  );
     }
 
     void RecordDNAME::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -1181,13 +1253,22 @@ namespace dns
         return soa_str.str();
     }
 
-    uint32_t RecordSOA::size( const OffsetDB &offset_db ) const
+    uint32_t RecordSOA::size( OffsetDB &offset_db, uint32_t begin ) const
     {
-        return
-            offset_db.getOutputWireFormatSize( mMName ) +
-            offset_db.getOutputWireFormatSize( mRName ) +
-            sizeof( mSerial ) + sizeof( mRefresh ) +
-            sizeof( mRetry ) + sizeof( mExpire ) + sizeof( mMinimum );            ;
+        uint32_t size = 0;
+        uint32_t pos  = begin;
+        
+        uint32_t mname_size= offset_db.getOutputWireFormatSize( mMName, pos );
+        pos  += mname_size;
+        size += mname_size;
+
+        uint32_t rname_size= offset_db.getOutputWireFormatSize( mRName, pos );
+        pos  += rname_size;
+        size += rname_size;
+        
+        size = ( sizeof( mSerial ) + sizeof( mRefresh ) +
+                 sizeof( mRetry ) + sizeof( mExpire ) + sizeof( mMinimum ) );
+        return size;
     }
 
     void RecordSOA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
@@ -2179,9 +2260,6 @@ namespace dns
     {
         unsigned int size = end - begin;
         if ( size < 8 ) {
-            std::ostringstream os;
-            os << "DNS Cookie length " << size << " is too short"; 
-            std::cerr << os.str();
             return OptPseudoRROptPtr( new CookieOption( PacketData(), PacketData() ) );        
         }
 
@@ -2420,8 +2498,8 @@ namespace dns
         other.insert( other.end(), pos, pos + other_length );
         pos += other_length;
 
-        return RDATAPtr( new RecordTSIGData( key_name.toString(),
-                                             algorithm.toString(),
+        return RDATAPtr( new RecordTSIGData( key_name,
+                                             algorithm,
                                              signed_time,
                                              fudge,
                                              mac,

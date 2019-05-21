@@ -164,7 +164,7 @@ namespace dns
 	    sign_algo  = stringToSignAlgorithm( loadParameter<std::string>( *key_config, "algorithm" ) );
 	    not_before = loadParameter<uint32_t>( *key_config, "not_before" );
 	    not_after  = loadParameter<uint32_t>( *key_config, "not_after" );
-	    domain     = loadParameter<std::string>( *key_config, "domain" );
+	    domain     = Domainname( loadParameter<std::string>( *key_config, "domain" ) );
 
             switch ( sign_algo ) {
             case DNSSEC_RSASHA1:

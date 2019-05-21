@@ -147,9 +147,9 @@ int main( int argc, char **argv )
 
             dns::Domainname qname;
             if ( dns::getRandom( 2 ) )
-                qname = basename;
+                qname = (dns::Domainname)basename;
             else
-                qname = another_basename;
+                qname = (dns::Domainname)another_basename;
             
             switch ( dns::getRandom( 12 ) ) {
             case 0:
@@ -290,7 +290,7 @@ int main( int argc, char **argv )
             // append new rrsets
             unsigned int rrsets_count = dns::getRandom( 4 );
             for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
-                dns::RRSet rrset = rr_generator.generate( packet_info, another_basename );
+                dns::RRSet rrset = rr_generator.generate( packet_info, (dns::Domainname)another_basename );
 
                 switch ( dns::getRandom( 5 ) ) {
                 case 0:

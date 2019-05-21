@@ -19,11 +19,11 @@ namespace dns
 	}
 
         PostSignedZone::initialize();
-        zone.reset( new PostSignedZone( apex,
+        zone.reset( new PostSignedZone( Domainname( apex ),
                                         ksk_config, zsk_config,
                                         salt, iterate, algo,
                                         enable_nsec, enable_nsec3 ) );
-	dns::full::load( *zone, apex, config );
+	dns::full::load( *zone, Domainname( apex ), config );
         zone->setup();
 	zone->verify();
     }

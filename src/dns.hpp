@@ -102,7 +102,7 @@ namespace dns
         virtual void outputCanonicalWireFormat( WireFormat &message ) const            = 0;
         virtual Type     type() const = 0;
         virtual uint32_t size() const = 0;
-        virtual uint32_t size( const OffsetDB & ) const = 0;
+        virtual uint32_t size( OffsetDB &, uint32_t begin ) const = 0;
 	virtual RDATA *clone() const = 0;
         std::ostream &operator<<( std::ostream &os ) const
         {
@@ -135,7 +135,7 @@ namespace dns
         {
             return mData.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -164,7 +164,7 @@ namespace dns
         {
             return sizeof( mSinAddr );
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -195,7 +195,7 @@ namespace dns
         {
             return sizeof( mSinAddr );
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -229,7 +229,7 @@ namespace dns
         {
             return sizeof( mSinAddr );
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -263,7 +263,7 @@ namespace dns
         {
             return mDomainname.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
 	virtual RecordNS *clone() const { return new RecordNS( mDomainname ); }
 	const Domainname &getNameServer() const { return mDomainname; }
 
@@ -291,7 +291,7 @@ namespace dns
         {
             return sizeof( mPriority ) + mDomainname.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
 	virtual RecordMX *clone() const { return new RecordMX( mPriority, mDomainname ); }
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
@@ -315,7 +315,7 @@ namespace dns
             return TYPE_TXT;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -343,7 +343,7 @@ namespace dns
             return TYPE_SPF;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -372,7 +372,7 @@ namespace dns
         {
             return mDomainname.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
 	virtual RecordCNAME *clone() const { return new RecordCNAME( mDomainname ); }
 
         const Domainname &getCanonicalName() const { return mDomainname; }
@@ -407,7 +407,7 @@ namespace dns
             return TYPE_NAPTR;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -436,7 +436,7 @@ namespace dns
         {
             return mDomainname.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
         const Domainname &getCanonicalName() const { return mDomainname; }
 
 	virtual RecordDNAME *clone() const { return new RecordDNAME( mDomainname ); }
@@ -473,7 +473,7 @@ namespace dns
             return TYPE_SOA;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
 
         const std::string getMName() const
         {
@@ -535,7 +535,7 @@ namespace dns
             return TYPE_APL;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -569,7 +569,7 @@ namespace dns
             return TYPE_CAA;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -645,7 +645,7 @@ namespace dns
                 mSigner.size() +
                 mSignature.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -705,7 +705,7 @@ namespace dns
         {
             return sizeof(mFlag) + sizeof(mAlgorithm) + 1 + mPublicKey.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -750,7 +750,7 @@ namespace dns
         {
             return sizeof(mKeyTag) + sizeof(mAlgorithm) + sizeof(mDigestType) + mDigest.size();
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -837,7 +837,7 @@ namespace dns
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -903,7 +903,7 @@ namespace dns
         {
             return TYPE_NSEC3;
         }
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -943,7 +943,7 @@ namespace dns
         virtual void outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const;
         virtual void outputCanonicalWireFormat( WireFormat &message ) const;
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -1264,7 +1264,7 @@ namespace dns
             return TYPE_OPT;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
@@ -1336,14 +1336,14 @@ namespace dns
         PacketData mOtherData;
 
     public:
-        RecordTKEY( const std::string &dom    = "",
-                    const std::string &algo   = "HMAC-MD5.SIG-ALG.REG.INT",
-                    uint32_t           incept = 0,
-                    uint32_t           expire = 0,
-                    uint16_t           m      = 0,
-                    uint16_t           err    = 0,
-                    PacketData         k      = PacketData(),
-                    PacketData         other  = PacketData() )
+        RecordTKEY( const Domainname &dom    = Domainname(),
+                    const Domainname &algo   = (Domainname)"HMAC-MD5.SIG-ALG.REG.INT",
+                    uint32_t          incept = 0,
+                    uint32_t          expire = 0,
+                    uint16_t          m      = 0,
+                    uint16_t          err    = 0,
+                    PacketData        k      = PacketData(),
+                    PacketData        other  = PacketData() )
             : mDomain( dom ),
               mAlgorithm( algo ),
               mInception( incept ),
@@ -1364,14 +1364,14 @@ namespace dns
             return TYPE_TKEY;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
 	virtual RecordTKEY *clone() const
 	{
-	    return new RecordTKEY( mDomain.toString(),
-				   mDomain.toString(),
+	    return new RecordTKEY( mDomain,
+				   mDomain,
 				   mInception,
 				   mExpiration,
 				   mMode,
@@ -1382,9 +1382,9 @@ namespace dns
     };
 
     struct TSIGInfo {
-        std::string mName;
+        Domainname  mName;
         PacketData  mKey;
-        std::string mAlgorithm;
+        Domainname  mAlgorithm;
         PacketData  mMAC;
         uint64_t    mSignedTime;
         uint16_t    mFudge;
@@ -1395,7 +1395,7 @@ namespace dns
         TSIGInfo()
             : mName(),
               mKey(),
-              mAlgorithm( "HMAC-MD5.SIG-ALG.REG.INT" ),
+              mAlgorithm( (Domainname)"HMAC-MD5.SIG-ALG.REG.INT" ),
               mMAC(),
               mSignedTime( 0 ),
               mFudge( 0 ),
@@ -1419,14 +1419,14 @@ namespace dns
         PacketData mOther;
 
     public:
-        RecordTSIGData( const std::string &in_key_name     = "",
-                        const std::string &in_algo         = "HMAC-MD5.SIG-ALG.REG.INT",
-                        uint64_t           in_signed_time  = 0,
-                        uint16_t           in_fudge        = 0,
-                        const PacketData & in_mac          = PacketData(),
-                        uint16_t           in_original_id  = 0,
-                        uint16_t           in_error        = 0,
-                        const PacketData & in_other        = PacketData() )
+        RecordTSIGData( const Domainname &in_key_name     = (Domainname)"",
+                        const Domainname &in_algo         = (Domainname)"HMAC-MD5.SIG-ALG.REG.INT",
+                        uint64_t          in_signed_time  = 0,
+                        uint16_t          in_fudge        = 0,
+                        const PacketData &in_mac          = PacketData(),
+                        uint16_t          in_original_id  = 0,
+                        uint16_t          in_error        = 0,
+                        const PacketData &in_other        = PacketData() )
 	: mKeyName( in_key_name ),
 	  mAlgorithm( in_algo ),
 	  mSignedTime( in_signed_time ),
@@ -1447,14 +1447,14 @@ namespace dns
             return TYPE_TSIG;
         }
         virtual uint32_t size() const;
-        virtual uint32_t size( const OffsetDB &offset_db ) const
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
         {
             return size();
         }
 	virtual RecordTSIGData *clone() const
 	{
-	    return new RecordTSIGData( mKeyName.toString(),
-				       mAlgorithm.toString(),
+	    return new RecordTSIGData( mKeyName,
+				       mAlgorithm,
 				       mSignedTime,
 				       mFudge,
 				       mMAC,

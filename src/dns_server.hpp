@@ -21,10 +21,10 @@ namespace dns
     };
 
     struct TSIGKey {
-        std::string algorithm;
-        PacketData  key;
+        Domainname algorithm;
+        PacketData key;
 
-        TSIGKey( const std::string &a, const PacketData &k ) : algorithm( a ), key( k )
+        TSIGKey( const Domainname &a, const PacketData &k ) : algorithm( a ), key( k )
         {}
     };
 

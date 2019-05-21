@@ -48,7 +48,7 @@ namespace dns
 
     public:
         Domainname( const std::deque<std::string> &l = std::deque<std::string>() );
-        Domainname( const std::string &name );
+        explicit Domainname( const std::string &name );
         Domainname( const char *name );
 
         std::string toString() const;
@@ -124,12 +124,12 @@ namespace dns
         OffsetContainer mOffsets;
 
         uint16_t findDomainname( const Domainname &name ) const;
-        void add( const Domainname &name, uint16_t offset );
+        void add( const Domainname &name, uint32_t offset );
     public:
-        const uint16_t NOT_FOUND = 0xffff;
+        const uint32_t NOT_FOUND = 0xffff;
 
-        uint16_t outputWireFormat( const Domainname &, WireFormat & );
-        uint16_t getOutputWireFormatSize( const Domainname & ) const;
+        uint32_t outputWireFormat( const Domainname &, WireFormat & );
+        uint32_t getOutputWireFormatSize( const Domainname &, uint32_t begin );
     };
 
 

@@ -85,11 +85,11 @@ private:
         answer2.mType       = dns::TYPE_NS;
         answer2.mClass      = dns::CLASS_IN;
         answer2.mTTL        = TTL;
-        answer2.mRData      = dns::RDATAPtr( new dns::RecordNS( "www." + getQName( query ).toString() ) );
+        answer2.mRData      = dns::RDATAPtr( new dns::RecordNS( (dns::Domainname)("www." + getQName( query ).toString() ) ) );
         response.pushAnswerSection( answer2 );
 
         dns::ResourceRecord answer3;
-        answer3.mDomainname = "www." + getQName( query ).toString();
+        answer3.mDomainname = (dns::Domainname)("www." + getQName( query ).toString());
         answer3.mType       = dns::TYPE_A;
         answer3.mClass      = dns::CLASS_IN;
         answer3.mTTL        = TTL;
@@ -151,7 +151,7 @@ private:
            << query_question.mDomainname;
 
         dns::ResourceRecord answer;
-        answer.mDomainname = os.str();
+        answer.mDomainname = (dns::Domainname)os.str();
         answer.mType       = dns::TYPE_A;
         answer.mClass      = dns::CLASS_IN;
         answer.mTTL        = TTL;
@@ -164,7 +164,7 @@ private:
             std::ostringstream os2;
             os2 << std::setfill( '0' ) << std::setw( 16 ) << index;
             index++;
-            answer2.mDomainname = os2.str();
+            answer2.mDomainname = (dns::Domainname)os2.str();
             answer2.mType       = dns::TYPE_CNAME;
             answer2.mClass      = dns::CLASS_IN;
             answer2.mTTL        = TTL;

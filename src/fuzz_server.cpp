@@ -323,7 +323,7 @@ int main( int argc, char **argv )
     dns::getRandom();
     
     try {
-	dns::FuzzServer server( bind_address, bind_port, debug, thread_count, another_hint );
+	dns::FuzzServer server( bind_address, bind_port, debug, thread_count, (dns::Domainname)another_hint );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,
