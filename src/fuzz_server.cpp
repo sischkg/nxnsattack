@@ -14,8 +14,8 @@ namespace dns
     class FuzzServer : public SignedAuthServer
     {
     public:
-	FuzzServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
-	    : dns::SignedAuthServer( addr, port, debug, thread_count ), 
+	FuzzServer( const std::string &addr, uint16_t port, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
+	    : dns::SignedAuthServer( addr, port, thread_count ), 
             mAnotherHint( hint2 )
 	{
         }
@@ -283,7 +283,6 @@ int main( int argc, char **argv )
     uint16_t             nsec3_iterate;
     uint16_t             nsec3_hash_algo;
     std::string          another_hint;
-    bool                 debug = false;
     
     po::options_description desc( "fuzz server" );
     desc.add_options()( "help,h", "print this message" )
@@ -323,7 +322,7 @@ int main( int argc, char **argv )
     dns::getRandom();
     
     try {
-	dns::FuzzServer server( bind_address, bind_port, debug, thread_count, (dns::Domainname)another_hint );
+	dns::FuzzServer server( bind_address, bind_port, thread_count, (dns::Domainname)another_hint );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,

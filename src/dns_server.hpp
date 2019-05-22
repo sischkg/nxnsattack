@@ -48,8 +48,8 @@ namespace dns
         void sendZone( const MessageInfo &info, tcpv4::ConnectionPtr &connection );
         bool isDebug() const { return mDebug; }
     public:
-        DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, bool debug = false, unsigned int thread_count = 1 )
-            : mBindAddress( address ), mBindPort( port ), mDebug( debug ), mThreadCount( thread_count )
+        DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, unsigned int thread_count = 1 )
+            : mBindAddress( address ), mBindPort( port ), mThreadCount( thread_count )
         {}
 
         ~DNSServer()

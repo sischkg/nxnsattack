@@ -10,8 +10,8 @@ namespace dns
     class AuthServer : public dns::DNSServer
     {
     public:
-	AuthServer( const std::string &addr, uint16_t port, bool debug )
-	    : dns::DNSServer( addr, port, true, debug )
+	AuthServer( const std::string &addr, uint16_t port )
+	    : dns::DNSServer( addr, port, true )
 	{}
 
 	void load( const std::string &apex, const std::string &filename );

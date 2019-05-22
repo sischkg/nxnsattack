@@ -13,7 +13,6 @@ int main( int argc, char **argv )
     uint16_t    thread_count; 
     std::string zone_filename;
     std::string apex;
-    bool        debug;
     std::string ksk_filename, zsk_filename;
     bool        enable_nsec;
     bool        enable_nsec3;
@@ -36,8 +35,7 @@ int main( int argc, char **argv )
         ( "nsec3,3",   po::value<bool>( &enable_nsec3 )->default_value( false ),            "enable NSEC3" )
         ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
         ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
-        ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
-        ( "debug,d",   po::bool_switch( &debug )->default_value( false ),                   "debug mode" );
+        ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" );
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -51,7 +49,7 @@ int main( int argc, char **argv )
     decodeFromHex( nsec3_salt_str, nsec3_salt );
 
     try {
-	dns::SignedAuthServer server( bind_address, bind_port, debug, thread_count );
+	dns::SignedAuthServer server( bind_address, bind_port, thread_count );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,

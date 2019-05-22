@@ -12,7 +12,6 @@ int main( int argc, char **argv )
     uint16_t    bind_port;
     std::string zone_filename;
     std::string apex;
-    bool        debug;
 
     po::options_description desc( "unbound" );
     desc.add_options()( "help,h", "print this message" )
@@ -20,8 +19,7 @@ int main( int argc, char **argv )
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
         ( "port,p", po::value<uint16_t>( &bind_port )->default_value( 53 ), "bind port" )
 	( "file,f", po::value<std::string>( &zone_filename ),           "zone filename" )
-	( "zone,z", po::value<std::string>( &apex),                     "zone apex" )
-        ( "debug,d", po::bool_switch( &debug )->default_value( false ), "debug mode" );
+	( "zone,z", po::value<std::string>( &apex),                     "zone apex" );
     
     po::variables_map vm;
     po::store( po::parse_command_line( argc, argv, desc ), vm );
@@ -33,7 +31,7 @@ int main( int argc, char **argv )
     }
 
     try {
-	dns::AuthServer server( bind_address, bind_port, debug );
+	dns::AuthServer server( bind_address, bind_port );
 	server.load( apex, zone_filename );
 	server.start();
     }

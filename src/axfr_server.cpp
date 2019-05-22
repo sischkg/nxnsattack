@@ -183,8 +183,8 @@ private:
     }
 
 public:
-    AXFRServer( const std::string addr, uint16_t port, bool debug, unsigned long long count )
-        : dns::DNSServer( addr, port, debug ), rr_count( count )
+    AXFRServer( const std::string addr, uint16_t port, unsigned long long count )
+        : dns::DNSServer( addr, port ), rr_count( count )
     {
     }
 
@@ -239,14 +239,12 @@ int main( int argc, char **argv )
     std::string        bind_address;
     uint16_t           bind_port;
     unsigned long long rr_count;
-    bool               debug;
 
     po::options_description desc( "AXFR Server" );
     desc.add_options()( "help,h", "print this message" )
 
         ( "bind,b", po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
         ( "port",   po::value<uint16_t>( &bind_port )->default_value( 53 ), "bind port" )
-        ( "debug",   po::value<bool>( &debug )->default_value( false ), "debug" )
 
         ( "count,c", po::value<unsigned long long>( &rr_count )->default_value( 0 ), "rr ount" );
 
@@ -259,7 +257,7 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    AXFRServer server( bind_address, bind_port, debug, rr_count );
+    AXFRServer server( bind_address, bind_port, rr_count );
     server.start();
 
     return 0;

@@ -11,8 +11,8 @@ namespace dns
     class PostSignedAuthServer : public dns::DNSServer
     {
     public:
-	PostSignedAuthServer( const std::string &addr, uint16_t port, bool debug, unsigned int thread_count )
-	    : dns::DNSServer( addr, port, debug, thread_count )
+	PostSignedAuthServer( const std::string &addr, uint16_t port, unsigned int thread_count )
+	    : dns::DNSServer( addr, port, thread_count )
 	{}
 
 	void load( const std::string &apex, const std::string &zone_filename,
