@@ -97,14 +97,14 @@ namespace dns
             pool.join();
 
         } catch ( std::runtime_error &e ) {
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: exception: " << e.what();
+	    BOOST_LOG_TRIVIAL(error) << "dns.server.udp: exception: " << e.what();
         }
     }
 
     void DNSServer::replyOverUDP( udpv4::Server &dns_receiver, udpv4::PacketInfo recv_data )
     {
         try {
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: received DNS message from "
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: received DNS message from "
 				     << recv_data.mSourceAddress << ":" << recv_data.mSourcePort << ".";
 	    
             MessageInfo query;
@@ -137,9 +137,9 @@ namespace dns
                     query.mOptPseudoRR.mPayloadSize = 4096;
             }
 
-            BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response size(UDP): " << response_info.getMessageSize();
+            BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: response size(UDP): " << response_info.getMessageSize();
             if ( response_info.getMessageSize() > requested_max_payload_size ) {
-                BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: response TC=1: " << response_info.getMessageSize();
+                BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: response TC=1: " << response_info.getMessageSize();
                 response_info.mTruncation = 1;
                             
                 response_info.clearAnswerSection();
@@ -157,7 +157,7 @@ namespace dns
             client.mPort    = recv_data.mSourcePort;
             dns_receiver.sendPacket( client, response_packet );
 
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.udp: sent DNS message to "
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.udp: sent DNS message to "
 				     << client.mAddress << ":" << client.mPort << ".";
         }
         catch ( std::runtime_error &e ) {
@@ -201,14 +201,14 @@ namespace dns
     void DNSServer::replyOverTCP( tcpv4::ConnectionPtr connection )
     {
         try {
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: connected.";
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: connected.";
 
             PacketData size_data = connection->receive( 2 );
             if ( size_data.size() < 2 ) {
                 throw std::runtime_error( "cannot get size of dns message" );
             }
             uint16_t size = ntohs( *( reinterpret_cast<const uint16_t *>( &size_data[ 0 ] ) ) );
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: message size: " << size;
+	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: message size: " << size;
 
             PacketData  recv_data = connection->receive( size );
 	    MessageInfo query;
@@ -220,7 +220,6 @@ namespace dns
 		return;
 	    }
 		
-	    BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: parsed query.";
 	    BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: query: " << query;
 
             if ( query.mQuestionSection[ 0 ].mType == dns::TYPE_AXFR ||
@@ -241,7 +240,7 @@ namespace dns
                 }
 
                 response_info.generateMessage( response_stream );
-		BOOST_LOG_TRIVIAL(debug) << "dns.server.tcp: generated DNS Message.";
+		BOOST_LOG_TRIVIAL(trace) << "dns.server.tcp: generated DNS Message.";
                 modifyMessage( query, response_stream );
 			
                 uint16_t send_size = htons( response_stream.size() );
