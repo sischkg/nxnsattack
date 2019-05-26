@@ -182,6 +182,25 @@ namespace dns
         return names.at( index );
     }
 
+    Domainname generateAlgorithmName()
+    {
+	if ( withChance( 0.7 ) ) {
+	    const char *algorithms[] = {
+					"gss-tsig",
+					"HMAC-MD5.SIG-ALG.REG.INT",
+					"hmac-sha1",
+					"hmac-sha224",
+					"hmac-sha256",
+					"hmac-sha384",
+					"hmac-sha512",
+	    };
+
+	    return (Domainname)algorithms[ getRandom( sizeof(algorithms) - 1 ) ];
+	}
+	else {
+	    return generateDomainname();
+	}
+    }
 
     /**********************************************************
      * XNAMEGenarator
@@ -614,16 +633,11 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> TKEYGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
-	Domainname algo = "HMAC-MD5.SIG-ALG.REG.INT";
-	if ( getRandom( 1 ) ) {
-            algo = generateDomainname();
-	}
-
 	PacketData signature = getRandomSizeStream( 0xff );
 	PacketData other     = getRandomSizeStream( 0xff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname( getDomainname( hint1 ), hint2 ), // domain
-						  algo,                                                // algorithm
+						  generateAlgorithmName(),  // algorithm
 						  getRandom(),         // inception
 						  getRandom(),         // expiration
 						  getRandom( 0xff ),
@@ -635,16 +649,11 @@ namespace dns
 
     std::shared_ptr<RDATA> TKEYGenerator::generate()
     {
-	Domainname algo = "HMAC-MD5.SIG-ALG.REG.INT";
-	if ( getRandom( 1 ) ) {
-            algo = generateDomainname();
-	}
-
 	PacketData signature = getRandomSizeStream( 0xff );
 	PacketData other     = getRandomSizeStream( 0xff );
 
 	std::shared_ptr<RDATA> p( new RecordTKEY( generateDomainname(), // domain
-						  algo,                 // algorithm
+						  generateAlgorithmName(),  // algorithm
 						  getRandom(),          // inception
 						  getRandom(),          // expiration
 						  getRandom(),
@@ -658,18 +667,13 @@ namespace dns
      **********************************************************/
     std::shared_ptr<RDATA> TSIGGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
     {
-	Domainname algo = "HMAC-MD5.SIG-ALG.REG.INT";
-	if ( getRandom( 1 ) ) {
-            algo = generateDomainname();
-	}
-	
 	PacketData signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
 	PacketData other = getRandomSizeStream( 0xff );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname( getDomainname( hint1 ), hint2 ), // domain
-                                                           algo,                                                   // algorithm
+                                                           generateAlgorithmName(),  // algorithm
                                                            signed_time,              // signed time
                                                            getRandom( 0xffff ),      // fudge
                                                            signature,                // mac
@@ -680,18 +684,13 @@ namespace dns
 
     std::shared_ptr<RDATA> TSIGGenerator::generate()
     {
-	Domainname algo = "HMAC-MD5.SIG-ALG.REG.INT";
-	if ( getRandom( 1 ) ) {
-            algo = generateDomainname();
-	}
-	
 	PacketData signature = getRandomStream( 16 );
 	uint64_t signed_time = (uint64_t)getRandom() + (((uint64_t)getRandom() ) << 32 );
 
 	PacketData other = getRandomSizeStream( 0xff );
 
 	return std::shared_ptr<RDATA>( new RecordTSIGData( generateDomainname(),     // domain
-                                                           algo,                     // algorithm
+                                                           generateAlgorithmName(),  // algorithm
                                                            signed_time,              // signed time
                                                            getRandom( 0xffff ),      // fudge
                                                            signature,                // mac
