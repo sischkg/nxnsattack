@@ -1779,7 +1779,7 @@ namespace dns
 
     std::string RecordNSEC::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC::toString() const
@@ -1832,7 +1832,7 @@ namespace dns
 
     std::string RecordNSEC3::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC3::toString() const
@@ -1934,7 +1934,7 @@ namespace dns
 
     std::string RecordNSEC3PARAM::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC3PARAM::toString() const
