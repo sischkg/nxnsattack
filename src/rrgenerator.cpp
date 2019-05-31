@@ -195,7 +195,7 @@ namespace dns
 					"hmac-sha512",
 	    };
 
-	    return (Domainname)algorithms[ getRandom( sizeof(algorithms) - 1 ) ];
+	    return (Domainname)algorithms[ getRandom( sizeof(algorithms)/sizeof(char *) - 1 ) ];
 	}
 	else {
 	    return generateDomainname();
