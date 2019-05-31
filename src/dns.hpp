@@ -959,6 +959,47 @@ namespace dns
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
 
+
+    class RecordTLSA : public RDATA
+    {
+    public:
+        typedef uint8_t Usage;
+        typedef uint8_t Selector;
+        typedef uint8_t MatchingType;
+
+    private:
+        Usage        mUsage;
+        Selector     mSelector;
+        MatchingType mMatchingType;
+        const std::vector<uint8_t> mData;
+
+    public:
+	RecordTLSA( Usage usage, Selector selector,  MatchingType type, const std::vector<uint8_t> &data )
+            : mUsage( usage ), mSelector( selector ), mMatchingType( type ), mData( data )
+        {}
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint32_t size() const;
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const
+        {
+            return size();
+        }
+        virtual uint16_t type() const
+        {
+            return TYPE_TLSA;
+        }
+	virtual RecordTLSA *clone() const
+	{
+	    return new RecordTLSA( mUsage, mSelector, mMatchingType, mData );
+	}
+	
+        static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
+    };
+
     const uint8_t PROTOCOL_TLS    = 0x01;
     const uint8_t PROTOCOL_MAIL   = 0x02;
     const uint8_t PROTOCOL_DNSSEC = 0x03;
