@@ -11,9 +11,6 @@ namespace dns
     class PostSignedAuthServer : public dns::DNSServer
     {
     public:
-	PostSignedAuthServer( const std::string &addr, uint16_t port, unsigned int thread_count )
-	    : dns::DNSServer( addr, port, thread_count )
-	{}
 	PostSignedAuthServer( const DNSServerParameters &params )
 	    : dns::DNSServer( params )
 	{}

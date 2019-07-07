@@ -10,9 +10,6 @@ namespace dns
     class AuthServer : public dns::DNSServer
     {
     public:
-	AuthServer( const std::string &addr, uint16_t port )
-	    : dns::DNSServer( addr, port, true )
-	{}
 	AuthServer( const DNSServerParameters &params )
 	    : dns::DNSServer( params )
 	{}

@@ -71,6 +71,7 @@ namespace udpv4
         if ( mParameters.mMulticast ) {
             std::cerr << "using multicast" << std::endl;
             ip_mreqn mreqn;
+	    std::memset( &mreqn, 0, sizeof(mreqn) );
             mreqn.imr_multiaddr = convertAddressStringToBinary( "224.0.0.251" );
             mreqn.imr_address   = socket_address.sin_addr;
             mreqn.imr_ifindex   = 0;

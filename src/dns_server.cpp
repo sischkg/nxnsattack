@@ -82,11 +82,12 @@ namespace dns
     {
         try {
             udpv4::ServerParameters params;
-            params.mAddress = mBindAddress;
-            params.mPort    = mBindPort;
+            params.mAddress   = mServerParameters.mBindAddress;
+            params.mPort      = mServerParameters.mBindPort;
+            params.mMulticast = mServerParameters.mMulticast;
             udpv4::Server dns_receiver( params );
 
-            utils::ThreadPool pool( mThreadCount );
+            utils::ThreadPool pool( mServerParameters.mThreadCount );
             pool.start();
 
             while ( true ) {
@@ -176,8 +177,8 @@ namespace dns
     {
         try {
             tcpv4::ServerParameters params;
-            params.mAddress = mBindAddress;
-            params.mPort    = mBindPort;
+            params.mAddress = mServerParameters.mBindAddress;
+            params.mPort    = mServerParameters.mBindPort;
             tcpv4::Server dns_receiver( params );
 
             while ( true ) {

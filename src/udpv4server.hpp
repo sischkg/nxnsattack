@@ -25,7 +25,6 @@ namespace udpv4
     private:
         ServerParameters mParameters;
         int              mUDPSocket;
-	bool             mMultcast;
 
         void openSocket();
         void closeSocket();

@@ -183,10 +183,6 @@ private:
     }
 
 public:
-    AXFRServer( const std::string addr, uint16_t port, unsigned long long count )
-        : dns::DNSServer( addr, port ), rr_count( count )
-    {
-    }
     AXFRServer( const dns::DNSServerParameters &params, unsigned long long count )
         : dns::DNSServer( params ), rr_count( count )
     {

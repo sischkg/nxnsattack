@@ -10,9 +10,6 @@ namespace dns
     class SignedAuthServer : public dns::DNSServer
     {
     public:
-	SignedAuthServer( const std::string &addr, uint16_t port, unsigned int thread_count )
-	    : dns::DNSServer( addr, port, thread_count )
-	{}
 	SignedAuthServer( const DNSServerParameters &params )
 	    : dns::DNSServer( params )
 	{}

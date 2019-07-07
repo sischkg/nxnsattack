@@ -19,11 +19,6 @@ namespace dns
 	      mAnotherHint( hint2 )
 	{
         }
-	FuzzServer( const std::string &addr, uint16_t port, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
-	    : dns::SignedAuthServer( addr, port, thread_count ), 
-            mAnotherHint( hint2 )
-	{
-        }
 
         std::vector<ResourceRecord> newRRs( const RRSet &rrset ) const
         {
@@ -292,20 +287,21 @@ int main( int argc, char **argv )
     po::options_description desc( "fuzz server" );
     desc.add_options()( "help,h", "print this message" )
 
-        ( "bind,b",    po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
-        ( "port,p",    po::value<uint16_t>( &bind_port )->default_value( 53 ),              "bind port" )
-        ( "thread,n",  po::value<uint16_t>( &thread_count )->default_value( 1 ),            "thread count" )
-	( "file,f",    po::value<std::string>( &zone_filename ),                            "zone filename" )
-	( "zone,z",    po::value<std::string>( &apex),                                      "zone apex" )
-	( "another,a", po::value<std::string>( &another_hint ),                             "another domainname for cache poisoning" )
-        ( "ksk,K",     po::value<std::string>( &ksk_filename),                              "KSK filename" )
-        ( "zsk,Z",     po::value<std::string>( &zsk_filename),                              "ZSK filename" )
-        ( "nsec",      po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
-        ( "nsec3,3",   po::value<bool>( &enable_nsec3 )->default_value( false ),            "enable NSEC3" )
-        ( "salt,s",    po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
-        ( "iterate,i", po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
-        ( "hash",      po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
-        ( "log-leevel,l",   po::value<std::string>( &log_level )->default_value( "info" ),  "trace|debug|info|warning|error|fatal" )
+        ( "bind,b",       po::value<std::string>( &bind_address )->default_value( "0.0.0.0" ), "bind address" )
+        ( "port,p",       po::value<uint16_t>( &bind_port )->default_value( 53 ),              "bind port" )
+        ( "thread,n",     po::value<uint16_t>( &thread_count )->default_value( 1 ),            "thread count" )
+	( "multicast,m",                                                                       "multicast" )  
+	( "file,f",       po::value<std::string>( &zone_filename ),                            "zone filename" )
+	( "zone,z",       po::value<std::string>( &apex),                                      "zone apex" )
+	( "another,a",    po::value<std::string>( &another_hint ),                             "another domainname for cache poisoning" )
+        ( "ksk,K",        po::value<std::string>( &ksk_filename),                              "KSK filename" )
+        ( "zsk,Z",        po::value<std::string>( &zsk_filename),                              "ZSK filename" )
+        ( "nsec",         po::value<bool>( &enable_nsec )->default_value( true ),              "enable NSEC" )
+        ( "nsec3,3",      po::value<bool>( &enable_nsec3 )->default_value( false ),            "enable NSEC3" )
+        ( "salt,s",       po::value<std::string>( &nsec3_salt_str )->default_value( "00" ),    "NSEC3 salt" )
+        ( "iterate,i",    po::value<uint16_t>( &nsec3_iterate )->default_value( 1 ),           "NSEC3 iterate" )
+        ( "hash",         po::value<uint16_t>( &nsec3_hash_algo )->default_value( 1 ),         "NSEC3 hash algorithm" )
+        ( "log-leevel,l", po::value<std::string>( &log_level )->default_value( "info" ),  "trace|debug|info|warning|error|fatal" )
 	;
     
     po::variables_map vm;
@@ -330,6 +326,7 @@ int main( int argc, char **argv )
 	dns::DNSServerParameters params;
 	params.mBindAddress = bind_address;
 	params.mBindPort    = bind_port;
+	params.mMulticast   = vm.count( "multicast" ) > 0;
 	params.mThreadCount = thread_count;
 	dns::FuzzServer server( params, (dns::Domainname)another_hint );
 	server.load( apex, zone_filename,
