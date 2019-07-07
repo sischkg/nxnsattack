@@ -13,6 +13,11 @@ namespace udpv4
     struct ServerParameters {
         std::string mAddress;
         uint16_t    mPort;
+	bool        mMulticast;
+
+	ServerParameters()
+	    : mPort( 0 ), mMulticast( false )
+	{}
     };
 
     class Server
@@ -20,6 +25,7 @@ namespace udpv4
     private:
         ServerParameters mParameters;
         int              mUDPSocket;
+	bool             mMultcast;
 
         void openSocket();
         void closeSocket();

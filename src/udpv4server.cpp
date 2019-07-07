@@ -55,7 +55,10 @@ namespace udpv4
         sockaddr_in socket_address;
         std::memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr   = convertAddressStringToBinary( mParameters.mAddress );
+        if ( mParameters.mMulticast )
+            socket_address.sin_addr   = convertAddressStringToBinary( "0.0.0.0" );
+        else
+            socket_address.sin_addr   = convertAddressStringToBinary( mParameters.mAddress );
         socket_address.sin_port   = htons( mParameters.mPort );
         if ( bind( mUDPSocket, reinterpret_cast<const sockaddr *>( &socket_address ), sizeof( socket_address ) ) < 0 ) {
             closeSocket();
@@ -63,6 +66,19 @@ namespace udpv4
             str << "cannot bind to " << mParameters.mAddress << ":" << mParameters.mPort << ".";
             std::string msg = getErrorMessage( str.str(), errno );
             throw SocketError( msg );
+        }
+
+        if ( mParameters.mMulticast ) {
+            std::cerr << "using multicast" << std::endl;
+            ip_mreqn mreqn;
+            mreqn.imr_multiaddr = convertAddressStringToBinary( "224.0.0.251" );
+            mreqn.imr_address   = socket_address.sin_addr;
+            mreqn.imr_ifindex   = 0;
+            err = setsockopt( mUDPSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreqn, sizeof(mreqn) );
+            if ( err ) {
+                std::string msg = getErrorMessage( "cannot use multicast", errno );
+                throw SocketError( msg );
+            }
         }
     }
 
