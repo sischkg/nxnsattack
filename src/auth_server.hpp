@@ -13,6 +13,9 @@ namespace dns
 	AuthServer( const std::string &addr, uint16_t port )
 	    : dns::DNSServer( addr, port, true )
 	{}
+	AuthServer( const DNSServerParameters &params )
+	    : dns::DNSServer( params )
+	{}
 
 	void load( const std::string &apex, const std::string &filename );
 	MessageInfo generateResponse( const MessageInfo &query, bool via_tcp ) const;

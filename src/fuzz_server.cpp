@@ -14,6 +14,11 @@ namespace dns
     class FuzzServer : public SignedAuthServer
     {
     public:
+	FuzzServer( const DNSServerParameters &params, const Domainname &hint2 = Domainname() )
+	    : dns::SignedAuthServer( params ), 
+	      mAnotherHint( hint2 )
+	{
+        }
 	FuzzServer( const std::string &addr, uint16_t port, unsigned int thread_count = 1, const Domainname &hint2 = Domainname() )
 	    : dns::SignedAuthServer( addr, port, thread_count ), 
             mAnotherHint( hint2 )
@@ -322,7 +327,11 @@ int main( int argc, char **argv )
     dns::getRandom();
     
     try {
-	dns::FuzzServer server( bind_address, bind_port, thread_count, (dns::Domainname)another_hint );
+	dns::DNSServerParameters params;
+	params.mBindAddress = bind_address;
+	params.mBindPort    = bind_port;
+	params.mThreadCount = thread_count;
+	dns::FuzzServer server( params, (dns::Domainname)another_hint );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,

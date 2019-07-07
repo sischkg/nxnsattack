@@ -49,7 +49,11 @@ int main( int argc, char **argv )
     decodeFromHex( nsec3_salt_str, nsec3_salt );
 
     try {
-	dns::SignedAuthServer server( bind_address, bind_port, thread_count );
+	dns::DNSServerParameters params;
+	params.mBindAddress = bind_address;
+	params.mBindPort    = bind_port;
+	params.mThreadCount = thread_count;
+	dns::SignedAuthServer server( params );
 	server.load( apex, zone_filename,
                      ksk_filename, zsk_filename,
                      nsec3_salt, nsec3_iterate, dns::DNSSEC_SHA1,

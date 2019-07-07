@@ -187,6 +187,10 @@ public:
         : dns::DNSServer( addr, port ), rr_count( count )
     {
     }
+    AXFRServer( const dns::DNSServerParameters &params, unsigned long long count )
+        : dns::DNSServer( params ), rr_count( count )
+    {
+    }
 
     void generateAXFRResponse( const dns::MessageInfo &query, tcpv4::ConnectionPtr &conn ) const
     {
@@ -257,7 +261,10 @@ int main( int argc, char **argv )
         return 1;
     }
 
-    AXFRServer server( bind_address, bind_port, rr_count );
+    dns::DNSServerParameters params;
+    params.mBindAddress = bind_address;
+    params.mBindPort    = bind_port;
+    AXFRServer server( params, rr_count );
     server.start();
 
     return 0;

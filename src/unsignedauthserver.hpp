@@ -14,6 +14,9 @@ namespace dns
 	PostSignedAuthServer( const std::string &addr, uint16_t port, unsigned int thread_count )
 	    : dns::DNSServer( addr, port, thread_count )
 	{}
+	PostSignedAuthServer( const DNSServerParameters &params )
+	    : dns::DNSServer( params )
+	{}
 
 	void load( const std::string &apex, const std::string &zone_filename,
                    const std::string &ksk_config_yaml, const std::string &zsk_config_yaml,

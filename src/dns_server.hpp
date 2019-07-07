@@ -28,6 +28,18 @@ namespace dns
         {}
     };
 
+    struct DNSServerParameters {
+	std::string  mBindAddress;
+	uint16_t     mBindPort;
+	bool         mMulticast;
+	bool         mDebug;
+	unsigned int mThreadCount;
+
+	DNSServerParameters()
+	    : mBindAddress( "0.0.0.0" ), mBindPort( 53 ), mMulticast( false ), mDebug( false ), mThreadCount( 1 )
+	{}
+    };
+
     class DNSServer
     {
     private:
@@ -48,6 +60,12 @@ namespace dns
         void sendZone( const MessageInfo &info, tcpv4::ConnectionPtr &connection );
         bool isDebug() const { return mDebug; }
     public:
+        DNSServer( const DNSServerParameters &params )
+            : mBindAddress( params.mBindAddress ),
+	      mBindPort( params.mBindPort ),
+	      mDebug( params.mDebug ),
+	      mThreadCount( params.mThreadCount )
+        {}
         DNSServer( const std::string &address = "0.0.0.0", uint16_t port = 53, unsigned int thread_count = 1 )
             : mBindAddress( address ), mBindPort( port ), mThreadCount( thread_count )
         {}
