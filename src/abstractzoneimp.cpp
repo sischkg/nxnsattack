@@ -46,13 +46,15 @@ namespace dns
 
     MessageInfo AbstractZoneImp::getAnswer( const MessageInfo &query ) const
     {
-        if ( query.mQuestionSection.size() != 1 ) {
-            throw std::logic_error( "one qname must be exist" );
+	Domainname qname  = mApex;
+        Type       qtype  = TYPE_SOA;
+        Class      qclass = CLASS_IN;
+
+	if ( query.mQuestionSection.size() != 0 ) {
+	    qname  = query.mQuestionSection[0].mDomainname;
+	    qtype  = query.mQuestionSection[0].mType;
+	    qclass = query.mQuestionSection[0].mClass;
         }
-	
-        Domainname qname  = query.mQuestionSection[0].mDomainname;
-        Type       qtype  = query.mQuestionSection[0].mType;
-        Class      qclass = query.mQuestionSection[0].mClass;
 
         MessageInfo response;
 
