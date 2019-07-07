@@ -129,6 +129,13 @@ namespace dns
         std::shared_ptr<RDATA> generate();
     };
 
+    class SRVGenerator : public RDATAGeneratable
+    {
+    public:
+        std::shared_ptr<RDATA> generate( const MessageInfo &hint1, const Domainname &hint2 );
+        std::shared_ptr<RDATA> generate();
+    };
+    
     class RRSIGGenerator : public RDATAGeneratable
     {
     public:

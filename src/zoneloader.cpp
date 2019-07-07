@@ -404,6 +404,9 @@ namespace dns
 		case TYPE_CAA:
 		    rr = parseRecordCAA( data );
 		    break;
+		case TYPE_SRV:
+		    rr = parseRecordSRV( data );
+		    break;
 		case TYPE_RRSIG:
 		    rr = parseRecordRRSIG( data );
 		    break;
@@ -514,6 +517,14 @@ namespace dns
         RDATAPtr parseRecordCAA( const std::vector<std::string> &data )
         {
             return RDATAPtr( new RecordCAA( data[1], data[2], boost::lexical_cast<uint32_t>( data[0] ) ) );
+        }
+
+        RDATAPtr parseRecordSRV( const std::vector<std::string> &data )
+        {
+            return RDATAPtr( new RecordSRV( boost::lexical_cast<uint16_t>( data[0] ), // priority
+					    boost::lexical_cast<uint16_t>( data[1] ), // weight
+					    boost::lexical_cast<uint16_t>( data[2] ), // port
+					    (Domainname)data[3] ) );                  // target
         }
 
         RDATAPtr parseRecordRRSIG( const std::vector<std::string> &data )

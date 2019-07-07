@@ -87,6 +87,7 @@ namespace dns
         RDATAPtr parseRecordTXT( const std::vector<std::string> & );
         RDATAPtr parseRecordSPF( const std::vector<std::string> & );
         RDATAPtr parseRecordCAA( const std::vector<std::string> & );
+        RDATAPtr parseRecordSRV( const std::vector<std::string> & );
         RDATAPtr parseRecordRRSIG( const std::vector<std::string> & );
         RDATAPtr parseRecordDS( const std::vector<std::string> & );
         RDATAPtr parseRecordDNSKEY( const std::vector<std::string> & );

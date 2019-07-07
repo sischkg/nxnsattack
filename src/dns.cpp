@@ -358,6 +358,9 @@ namespace dns
         case TYPE_CAA:
             parsed_data = RecordCAA::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
+        case TYPE_SRV:
+            parsed_data = RecordSRV::parse( packet_begin, packet_end, pos, pos + data_length );
+            break;
         case TYPE_DNSKEY:
             parsed_data = RecordDNSKEY::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
@@ -516,6 +519,9 @@ namespace dns
         case TYPE_CAA:
             res = "CAA";
             break;
+        case TYPE_SRV:
+            res = "SRV";
+            break;
         default:
             res = boost::lexical_cast<std::string>( t );
         }
@@ -589,6 +595,7 @@ namespace dns
         if ( t == "AXFR" )       return TYPE_AXFR;
         if ( t == "ANY" )        return TYPE_ANY;
         if ( t == "CAA" )        return TYPE_CAA;
+        if ( t == "SRV" )        return TYPE_SRV;
 
         throw std::runtime_error( "unknown type \"" + t + "\"" );
     }
@@ -1438,6 +1445,68 @@ namespace dns
     }
 
 
+    RecordSRV::RecordSRV( uint16_t priority, uint16_t weight, uint16_t port, const Domainname &target )
+        : mPriority( priority ), mWeight( weight ), mPort( port ), mTarget( target )
+    {
+    }
+
+    std::string RecordSRV::toZone() const
+    {
+        return toString();
+    }
+
+    std::string RecordSRV::toString() const
+    {
+        std::ostringstream os;
+        os << mPriority << " "
+	   << mWeight   << " "
+	   << mPort     << " "
+	   << mTarget.toString();
+        return os.str();
+    }
+
+    uint32_t RecordSRV::size( OffsetDB &offset_db, uint32_t begin ) const
+    {
+        return sizeof(mPriority) + sizeof(mWeight) + sizeof(mPort) + offset_db.getOutputWireFormatSize( mTarget, begin );
+    }
+
+    void RecordSRV::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        message.pushUInt16HtoN( mPriority );
+        message.pushUInt16HtoN( mWeight );
+        message.pushUInt16HtoN( mPort );
+        offset_db.outputWireFormat( mTarget, message );
+    }
+    
+    void RecordSRV::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+        message.pushUInt16HtoN( mPriority );
+        message.pushUInt16HtoN( mWeight );
+        message.pushUInt16HtoN( mPort );
+        mTarget.outputCanonicalWireFormat( message );
+    }
+
+    RDATAPtr RecordSRV::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
+    {
+        const uint8_t *pos = rdata_begin;
+
+        if ( rdata_end - pos < 7 )
+            throw FormatError( "too few length for SRV record," );
+        uint16_t priority = get_bytes<uint16_t>( &pos );
+
+        if ( rdata_end - pos < 5 )
+            throw FormatError( "too few length for SRV record," );
+        uint16_t weight = get_bytes<uint16_t>( &pos );
+
+        if ( rdata_end - pos < 7 )
+            throw FormatError( "too few length for SRV record," );
+        uint16_t port = get_bytes<uint16_t>( &pos );
+
+        Domainname name;
+        Domainname::parsePacket( name, packet_begin, packet_end, pos );
+        return RDATAPtr( new RecordSRV( priority, weight, port, name ) );
+    }
+    
     std::string RecordRRSIG::toZone() const
     {
         std::string signature_str;

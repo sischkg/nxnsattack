@@ -44,6 +44,7 @@ namespace dns
     const Type       TYPE_KEY         = 25;
     const Type       TYPE_AAAA        = 28;
     const Type       TYPE_NXT         = 30;
+    const Type       TYPE_SRV         = 33;
     const Type       TYPE_NAPTR       = 35;
     const Type       TYPE_DNAME       = 39;
     const Type       TYPE_OPT         = 41;
@@ -577,6 +578,36 @@ namespace dns
 
         static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
     };
+
+    class RecordSRV : public RDATA
+    {
+    private:
+        uint16_t   mPriority;
+	uint16_t   mWeight;
+	uint16_t   mPort;
+        Domainname mTarget;
+
+    public:
+        RecordSRV( uint16_t pri, uint16_t weight, uint16_t port, const Domainname &target );
+
+        virtual std::string toZone() const;
+        virtual std::string toString() const;
+        virtual void outputWireFormat( WireFormat &message, OffsetDB &offset ) const;
+        virtual void outputCanonicalWireFormat( WireFormat &message ) const;
+        virtual uint16_t type() const
+        {
+            return TYPE_SRV;
+        }
+        virtual uint32_t size() const
+        {
+            return sizeof( mPriority ) + sizeof( mWeight ) + sizeof( mPort ) + mTarget.size();
+        }
+        virtual uint32_t size( OffsetDB &offset_db, uint32_t begin ) const;
+	virtual RecordSRV *clone() const { return new RecordSRV( mPriority, mWeight, mPort, mTarget ); }
+
+        static RDATAPtr parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end );
+    };
+
 
     class RecordRRSIG : public RDATA
     {

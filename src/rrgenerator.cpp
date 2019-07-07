@@ -195,7 +195,7 @@ namespace dns
 					"hmac-sha512",
 	    };
 
-	    return (Domainname)algorithms[ getRandom( sizeof(algorithms) - 1 ) ];
+	    return (Domainname)algorithms[ getRandom( sizeof(algorithms)/sizeof(char *) - 1 ) ];
 	}
 	else {
 	    return generateDomainname();
@@ -377,6 +377,25 @@ namespace dns
 						      getRandom() ));
     }
 
+    /**********************************************************
+     * SRVGenarator
+     **********************************************************/
+    std::shared_ptr<RDATA> SRVGenerator::generate( const MessageInfo &hint1, const Domainname &hint2 )
+    {
+	return std::shared_ptr<RDATA>( new RecordSRV( getRandom( 0xffff ),
+						      getRandom( 0xffff ),
+						      getRandom( 0xffff ),
+						      getDomainname( hint1 ) ) );
+    }
+
+    std::shared_ptr<RDATA> SRVGenerator::generate()
+    {
+	return std::shared_ptr<RDATA>( new RecordSRV( getRandom( 0xffff ),
+						      getRandom( 0xffff ),
+						      getRandom( 0xffff ),
+						      generateDomainname() ) );
+    }
+    
     /**********************************************************
      * RRSIGGenarator
      **********************************************************/
@@ -713,6 +732,7 @@ namespace dns
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new AAAAGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new WKSGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new SOAGenerator ) );
+        mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new SRVGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new RRSIGGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DNSKEYGenerator ) );
         mGenerators.push_back( std::shared_ptr<RDATAGeneratable>( new DSGenerator ) );
