@@ -373,6 +373,9 @@ namespace dns
         case TYPE_NSEC3PARAM:
             parsed_data = RecordNSEC3PARAM::parse( packet_begin, packet_end, pos, pos + data_length );
             break;
+        case TYPE_TLSA:
+            parsed_data = RecordTLSA::parse( packet_begin, packet_end, pos, pos + data_length );
+            break;
         case TYPE_TSIG:
             parsed_data = RecordTSIGData::parse( packet_begin, packet_end, pos, pos + data_length, sec.mDomainname );
             break;
@@ -501,6 +504,9 @@ namespace dns
         case TYPE_NSEC3PARAM:
             res = "NSEC3PARAM";
             break;
+        case TYPE_TLSA:
+            res = "TLSA";
+            break;
         case TYPE_TSIG:
             res = "TSIG";
             break;
@@ -589,6 +595,7 @@ namespace dns
         if ( t == "NSEC" )       return TYPE_NSEC;
         if ( t == "NSEC3" )      return TYPE_NSEC3;
         if ( t == "NSEC3PARAM" ) return TYPE_NSEC3PARAM;
+        if ( t == "TLSA" )       return TYPE_TLSA;
         if ( t == "TSIG" )       return TYPE_TSIG;
         if ( t == "TKEY" )       return TYPE_TKEY;
         if ( t == "IXFR" )       return TYPE_IXFR;
@@ -1841,7 +1848,7 @@ namespace dns
 
     std::string RecordNSEC::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC::toString() const
@@ -1894,7 +1901,7 @@ namespace dns
 
     std::string RecordNSEC3::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC3::toString() const
@@ -1996,7 +2003,7 @@ namespace dns
 
     std::string RecordNSEC3PARAM::toZone() const
     {
-	return toZone();
+	return toString();
     }
 
     std::string RecordNSEC3PARAM::toString() const
@@ -2055,6 +2062,63 @@ namespace dns
 	salt.insert( salt.end(), pos, pos + salt_size );
 	pos += salt_size;
 	return RDATAPtr( new RecordNSEC3PARAM( algo, flag, iteration, salt ) );
+    }
+
+
+    std::string RecordTLSA::toZone() const
+    {
+	return toString();
+    }
+
+    std::string RecordTLSA::toString() const
+    {
+	std::string data;
+	encodeToHex( mData, data );
+	
+	std::stringstream os;
+	os << (uint32_t)mUsage        << " "
+	   << (uint32_t)mSelector     << " "
+	   << (uint32_t)mMatchingType << " "
+           << data;
+
+        return os.str();
+    }
+
+    void RecordTLSA::outputWireFormat( WireFormat &message, OffsetDB &offset_db ) const
+    {
+        outputCanonicalWireFormat( message );
+    }
+
+    void RecordTLSA::outputCanonicalWireFormat( WireFormat &message ) const
+    {
+	message.pushUInt8( mUsage );
+	message.pushUInt8( mSelector );
+	message.pushUInt8( mMatchingType );
+	message.pushBuffer( mData );
+    }
+
+    uint32_t RecordTLSA::size() const
+    {
+	return
+	    + 1                 // Usage
+	    + 1                 // Selector
+	    + 1                 // MatchingType
+	    + mData.size();     // Certificate Association Data
+    }
+
+    RDATAPtr RecordTLSA::parse( const uint8_t *packet_begin, const uint8_t *packet_end, const uint8_t *rdata_begin, const uint8_t *rdata_end )
+    {
+	if ( rdata_end - rdata_begin < 1 + 1 + 1 + 1 ) {
+	    throw FormatError( "too few size for TLSA" );
+	}
+        const uint8_t *pos = rdata_begin;
+	uint8_t usage         = get_bytes<uint8_t>( &pos );
+	uint8_t selector      = get_bytes<uint8_t>( &pos );
+        uint8_t matching_type = get_bytes<uint8_t>( &pos );
+
+	PacketData data;
+	data.insert( data.end(), pos, packet_end );
+	return RDATAPtr( new RecordTLSA( usage, selector, matching_type, data ) );
     }
 
     std::string RecordOptionsData::toString() const
