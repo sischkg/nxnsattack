@@ -11,6 +11,10 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#define _GNU_SOURCE
+#include <poll.h>
 
 namespace tcpv4
 {
@@ -54,6 +58,11 @@ namespace tcpv4
         tv.tv_sec  = 1;
         tv.tv_usec = 0;
         setsockopt( mTCPSocket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv) );
+
+        if ( ! mParameters.mBlock ) {
+            fcntl( mTCPSocket, F_SETFL, O_NONBLOCK );
+        }
+
     }
 
     void Client::closeSocket()
@@ -157,4 +166,28 @@ namespace tcpv4
     {
         return true;
     }
+
+
+    FD::Event Client::wait( unsigned int timeout_msec )
+    {
+        pollfd fds[1];
+        std::memset( fds, 0, sizeof(fds)/sizeof(pollfd) );
+        fds[0].fd = mTCPSocket;
+        fds[0].events = POLLIN | POLLPRI | POLLOUT | POLLERR | POLLRDHUP | POLLNVAL;
+        int fd_count = poll( fds, sizeof(fds)/sizeof(pollfd), timeout_msec );
+        if ( fd_count < 0 ) {
+            throw std::runtime_error( "poll error" );
+        }
+            
+        if ( fd_count == 0 )
+            return FD::NONE;
+
+        FD::Event event_flag = FD::NONE;
+        if ( fds[0].revents & POLLIN ) event_flag |= FD::READABLE;
+        if ( fds[0].revents & POLLOUT ) event_flag |= FD::WRITABLE;
+        if ( fds[0].revents & ( POLLERR | POLLRDHUP | POLLNVAL ) )
+             event_flag |= FD::ERROR;
+        return event_flag;
+    }
+
 }

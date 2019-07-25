@@ -42,6 +42,11 @@ namespace tcpv4
     struct ClientParameters {
         std::string mAddress;
         uint16_t    mPort;
+        bool        mBlock;
+
+        ClientParameters()
+            : mAddress( "" ), mPort( 0 ), mBlock( true )
+        {}
     };
 
     class Client
@@ -64,6 +69,8 @@ namespace tcpv4
         void shutdown_read();
         void shutdown_write();
 	bool isEnableSocket() const;
+
+        FD::Event wait( unsigned int timeout_msec = 0 );
 
         uint16_t send( const uint8_t *data, uint16_t size );
         uint16_t send( const uint8_t *begin, const uint8_t *end )

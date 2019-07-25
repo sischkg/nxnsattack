@@ -8,6 +8,16 @@
 #include <stdexcept>
 #include <vector>
 
+
+namespace FD
+{
+    typedef unsigned int Event;
+    const Event NONE     = 0;
+    const Event READABLE = 1;
+    const Event WRITABLE = 1<<1;
+    const Event ERROR    = 1<<2;
+}
+
 typedef std::vector<uint8_t> PacketData;
 
 /*!
