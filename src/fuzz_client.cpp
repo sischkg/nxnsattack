@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <signal.h>
 
 const char *DNS_SERVER_ADDRESS       = "127.0.0.1";
 const uint32_t DEFAULT_INTERVAL_MSEC = 500;
@@ -53,6 +54,9 @@ std::string now_string()
     return outstr;
 }
 
+
+void ignore_signal( int sig )
+{}
 
 void generate_query( const dns::Domainname &basename,
                      const dns::Domainname &another_basename,
@@ -312,6 +316,7 @@ int main( int argc, char **argv )
     std::string basename, another_basename;
     uint32_t    interval = 0;
     bool        is_randomize = true;
+    bool        is_pipelining = false;
     std::string sent_queries_file = "";
     std::string log_level;
     
@@ -327,6 +332,8 @@ int main( int argc, char **argv )
         ( "base,b",
           po::value<std::string>( &basename ),
           "basename" )
+        ( "pipelining",
+          "enable TCP pipelining" )
         ( "randomize,r",
           po::value<bool>( &is_randomize )->default_value( true ),
           "randomize message" )
@@ -351,6 +358,8 @@ int main( int argc, char **argv )
         std::cerr << desc << "\n";
         return 1;
     }
+    if ( vm.count( "pipelining" ) )
+        is_pipelining = true;
 
     dns::logger::initialize( log_level );
 
@@ -367,66 +376,137 @@ int main( int argc, char **argv )
 
     BOOST_LOG_TRIVIAL(info) << "Sending fuzzing queries to " << target_server << ":" << target_port << ".";
     
-    while ( true ) {
-        try {
-            WireFormat message;
-            generate_query( (dns::Domainname)basename,
-                            (dns::Domainname)another_basename,
-                            label_generator,
-                            rr_generator,
-                            option_generator,
-                            is_randomize,
-                            message );
+    signal( SIGPIPE, ignore_signal );
 
-            if ( record_queries ) {
-                std::string message_base64;
-                std::vector<uint8_t> m;
-                m = message.get();
-                encodeToBase64( m, message_base64 );
-
-                fs_record_queries << now_string() << "," << message_base64 << std::endl;
-            }
-
-            if ( message.size() < 1500 ) {
-                udpv4::ClientParameters udp_param;
-                udp_param.mAddress = target_server;
-                udp_param.mPort    = target_port;
-                udpv4::Client udp( udp_param );
-                udp.sendPacket( message );
-            }
-            else {
+    if ( is_pipelining ) {
+        BOOST_LOG_TRIVIAL(info) << "enable pipelining.";
+        while ( true ) {
+            BOOST_LOG_TRIVIAL(info) << "new connection";
+            try {
                 tcpv4::ClientParameters tcp_param;
                 tcp_param.mAddress = target_server;
                 tcp_param.mPort    = target_port;
+                tcp_param.mBlock   = false;
+
                 tcpv4::Client tcp( tcp_param );
                 tcp.openSocket();
+                BOOST_LOG_TRIVIAL(info) << "connected";
+                
+                while ( true ) {
+                    FD::Event tcp_event = tcp.wait();
+                    if ( tcp_event & FD::ERROR ) {
+                        throw std::runtime_error( "closed or other error" );
+                    }
+                    if ( tcp_event & FD::READABLE ) {
+                        BOOST_LOG_TRIVIAL(info) << "reading response";
+                        PacketData response_data;
+                        tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
+                        if ( response_size_data.getLength() < 2 )
+                            continue;
+                        uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
+                        while ( response_data.size() < response_size ) {
+                            tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
+                            response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
+                        }
+                        BOOST_LOG_TRIVIAL(info) << "read response";
+                    }
+                    if ( tcp_event & FD::WRITABLE ) {
+                        WireFormat message;
+                        generate_query( (dns::Domainname)basename,
+                                        (dns::Domainname)another_basename,
+                                        label_generator,
+                                        rr_generator,
+                                        option_generator,
+                                        is_randomize,
+                                        message );
 
-                uint16_t query_size_data2 = htons( message.size() );
-                tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );
-                tcp.send( message );
+                        if ( record_queries ) {
+                            std::string message_base64;
+                            std::vector<uint8_t> m;
+                            m = message.get();
+                            encodeToBase64( m, message_base64 );
+                            fs_record_queries << now_string() << "," << message_base64 << std::endl;
+                        }
 
-                tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
-                if ( response_size_data.getLength() < 2 )
-                    continue;
-                uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
-
-                PacketData response_data;
-                while ( response_data.size() < response_size ) {
-                    tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
-
-                    response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
+                        BOOST_LOG_TRIVIAL(info) << "writing query";
+                        uint16_t query_size_data2 = htons( message.size() );
+                        tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );
+                        tcp.send( message );
+                        BOOST_LOG_TRIVIAL(info) << "wrote query";
+                    }
                 }
             }
+            catch ( std::runtime_error &e )  {
+                BOOST_LOG_TRIVIAL(error) << e.what();
+            }
+            catch ( ... ) {
+                BOOST_LOG_TRIVIAL(error) << "other error";
+            }
+            BOOST_LOG_TRIVIAL(info) << "connection closed";
+        }
+    }
+    else {
+        while ( true ) {
+            try {
+                WireFormat message;
+                generate_query( (dns::Domainname)basename,
+                                (dns::Domainname)another_basename,
+                                label_generator,
+                                rr_generator,
+                                option_generator,
+                                is_randomize,
+                                message );
 
-	    wait_msec( interval );
-        }
-        catch ( std::runtime_error &e )  {
-            BOOST_LOG_TRIVIAL(error) << e.what();
-        }
-        catch ( ... ) {
-            BOOST_LOG_TRIVIAL(error) << "other error";
-        }
+                if ( record_queries ) {
+                    std::string message_base64;
+                    std::vector<uint8_t> m;
+                    m = message.get();
+                    encodeToBase64( m, message_base64 );
 
+                    fs_record_queries << now_string() << "," << message_base64 << std::endl;
+                }
+
+                if ( message.size() < 1500 ) {
+                    udpv4::ClientParameters udp_param;
+                    udp_param.mAddress = target_server;
+                    udp_param.mPort    = target_port;
+                    udpv4::Client udp( udp_param );
+                    udp.sendPacket( message );
+                }
+                else {
+                    tcpv4::ClientParameters tcp_param;
+                    tcp_param.mAddress = target_server;
+                    tcp_param.mPort    = target_port;
+                    tcpv4::Client tcp( tcp_param );
+                    tcp.openSocket();
+
+                    uint16_t query_size_data2 = htons( message.size() );
+                    tcp.send( reinterpret_cast<const uint8_t *>( &query_size_data2 ), 2 );
+                    tcp.send( message );
+
+                    tcpv4::ConnectionInfo response_size_data = tcp.receive_data( 2 );
+                    if ( response_size_data.getLength() < 2 )
+                        continue;
+                    uint16_t response_size = ntohs( *( reinterpret_cast<const uint16_t *>( response_size_data.getData() ) ) );
+
+                    PacketData response_data;
+                    while ( response_data.size() < response_size ) {
+                        tcpv4::ConnectionInfo received_data = tcp.receive_data( response_size - response_data.size() );
+
+                        response_data.insert( response_data.end(), received_data.begin(), received_data.end() );
+                    }
+                }
+
+                wait_msec( interval );
+            }
+            catch ( std::runtime_error &e )  {
+                BOOST_LOG_TRIVIAL(error) << e.what();
+            }
+            catch ( ... ) {
+                BOOST_LOG_TRIVIAL(error) << "other error";
+            }
+
+        }
     }
 
     return 0;
