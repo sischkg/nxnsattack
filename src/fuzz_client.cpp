@@ -54,6 +54,256 @@ std::string now_string()
 }
 
 
+void generate_query( const dns::Domainname &basename,
+                     const dns::Domainname &another_basename,
+                     dns::DomainnameGenerator &label_generator,
+                     dns::ResourceRecordGenerator &rr_generator,
+                     dns::OptionGenerator &option_generator,
+                     bool is_randomize,
+                     WireFormat &ref_query )
+{
+    dns::MessageInfo packet_info;
+
+    if ( dns::getRandom( 5 ) ) {
+        packet_info.mOptPseudoRR.mDomainname  = ".";
+        packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
+        packet_info.mOptPseudoRR.mRCode       = dns::getRandom( 0xff );
+        packet_info.mOptPseudoRR.mVersion     = 0;
+        packet_info.mOptPseudoRR.mDOBit       = 1;
+        packet_info.mIsEDNS0 = true;
+
+        unsigned int count = dns::getRandom( 8 );
+        for ( unsigned int i = 0 ; i < count ; i++ ) {
+            option_generator.generate( packet_info );
+        }
+
+        if ( ! dns::getRandom( 7 ) ) {
+            packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 11000 );
+        }
+        if ( ! dns::getRandom( 7 ) ) {
+            packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16);
+        }
+        if ( ! dns::getRandom( 7 ) ) {
+            packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
+        }
+    }
+
+    dns::Domainname qname;
+    if ( dns::getRandom( 2 ) )
+        qname = (dns::Domainname)basename;
+    else
+        qname = (dns::Domainname)another_basename;
+            
+    switch ( dns::getRandom( 12 ) ) {
+    case 0:
+        qname.addSubdomain( "www" );
+        break;
+    case 1:
+        qname.addSubdomain( "vvv" );
+        break;
+    case 2:
+        qname.addSubdomain( "yyy" );
+        break;
+    case 3:
+        switch ( dns::getRandom( 3 ) ) {
+        case 0:
+            qname.addSubdomain( "yyy" );
+            break;
+        case 1:
+            qname.addSubdomain( "vvv" );
+            break;
+        case 2:
+            qname.addSubdomain( "zzz" );
+            break;
+        }
+
+        switch ( dns::getRandom( 6 ) ) {
+        case 0:
+            qname.addSubdomain( "www" );
+            break;
+        case 1:
+            qname.addSubdomain( "zzz" );
+            break;
+        case 2:
+            qname.addSubdomain( "yyy" );
+            break;
+        case 3:
+            qname.addSubdomain( "ns01" );
+            break;
+        case 4:
+            qname.addSubdomain( "child" );
+            break;
+        case 5:
+            qname.addSubdomain( label_generator.generateLabel() );
+            break;
+        }
+        break;
+    case 4:
+        qname.addSubdomain( "yyyy" );
+        switch ( dns::getRandom( 4 ) ) {
+        case 0:
+            qname.addSubdomain( "www" );
+            break;
+        case 1:
+            qname.addSubdomain( "ns01" );
+            break;
+        case 2:
+            qname.addSubdomain( label_generator.generateLabel() );
+            break;
+        }
+        break;
+    case 5:
+        qname.addSubdomain( "*" );
+        switch ( dns::getRandom( 4 ) ) {
+        case 0:
+            qname.addSubdomain( "www" );
+            break;
+        case 1:
+            qname.addSubdomain( "ns01" );
+            break;
+        case 2:
+            qname.addSubdomain( "child" );
+            break;
+        case 3:
+            qname.addSubdomain( label_generator.generateLabel() );
+            break;
+        }
+        break;
+    case 6:
+        qname.addSubdomain( "xxxxxxxxxx" );
+        break;
+    case 7:
+        qname.addSubdomain( label_generator.generateLabel() );
+        break;
+    case 8:
+        qname.addSubdomain( label_generator.generateLabel() );
+        switch ( dns::getRandom( 4 ) ) {
+        case 0:
+            qname.addSubdomain( "www" );
+            break;
+        case 1:
+            qname.addSubdomain( "ns01" );
+            break;
+        case 2:
+            qname.addSubdomain( "child" );
+            break;
+        case 3:
+            qname.addSubdomain( label_generator.generateLabel() );
+            break;
+        }
+        break;
+    default:
+        qname.addSubdomain( "child" );
+        switch ( dns::getRandom( 6 ) ) {
+        case 0:
+            qname.addSubdomain( "vvv" );
+            break;
+        case 1:
+            qname.addSubdomain( "www" );
+            break;
+        case 2:
+            qname.addSubdomain( "zzz" );
+            break;
+        case 3:
+            qname.addSubdomain( "ns01" );
+            break;
+        case 4:
+            qname.addSubdomain( "child" );
+            break;
+        case 5:
+            qname.addSubdomain( label_generator.generateLabel() );
+            break;
+        }
+        break;
+    }
+
+    dns::Type  qtype  = dns::getRandom( 63 );
+    dns::Class qclass = dns::CLASS_IN;
+    if ( dns::getRandom( 16 ) == 0 )
+        qclass = dns::CLASS_ANY;
+    if ( dns::getRandom( 16 ) == 0 )
+        qclass = dns::CLASS_NONE;
+
+    dns::QuestionSectionEntry q;
+    q.mDomainname = qname;
+    q.mType       = qtype;
+    q.mClass      = qclass;
+    packet_info.mQuestionSection.push_back( q );
+
+    // append new rrsets
+    unsigned int rrsets_count = dns::getRandom( 4 );
+    for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
+        dns::RRSet rrset = rr_generator.generate( packet_info, (dns::Domainname)another_basename );
+
+        switch ( dns::getRandom( 5 ) ) {
+        case 0:
+            {
+                auto new_rrs = newRRs( rrset );
+                for ( auto rr : new_rrs )
+                    packet_info.pushAnswerSection( rr );
+            }
+            break;
+        case 1:
+            {
+                auto new_rrs = newRRs( rrset );
+                for ( auto rr : new_rrs )
+                    packet_info.pushAuthoritySection( rr );
+            }
+            break;
+        case 2:
+            {
+                auto new_rrs = newRRs( rrset );
+                for ( auto rr : new_rrs )
+                    packet_info.pushAdditionalSection( rr );
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    packet_info.mIsEDNS0 = true;
+    packet_info.mOptPseudoRR.mDOBit = true;
+
+    unsigned int option_count = dns::getRandom( 4 );
+    for ( unsigned int i = 0 ; i < option_count ; i++ )
+        option_generator.generate( packet_info );
+
+    if ( ! dns::getRandom( 7 ) ) {
+        packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
+    }
+    if ( ! dns::getRandom( 7 ) ) {
+        packet_info.mOptPseudoRR.mRCode = dns::getRandom( 15 );
+    }
+    if ( ! dns::getRandom( 7 ) ) {
+        packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
+    }
+
+    packet_info.mID                  = dns::getRandom( 0xffff );
+    packet_info.mOpcode              = dns::getRandom( 0x02 );
+    packet_info.mQueryResponse       = dns::getRandom( 0x02 );
+    packet_info.mAuthoritativeAnswer = dns::getRandom( 0x02 );
+    packet_info.mTruncation          = dns::getRandom( 0x02 );
+    packet_info.mRecursionDesired    = dns::getRandom( 0x02 );
+    packet_info.mRecursionAvailable  = dns::getRandom( 0x02 );
+    packet_info.mZeroField           = dns::getRandom( 0x0f );
+    packet_info.mAuthenticData       = dns::getRandom( 0x02 );
+    packet_info.mCheckingDisabled    = dns::getRandom( 0x02 );
+    packet_info.mResponseCode        = dns::getRandom( 0x0f );
+	
+    packet_info.generateMessage( ref_query );
+
+    if ( is_randomize ) {
+        unsigned int shuffle_count = dns::getRandom( 3 );
+        for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
+            if ( dns::getRandom( 8 ) == 0 ) {
+                WireFormat src = ref_query;
+                dns::shuffle( src, ref_query );
+            }
+        }
+    }
+}
+
 
 int main( int argc, char **argv )
 {
@@ -119,247 +369,14 @@ int main( int argc, char **argv )
     
     while ( true ) {
         try {
-            dns::MessageInfo packet_info;
-
-            if ( dns::getRandom( 5 ) ) {
-                packet_info.mOptPseudoRR.mDomainname  = ".";
-                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
-                packet_info.mOptPseudoRR.mRCode       = dns::getRandom( 0xff );
-                packet_info.mOptPseudoRR.mVersion     = 0;
-                packet_info.mOptPseudoRR.mDOBit       = 1;
-                packet_info.mIsEDNS0 = true;
-
-                unsigned int count = dns::getRandom( 8 );
-                for ( unsigned int i = 0 ; i < count ; i++ ) {
-                    option_generator.generate( packet_info );
-                }
-
-                if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 11000 );
-                }
-                if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.mOptPseudoRR.mRCode = dns::getRandom( 16);
-                }
-                if ( ! dns::getRandom( 7 ) ) {
-                    packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
-                }
-            }
-
-            dns::Domainname qname;
-            if ( dns::getRandom( 2 ) )
-                qname = (dns::Domainname)basename;
-            else
-                qname = (dns::Domainname)another_basename;
-            
-            switch ( dns::getRandom( 12 ) ) {
-            case 0:
-                qname.addSubdomain( "www" );
-                break;
-            case 1:
-                qname.addSubdomain( "vvv" );
-                break;
-            case 2:
-                qname.addSubdomain( "yyy" );
-                break;
-            case 3:
-                switch ( dns::getRandom( 3 ) ) {
-                case 0:
-                    qname.addSubdomain( "yyy" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "vvv" );
-                    break;
-                case 2:
-                    qname.addSubdomain( "zzz" );
-                    break;
-                }
-
-                switch ( dns::getRandom( 6 ) ) {
-                case 0:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "zzz" );
-                    break;
-                case 2:
-                    qname.addSubdomain( "yyy" );
-                    break;
-                case 3:
-                    qname.addSubdomain( "ns01" );
-                    break;
-                case 4:
-                    qname.addSubdomain( "child" );
-                    break;
-                case 5:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            case 4:
-                qname.addSubdomain( "yyyy" );
-                switch ( dns::getRandom( 4 ) ) {
-                case 0:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "ns01" );
-                    break;
-                case 2:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            case 5:
-                qname.addSubdomain( "*" );
-                switch ( dns::getRandom( 4 ) ) {
-                case 0:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "ns01" );
-                    break;
-                case 2:
-                    qname.addSubdomain( "child" );
-                    break;
-                case 3:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            case 6:
-                qname.addSubdomain( "xxxxxxxxxx" );
-                break;
-            case 7:
-                qname.addSubdomain( label_generator.generateLabel() );
-                break;
-            case 8:
-                qname.addSubdomain( label_generator.generateLabel() );
-                switch ( dns::getRandom( 4 ) ) {
-                case 0:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "ns01" );
-                    break;
-                case 2:
-                    qname.addSubdomain( "child" );
-                    break;
-                case 3:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            default:
-                qname.addSubdomain( "child" );
-                switch ( dns::getRandom( 6 ) ) {
-                case 0:
-                    qname.addSubdomain( "vvv" );
-                    break;
-                case 1:
-                    qname.addSubdomain( "www" );
-                    break;
-                case 2:
-                    qname.addSubdomain( "zzz" );
-                    break;
-                case 3:
-                    qname.addSubdomain( "ns01" );
-                    break;
-                case 4:
-                    qname.addSubdomain( "child" );
-                    break;
-                case 5:
-                    qname.addSubdomain( label_generator.generateLabel() );
-                    break;
-                }
-                break;
-            }
-
-            dns::Type  qtype  = dns::getRandom( 63 );
-            dns::Class qclass = dns::CLASS_IN;
-            if ( dns::getRandom( 16 ) == 0 )
-                qclass = dns::CLASS_ANY;
-            if ( dns::getRandom( 16 ) == 0 )
-                qclass = dns::CLASS_NONE;
-
-            dns::QuestionSectionEntry q;
-            q.mDomainname = qname;
-            q.mType       = qtype;
-            q.mClass      = qclass;
-            packet_info.mQuestionSection.push_back( q );
-
-            // append new rrsets
-            unsigned int rrsets_count = dns::getRandom( 4 );
-            for ( unsigned int i = 0 ; i < rrsets_count ; i++ ) {
-                dns::RRSet rrset = rr_generator.generate( packet_info, (dns::Domainname)another_basename );
-
-                switch ( dns::getRandom( 5 ) ) {
-                case 0:
-                    {
-                        auto new_rrs = newRRs( rrset );
-                        for ( auto rr : new_rrs )
-                            packet_info.pushAnswerSection( rr );
-                    }
-                    break;
-                case 1:
-                    {
-                        auto new_rrs = newRRs( rrset );
-                        for ( auto rr : new_rrs )
-                            packet_info.pushAuthoritySection( rr );
-                    }
-                    break;
-                case 2:
-                    {
-                        auto new_rrs = newRRs( rrset );
-                        for ( auto rr : new_rrs )
-                            packet_info.pushAdditionalSection( rr );
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-
-            packet_info.mIsEDNS0 = true;
-            packet_info.mOptPseudoRR.mDOBit = true;
-
-            unsigned int option_count = dns::getRandom( 4 );
-            for ( unsigned int i = 0 ; i < option_count ; i++ )
-                option_generator.generate( packet_info );
-
-            if ( ! dns::getRandom( 7 ) ) {
-                packet_info.mOptPseudoRR.mPayloadSize = dns::getRandom( 0xffff );
-            }
-            if ( ! dns::getRandom( 7 ) ) {
-                packet_info.mOptPseudoRR.mRCode = dns::getRandom( 15 );
-            }
-            if ( ! dns::getRandom( 7 ) ) {
-                packet_info.mOptPseudoRR.mDOBit = dns::getRandom( 1 );
-            }
-
-            packet_info.mID                  = dns::getRandom( 0xffff );
-            packet_info.mOpcode              = dns::getRandom( 0x02 );
-            packet_info.mQueryResponse       = dns::getRandom( 0x02 );
-            packet_info.mAuthoritativeAnswer = dns::getRandom( 0x02 );
-            packet_info.mTruncation          = dns::getRandom( 0x02 );
-            packet_info.mRecursionDesired    = dns::getRandom( 0x02 );
-            packet_info.mRecursionAvailable  = dns::getRandom( 0x02 );
-            packet_info.mZeroField           = dns::getRandom( 0x0f );
-            packet_info.mAuthenticData       = dns::getRandom( 0x02 );
-            packet_info.mCheckingDisabled    = dns::getRandom( 0x02 );
-            packet_info.mResponseCode        = dns::getRandom( 0x0f );
-	
             WireFormat message;
-            packet_info.generateMessage( message );
-
-            if ( is_randomize ) {
-                unsigned int shuffle_count = dns::getRandom( 3 );
-                for ( unsigned int i = 0 ; i < shuffle_count ; i++ ) {
-                    if ( dns::getRandom( 8 ) == 0 ) {
-                        WireFormat src = message;
-                        dns::shuffle( src, message );
-                    }
-                }
-            }
+            generate_query( (dns::Domainname)basename,
+                            (dns::Domainname)another_basename,
+                            label_generator,
+                            rr_generator,
+                            option_generator,
+                            is_randomize,
+                            message );
 
             if ( record_queries ) {
                 std::string message_base64;
