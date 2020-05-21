@@ -37,26 +37,11 @@ set( CLIENT_LIBRARY
   boost_program_options
   boost_thread
   boost_system
-  ${OPENSSL_CRYPTO_LIBRARY}
-  pthread )
+  ${OPENSSL_CRYPTO_LIBRARY} )
 set( SERVER_LIBRARY dnsserver threadpool ${CLIENT_LIBRARY} )
 set( ZONE_SERVER_LIBRARY zone tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 
-add_executable( zone_server    zone_server.cpp )
-add_executable( dnssec_server  dnssec_server.cpp )
-add_executable( fuzz_server    fuzz_server.cpp )
-add_executable( fuzz_client    fuzz_client.cpp )
-add_executable( fuzz_replay    fuzz_replay.cpp )
-add_executable( multi_keytag_options multi_keytag_options.cpp )
-add_executable( message_parser message_parser.cpp )
-add_executable( axfr_server    axfr_server.cpp )
+add_executable( nxnsattack    nxnsattack.cpp )
 
-target_link_libraries( zone_server             ${ZONE_SERVER_LIBRARY} )
-target_link_libraries( dnssec_server           ${ZONE_SERVER_LIBRARY} )
-target_link_libraries( fuzz_server             ${ZONE_SERVER_LIBRARY} )
-target_link_libraries( axfr_server             ${ZONE_SERVER_LIBRARY} )
-target_link_libraries( fuzz_client             ${CLIENT_LIBRARY} )
-target_link_libraries( fuzz_replay             ${CLIENT_LIBRARY} )
-target_link_libraries( multi_keytag_options    ${CLIENT_LIBRARY} )
-target_link_libraries( message_parser          ${CLIENT_LIBRARY} )
+target_link_libraries( nxnsattack ${ZONE_SERVER_LIBRARY} )
 
