@@ -158,7 +158,7 @@ namespace dns
         std::stringstream result;
         for ( auto label : labels ) {
             for ( uint8_t c : label ) {
-                result << "0x" << std::hex << (uint32_t)c << " ";
+		result << c;
             }
             result << '.';
         }
