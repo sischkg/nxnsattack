@@ -19,6 +19,7 @@ add_executable( test-nsecdb       test-nsecdb.cpp )
 add_executable( test-zone         test-zone.cpp )
 add_executable( test-zoneloader   test-zoneloader.cpp )
 add_executable( test-dnskey       test-dnskey.cpp )
+add_executable( test-rr           test-rr.cpp )
 target_link_libraries(test-base64      ${UTIL_LIBRARY} )
 target_link_libraries(test-base32      ${UTIL_LIBRARY} )
 target_link_libraries(test-hex         ${UTIL_LIBRARY} )
@@ -33,6 +34,7 @@ target_link_libraries(test-nsecdb      ${ZONE_LIBRARY} )
 target_link_libraries(test-zone        ${ZONE_LIBRARY} )
 target_link_libraries(test-zoneloader  ${ZONE_LIBRARY} )
 target_link_libraries(test-dnskey      ${ZONE_LIBRARY} )
+target_link_libraries(test-rr          ${ZONE_LIBRARY} )
 
 add_test(
   NAME base64
@@ -107,5 +109,10 @@ add_test(
 add_test(
   NAME dnskey
   COMMAND test-dnskey
+)
+
+add_test(
+  NAME rr
+  COMMAND test-rr
 )
 

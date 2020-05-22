@@ -23,10 +23,6 @@
 
 namespace dns
 {
-    void generateQuestion( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
-    void generateResourceRecord( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
-    uint32_t getQuestionSize( const QuestionSectionEntry &q, uint32_t begin, OffsetDB &offset );
-    uint32_t getResourceRecordSize( const ResourceRecord &r, uint32_t begin, OffsetDB &offset, bool compression = true );
     typedef std::pair<QuestionSectionEntry, const uint8_t *> QuestionSectionEntryPair;
     typedef std::pair<ResourceRecord, const uint8_t *> ResourceRecordPair;
     QuestionSectionEntryPair parseQuestion( const uint8_t *begin, const uint8_t *end, const uint8_t *section );
@@ -260,12 +256,15 @@ namespace dns
         message.pushUInt32HtoN( response.mTTL );
         if ( response.mRData ) {
             uint32_t rdata_size = 0;
+	    uint16_t rd_length_pos = message.size();
+            message.pushUInt16HtoN( 0 ); // write dummy data
             if ( compression )
-                rdata_size = response.mRData->size( offset_db, message.size() );
-            else
-                rdata_size = response.mRData->size();
-            message.pushUInt16HtoN( rdata_size );
-            response.mRData->outputWireFormat( message, offset_db );
+		response.mRData->outputWireFormat( message, offset_db );
+	    else
+		response.mRData->outputCanonicalWireFormat( message );
+	    uint16_t rd_length = message.size() - rd_length_pos - 2;
+	    message[rd_length_pos]   = ( 0xff00 & rd_length ) >> 8;
+	    message[rd_length_pos+1] = ( 0x00ff & rd_length );
         } else {
             message.pushUInt16HtoN( 0 );
         }

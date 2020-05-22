@@ -1669,6 +1669,11 @@ namespace dns
         uint32_t getMessageSize() const;
     };
 
+    void generateQuestion( const QuestionSectionEntry &q, WireFormat &message, OffsetDB &offset );
+    void generateResourceRecord( const ResourceRecord &r, WireFormat &message, OffsetDB &offset, bool compression = true );
+    uint32_t getQuestionSize( const QuestionSectionEntry &q, uint32_t begin, OffsetDB &offset );
+    uint32_t getResourceRecordSize( const ResourceRecord &r, uint32_t begin, OffsetDB &offset, bool compression = true );
+
     MessageInfo parseDNSMessage( const uint8_t *begin, const uint8_t *end );
     std::ostream &operator<<( std::ostream &os, const MessageInfo &query );
     std::ostream &printHeader( std::ostream &os, const MessageInfo &packet );
