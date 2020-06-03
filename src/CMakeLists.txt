@@ -42,6 +42,8 @@ set( SERVER_LIBRARY dnsserver threadpool ${CLIENT_LIBRARY} )
 set( ZONE_SERVER_LIBRARY zone tokenizer ${YAML_CPP_LIBRARIES} ${OPENSSL_SSL_LIBRARY} ${SERVER_LIBRARY} )
 
 add_executable( nxnsattack    nxnsattack.cpp )
+add_executable( nonsattack    nonsattack.cpp )
 
 target_link_libraries( nxnsattack ${ZONE_SERVER_LIBRARY} )
+target_link_libraries( nonsattack ${ZONE_SERVER_LIBRARY} )
 
