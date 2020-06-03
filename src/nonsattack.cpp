@@ -52,7 +52,7 @@ public:
 	    glue.mTTL        = TTL;
 	    glue.mRData =
 		dns::RDATAPtr( new dns::RecordA( mTarget ) );
-	    response.pushAuthoritySection( glue );
+	    response.pushAdditionalSection( glue );
 	}
 
 	response.mID                   = query.mID;
